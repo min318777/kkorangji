@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: meow
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/mart
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: min3782
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+      database-platform: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
