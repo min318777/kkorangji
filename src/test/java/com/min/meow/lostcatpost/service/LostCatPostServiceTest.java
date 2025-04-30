@@ -2,7 +2,9 @@ package com.min.meow.lostcatpost.service;
 
 import com.min.meow.lostcatpost.domain.dto.LostCatPostDto;
 import com.min.meow.lostcatpost.domain.entity.LostCatPost;
+import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
 import com.min.meow.lostcatpost.repository.LostCatRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,6 +31,7 @@ class LostCatPostServiceTest {
     private LostCatPostService lostCatPostService;
 
     @Test
+    @DisplayName("모든 고양이 찾기 공고글을 조회한다.")
     void getAllLostCatPost(){
         // given
         Pageable pageable = PageRequest.of(0, 10);
@@ -45,5 +48,28 @@ class LostCatPostServiceTest {
         assertThat(result.getContent().get(0).getTitle()).isEqualTo("고양이 공고1");
         verify(lostCatRepository, times(1)).findAll(pageable);
 
+    }
+
+    @Test
+    @DisplayName("요청으로 고양이 찾기 공고 글을 생성한다.")
+    void createLostCatPost(){
+        // given
+        CreateLostCatPostRequest createLostCatPostRequest = CreateLostCatPostRequest.builder()
+                .title("고양이 유기글 추가")
+                .catAge(3)
+                .catColor("검정")
+                .build();
+
+        LostCatPost lostCatPost = LostCatPost.convertToEntity(createLostCatPostRequest);
+        when(lostCatRepository.save(any(LostCatPost.class))).thenReturn(lostCatPost);
+
+        // when
+        LostCatPostDto result = lostCatPostService.createLostCatPost(createLostCatPostRequest);
+
+        // then
+        assertThat(result.getTitle()).isEqualTo("고양이 유기글 추가");
+        assertThat(result.getCatAge()).isEqualTo(3);
+        assertThat(result.getCatColor()).isEqualTo("검정");
+        verify(lostCatRepository, times(1)).save(any(LostCatPost.class));
     }
 }

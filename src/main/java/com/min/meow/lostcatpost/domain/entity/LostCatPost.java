@@ -1,6 +1,7 @@
 package com.min.meow.lostcatpost.domain.entity;
 
 
+import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -48,6 +49,8 @@ public class LostCatPost {
 
     private LocalDateTime updatedAt;
 
+
+    /*
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
@@ -58,6 +61,23 @@ public class LostCatPost {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+     */
 
-
+    public static LostCatPost convertToEntity(CreateLostCatPostRequest createLostCatPostRequest) {
+        return LostCatPost.builder()
+                .title(createLostCatPostRequest.getTitle())
+                .content(createLostCatPostRequest.getContent())
+                .lostLocation(createLostCatPostRequest.getLostLocation())
+                .latitude(createLostCatPostRequest.getLatitude())
+                .longitude(createLostCatPostRequest.getLongitude())
+                .catName(createLostCatPostRequest.getCatName())
+                .catAge(createLostCatPostRequest.getCatAge())
+                .catType(createLostCatPostRequest.getCatType())
+                .catWeight(createLostCatPostRequest.getCatWeight())
+                .catColor(createLostCatPostRequest.getCatColor())
+                .catImageUrl(createLostCatPostRequest.getCatImageUrl())
+                .reward(createLostCatPostRequest.getReward())
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
 }

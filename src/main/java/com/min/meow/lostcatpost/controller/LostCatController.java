@@ -4,7 +4,9 @@ package com.min.meow.lostcatpost.controller;
 import com.min.meow.common.ResponseDto;
 import com.min.meow.lostcatpost.domain.dto.LostCatPostDto;
 import com.min.meow.lostcatpost.domain.entity.LostCatPost;
+import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
 import com.min.meow.lostcatpost.service.LostCatPostService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,4 +34,12 @@ public class LostCatController {
         return ResponseEntity.ok(new ResponseDto<>(true, "모든 글 조회 성공", posts));
     }
 
+
+    @PostMapping
+    public ResponseEntity<?> createLostCatPost(@Valid CreateLostCatPostRequest createLostCatPostRequest){
+
+        LostCatPostDto post = lostCatPostService.createLostCatPost(createLostCatPostRequest);
+
+        return ResponseEntity.ok(new ResponseDto<>(true, "글 생성 성공", post));
+    }
 }
