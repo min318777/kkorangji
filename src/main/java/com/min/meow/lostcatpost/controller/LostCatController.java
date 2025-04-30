@@ -55,5 +55,14 @@ public class LostCatController {
 
     }
 
+    // 글 삭제
+    @DeleteMapping("/delete/{lostCatPostId}")
+    public ResponseEntity<?> deleteLostCatPost(@PathVariable Long lostCatPostId){
+
+        lostCatPostService.deleteLostCatPost(lostCatPostId);
+
+        return ResponseEntity.ok(new ResponseDto<>(true, "글 삭제 성공", null));
+    }
+
 
 }

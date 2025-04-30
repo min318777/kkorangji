@@ -100,4 +100,19 @@ class LostCatPostServiceTest {
         assertThat(result.getCatWeight()).isEqualTo(8);
         verify(lostCatRepository, times(1)).findById(anyLong());
     }
+
+    @Test
+    @DisplayName("고양이 찾기 글을 삭제한다.")
+    void deleteLostCatPost(){
+        // given
+        Long lostCatPostId = 1L;
+        when(lostCatRepository.existsById(lostCatPostId)).thenReturn(true);
+
+        // when
+        lostCatPostService.deleteLostCatPost(lostCatPostId);
+
+        // then
+        verify(lostCatRepository, times(1)).existsById(lostCatPostId);
+        verify(lostCatRepository, times(1)).deleteById(lostCatPostId);
+    }
 }

@@ -1,6 +1,5 @@
 package com.min.meow.lostcatpost.service;
 
-
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.lostcatpost.domain.dto.LostCatPostDto;
@@ -44,6 +43,22 @@ public class LostCatPostService {
 
         lostCatPost.update(updateLostCatPostRequest);
         return LostCatPostDto.convertToDto(lostCatPost);
+    }
+
+    // 글 삭제
+    // 성능개선-> findById 이후 delete를 db호출 2번발생-> deleteById 한번의 호출로 성능개성 -> existById도 있는데? -> 존재여부만 확인하므로 엔티티 조회보다 가벼운 호출이다. -> query dsl로 해볼까?
+    // 물리적삭제 대신 소프트삭제도 고려해보자.
+    @Transactional
+    public void deleteLostCatPost(Long lostCatPostId) {
+        /*
+        LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+        lostCatRepository.delete(lostCatPost);
+        */
+        if (!lostCatRepository.existsById(lostCatPostId)) {
+            throw new CustomException(ErrorCode.NOT_FOUND);
+        }
+        lostCatRepository.deleteById(lostCatPostId);
     }
 
 }
