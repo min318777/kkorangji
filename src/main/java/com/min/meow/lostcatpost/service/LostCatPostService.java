@@ -1,7 +1,7 @@
 package com.min.meow.lostcatpost.service;
 
 
-import com.min.meow.lostcatpost.domain.LostCatPostEntity;
+import com.min.meow.lostcatpost.domain.dto.LostCatPostDto;
 import com.min.meow.lostcatpost.repository.LostCatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,10 +14,10 @@ public class LostCatPostService {
 
     private final LostCatRepository lostCatRepository;
 
-    public Page<LostCatPostEntity> getAllLostCatPosts(Pageable pageable){
+    public Page<LostCatPostDto> getAllLostCatPosts(Pageable pageable){
 
-
-
-        return lostCatRepository.findAll(pageable);
+        return lostCatRepository.findAll(pageable).map(LostCatPostDto::convertToDto);
     }
+
+
 }
