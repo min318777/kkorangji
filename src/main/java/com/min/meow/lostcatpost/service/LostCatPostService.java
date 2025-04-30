@@ -16,6 +16,8 @@ public class LostCatPostService {
 
     public Page<LostCatPostEntity> getAllLostCatPosts(Pageable pageable){
 
+
+
         return lostCatRepository.findAll(pageable);
     }
 }
