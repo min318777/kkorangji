@@ -3,6 +3,7 @@ package com.min.meow.lostcatpost.service;
 import com.min.meow.lostcatpost.domain.dto.LostCatPostDto;
 import com.min.meow.lostcatpost.domain.entity.LostCatPost;
 import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
+import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
 import com.min.meow.lostcatpost.repository.LostCatRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -31,7 +33,7 @@ class LostCatPostServiceTest {
     private LostCatPostService lostCatPostService;
 
     @Test
-    @DisplayName("모든 고양이 찾기 공고글을 조회한다.")
+    @DisplayName("모든 고양이 찾기 글을 조회한다.")
     void getAllLostCatPost(){
         // given
         Pageable pageable = PageRequest.of(0, 10);
@@ -51,7 +53,7 @@ class LostCatPostServiceTest {
     }
 
     @Test
-    @DisplayName("요청으로 고양이 찾기 공고 글을 생성한다.")
+    @DisplayName("요청으로 고양이 찾기 글을 생성한다.")
     void createLostCatPost(){
         // given
         CreateLostCatPostRequest createLostCatPostRequest = CreateLostCatPostRequest.builder()
@@ -71,5 +73,31 @@ class LostCatPostServiceTest {
         assertThat(result.getCatAge()).isEqualTo(3);
         assertThat(result.getCatColor()).isEqualTo("검정");
         verify(lostCatRepository, times(1)).save(any(LostCatPost.class));
+    }
+
+    @Test
+    @DisplayName("요청으로 고양이 찾기 글을 수정한다.")
+    void updateLostCatPost(){
+        // given
+        Long id = 1L;
+        UpdateLostCatPostRequest updateLostCatPostRequest = UpdateLostCatPostRequest.builder()
+                .title("수정한 제목")
+                .catType("아르비시안")
+                .catWeight(8)
+                .build();
+        LostCatPost lostCatPost =  LostCatPost.builder()
+                .lostCatPostId(1L)
+                .title("수정전 제목")
+                .catType("숏헤어")
+                .catWeight(5)
+                .build();
+        when(lostCatRepository.findById(id)).thenReturn(Optional.of(lostCatPost));
+        // when
+        LostCatPostDto result = lostCatPostService.updateLostCatPost(id, updateLostCatPostRequest);
+        // then
+        assertThat(result.getTitle()).isEqualTo("수정한 제목");
+        assertThat(result.getCatType()).isEqualTo("아르비시안");
+        assertThat(result.getCatWeight()).isEqualTo(8);
+        verify(lostCatRepository, times(1)).findById(anyLong());
     }
 }

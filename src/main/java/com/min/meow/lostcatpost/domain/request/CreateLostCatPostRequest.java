@@ -1,5 +1,6 @@
 package com.min.meow.lostcatpost.domain.request;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 public class CreateLostCatPostRequest {
 
+    @NotBlank(message = "제목을 입력해 주세요.")
     private String title;
 
     private String content;
