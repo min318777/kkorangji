@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -46,11 +46,26 @@ class LostCatPostCommentServiceTest {
         LostCatPostComment lostCatPostComment = LostCatPostComment.convertToEntity(registerCommentRequest, lostCatPost);
         when(lostCatRepository.findById(1L)).thenReturn(Optional.of(lostCatPost));
         // when
-        RegisterCommentDto result = lostCatPostCommentService.registerComment(registerCommentRequest, lostCatPost.getLostCatPostId());
+        RegisterCommentDto result = lostCatPostCommentService.registerLostCatPostComment(registerCommentRequest, lostCatPost.getLostCatPostId());
         // then
         assertThat(result).isNotNull();
         assertThat(result.getLostCatPostId()).isEqualTo(1L);
         assertThat(result.getContent()).isEqualTo("고양이를 발견했어요.");
+    }
+
+    @Test
+    @DisplayName("댓글을 삭제한다.")
+    void deleteLostCatPostComment(){
+        // given
+        Long lostCatPostId = 1L;
+        when(lostCatPostCommentRepository.existsById(lostCatPostId)).thenReturn(true);
+
+        // when
+        lostCatPostCommentService.deleteLostCatPostComment(lostCatPostId);
+
+        // then
+        verify(lostCatPostCommentRepository, times(1)).existsById(lostCatPostId);
+        verify(lostCatPostCommentRepository, times(1)).deleteById(lostCatPostId);
     }
 
 }

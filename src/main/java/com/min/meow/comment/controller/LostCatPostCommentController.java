@@ -18,12 +18,19 @@ public class LostCatPostCommentController {
     private final LostCatPostCommentService lostCatPostCommentService;
 
     // 댓글 작성
-
     @PostMapping("/{lostCatPostId}")
-    public ResponseEntity<?> registerComment(@RequestBody @Valid RegisterCommentRequest registerCommentRequest, @PathVariable Long lostCatPostId){
+    public ResponseEntity<?> registerLostCatPostComment(@RequestBody @Valid RegisterCommentRequest registerCommentRequest, @PathVariable Long lostCatPostId){
 
-        RegisterCommentDto registerCommentDto = lostCatPostCommentService.registerComment(registerCommentRequest, lostCatPostId);
+        RegisterCommentDto registerCommentDto = lostCatPostCommentService.registerLostCatPostComment(registerCommentRequest, lostCatPostId);
         return ResponseEntity.ok(new ResponseDto<>(true, "댓글 작성 성공", registerCommentDto));
+    }
+
+    // 댓글 삭제
+    @DeleteMapping("/{lostCatPostId}")
+    public ResponseEntity<?> deleteLostCatPostComment(@PathVariable Long lostCatPostId){
+
+        lostCatPostCommentService.deleteLostCatPostComment(lostCatPostId);
+        return ResponseEntity.ok(new ResponseDto<>(true, "댓글 삭제 성공", null));
     }
 
 

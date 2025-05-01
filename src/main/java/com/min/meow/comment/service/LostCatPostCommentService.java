@@ -20,8 +20,9 @@ public class LostCatPostCommentService {
     private final LostCatRepository lostCatRepository;
     private final LostCatPostCommentRepository lostCatPostCommentRepository;
 
+    // 댓글 작성
     @Transactional
-    public RegisterCommentDto registerComment(RegisterCommentRequest registerCommentRequest, Long lostCatPostId){
+    public RegisterCommentDto registerLostCatPostComment(RegisterCommentRequest registerCommentRequest, Long lostCatPostId){
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
@@ -29,5 +30,16 @@ public class LostCatPostCommentService {
         lostCatPostCommentRepository.save(lostCatPostComment);
 
         return RegisterCommentDto.convertToDto(lostCatPostComment);
+    }
+
+    // 댓글 삭제
+    @Transactional
+    public void deleteLostCatPostComment(Long lostCatPostId){
+
+        if(!lostCatPostCommentRepository.existsById(lostCatPostId)){
+            throw new CustomException(ErrorCode.NOT_FOUND);
+        }
+
+        lostCatPostCommentRepository.deleteById(lostCatPostId);
     }
 }
