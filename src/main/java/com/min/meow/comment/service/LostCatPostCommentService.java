@@ -20,21 +20,13 @@ public class LostCatPostCommentService {
     private final LostCatRepository lostCatRepository;
     private final LostCatPostCommentRepository lostCatPostCommentRepository;
 
-
     @Transactional
     public RegisterCommentDto registerComment(RegisterCommentRequest registerCommentRequest, Long lostCatPostId){
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        LostCatPostComment lostCatPostComment = LostCatPostComment.builder()
-                .content(registerCommentRequest.getContent())
-                .lostCatPost(lostCatPost)
-                .build();
-
-
+        LostCatPostComment lostCatPostComment = LostCatPostComment.convertToEntity(registerCommentRequest, lostCatPost);
         lostCatPostCommentRepository.save(lostCatPostComment);
-
-        lostCatPost.getLostCatPostComments().add(lostCatPostComment);
 
         return RegisterCommentDto.convertToDto(lostCatPostComment);
     }

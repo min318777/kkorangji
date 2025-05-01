@@ -1,11 +1,10 @@
 package com.min.meow.comment.entity;
 
 
+import com.min.meow.comment.domain.request.RegisterCommentRequest;
 import com.min.meow.lostcatpost.entity.LostCatPost;
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -13,6 +12,8 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class LostCatPostComment {
 
     @Id
@@ -36,7 +37,16 @@ public class LostCatPostComment {
 
     @PreUpdate
     public void preUpdate() {
+
         this.updatedAt = LocalDateTime.now();
+    }
+
+
+    public static LostCatPostComment convertToEntity(RegisterCommentRequest registerCommentRequest, LostCatPost lostCatPost){
+        return LostCatPostComment.builder()
+                .content(registerCommentRequest.getContent())
+                .lostCatPost(lostCatPost)
+                .build();
     }
 
 }
