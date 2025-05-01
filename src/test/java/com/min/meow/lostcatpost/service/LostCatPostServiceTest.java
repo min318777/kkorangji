@@ -53,7 +53,7 @@ class LostCatPostServiceTest {
     }
 
     @Test
-    @DisplayName("요청으로 고양이 찾기 글을 생성한다.")
+    @DisplayName("고양이 찾기 글을 생성한다.")
     void createLostCatPost(){
         // given
         CreateLostCatPostRequest createLostCatPostRequest = CreateLostCatPostRequest.builder()
@@ -76,7 +76,7 @@ class LostCatPostServiceTest {
     }
 
     @Test
-    @DisplayName("요청으로 고양이 찾기 글을 수정한다.")
+    @DisplayName("고양이 찾기 글을 수정한다.")
     void updateLostCatPost(){
         // given
         Long id = 1L;
