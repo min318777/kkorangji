@@ -1,7 +1,9 @@
 package com.min.meow.comment.service;
 
-import com.min.meow.comment.domain.dto.RegisterCommentDto;
-import com.min.meow.comment.domain.request.RegisterCommentRequest;
+import com.min.meow.comment.domain.dto.RegisterLostCatPostCommentDto;
+import com.min.meow.comment.domain.dto.UpdateLostCatPostCommentDto;
+import com.min.meow.comment.domain.request.RegisterLostCatPostCommentRequest;
+import com.min.meow.comment.domain.request.UpdateLostCatPostCommentRequest;
 import com.min.meow.comment.entity.LostCatPostComment;
 import com.min.meow.comment.repository.LostCatPostCommentRepository;
 import com.min.meow.lostcatpost.entity.LostCatPost;
@@ -36,17 +38,17 @@ class LostCatPostCommentServiceTest {
     @DisplayName("댓글을 작성한다.")
     public void registerLostCatPostComment(){
         // given
-        RegisterCommentRequest registerCommentRequest = RegisterCommentRequest.builder()
+        RegisterLostCatPostCommentRequest registerLostCatPostCommentRequest = RegisterLostCatPostCommentRequest.builder()
                 .content("고양이를 발견했어요.")
                 .build();
         LostCatPost lostCatPost = LostCatPost.builder()
                 .lostCatPostId(1L)
                 .content("고양이를 찾아요.")
                 .build();
-        LostCatPostComment lostCatPostComment = LostCatPostComment.convertToEntity(registerCommentRequest, lostCatPost);
+        LostCatPostComment lostCatPostComment = LostCatPostComment.convertToEntity(registerLostCatPostCommentRequest, lostCatPost);
         when(lostCatRepository.findById(1L)).thenReturn(Optional.of(lostCatPost));
         // when
-        RegisterCommentDto result = lostCatPostCommentService.registerLostCatPostComment(registerCommentRequest, lostCatPost.getLostCatPostId());
+        RegisterLostCatPostCommentDto result = lostCatPostCommentService.registerLostCatPostComment(registerLostCatPostCommentRequest, lostCatPost.getLostCatPostId());
         // then
         assertThat(result).isNotNull();
         assertThat(result.getLostCatPostId()).isEqualTo(1L);
@@ -54,18 +56,47 @@ class LostCatPostCommentServiceTest {
     }
 
     @Test
+    @DisplayName("댓글을 수정한다.")
+    void updateLostCatPostComment(){
+        // given
+        Long lostCatPostCommentId = 1L;
+
+        LostCatPost lostCatPost = LostCatPost.builder()
+                .title("고양이 찾기 글1")
+                .build();
+
+        LostCatPostComment lostCatPostComment = LostCatPostComment.builder()
+                .lostCatPost(lostCatPost)
+                .content("고양이를 발견했어요.")
+                .build();
+
+        UpdateLostCatPostCommentRequest updateLostCatPostCommentRequest = UpdateLostCatPostCommentRequest.builder()
+                .content("죄송해요. 잘못봤어요.")
+                .build();
+
+        when(lostCatPostCommentRepository.findById(lostCatPostCommentId)).thenReturn(Optional.of(lostCatPostComment));
+
+        // when
+        UpdateLostCatPostCommentDto result = lostCatPostCommentService.updateLostCatPostComment(updateLostCatPostCommentRequest, lostCatPostCommentId);
+
+        // then
+        assertThat(result.getContent()).isEqualTo("죄송해요. 잘못봤어요.");
+
+    }
+
+    @Test
     @DisplayName("댓글을 삭제한다.")
     void deleteLostCatPostComment(){
         // given
-        Long lostCatPostId = 1L;
-        when(lostCatPostCommentRepository.existsById(lostCatPostId)).thenReturn(true);
+        Long lostCatPostCommentId = 1L;
+        when(lostCatPostCommentRepository.existsById(lostCatPostCommentId)).thenReturn(true);
 
         // when
-        lostCatPostCommentService.deleteLostCatPostComment(lostCatPostId);
+        lostCatPostCommentService.deleteLostCatPostComment(lostCatPostCommentId);
 
         // then
-        verify(lostCatPostCommentRepository, times(1)).existsById(lostCatPostId);
-        verify(lostCatPostCommentRepository, times(1)).deleteById(lostCatPostId);
+        verify(lostCatPostCommentRepository, times(1)).existsById(lostCatPostCommentId);
+        verify(lostCatPostCommentRepository, times(1)).deleteById(lostCatPostCommentId);
     }
 
 }

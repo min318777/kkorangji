@@ -2,29 +2,31 @@ package com.min.meow.comment.domain.dto;
 
 
 import com.min.meow.comment.entity.LostCatPostComment;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
+
 
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class RegisterCommentDto {
+public class UpdateLostCatPostCommentDto {
 
     private Long lostCatPostCommentId;
     private String content;
     private Long lostCatPostId;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
-    public static RegisterCommentDto convertToDto(LostCatPostComment lostCatPostComment){
-        return RegisterCommentDto.builder()
+    public static UpdateLostCatPostCommentDto convertToDto(LostCatPostComment lostCatPostComment){
+        return UpdateLostCatPostCommentDto.builder()
                 .lostCatPostCommentId(lostCatPostComment.getLostCatPostCommentId())
                 .content(lostCatPostComment.getContent())
                 .lostCatPostId(lostCatPostComment.getLostCatPost().getLostCatPostId())
                 .createdAt(lostCatPostComment.getCreatedAt())
+                .updatedAt(lostCatPostComment.getUpdatedAt())
                 .build();
-
     }
 }

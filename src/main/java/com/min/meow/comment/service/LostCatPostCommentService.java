@@ -1,8 +1,10 @@
 package com.min.meow.comment.service;
 
 
-import com.min.meow.comment.domain.dto.RegisterCommentDto;
-import com.min.meow.comment.domain.request.RegisterCommentRequest;
+import com.min.meow.comment.domain.dto.RegisterLostCatPostCommentDto;
+import com.min.meow.comment.domain.dto.UpdateLostCatPostCommentDto;
+import com.min.meow.comment.domain.request.RegisterLostCatPostCommentRequest;
+import com.min.meow.comment.domain.request.UpdateLostCatPostCommentRequest;
 import com.min.meow.comment.entity.LostCatPostComment;
 import com.min.meow.comment.repository.LostCatPostCommentRepository;
 import com.min.meow.global.exception.CustomException;
@@ -22,24 +24,35 @@ public class LostCatPostCommentService {
 
     // 댓글 작성
     @Transactional
-    public RegisterCommentDto registerLostCatPostComment(RegisterCommentRequest registerCommentRequest, Long lostCatPostId){
+    public RegisterLostCatPostCommentDto registerLostCatPostComment(RegisterLostCatPostCommentRequest registerLostCatPostCommentRequest, Long lostCatPostId){
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
-        LostCatPostComment lostCatPostComment = LostCatPostComment.convertToEntity(registerCommentRequest, lostCatPost);
+        LostCatPostComment lostCatPostComment = LostCatPostComment.convertToEntity(registerLostCatPostCommentRequest, lostCatPost);
         lostCatPostCommentRepository.save(lostCatPostComment);
 
-        return RegisterCommentDto.convertToDto(lostCatPostComment);
+        return RegisterLostCatPostCommentDto.convertToDto(lostCatPostComment);
+    }
+
+    // 댓글 수정
+    @Transactional
+    public UpdateLostCatPostCommentDto updateLostCatPostComment(UpdateLostCatPostCommentRequest updateLostCatPostCommentRequest, Long lostCatPostCommentId){
+        LostCatPostComment lostCatPostComment = lostCatPostCommentRepository.findById(lostCatPostCommentId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        lostCatPostComment.update(updateLostCatPostCommentRequest);
+
+        return UpdateLostCatPostCommentDto.convertToDto(lostCatPostComment);
     }
 
     // 댓글 삭제
     @Transactional
-    public void deleteLostCatPostComment(Long lostCatPostId){
+    public void deleteLostCatPostComment(Long lostCatPostCommentId){
 
-        if(!lostCatPostCommentRepository.existsById(lostCatPostId)){
+        if(!lostCatPostCommentRepository.existsById(lostCatPostCommentId)){
             throw new CustomException(ErrorCode.NOT_FOUND);
         }
 
-        lostCatPostCommentRepository.deleteById(lostCatPostId);
+        lostCatPostCommentRepository.deleteById(lostCatPostCommentId);
     }
 }

@@ -16,7 +16,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-@Setter
 public class LostCatPost {
 
     @Id
@@ -84,43 +83,43 @@ public class LostCatPost {
                 .build();
     }
 
-    public void update(UpdateLostCatPostRequest request) {
+    public void update(UpdateLostCatPostRequest updateLostCatPostRequest) {
 
-        if (request.getTitle() != null) {
-            this.title = request.getTitle();
+        if (updateLostCatPostRequest.getTitle() != null) {
+            this.title = updateLostCatPostRequest.getTitle();
         }
-        if (request.getContent() != null) {
-            this.content = request.getContent();
+        if (updateLostCatPostRequest.getContent() != null) {
+            this.content = updateLostCatPostRequest.getContent();
         }
-        if (request.getCatName() != null) {
-            this.catName = request.getCatName();
+        if (updateLostCatPostRequest.getCatName() != null) {
+            this.catName = updateLostCatPostRequest.getCatName();
         }
-        if (request.getCatType() != null) {
-            this.catType = request.getCatType();
+        if (updateLostCatPostRequest.getCatType() != null) {
+            this.catType = updateLostCatPostRequest.getCatType();
         }
-        if (request.getCatColor() != null) {
-            this.catColor = request.getCatColor();
+        if (updateLostCatPostRequest.getCatColor() != null) {
+            this.catColor = updateLostCatPostRequest.getCatColor();
         }
-        if (request.getCatAge() != null) {
-            this.catAge = request.getCatAge();
+        if (updateLostCatPostRequest.getCatAge() != null) {
+            this.catAge = updateLostCatPostRequest.getCatAge();
         }
-        if (request.getCatWeight() != null) {
-            this.catWeight = request.getCatWeight();
+        if (updateLostCatPostRequest.getCatWeight() != null) {
+            this.catWeight = updateLostCatPostRequest.getCatWeight();
         }
-        if (request.getCatImageUrl() != null) {
-            this.catImageUrl = request.getCatImageUrl();
+        if (updateLostCatPostRequest.getCatImageUrl() != null) {
+            this.catImageUrl = updateLostCatPostRequest.getCatImageUrl();
         }
-        if (request.getLostLocation() != null) {
-            this.lostLocation = request.getLostLocation();
+        if (updateLostCatPostRequest.getLostLocation() != null) {
+            this.lostLocation = updateLostCatPostRequest.getLostLocation();
         }
-        if (request.getLatitude() != null) {
-            this.latitude = request.getLatitude();
+        if (updateLostCatPostRequest.getLatitude() != null) {
+            this.latitude = updateLostCatPostRequest.getLatitude();
         }
-        if (request.getLongitude() != null) {
-            this.longitude = request.getLongitude();
+        if (updateLostCatPostRequest.getLongitude() != null) {
+            this.longitude = updateLostCatPostRequest.getLongitude();
         }
-        if (request.getReward() != null) {
-            this.reward = request.getReward();
+        if (updateLostCatPostRequest.getReward() != null) {
+            this.reward = updateLostCatPostRequest.getReward();
         }
     }
 }
