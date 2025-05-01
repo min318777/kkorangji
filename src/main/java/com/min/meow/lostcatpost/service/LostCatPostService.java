@@ -3,7 +3,7 @@ package com.min.meow.lostcatpost.service;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.lostcatpost.domain.dto.LostCatPostDto;
-import com.min.meow.lostcatpost.domain.entity.LostCatPost;
+import com.min.meow.lostcatpost.entity.LostCatPost;
 import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
 import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
 import com.min.meow.lostcatpost.repository.LostCatRepository;

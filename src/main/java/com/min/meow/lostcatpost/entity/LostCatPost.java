@@ -1,12 +1,15 @@
-package com.min.meow.lostcatpost.domain.entity;
+package com.min.meow.lostcatpost.entity;
 
 
+import com.min.meow.comment.entity.LostCatPostComment;
 import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
 import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Builder
@@ -44,6 +47,9 @@ public class LostCatPost {
     private Double longitude;
 
     private Integer reward;
+
+    @OneToMany(mappedBy = "lostCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LostCatPostComment> lostCatPostComments = new ArrayList<>();
 
     @Column(updatable = false)
     private LocalDateTime createdAt;

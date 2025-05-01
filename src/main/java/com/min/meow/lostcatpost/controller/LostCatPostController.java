@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/meow/lost-cat")
-public class LostCatController {
+public class LostCatPostController {
 
     private final LostCatPostService lostCatPostService;
 

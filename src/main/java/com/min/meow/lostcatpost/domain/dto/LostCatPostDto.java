@@ -1,6 +1,6 @@
 package com.min.meow.lostcatpost.domain.dto;
 
-import com.min.meow.lostcatpost.domain.entity.LostCatPost;
+import com.min.meow.lostcatpost.entity.LostCatPost;
 import lombok.*;
 
 import java.time.LocalDateTime;
