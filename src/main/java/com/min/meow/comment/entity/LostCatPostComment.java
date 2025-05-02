@@ -5,7 +5,10 @@ import com.min.meow.comment.domain.request.RegisterLostCatPostCommentRequest;
 import com.min.meow.comment.domain.request.UpdateLostCatPostCommentRequest;
 import com.min.meow.lostcatpost.entity.LostCatPost;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
