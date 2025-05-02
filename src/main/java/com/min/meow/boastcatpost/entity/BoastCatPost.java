@@ -1,6 +1,7 @@
 package com.min.meow.boastcatpost.entity;
 
 
+import com.min.meow.boastcatpost.domain.request.CreateBoastCatPostRequest;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -40,4 +41,13 @@ public class BoastCatPost {
         this.updatedAt = LocalDateTime.now();
     }
 
+
+    public static BoastCatPost convertToEntity(CreateBoastCatPostRequest createBoastCatPostRequest){
+
+        return BoastCatPost.builder()
+                .title(createBoastCatPostRequest.getTitle())
+                .content(createBoastCatPostRequest.getContent())
+                .catImageUrl(createBoastCatPostRequest.getCatImageUrl())
+                .build();
+    }
 }

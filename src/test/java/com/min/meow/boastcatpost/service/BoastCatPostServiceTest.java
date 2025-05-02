@@ -1,6 +1,8 @@
 package com.min.meow.boastcatpost.service;
 
 import com.min.meow.boastcatpost.domain.dto.BoastCatPostDto;
+import com.min.meow.boastcatpost.domain.dto.CreateBoastCatPostDto;
+import com.min.meow.boastcatpost.domain.request.CreateBoastCatPostRequest;
 import com.min.meow.boastcatpost.entity.BoastCatPost;
 import com.min.meow.boastcatpost.repository.BoastCatPostRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -48,5 +50,28 @@ class BoastCatPostServiceTest {
         assertThat(result.getContent().size()).isEqualTo(2);
         assertThat(result.getContent().get(1).getTitle()).isEqualTo("고양이 자랑글2");
         verify(boastCatPostRepository, times(1)).findAll(pageable);
+    }
+
+    @Test
+    @DisplayName("고양이 자랑글을 생성한다.")
+    public void createBoastCatPost(){
+        // given
+        CreateBoastCatPostRequest createBoastCatPostRequest = CreateBoastCatPostRequest.builder()
+                .title("제 고양이를 자랑합니다.")
+                .content("제 고양이는 예쁜 눈을 가졌습니다.")
+                .build();
+        BoastCatPost boastCatPost = BoastCatPost.builder()
+                .title("제 고양이를 자랑합니다.")
+                .content("제 고양이는 예쁜 눈을 가졌습니다.")
+                .build();
+        when(boastCatPostRepository.save(any(BoastCatPost.class))).thenReturn(boastCatPost);
+
+        // when
+        CreateBoastCatPostDto result = boastCatPostService.createBoastCatPost(createBoastCatPostRequest);
+
+        // then
+        assertThat(result.getTitle()).isEqualTo(boastCatPost.getTitle());
+        assertThat(result.getContent()).isEqualTo("제 고양이는 예쁜 눈을 가졌습니다.");
+        verify(boastCatPostRepository, times(1)).save(any(BoastCatPost.class));
     }
 }
