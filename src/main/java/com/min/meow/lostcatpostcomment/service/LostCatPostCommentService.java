@@ -1,12 +1,12 @@
-package com.min.meow.comment.service;
+package com.min.meow.lostcatpostcomment.service;
 
 
-import com.min.meow.comment.domain.dto.RegisterLostCatPostCommentDto;
-import com.min.meow.comment.domain.dto.UpdateLostCatPostCommentDto;
-import com.min.meow.comment.domain.request.RegisterLostCatPostCommentRequest;
-import com.min.meow.comment.domain.request.UpdateLostCatPostCommentRequest;
-import com.min.meow.comment.entity.LostCatPostComment;
-import com.min.meow.comment.repository.LostCatPostCommentRepository;
+import com.min.meow.lostcatpostcomment.domain.dto.RegisterLostCatPostCommentDto;
+import com.min.meow.lostcatpostcomment.domain.dto.UpdateLostCatPostCommentDto;
+import com.min.meow.lostcatpostcomment.domain.request.RegisterLostCatPostCommentRequest;
+import com.min.meow.lostcatpostcomment.domain.request.UpdateLostCatPostCommentRequest;
+import com.min.meow.lostcatpostcomment.entity.LostCatPostComment;
+import com.min.meow.lostcatpostcomment.repository.LostCatPostCommentRepository;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.lostcatpost.entity.LostCatPost;

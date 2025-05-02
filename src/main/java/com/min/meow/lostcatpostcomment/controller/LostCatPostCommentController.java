@@ -1,11 +1,11 @@
-package com.min.meow.comment.controller;
+package com.min.meow.lostcatpostcomment.controller;
 
 
-import com.min.meow.comment.domain.dto.RegisterLostCatPostCommentDto;
-import com.min.meow.comment.domain.dto.UpdateLostCatPostCommentDto;
-import com.min.meow.comment.domain.request.RegisterLostCatPostCommentRequest;
-import com.min.meow.comment.domain.request.UpdateLostCatPostCommentRequest;
-import com.min.meow.comment.service.LostCatPostCommentService;
+import com.min.meow.lostcatpostcomment.domain.dto.RegisterLostCatPostCommentDto;
+import com.min.meow.lostcatpostcomment.domain.dto.UpdateLostCatPostCommentDto;
+import com.min.meow.lostcatpostcomment.domain.request.RegisterLostCatPostCommentRequest;
+import com.min.meow.lostcatpostcomment.domain.request.UpdateLostCatPostCommentRequest;
+import com.min.meow.lostcatpostcomment.service.LostCatPostCommentService;
 import com.min.meow.global.ResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

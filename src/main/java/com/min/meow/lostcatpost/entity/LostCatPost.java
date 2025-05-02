@@ -1,7 +1,7 @@
 package com.min.meow.lostcatpost.entity;
 
 
-import com.min.meow.comment.entity.LostCatPostComment;
+import com.min.meow.lostcatpostcomment.entity.LostCatPostComment;
 import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
 import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
 import jakarta.persistence.*;

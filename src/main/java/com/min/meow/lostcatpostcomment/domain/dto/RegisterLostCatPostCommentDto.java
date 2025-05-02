@@ -1,7 +1,7 @@
-package com.min.meow.comment.domain.dto;
+package com.min.meow.lostcatpostcomment.domain.dto;
 
 
-import com.min.meow.comment.entity.LostCatPostComment;
+import com.min.meow.lostcatpostcomment.entity.LostCatPostComment;
 import lombok.*;
 
 import java.time.LocalDateTime;

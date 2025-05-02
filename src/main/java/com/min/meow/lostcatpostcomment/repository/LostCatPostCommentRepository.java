@@ -1,6 +1,6 @@
-package com.min.meow.comment.repository;
+package com.min.meow.lostcatpostcomment.repository;
 
-import com.min.meow.comment.entity.LostCatPostComment;
+import com.min.meow.lostcatpostcomment.entity.LostCatPostComment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
