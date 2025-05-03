@@ -3,7 +3,9 @@ package com.min.meow.boastcatpost.controller;
 
 import com.min.meow.boastcatpost.domain.dto.BoastCatPostDto;
 import com.min.meow.boastcatpost.domain.dto.CreateBoastCatPostDto;
+import com.min.meow.boastcatpost.domain.dto.UpdateBoastCatPostDto;
 import com.min.meow.boastcatpost.domain.request.CreateBoastCatPostRequest;
+import com.min.meow.boastcatpost.domain.request.UpdateBoastCatPostRequest;
 import com.min.meow.boastcatpost.service.BoastCatPostService;
 import com.min.meow.global.ResponseDto;
 import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
@@ -32,7 +34,7 @@ public class BoastCatPostController {
         Page<BoastCatPostDto> posts = boastCatPostService.getAllBoastCatPosts(pageable);
         return ResponseEntity.ok(new ResponseDto<>(true, "모든 글 조회 성공", posts));
     }
-
+    // 글 생성
     @PostMapping
     public ResponseEntity<?> createBoastCatPost(@RequestBody @Valid CreateBoastCatPostRequest createBoastCatPostRequest){
 
@@ -40,6 +42,13 @@ public class BoastCatPostController {
         return ResponseEntity.ok(new ResponseDto<>(true, "글 생성 성공", post));
     }
 
+    // 글 수정
+    @PutMapping("/{boastCatPostId}")
+    public ResponseEntity<?> updateBoastCatPost(@RequestBody @Valid UpdateBoastCatPostRequest updateBoastCatPostRequest, @PathVariable Long boastCatPostId){
+
+        UpdateBoastCatPostDto post = boastCatPostService.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId);
+        return ResponseEntity.ok(new ResponseDto<>(true, "글 수정 성공", post));
+    }
 
     // 글 삭제
     @DeleteMapping("/{boastCatPostId}")

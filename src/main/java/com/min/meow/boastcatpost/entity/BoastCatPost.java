@@ -2,6 +2,8 @@ package com.min.meow.boastcatpost.entity;
 
 
 import com.min.meow.boastcatpost.domain.request.CreateBoastCatPostRequest;
+import com.min.meow.boastcatpost.domain.request.UpdateBoastCatPostRequest;
+import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -41,6 +43,17 @@ public class BoastCatPost {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void update(UpdateBoastCatPostRequest updateBoastCatPostRequest){
+        if (updateBoastCatPostRequest.getTitle() != null) {
+            this.title = updateBoastCatPostRequest.getTitle();
+        }
+        if (updateBoastCatPostRequest.getContent() != null) {
+            this.content = updateBoastCatPostRequest.getContent();
+        }
+        if (updateBoastCatPostRequest.getCatImageUrl() != null) {
+            this.catImageUrl = updateBoastCatPostRequest.getCatImageUrl();
+        }
+    }
 
     public static BoastCatPost convertToEntity(CreateBoastCatPostRequest createBoastCatPostRequest){
 

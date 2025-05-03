@@ -2,7 +2,8 @@ package com.min.meow.lostcatpost.service;
 
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
-import com.min.meow.lostcatpost.domain.dto.LostCatPostDto;
+import com.min.meow.lostcatpost.domain.dto.CreateLostCatPostDto;
+import com.min.meow.lostcatpost.domain.dto.UpdateLostCatPostDto;
 import com.min.meow.lostcatpost.entity.LostCatPost;
 import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
 import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
@@ -20,29 +21,29 @@ public class LostCatPostService {
     private final LostCatRepository lostCatRepository;
 
     // 글 전체 조회
-    public Page<LostCatPostDto> getAllLostCatPosts(Pageable pageable){
+    public Page<UpdateLostCatPostDto> getAllLostCatPosts(Pageable pageable){
 
-        return lostCatRepository.findAll(pageable).map(LostCatPostDto::convertToDto);
+        return lostCatRepository.findAll(pageable).map(UpdateLostCatPostDto::convertToDto);
     }
 
     // 글 생성
-    public LostCatPostDto createLostCatPost(CreateLostCatPostRequest createLostCatPostRequest){
+    public CreateLostCatPostDto createLostCatPost(CreateLostCatPostRequest createLostCatPostRequest){
 
         LostCatPost lostCatPost = LostCatPost.convertToEntity(createLostCatPostRequest);
         lostCatRepository.save(lostCatPost);
 
-        return LostCatPostDto.convertToDto(lostCatPost);
+        return CreateLostCatPostDto.convertToDto(lostCatPost);
     }
     
     // 글 수정
     @Transactional
-    public LostCatPostDto updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest){
+    public UpdateLostCatPostDto updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest){
 
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
 
         lostCatPost.update(updateLostCatPostRequest);
-        return LostCatPostDto.convertToDto(lostCatPost);
+        return UpdateLostCatPostDto.convertToDto(lostCatPost);
     }
 
     // 글 삭제

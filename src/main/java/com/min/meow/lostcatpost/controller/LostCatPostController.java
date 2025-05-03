@@ -2,7 +2,8 @@ package com.min.meow.lostcatpost.controller;
 
 
 import com.min.meow.global.ResponseDto;
-import com.min.meow.lostcatpost.domain.dto.LostCatPostDto;
+import com.min.meow.lostcatpost.domain.dto.CreateLostCatPostDto;
+import com.min.meow.lostcatpost.domain.dto.UpdateLostCatPostDto;
 import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
 import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
 import com.min.meow.lostcatpost.service.LostCatPostService;
@@ -12,7 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,7 +29,7 @@ public class LostCatPostController {
                                                 @RequestParam (defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<LostCatPostDto> posts = lostCatPostService.getAllLostCatPosts(pageable);
+        Page<UpdateLostCatPostDto> posts = lostCatPostService.getAllLostCatPosts(pageable);
 
         return ResponseEntity.ok(new ResponseDto<>(true, "모든 글 조회 성공", posts));
     }
@@ -39,7 +39,7 @@ public class LostCatPostController {
     public ResponseEntity<?> createLostCatPost(@RequestBody @Valid CreateLostCatPostRequest createLostCatPostRequest,
                                                BindingResult bindingResult){
 
-        LostCatPostDto post = lostCatPostService.createLostCatPost(createLostCatPostRequest);
+        CreateLostCatPostDto post = lostCatPostService.createLostCatPost(createLostCatPostRequest);
 
         return ResponseEntity.ok(new ResponseDto<>(true, "글 생성 성공", post));
     }
@@ -50,7 +50,7 @@ public class LostCatPostController {
                                                @RequestBody @Valid UpdateLostCatPostRequest updateLostCatPostRequest,
                                                BindingResult bindingResult){
 
-        LostCatPostDto post = lostCatPostService.updateLostCatPost(lostCatPostId, updateLostCatPostRequest);
+        UpdateLostCatPostDto post = lostCatPostService.updateLostCatPost(lostCatPostId, updateLostCatPostRequest);
         return ResponseEntity.ok(new ResponseDto<>(true, "글 수정 성공", post));
 
     }

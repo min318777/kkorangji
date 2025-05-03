@@ -33,7 +33,6 @@ class LostCatPostCommentServiceTest {
     @InjectMocks
     private LostCatPostCommentService lostCatPostCommentService;
 
-
     @Test
     @DisplayName("댓글을 작성한다.")
     public void registerLostCatPostComment(){

@@ -2,7 +2,9 @@ package com.min.meow.boastcatpost.service;
 
 import com.min.meow.boastcatpost.domain.dto.BoastCatPostDto;
 import com.min.meow.boastcatpost.domain.dto.CreateBoastCatPostDto;
+import com.min.meow.boastcatpost.domain.dto.UpdateBoastCatPostDto;
 import com.min.meow.boastcatpost.domain.request.CreateBoastCatPostRequest;
+import com.min.meow.boastcatpost.domain.request.UpdateBoastCatPostRequest;
 import com.min.meow.boastcatpost.entity.BoastCatPost;
 import com.min.meow.boastcatpost.repository.BoastCatPostRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +37,7 @@ class BoastCatPostServiceTest {
 
     @Test
     @DisplayName("모든 고양이 자랑글을 조회한다.")
-    public void getAllBoastCatPosts(){
+    void getAllBoastCatPosts(){
 
         // given
         Pageable pageable = PageRequest.of(0,10);
@@ -55,7 +57,7 @@ class BoastCatPostServiceTest {
 
     @Test
     @DisplayName("고양이 자랑글을 생성한다.")
-    public void createBoastCatPost(){
+    void createBoastCatPost(){
         // given
         CreateBoastCatPostRequest createBoastCatPostRequest = CreateBoastCatPostRequest.builder()
                 .title("제 고양이를 자랑합니다.")
@@ -76,10 +78,34 @@ class BoastCatPostServiceTest {
         verify(boastCatPostRepository, times(1)).save(any(BoastCatPost.class));
     }
 
+    @Test
+    @DisplayName("고양이 자랑글을 수정 한다.")
+    void updateBoastCatPost(){
+        // given
+        Long boastCatPostId = 2L;
+        UpdateBoastCatPostRequest updateBoastCatPostRequest = UpdateBoastCatPostRequest.builder()
+                .title("자랑글을 수정하겠습니다.")
+                .content("수정된 자랑글 내용")
+                .build();
+        BoastCatPost boastCatPost = BoastCatPost.builder()
+                .title("고양이 자랑글 1")
+                .content("수정전 자랑글 내용")
+                .build();
+        when(boastCatPostRepository.findById(boastCatPostId)).thenReturn(Optional.of(boastCatPost));
+
+        // when
+        UpdateBoastCatPostDto result = boastCatPostService.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId);
+
+        // then
+        assertThat(boastCatPost.getTitle()).isEqualTo(result.getTitle());
+        assertThat(result.getTitle()).isEqualTo("자랑글을 수정하겠습니다.");
+        assertThat(result.getContent()).isEqualTo("수정된 자랑글 내용");
+
+    }
 
     @Test
     @DisplayName("고양이 자랑글을 삭제를 한다.")
-    public void deleteBoastCatPost(){
+    void deleteBoastCatPost(){
         // given
         Long boastCatPostId = 1L;
         when(boastCatPostRepository.existsById(boastCatPostId)).thenReturn(true);

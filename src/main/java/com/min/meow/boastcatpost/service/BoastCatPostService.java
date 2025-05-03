@@ -3,11 +3,14 @@ package com.min.meow.boastcatpost.service;
 
 import com.min.meow.boastcatpost.domain.dto.BoastCatPostDto;
 import com.min.meow.boastcatpost.domain.dto.CreateBoastCatPostDto;
+import com.min.meow.boastcatpost.domain.dto.UpdateBoastCatPostDto;
 import com.min.meow.boastcatpost.domain.request.CreateBoastCatPostRequest;
+import com.min.meow.boastcatpost.domain.request.UpdateBoastCatPostRequest;
 import com.min.meow.boastcatpost.entity.BoastCatPost;
 import com.min.meow.boastcatpost.repository.BoastCatPostRepository;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,6 +37,18 @@ public class BoastCatPostService {
         boastCatPostRepository.save(boastCatPost);
 
         return CreateBoastCatPostDto.convertToDto(boastCatPost);
+    }
+
+    // 글 수정
+    @Transactional
+    public UpdateBoastCatPostDto updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId){
+
+        BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        boastCatPost.update(updateBoastCatPostRequest);
+
+        return UpdateBoastCatPostDto.convertToDto(boastCatPost);
     }
 
     // 글 삭제

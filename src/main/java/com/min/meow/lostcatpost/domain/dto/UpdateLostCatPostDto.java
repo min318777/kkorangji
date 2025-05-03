@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LostCatPostDto {
+public class UpdateLostCatPostDto {
 
     private Long lostCatPostId;
 
@@ -47,9 +47,9 @@ public class LostCatPostDto {
 
     private LocalDateTime updatedAt;
 
-    public static LostCatPostDto convertToDto(LostCatPost lostCatPost){
+    public static UpdateLostCatPostDto convertToDto(LostCatPost lostCatPost){
 
-        return LostCatPostDto.builder()
+        return UpdateLostCatPostDto.builder()
                 .lostCatPostId(lostCatPost.getLostCatPostId())
                 .title(lostCatPost.getTitle())
                 .content(lostCatPost.getContent())
