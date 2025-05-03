@@ -39,4 +39,13 @@ public class BoastCatPostController {
         CreateBoastCatPostDto post = boastCatPostService.createBoastCatPost(createBoastCatPostRequest);
         return ResponseEntity.ok(new ResponseDto<>(true, "글 생성 성공", post));
     }
+
+
+    // 글 삭제
+    @DeleteMapping("/{boastCatPostId}")
+    public ResponseEntity<?> deleteBoastCatPost(@PathVariable Long boastCatPostId){
+
+        boastCatPostService.deleteBoastCatPost(boastCatPostId);
+        return ResponseEntity.ok(new ResponseDto<>(true, "글 삭제 성공", null));
+    }
 }

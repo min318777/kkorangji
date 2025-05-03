@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -73,5 +74,20 @@ class BoastCatPostServiceTest {
         assertThat(result.getTitle()).isEqualTo(boastCatPost.getTitle());
         assertThat(result.getContent()).isEqualTo("제 고양이는 예쁜 눈을 가졌습니다.");
         verify(boastCatPostRepository, times(1)).save(any(BoastCatPost.class));
+    }
+
+
+    @Test
+    @DisplayName("고양이 자랑글을 삭제를 한다.")
+    public void deleteBoastCatPost(){
+        // given
+        Long boastCatPostId = 1L;
+        when(boastCatPostRepository.existsById(boastCatPostId)).thenReturn(true);
+        // when
+        boastCatPostService.deleteBoastCatPost(boastCatPostId);
+
+        // then
+        verify(boastCatPostRepository, times(1)).existsById(boastCatPostId);
+        verify(boastCatPostRepository, times(1)).deleteById(boastCatPostId);
     }
 }
