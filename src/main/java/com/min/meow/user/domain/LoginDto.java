@@ -1,5 +1,6 @@
 package com.min.meow.user.domain;
 
+import com.min.meow.global.Role;
 import lombok.*;
 
 @Getter
@@ -10,4 +11,5 @@ import lombok.*;
 public class LoginDto {
 
     private String loginId;
+    private Role role;
 }
