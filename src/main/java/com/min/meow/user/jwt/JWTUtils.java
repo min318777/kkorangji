@@ -13,9 +13,9 @@ import java.util.Date;
 // jwt 생성 및 검증
 @Component
 public class JWTUtils {
-    private SecretKey secretKey;
+    private final SecretKey secretKey;
 
-    public JWTUtils(@Value("${spring.jwt.secret}")String secret){
+    public JWTUtils(@Value("${jwt.secret}")String secret){
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 

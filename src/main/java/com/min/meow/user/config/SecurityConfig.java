@@ -1,6 +1,7 @@
 package com.min.meow.user.config;
 
 
+import com.min.meow.user.jwt.JWTUtils;
 import com.min.meow.user.jwt.LoginFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -20,12 +21,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final AuthenticationConfiguration authenticationConfiguration;
-
+    private final JWTUtils jwtUtils;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 
-        LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration));
+        LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtils);
         loginFilter.setFilterProcessesUrl("/user/login");
 
         http

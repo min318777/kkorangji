@@ -1,6 +1,7 @@
 package com.min.meow.user.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.min.meow.user.domain.CustomUserDetails;
 import com.min.meow.user.domain.LoginDto;
 import com.min.meow.user.domain.LoginRequest;
 import com.min.meow.user.entity.User;
@@ -13,16 +14,21 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.yaml.snakeyaml.events.CollectionEndEvent;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Iterator;
 
 @RequiredArgsConstructor
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
 
+    private final JWTUtils jwtUtils;
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         try {
@@ -43,21 +49,37 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
-        System.out.println("로그인 성공");
-        UserDetails userDetails =(UserDetails) authentication.getPrincipal();
-        User user = (User) userDetails;
 
+        UserDetails userDetails =(UserDetails) authentication.getPrincipal();
+        String loginId = userDetails.getUsername();
+
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
+        GrantedAuthority auth = iterator.next();
+        String role = auth.getAuthority();
+
+        String token = jwtUtils.createJwt(loginId, role, 60*60*10L);
+
+        response.addHeader("Authorization", "Bearer " + token);
+
+
+
+        CustomUserDetails customUserDetails = (CustomUserDetails) userDetails;
+        User user = customUserDetails.getUser();
         LoginDto loginDto = LoginDto.builder()
                 .loginId(user.getLoginId())
                 .role(user.getRole())
                 .build();
         //Role role = userDetails.getAuthorities();
-
+        System.out.println("로그인 성공");
 
     }
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
+
+        response.setStatus(401);
+
         System.out.println("로그인 실패2");
 
     }
