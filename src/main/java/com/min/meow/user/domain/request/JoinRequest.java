@@ -1,4 +1,4 @@
-package com.min.meow.user.domain;
+package com.min.meow.user.domain.request;
 
 import com.min.meow.global.Role;
 import jakarta.validation.constraints.NotBlank;

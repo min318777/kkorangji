@@ -2,8 +2,8 @@ package com.min.meow.user.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.min.meow.user.domain.CustomUserDetails;
-import com.min.meow.user.domain.LoginDto;
-import com.min.meow.user.domain.LoginRequest;
+import com.min.meow.user.domain.dto.LoginDto;
+import com.min.meow.user.domain.request.LoginRequest;
 import com.min.meow.user.entity.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -17,7 +17,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.yaml.snakeyaml.events.CollectionEndEvent;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -50,7 +49,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
 
-        UserDetails userDetails =(UserDetails) authentication.getPrincipal();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String loginId = userDetails.getUsername();
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
@@ -61,7 +60,6 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String token = jwtUtils.createJwt(loginId, role, 60*60*10L);
 
         response.addHeader("Authorization", "Bearer " + token);
-
 
 
         CustomUserDetails customUserDetails = (CustomUserDetails) userDetails;

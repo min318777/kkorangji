@@ -1,4 +1,4 @@
-package com.min.meow.user.domain;
+package com.min.meow.user.domain.dto;
 
 import com.min.meow.global.Role;
 import com.min.meow.user.entity.User;

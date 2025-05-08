@@ -2,6 +2,7 @@ package com.min.meow.user.config;
 
 
 import com.min.meow.user.jwt.JWTUtils;
+import com.min.meow.user.jwt.JwtFilter;
 import com.min.meow.user.jwt.LoginFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -41,7 +42,8 @@ public class SecurityConfig {
                         requestMatchers( "/user/**","/lost-cat/**","/boast-cat/**","/login", "/", "/join").permitAll().
                         requestMatchers("/admin").hasRole("ADMIN").
                         anyRequest().authenticated());
-
+        http.
+                addFilterBefore(new JwtFilter(jwtUtils), LoginFilter.class);
         http.
                 addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
         http.

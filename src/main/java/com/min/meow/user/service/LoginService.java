@@ -1,8 +1,8 @@
 package com.min.meow.user.service;
 
 
-import com.min.meow.user.domain.LoginDto;
-import com.min.meow.user.domain.LoginRequest;
+import com.min.meow.user.domain.dto.LoginDto;
+import com.min.meow.user.domain.request.LoginRequest;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

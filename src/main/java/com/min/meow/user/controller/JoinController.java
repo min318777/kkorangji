@@ -2,8 +2,8 @@ package com.min.meow.user.controller;
 
 
 import com.min.meow.global.ResponseDto;
-import com.min.meow.user.domain.JoinDto;
-import com.min.meow.user.domain.JoinRequest;
+import com.min.meow.user.domain.dto.JoinDto;
+import com.min.meow.user.domain.request.JoinRequest;
 import com.min.meow.user.service.JoinService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
