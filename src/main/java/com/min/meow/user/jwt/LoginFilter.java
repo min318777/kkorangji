@@ -63,11 +63,11 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String refreshToken = jwtUtils.createJwt(Token.REPRESH_TOKEN, loginId, role, 86400000L);
 
         // 응답 설정
-        response.setHeader("access", accessToken);
+        response.setHeader("Authorization", "Bearer " + accessToken);
         response.addCookie(createCookie("refresh", refreshToken));
         response.setStatus(HttpStatus.OK.value());
 
-        //response.addHeader("Authorization", "Bearer " + token);
+        //response.addHeader("Authorization", "Bearer " + accessToken);
 
         /*
         CustomUserDetails customUserDetails = (CustomUserDetails) userDetails;

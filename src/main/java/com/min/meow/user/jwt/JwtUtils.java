@@ -1,6 +1,7 @@
 package com.min.meow.user.jwt;
 
 
+import com.min.meow.global.Role;
 import com.min.meow.global.Token;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -23,18 +24,18 @@ public class JwtUtils {
 
     public String getLoginId(String token){
 
-        return Jwts.parser().verifyWith(secretKey).build().parseEncryptedClaims(token).getPayload().get("loginId", String.class);
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("loginId", String.class);
     }
 
 
-    public String getRole(String token){
-
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("role", String.class);
+    public Role getRole(String token){
+        String roleString = Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("role", String.class);
+        return Role.valueOf(roleString);
     }
 
     public Token getTokenCategory(String token){
-
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("tokenCategory", Token.class);
+        String tokenString = Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("tokenCategory", String.class);
+        return Token.valueOf(tokenString);
     }
 
     public Boolean isExpiration(String token){
