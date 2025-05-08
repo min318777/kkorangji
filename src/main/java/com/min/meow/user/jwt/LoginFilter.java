@@ -1,15 +1,18 @@
 package com.min.meow.user.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.min.meow.global.Token;
 import com.min.meow.user.domain.CustomUserDetails;
 import com.min.meow.user.domain.dto.LoginDto;
 import com.min.meow.user.domain.request.LoginRequest;
 import com.min.meow.user.entity.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -27,7 +30,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
 
-    private final JWTUtils jwtUtils;
+    private final JwtUtils jwtUtils;
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         try {
@@ -48,20 +51,25 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
-
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String loginId = userDetails.getUsername();
-
+        // 유저정보
+        String loginId = authentication.getName();
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority();
 
-        String token = jwtUtils.createJwt(loginId, role, 60*60*10L);
+        // 토큰 생성
+        String accessToken = jwtUtils.createJwt(Token.ACCESS_TOKEN, loginId, role, 600000L);
+        String refreshToken = jwtUtils.createJwt(Token.REPRESH_TOKEN, loginId, role, 86400000L);
 
-        response.addHeader("Authorization", "Bearer " + token);
+        // 응답 설정
+        response.setHeader("access", accessToken);
+        response.addCookie(createCookie("refresh", refreshToken));
+        response.setStatus(HttpStatus.OK.value());
 
+        //response.addHeader("Authorization", "Bearer " + token);
 
+        /*
         CustomUserDetails customUserDetails = (CustomUserDetails) userDetails;
         User user = customUserDetails.getUser();
         LoginDto loginDto = LoginDto.builder()
@@ -69,6 +77,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
                 .role(user.getRole())
                 .build();
         //Role role = userDetails.getAuthorities();
+         */
         System.out.println("로그인 성공");
 
     }
@@ -79,6 +88,15 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         response.setStatus(401);
 
         System.out.println("로그인 실패2");
+    }
 
+    private Cookie createCookie(String key, String value){
+        Cookie cookie = new Cookie(key, value);
+        cookie.setMaxAge(24*60*60);
+        //cookie.setSecure(ture); -> https통신시 필요
+        //cookie.setPath("/"); -> 쿠키가 적용될 범위
+        cookie.setHttpOnly(true); // 자바스크립트로 해당쿠키에 접근하지 못하도록 하는 로직
+
+        return cookie;
     }
 }

@@ -20,7 +20,7 @@ import java.io.IOException;
 public class JwtFilter extends OncePerRequestFilter {
 
 
-    private final JWTUtils jwtUtils;
+    private final JwtUtils jwtUtils;
 
 
     @Override
