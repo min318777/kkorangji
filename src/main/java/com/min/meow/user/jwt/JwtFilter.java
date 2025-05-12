@@ -24,13 +24,13 @@ import java.io.PrintWriter;
 public class JwtFilter extends OncePerRequestFilter {
 
 
-    private final JwtUtils jwtUtils;
+    private final JwtUtil jwtUtil;
 
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-
+        /*
         // request에서 Authorization 헤더를 찾음
         String authorization = request.getHeader("Authorization");
 
@@ -73,12 +73,21 @@ public class JwtFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+    */
 
-
-
-        /*
         // 헤더에서 access키에 담긴 토큰을 꺼냄
-        String accessToken = request.getHeader("access");
+        //String accessToken = request.getHeader("access");
+
+        String authorization = request.getHeader("Authorization");
+
+        if(authorization == null || !authorization.startsWith("Bearer ")){
+
+            System.out.println("토큰이 없습니다.");
+            filterChain.doFilter(request, response);
+            // 조건이 해당되면 메소드 종료
+            return;
+        }
+        String accessToken = authorization.split(" ")[1];
 
         // 토큰이 없다면 다음 필터로 넘김
         if (accessToken == null) {
@@ -90,7 +99,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // 토큰 만료 여부 확인, 만료시 다음 필터로 넘기지 않음
         try {
-            jwtUtils.isExpiration(accessToken);
+            jwtUtil.isExpired(accessToken);
         } catch (ExpiredJwtException e) {
 
             //response body
@@ -103,7 +112,7 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         // 토큰이 access인지 확인 (발급시 페이로드에 명시)
-        Token category = jwtUtils.getTokenCategory(accessToken);
+        Token category = jwtUtil.getTokenCategory(accessToken);
 
         if (!category.equals(Token.ACCESS_TOKEN)) {
 
@@ -117,21 +126,23 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
 
-        // username, role 값을 획득
-        String loginId = jwtUtils.getLoginId(accessToken);
-        Role role = jwtUtils.getRole(accessToken);
+        // 토큰에서 loginId와 role 추출
+        String loginId = jwtUtil.getLoginId(accessToken);
+        Role role = jwtUtil.getRole(accessToken);
 
         User user = new User();
         user.setLoginId(loginId);
         user.setRole(role);
+
+        // Userdetails에 회원 정보 객체 담기
         CustomUserDetails customUserDetails = new CustomUserDetails(user);
 
+        // 스프링 시큐리티 인증 토큰 생성
         Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
+        // 세션에 사용자 등록
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
         filterChain.doFilter(request, response);
     }
-    */
-
 
 }

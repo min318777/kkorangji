@@ -1,7 +1,7 @@
 package com.min.meow.user.config;
 
 
-import com.min.meow.user.jwt.JwtUtils;
+import com.min.meow.user.jwt.JwtUtil;
 import com.min.meow.user.jwt.JwtFilter;
 import com.min.meow.user.jwt.LoginFilter;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,12 +27,12 @@ import java.util.Collections;
 public class SecurityConfig {
 
     private final AuthenticationConfiguration authenticationConfiguration;
-    private final JwtUtils jwtUtils;
+    private final JwtUtil jwtUtil;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 
-        LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtils);
+        LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil);
         loginFilter.setFilterProcessesUrl("/user/login");
         http
                 .cors((cors) -> cors.configurationSource(new CorsConfigurationSource() {
@@ -61,12 +61,13 @@ public class SecurityConfig {
                 .httpBasic((auth) -> auth.disable());
 
         http.
-                authorizeHttpRequests((auth) -> auth.
-                        requestMatchers( "/user/**","/lost-cat/**","/boast-cat/**","/login", "/", "/join").permitAll().
-                        requestMatchers("/admin").hasRole("ADMIN").
-                        anyRequest().authenticated());
+                authorizeHttpRequests((auth) -> auth
+                        .requestMatchers( "/user/**","/lost-cat/**","/boast-cat/**","/login", "/", "/join", "/reissue").permitAll()
+                        .requestMatchers("/admin").hasRole("ADMIN")
+                        //.requestMatchers("/reissue").permitAll()
+                        .anyRequest().authenticated());
         http.
-                addFilterBefore(new JwtFilter(jwtUtils), LoginFilter.class);
+                addFilterBefore(new JwtFilter(jwtUtil), LoginFilter.class);
         http.
                 addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
         http.

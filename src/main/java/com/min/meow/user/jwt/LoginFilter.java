@@ -2,10 +2,7 @@ package com.min.meow.user.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.min.meow.global.Token;
-import com.min.meow.user.domain.CustomUserDetails;
-import com.min.meow.user.domain.dto.LoginDto;
 import com.min.meow.user.domain.request.LoginRequest;
-import com.min.meow.user.entity.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -18,7 +15,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
@@ -30,7 +26,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
 
-    private final JwtUtils jwtUtils;
+    private final JwtUtil jwtUtil;
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         try {
@@ -59,8 +55,8 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String role = auth.getAuthority();
 
         // 토큰 생성
-        String accessToken = jwtUtils.createJwt(Token.ACCESS_TOKEN, loginId, role, 600000L);
-        String refreshToken = jwtUtils.createJwt(Token.REPRESH_TOKEN, loginId, role, 86400000L);
+        String accessToken = jwtUtil.createJwt(Token.ACCESS_TOKEN, loginId, role, 600000L);
+        String refreshToken = jwtUtil.createJwt(Token.REFRESH_TOKEN, loginId, role, 86400000L);
 
         // 응답 설정
         response.setHeader("Authorization", "Bearer " + accessToken);

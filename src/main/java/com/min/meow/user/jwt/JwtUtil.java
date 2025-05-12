@@ -14,10 +14,10 @@ import java.util.Date;
 
 // jwt 생성 및 검증
 @Component
-public class JwtUtils {
+public class JwtUtil {
     private final SecretKey secretKey;
 
-    public JwtUtils(@Value("${jwt.secret}")String secret){
+    public JwtUtil(@Value("${jwt.secret}")String secret){
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
@@ -38,7 +38,7 @@ public class JwtUtils {
         return Token.valueOf(tokenString);
     }
 
-    public Boolean isExpiration(String token){
+    public Boolean isExpired(String token){
 
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration().before(new Date());
     }
@@ -53,6 +53,7 @@ public class JwtUtils {
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))
                 .signWith(secretKey)
                 .compact();
+
     }
 
 }
