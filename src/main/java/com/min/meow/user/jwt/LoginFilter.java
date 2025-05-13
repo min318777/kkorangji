@@ -3,6 +3,8 @@ package com.min.meow.user.jwt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.min.meow.global.Token;
 import com.min.meow.user.domain.request.LoginRequest;
+import com.min.meow.user.entity.RefreshEntity;
+import com.min.meow.user.repository.RefreshEntityRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -19,14 +21,16 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 
 @RequiredArgsConstructor
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
-
     private final JwtUtil jwtUtil;
+    private final RefreshEntityRepository refreshEntityRepository;
+
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         try {
@@ -57,6 +61,10 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         // 토큰 생성
         String accessToken = jwtUtil.createJwt(Token.ACCESS_TOKEN, loginId, role, 600000L);
         String refreshToken = jwtUtil.createJwt(Token.REFRESH_TOKEN, loginId, role, 86400000L);
+
+        // 리프레쉬토큰 저장
+        addRefreshEntity(loginId, refreshToken, 864000000L);
+
 
         // 응답 설정
         response.setHeader("Authorization", "Bearer " + accessToken);
@@ -90,9 +98,21 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         Cookie cookie = new Cookie(key, value);
         cookie.setMaxAge(24*60*60);
         //cookie.setSecure(ture); -> https통신시 필요
-        //cookie.setPath("/"); -> 쿠키가 적용될 범위
+        cookie.setPath("/"); //-> 쿠키가 적용될 범위
         cookie.setHttpOnly(true); // 자바스크립트로 해당쿠키에 접근하지 못하도록 하는 로직
 
         return cookie;
+    }
+
+    private void addRefreshEntity(String loginId, String refresh, Long expiredMs) {
+
+        Date date = new Date(System.currentTimeMillis() + expiredMs);
+
+        RefreshEntity refreshEntity = new RefreshEntity();
+        refreshEntity.setLoginId(loginId);
+        refreshEntity.setRefreshToken(refresh);
+        refreshEntity.setExpiration(date.toString());
+
+        refreshEntityRepository.save(refreshEntity);
     }
 }

@@ -4,6 +4,8 @@ package com.min.meow.user.config;
 import com.min.meow.user.jwt.JwtUtil;
 import com.min.meow.user.jwt.JwtFilter;
 import com.min.meow.user.jwt.LoginFilter;
+import com.min.meow.user.jwt.CustomLogoutFilter;
+import com.min.meow.user.repository.RefreshEntityRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +18,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
@@ -28,11 +31,12 @@ public class SecurityConfig {
 
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JwtUtil jwtUtil;
+    private final RefreshEntityRepository refreshEntityRepository;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 
-        LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil);
+        LoginFilter loginFilter = new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshEntityRepository);
         loginFilter.setFilterProcessesUrl("/user/login");
         http
                 .cors((cors) -> cors.configurationSource(new CorsConfigurationSource() {
@@ -70,6 +74,8 @@ public class SecurityConfig {
                 addFilterBefore(new JwtFilter(jwtUtil), LoginFilter.class);
         http.
                 addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
+        http.
+                addFilterBefore(new CustomLogoutFilter(refreshEntityRepository, jwtUtil), LogoutFilter.class);
         http.
                 sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
