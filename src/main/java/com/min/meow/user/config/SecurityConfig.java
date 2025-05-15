@@ -5,6 +5,7 @@ import com.min.meow.user.jwt.JwtUtil;
 import com.min.meow.user.jwt.JwtFilter;
 import com.min.meow.user.jwt.LoginFilter;
 import com.min.meow.user.jwt.CustomLogoutFilter;
+import com.min.meow.user.oauth2.CustomSuccessHandler;
 import com.min.meow.user.repository.RefreshEntityRepository;
 import com.min.meow.user.service.CustomOauth2UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,6 +37,7 @@ public class SecurityConfig {
     private final RefreshEntityRepository refreshEntityRepository;
 
     private final CustomOauth2UserService customOauth2UserService;
+    private final CustomSuccessHandler customSuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
@@ -70,9 +72,12 @@ public class SecurityConfig {
         // oauth2
         http
                 .oauth2Login((oauth2) -> oauth2
-                        .userInfoEndpoint((userInfoEndpointConfig -> userInfoEndpointConfig
-                            .userService(customOauth2UserService))));
+                        .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
+                                .userService(customOauth2UserService))
+                        .successHandler(customSuccessHandler)
+                );
 
+        // 경로별 인가 작업
         http.
                 authorizeHttpRequests((auth) -> auth
                         .requestMatchers( "/user/**","/lost-cat/**","/boast-cat/**","/login", "/", "/join", "/reissue").permitAll()
