@@ -6,11 +6,13 @@ import com.min.meow.user.jwt.JwtFilter;
 import com.min.meow.user.jwt.LoginFilter;
 import com.min.meow.user.jwt.CustomLogoutFilter;
 import com.min.meow.user.repository.RefreshEntityRepository;
+import com.min.meow.user.service.CustomOauth2UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -32,6 +34,8 @@ public class SecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JwtUtil jwtUtil;
     private final RefreshEntityRepository refreshEntityRepository;
+
+    private final CustomOauth2UserService customOauth2UserService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
@@ -63,6 +67,11 @@ public class SecurityConfig {
                 .formLogin((auth) -> auth.disable());
         http
                 .httpBasic((auth) -> auth.disable());
+        // oauth2
+        http
+                .oauth2Login((oauth2) -> oauth2
+                        .userInfoEndpoint((userInfoEndpointConfig -> userInfoEndpointConfig
+                            .userService(customOauth2UserService))));
 
         http.
                 authorizeHttpRequests((auth) -> auth
@@ -76,6 +85,8 @@ public class SecurityConfig {
                 addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
         http.
                 addFilterBefore(new CustomLogoutFilter(refreshEntityRepository, jwtUtil), LogoutFilter.class);
+        
+        // 세션설정
         http.
                 sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));

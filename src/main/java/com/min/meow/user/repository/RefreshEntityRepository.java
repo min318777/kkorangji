@@ -1,7 +1,6 @@
 package com.min.meow.user.repository;
 
 
-import com.min.meow.global.Token;
 import com.min.meow.user.entity.RefreshEntity;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
