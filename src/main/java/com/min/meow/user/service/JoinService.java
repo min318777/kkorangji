@@ -9,6 +9,7 @@ import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,6 +20,10 @@ public class JoinService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public JoinDto join(JoinRequest joinRequest){
+
+        if (userRepository.existsByEmail(joinRequest.getEmail())) {
+            throw new CustomException(ErrorCode.ALREADY_EXISTING_EMAIL);
+        }
 
         if(userRepository.existsByLoginId(joinRequest.getLoginId())){
             throw new CustomException(ErrorCode.ALREADY_EXISTING_USER);

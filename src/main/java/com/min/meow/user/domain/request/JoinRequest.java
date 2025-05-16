@@ -25,9 +25,6 @@ public class JoinRequest {
     @NotBlank(message = "이름을 입력해 주세요.")
     private String name;
 
-    @NotBlank(message = "닉네임을 입력해 주세요.")
-    private String nickName;
-
     @NotNull(message = "권한을 선택해 주세요.")
     private Role role;
 }

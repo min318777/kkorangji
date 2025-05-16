@@ -3,8 +3,11 @@ package com.min.meow.user.jwt;
 
 import com.min.meow.global.Role;
 import com.min.meow.global.Token;
+import com.min.meow.global.exception.CustomException;
+import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.user.domain.CustomUserDetails;
 import com.min.meow.user.entity.User;
+import com.nimbusds.oauth2.sdk.auth.JWTAuthentication;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,9 +26,7 @@ import java.io.PrintWriter;
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
-
     private final JwtUtil jwtUtil;
-
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -83,9 +84,9 @@ public class JwtFilter extends OncePerRequestFilter {
         if(authorization == null || !authorization.startsWith("Bearer ")){
 
             System.out.println("토큰이 없습니다.");
-            filterChain.doFilter(request, response);
+            throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
+            //filterChain.doFilter(request, response);
             // 조건이 해당되면 메소드 종료
-            return;
         }
         String accessToken = authorization.split(" ")[1];
 
@@ -101,44 +102,31 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             jwtUtil.isExpired(accessToken);
         } catch (ExpiredJwtException e) {
-
-            //response body
-            PrintWriter writer = response.getWriter();
-            writer.print("토큰이 만료되었습니다.");
-
-            //response status code
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
+            throw new CustomException(ErrorCode.TOKEN_EXPIRED);
         }
 
         // 토큰이 access인지 확인 (발급시 페이로드에 명시)
         Token category = jwtUtil.getTokenCategory(accessToken);
 
         if (!category.equals(Token.ACCESS_TOKEN)) {
-
-            //response body
-            PrintWriter writer = response.getWriter();
-            writer.print("유효하지 않은 access 토큰 입니다.");
-
-            //response status code
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
+            throw new CustomException(ErrorCode.INVALID_ACCESS_TOKEN);
         }
-
 
         // 토큰에서 loginId와 role 추출
         String loginId = jwtUtil.getLoginId(accessToken);
         Role role = jwtUtil.getRole(accessToken);
 
-        User user = new User();
-        user.setLoginId(loginId);
-        user.setRole(role);
+        User user = User.builder()
+                .loginId(loginId)
+                .role(role)
+                .build();
 
         // Userdetails에 회원 정보 객체 담기
         CustomUserDetails customUserDetails = new CustomUserDetails(user);
 
         // 스프링 시큐리티 인증 토큰 생성
         Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
+
         // 세션에 사용자 등록
         SecurityContextHolder.getContext().setAuthentication(authToken);
 

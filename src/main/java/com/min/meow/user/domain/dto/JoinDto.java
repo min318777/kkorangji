@@ -21,8 +21,6 @@ public class JoinDto {
 
     private String name;
 
-    private String nickName;
-
     private Role role;
 
     private LocalDateTime registeredAt;
@@ -34,7 +32,6 @@ public class JoinDto {
                 .loginId(user.getLoginId())
                 .name(user.getName())
                 .email(user.getEmail())
-                .nickName(user.getNickName())
                 .registeredAt(user.getRegisteredAt())
                 .role(user.getRole())
                 .build();

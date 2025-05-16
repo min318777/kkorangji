@@ -12,6 +12,8 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class CustomOauth2UserService extends DefaultOAuth2UserService {
@@ -38,6 +40,12 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
         }
 
         String loginId = oAuth2Response.getProvider() + " " + oAuth2Response.getProviderId();
+        String existEmail = oAuth2Response.getEmail();
+
+        User emailConflictUser = userRepository.findByEmail(existEmail);
+        if (emailConflictUser != null && !emailConflictUser.getLoginId().equals(loginId)) {
+            throw new OAuth2AuthenticationException("이미 동일한 이메일로 가입된 계정이 존재합니다.");
+        }
 
         User existUser = userRepository.findByLoginId(loginId);
 
@@ -45,8 +53,10 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
             User user = User.builder()
                     .loginId(loginId)
                     .email(oAuth2Response.getEmail())
+                    .password(null)
                     .name(oAuth2Response.getName())
                     .role(Role.ROLE_USER)
+                    .isDelete(false)
                     .build();
             userRepository.save(user);
 
@@ -60,16 +70,15 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
 
             existUser.setEmail(oAuth2Response.getEmail());
             existUser.setName(oAuth2Response.getName());
-
+            existUser.setLastLoginAt(LocalDateTime.now());
             userRepository.save(existUser);
-
             UserDto userDto = new UserDto();
             userDto.setRole("ROLE_USER");
             userDto.setName(oAuth2Response.getName());
             userDto.setLoginId(existUser.getLoginId());
 
-            return new CustomOAuth2User(userDto);
 
+            return new CustomOAuth2User(userDto);
         }
     }
 }

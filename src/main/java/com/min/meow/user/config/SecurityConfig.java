@@ -1,10 +1,10 @@
 package com.min.meow.user.config;
 
 
-import com.min.meow.user.jwt.JwtUtil;
-import com.min.meow.user.jwt.JwtFilter;
-import com.min.meow.user.jwt.LoginFilter;
 import com.min.meow.user.jwt.CustomLogoutFilter;
+import com.min.meow.user.jwt.JwtFilter;
+import com.min.meow.user.jwt.JwtUtil;
+import com.min.meow.user.jwt.LoginFilter;
 import com.min.meow.user.oauth2.CustomSuccessHandler;
 import com.min.meow.user.repository.RefreshEntityRepository;
 import com.min.meow.user.service.CustomOauth2UserService;
@@ -13,12 +13,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
@@ -48,9 +48,7 @@ public class SecurityConfig {
                 .cors((cors) -> cors.configurationSource(new CorsConfigurationSource() {
                     @Override
                     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-
                         CorsConfiguration corsConfiguration = new CorsConfiguration();
-
 
                         corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
                         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
@@ -58,7 +56,9 @@ public class SecurityConfig {
                         corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
                         corsConfiguration.setMaxAge(3600L);
 
+                        corsConfiguration.setExposedHeaders(Collections.singletonList("Set-Cookie"));
                         corsConfiguration.setExposedHeaders(Collections.singletonList("Authorization"));
+
                         return corsConfiguration;
                     }
                 }));
@@ -69,6 +69,7 @@ public class SecurityConfig {
                 .formLogin((auth) -> auth.disable());
         http
                 .httpBasic((auth) -> auth.disable());
+
         // oauth2
         http
                 .oauth2Login((oauth2) -> oauth2
@@ -84,6 +85,8 @@ public class SecurityConfig {
                         .requestMatchers("/admin").hasRole("ADMIN")
                         //.requestMatchers("/reissue").permitAll()
                         .anyRequest().authenticated());
+        http.
+                addFilterAfter(new JwtFilter(jwtUtil), OAuth2LoginAuthenticationFilter.class);
         http.
                 addFilterBefore(new JwtFilter(jwtUtil), LoginFilter.class);
         http.

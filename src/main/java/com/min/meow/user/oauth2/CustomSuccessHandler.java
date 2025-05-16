@@ -23,7 +23,6 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final JwtUtil jwtUtil;
 
-
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
@@ -37,15 +36,14 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority();
 
-        String token = jwtUtil.createJwt(Token.ACCESS_TOKEN, loginId, role, 86400000L);
+        String token = jwtUtil.createJwt(Token.ACCESS_TOKEN, loginId, role, 600000L);
+        //String refreshToken = jwtUtil.createJwt(Token.REFRESH_TOKEN, loginId, role, 86400000L);
 
         response.addCookie(createCookie("Authorization", token));
         response.sendRedirect("http://localhost:3000/");
-        super.onAuthenticationSuccess(request, response, authentication);
     }
 
     private Cookie createCookie(String key, String value){
-
 
         Cookie cookie = new Cookie(key, value);
         cookie.setMaxAge(60*60*60);

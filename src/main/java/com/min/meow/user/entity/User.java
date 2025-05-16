@@ -28,19 +28,15 @@ public class User implements UserDetails {
     @Column(unique = true, nullable = false)
     private String loginId;
 
-    @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
-    private String nickName;
-
-    @Enumerated(EnumType.STRING)
+    //@Enumerated(EnumType.STRING)
     private Role role;
 
     private LocalDateTime registeredAt;
@@ -58,7 +54,6 @@ public class User implements UserDetails {
                 .loginId(joinRequest.getLoginId())
                 .name(joinRequest.getName())
                 .email(joinRequest.getEmail())
-                .nickName(joinRequest.getNickName())
                 .role(joinRequest.getRole())
                 .build();
     }

@@ -65,7 +65,6 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         // 리프레쉬토큰 저장
         addRefreshEntity(loginId, refreshToken, 864000000L);
 
-
         // 응답 설정
         response.setHeader("Authorization", "Bearer " + accessToken);
         response.addCookie(createCookie("refresh", refreshToken));

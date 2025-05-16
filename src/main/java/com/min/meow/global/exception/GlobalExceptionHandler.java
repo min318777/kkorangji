@@ -17,7 +17,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ResponseDto<?>> handleCustomException(CustomException e) {
         ErrorCode errorCode = e.getErrorCode();
         log.error("CustomException 발생: {}", e.getMessage());
-        return createErrorResponse(HttpStatus.BAD_REQUEST, errorCode.getMessage());
+        return createErrorResponse(errorCode.getStatus(), errorCode.getMessage());
         //return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDto<>(false, e.getMessage(), null));
     }
 
@@ -29,7 +29,6 @@ public class GlobalExceptionHandler {
         return createErrorResponse(HttpStatus.BAD_REQUEST, errorMessage);
     }
 
-
     // 기타 예외 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseDto<?>> handleException(Exception e) {
@@ -37,7 +36,6 @@ public class GlobalExceptionHandler {
         return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "알 수 없는 오류가 발생했습니다.");
     }
 
-    // 응답 생성 헬퍼 메소드
     private ResponseEntity<ResponseDto<?>> createErrorResponse(HttpStatus status, String message) {
         return ResponseEntity
                 .status(status)
