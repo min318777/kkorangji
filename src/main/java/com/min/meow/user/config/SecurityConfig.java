@@ -81,14 +81,19 @@ public class SecurityConfig {
         // 경로별 인가 작업
         http.
                 authorizeHttpRequests((auth) -> auth
-                        .requestMatchers( "/user/**","/lost-cat/**","/boast-cat/**","/login", "/", "/join", "/reissue").permitAll()
+                        .requestMatchers( "/user/**","/lost-cat/**","/boast-cat/**", "/reissue").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
-                        .requestMatchers("/reissue").permitAll()
                         .anyRequest().authenticated());
+        /*
         http.
                 addFilterAfter(new JwtFilter(jwtUtil), OAuth2LoginAuthenticationFilter.class);
         http.
                 addFilterBefore(new JwtFilter(jwtUtil), LoginFilter.class);
+        */
+
+        // JwtFilter는 LoginFilter 뒤에 등록하여, 로그인 성공 후 JWT 인증 처리
+        http.
+                addFilterAfter(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
         http.
                 addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class);
         http.

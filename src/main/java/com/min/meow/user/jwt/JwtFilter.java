@@ -84,6 +84,9 @@ public class JwtFilter extends OncePerRequestFilter {
         if ("/reissue".equals(path)) {
             filterChain.doFilter(request, response);
             return;
+        }else if(path.equals("/user/login") || path.equals("/user/join")){
+            filterChain.doFilter(request, response);
+            return;
         }
 
         String authorization = request.getHeader("Authorization");

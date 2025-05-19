@@ -12,7 +12,5 @@ import lombok.Setter;
 @Builder
 public class UpdateLostCatPostCommentRequest {
 
-    @NotBlank(message = "최소 다섯글자 이상 작성해 주세요.")
-    @Size(min = 5)
     private String content;
 }

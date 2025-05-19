@@ -4,10 +4,13 @@ package com.min.meow.boastcatpost.entity;
 import com.min.meow.boastcatpost.domain.request.CreateBoastCatPostRequest;
 import com.min.meow.boastcatpost.domain.request.UpdateBoastCatPostRequest;
 import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
+import com.min.meow.postlike.entity.PostLike;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Builder
@@ -26,6 +29,9 @@ public class BoastCatPost {
     private String content;
 
     private String catImageUrl;
+
+    @OneToMany
+    private List<PostLike> postLikeList = new ArrayList<>();
 
     //private List<LostCatPostCommentDto> lostCatPostCommentDtos;
 

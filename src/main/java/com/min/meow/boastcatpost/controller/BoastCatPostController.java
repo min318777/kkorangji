@@ -7,7 +7,9 @@ import com.min.meow.boastcatpost.domain.dto.UpdateBoastCatPostDto;
 import com.min.meow.boastcatpost.domain.request.CreateBoastCatPostRequest;
 import com.min.meow.boastcatpost.domain.request.UpdateBoastCatPostRequest;
 import com.min.meow.boastcatpost.service.BoastCatPostService;
+import com.min.meow.global.PageResponse;
 import com.min.meow.global.ResponseDto;
+import com.min.meow.lostcatpost.domain.dto.UpdateLostCatPostDto;
 import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -32,7 +34,9 @@ public class BoastCatPostController {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<BoastCatPostDto> posts = boastCatPostService.getAllBoastCatPosts(pageable);
-        return ResponseEntity.ok(new ResponseDto<>(true, "모든 글 조회 성공", posts));
+        PageResponse<BoastCatPostDto> pageResponse = PageResponse.from(posts);
+
+        return ResponseEntity.ok(new ResponseDto<>(true, "모든 글 조회 성공", pageResponse));
     }
     // 글 생성
     @PostMapping

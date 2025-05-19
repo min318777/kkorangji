@@ -2,15 +2,18 @@ package com.min.meow.user.entity;
 
 
 import com.min.meow.global.Role;
+import com.min.meow.postlike.entity.PostLike;
 import com.min.meow.user.domain.request.JoinRequest;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -38,6 +41,9 @@ public class User{
     @Column(nullable = false)
     private String name;
 
+    @OneToMany
+    private List<PostLike> postLike = new ArrayList<>();
+
     //@Enumerated(EnumType.STRING)
     private Role role;
 
@@ -48,6 +54,11 @@ public class User{
     @PrePersist
     public void prePersist(){
         this.registeredAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate(){
+        this.lastLoginAt = LocalDateTime.now();
     }
 
     public static User convertToEntity(JoinRequest joinRequest){
