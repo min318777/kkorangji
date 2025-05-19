@@ -10,7 +10,6 @@ import com.min.meow.boastcatpost.entity.BoastCatPost;
 import com.min.meow.boastcatpost.repository.BoastCatPostRepository;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
-import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -44,7 +43,7 @@ public class BoastCatPostService {
     public UpdateBoastCatPostDto updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId){
 
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
         boastCatPost.update(updateBoastCatPostRequest);
 
@@ -56,7 +55,7 @@ public class BoastCatPostService {
     public void deleteBoastCatPost(Long boastCatPostId){
 
         if(!boastCatPostRepository.existsById(boastCatPostId)){
-            throw new CustomException(ErrorCode.NOT_FOUND);
+            throw new CustomException(ErrorCode.NOT_FOUND_POST);
         }
         boastCatPostRepository.deleteById(boastCatPostId);
     }

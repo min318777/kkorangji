@@ -25,6 +25,7 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 @Configuration
@@ -56,8 +57,7 @@ public class SecurityConfig {
                         corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
                         corsConfiguration.setMaxAge(3600L);
 
-                        corsConfiguration.setExposedHeaders(Collections.singletonList("Set-Cookie"));
-                        corsConfiguration.setExposedHeaders(Collections.singletonList("Authorization"));
+                        corsConfiguration.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
 
                         return corsConfiguration;
                     }
@@ -83,7 +83,7 @@ public class SecurityConfig {
                 authorizeHttpRequests((auth) -> auth
                         .requestMatchers( "/user/**","/lost-cat/**","/boast-cat/**","/login", "/", "/join", "/reissue").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
-                        //.requestMatchers("/reissue").permitAll()
+                        .requestMatchers("/reissue").permitAll()
                         .anyRequest().authenticated());
         http.
                 addFilterAfter(new JwtFilter(jwtUtil), OAuth2LoginAuthenticationFilter.class);

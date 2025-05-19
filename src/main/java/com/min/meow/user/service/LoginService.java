@@ -20,6 +20,7 @@ public class LoginService {
 
         return LoginDto.builder()
                 .loginId(user.getLoginId())
+                .rememberMe(loginRequest.isRememberMe())
                 .build();
     }
 }

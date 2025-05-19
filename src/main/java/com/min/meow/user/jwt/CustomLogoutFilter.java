@@ -1,6 +1,8 @@
 package com.min.meow.user.jwt;
 
 import com.min.meow.global.Token;
+import com.min.meow.global.exception.CustomException;
+import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.user.repository.RefreshEntityRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.*;
@@ -51,8 +53,8 @@ public class CustomLogoutFilter extends GenericFilter {
         //refresh null check
         if (refresh == null) {
 
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
+            throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
+            //response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
 
         //expired check
@@ -61,8 +63,8 @@ public class CustomLogoutFilter extends GenericFilter {
         } catch (ExpiredJwtException e) {
 
             //response status code
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
+            throw new CustomException(ErrorCode.TOKEN_EXPIRED);
+            //response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
 
         // 토큰이 refresh인지 확인 (발급시 페이로드에 명시)
@@ -70,8 +72,8 @@ public class CustomLogoutFilter extends GenericFilter {
         if (!category.equals(Token.REFRESH_TOKEN)) {
 
             //response status code
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+            //response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
 
         //DB에 저장되어 있는지 확인
@@ -79,8 +81,9 @@ public class CustomLogoutFilter extends GenericFilter {
         if (!isExist) {
 
             //response status code
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+
+            //response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
 
         //로그아웃 진행

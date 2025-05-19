@@ -78,6 +78,13 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // 헤더에서 access키에 담긴 토큰을 꺼냄
         //String accessToken = request.getHeader("access");
+        String path = request.getRequestURI();
+
+        // 리프레시 토큰 요청은 토큰 검사하지 않고 바로 필터 체인으로 넘기기
+        if ("/reissue".equals(path)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         String authorization = request.getHeader("Authorization");
 

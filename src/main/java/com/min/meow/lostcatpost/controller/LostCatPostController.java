@@ -1,6 +1,7 @@
 package com.min.meow.lostcatpost.controller;
 
 
+import com.min.meow.global.PageResponse;
 import com.min.meow.global.ResponseDto;
 import com.min.meow.lostcatpost.domain.dto.CreateLostCatPostDto;
 import com.min.meow.lostcatpost.domain.dto.UpdateLostCatPostDto;
@@ -30,8 +31,9 @@ public class LostCatPostController {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<UpdateLostCatPostDto> posts = lostCatPostService.getAllLostCatPosts(pageable);
+        PageResponse<UpdateLostCatPostDto> pageResponse = PageResponse.from(posts);
 
-        return ResponseEntity.ok(new ResponseDto<>(true, "모든 글 조회 성공", posts));
+        return ResponseEntity.ok(new ResponseDto<>(true, "모든 글 조회 성공", pageResponse));
     }
 
     // 글 생성

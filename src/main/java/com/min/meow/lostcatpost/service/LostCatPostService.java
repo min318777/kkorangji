@@ -40,7 +40,7 @@ public class LostCatPostService {
     public UpdateLostCatPostDto updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest){
 
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
         lostCatPost.update(updateLostCatPostRequest);
         return UpdateLostCatPostDto.convertToDto(lostCatPost);
@@ -57,7 +57,7 @@ public class LostCatPostService {
         lostCatRepository.delete(lostCatPost);
         */
         if (!lostCatRepository.existsById(lostCatPostId)) {
-            throw new CustomException(ErrorCode.NOT_FOUND);
+            throw new CustomException(ErrorCode.NOT_FOUND_POST);
         }
         lostCatRepository.deleteById(lostCatPostId);
     }

@@ -12,4 +12,5 @@ public class LoginDto {
 
     private String loginId;
     private Role role;
+    private boolean rememberMe;
 }

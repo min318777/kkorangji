@@ -3,6 +3,8 @@ package com.min.meow.user.controller;
 
 import com.min.meow.global.Role;
 import com.min.meow.global.Token;
+import com.min.meow.global.exception.CustomException;
+import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.user.entity.RefreshEntity;
 import com.min.meow.user.jwt.JwtUtil;
 import com.min.meow.user.repository.RefreshEntityRepository;
@@ -34,9 +36,7 @@ public class ReissueController {
         String refresh = null;
         Cookie[] cookies = request.getCookies();
         for (Cookie cookie : cookies) {
-
             if (cookie.getName().equals("refresh")) {
-
                 refresh = cookie.getValue();
             }
         }
@@ -69,7 +69,8 @@ public class ReissueController {
         boolean isExist = refreshEntityRepository.existsByRefreshToken(refresh);
         if(!isExist){
             // response body
-            return new ResponseEntity<>("유효하지 않은 리프레쉬 토큰입니다.", HttpStatus.BAD_REQUEST);
+            throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
+            //return new ResponseEntity<>("유효하지 않은 리프레쉬 토큰입니다.", HttpStatus.BAD_REQUEST);
         }
 
         String loginId = jwtUtil.getLoginId(refresh);
@@ -88,7 +89,6 @@ public class ReissueController {
         response.setHeader("Authorization", newAccess);
         response.addCookie(createCookie("refresh", newRefresh));
         System.out.println(newAccess);
-        System.out.println("1111");
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

@@ -1,5 +1,7 @@
-package com.min.meow.user.domain.dto;
+package com.min.meow.user.domain;
 
+import com.min.meow.user.domain.dto.UserDto;
+import com.min.meow.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -11,8 +13,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CustomOAuth2User implements OAuth2User {
 
-    private final UserDto userDto;
-
+    //private final UserDto userDto;
+    private final User user;
 
     @Override
     public Map<String, Object> getAttributes() {
@@ -28,7 +30,7 @@ public class CustomOAuth2User implements OAuth2User {
             @Override
             public String getAuthority() {
 
-                return userDto.getRole();
+                return user.getRole().name();
             }
         });
         return collection;
@@ -36,11 +38,11 @@ public class CustomOAuth2User implements OAuth2User {
 
     @Override
     public String getName() {
-        return userDto.getName();
+        return user.getName();
     }
 
     public String getLoginId(){
 
-        return userDto.getLoginId();
+        return user.getLoginId();
     }
 }

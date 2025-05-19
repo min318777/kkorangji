@@ -4,6 +4,7 @@ package com.min.meow.user.entity;
 import com.min.meow.global.Role;
 import com.min.meow.user.domain.request.JoinRequest;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,7 +20,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User implements UserDetails {
+public class User{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,6 +32,7 @@ public class User implements UserDetails {
     private String password;
 
     @Column(nullable = false, unique = true)
+    @Email
     private String email;
 
     @Column(nullable = false)
@@ -41,7 +43,7 @@ public class User implements UserDetails {
 
     private LocalDateTime registeredAt;
     private LocalDateTime lastLoginAt;
-    private boolean isDelete = false;
+    private boolean isDelete;
 
     @PrePersist
     public void prePersist(){
@@ -55,36 +57,7 @@ public class User implements UserDetails {
                 .name(joinRequest.getName())
                 .email(joinRequest.getEmail())
                 .role(joinRequest.getRole())
+                .isDelete(false)
                 .build();
-    }
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
-    }
-
-    @Override
-    public String getUsername() {
-        return loginId;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return UserDetails.super.isCredentialsNonExpired();
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return UserDetails.super.isAccountNonExpired();
     }
 }

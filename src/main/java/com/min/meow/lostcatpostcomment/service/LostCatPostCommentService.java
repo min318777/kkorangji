@@ -26,7 +26,7 @@ public class LostCatPostCommentService {
     @Transactional
     public RegisterLostCatPostCommentDto registerLostCatPostComment(RegisterLostCatPostCommentRequest registerLostCatPostCommentRequest, Long lostCatPostId){
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
         LostCatPostComment lostCatPostComment = LostCatPostComment.convertToEntity(registerLostCatPostCommentRequest, lostCatPost);
         lostCatPostCommentRepository.save(lostCatPostComment);
@@ -38,7 +38,7 @@ public class LostCatPostCommentService {
     @Transactional
     public UpdateLostCatPostCommentDto updateLostCatPostComment(UpdateLostCatPostCommentRequest updateLostCatPostCommentRequest, Long lostCatPostCommentId){
         LostCatPostComment lostCatPostComment = lostCatPostCommentRepository.findById(lostCatPostCommentId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
         lostCatPostComment.update(updateLostCatPostCommentRequest);
 
@@ -50,7 +50,7 @@ public class LostCatPostCommentService {
     public void deleteLostCatPostComment(Long lostCatPostCommentId){
 
         if(!lostCatPostCommentRepository.existsById(lostCatPostCommentId)){
-            throw new CustomException(ErrorCode.NOT_FOUND);
+            throw new CustomException(ErrorCode.NOT_FOUND_POST);
         }
 
         lostCatPostCommentRepository.deleteById(lostCatPostCommentId);

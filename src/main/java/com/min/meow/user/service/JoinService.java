@@ -32,8 +32,8 @@ public class JoinService {
         String encodedPassword = bCryptPasswordEncoder.encode(joinRequest.getPassword());
         User user = User.convertToEntity(joinRequest);
         user.setPassword(encodedPassword);
-
         userRepository.save(user);
+
         return JoinDto.convertToDto(user);
     }
 }
