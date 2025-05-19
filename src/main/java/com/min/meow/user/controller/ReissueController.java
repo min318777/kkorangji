@@ -42,53 +42,44 @@ public class ReissueController {
         }
 
         if (refresh == null) {
-
-            //response status code
-            return new ResponseEntity<>("refresh token null", HttpStatus.BAD_REQUEST);
+            throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
         }
 
         //expired check
         try {
             jwtUtil.isExpired(refresh);
         } catch (ExpiredJwtException e) {
-
-            //response status code
-            return new ResponseEntity<>("refresh token expired", HttpStatus.BAD_REQUEST);
+            
+            throw new CustomException(ErrorCode.TOKEN_EXPIRED);
         }
 
         // 토큰이 refresh인지 확인 (발급시 페이로드에 명시)
         Token category = jwtUtil.getTokenCategory(refresh);
-
         if (!category.equals(Token.REFRESH_TOKEN)) {
-
-            //response status code
-            return new ResponseEntity<>("invalid refresh token", HttpStatus.BAD_REQUEST);
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+        
         }
 
         // DB에 저장되어 있는지 확인
         boolean isExist = refreshEntityRepository.existsByRefreshToken(refresh);
         if(!isExist){
-            // response body
             throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
-            //return new ResponseEntity<>("유효하지 않은 리프레쉬 토큰입니다.", HttpStatus.BAD_REQUEST);
         }
 
         String loginId = jwtUtil.getLoginId(refresh);
         Role role = jwtUtil.getRole(refresh);
-
-        //make new JWT
+        
+        // 새로운 jwt발급
         String newAccess = jwtUtil.createJwt(Token.ACCESS_TOKEN, loginId, role.name(), 600000L);
         String newRefresh = jwtUtil.createJwt(Token.REFRESH_TOKEN, loginId, role.name(), 86400000L);
-
-
+        
         // refresh 토큰 저장 db에 기존의 refresh토큰 삭제후 새 refresh토큰 저장
         refreshEntityRepository.deleteByRefreshToken(refresh);
         addRefreshEntity(loginId, newRefresh, 86400000L);
 
-        //response
+        // 응답
         response.setHeader("Authorization", newAccess);
         response.addCookie(createCookie("refresh", newRefresh));
-        System.out.println(newAccess);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
