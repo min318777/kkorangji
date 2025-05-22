@@ -71,16 +71,13 @@ public class CustomLogoutFilter extends GenericFilter {
         Token category = jwtUtil.getTokenCategory(refresh);
         if (!category.equals(Token.REFRESH_TOKEN)) {
 
-            //response status code
             throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
             //response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
 
         //DB에 저장되어 있는지 확인
-        Boolean isExist = refreshEntityRepository.existsByRefreshToken(refresh);
+        boolean isExist = refreshEntityRepository.existsByRefreshToken(refresh);
         if (!isExist) {
-
-            //response status code
             throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
 
             //response.setStatus(HttpServletResponse.SC_BAD_REQUEST);

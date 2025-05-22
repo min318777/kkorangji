@@ -1,25 +1,28 @@
 package com.min.meow.lostcatpost.domain.dto;
 
-import com.min.meow.postcomment.domain.dto.PostCommentDto;
 import com.min.meow.lostcatpost.entity.LostCatPost;
+import com.min.meow.postcomment.domain.dto.PostCommentDto;
 import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Builder
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateLostCatPostDto {
+@Builder
+public class GetLostCatPostDto {
 
     private Long lostCatPostId;
 
     private String title;
 
     private String content;
+
+    private String writer;
 
     private String catName;
 
@@ -47,13 +50,14 @@ public class UpdateLostCatPostDto {
 
     private LocalDateTime updatedAt;
 
-    public static UpdateLostCatPostDto convertToDto(LostCatPost lostCatPost){
+    public static GetLostCatPostDto convertToDto(LostCatPost lostCatPost){
 
-        return UpdateLostCatPostDto.builder()
+        return GetLostCatPostDto.builder()
                 .lostCatPostId(lostCatPost.getLostCatPostId())
                 .title(lostCatPost.getTitle())
                 .content(lostCatPost.getContent())
                 .catName(lostCatPost.getCatName())
+                .writer(lostCatPost.getUser().getLoginId())
                 .catType(lostCatPost.getCatType())
                 .catColor(lostCatPost.getCatColor())
                 .catAge(lostCatPost.getCatAge())

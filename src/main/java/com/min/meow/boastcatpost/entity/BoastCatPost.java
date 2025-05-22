@@ -3,7 +3,10 @@ package com.min.meow.boastcatpost.entity;
 
 import com.min.meow.boastcatpost.domain.request.CreateBoastCatPostRequest;
 import com.min.meow.boastcatpost.domain.request.UpdateBoastCatPostRequest;
+import com.min.meow.global.BasePost;
 import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
+import com.min.meow.postcomment.domain.dto.PostCommentDto;
+import com.min.meow.postcomment.entity.PostComment;
 import com.min.meow.postlike.entity.PostLike;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,7 +36,7 @@ public class BoastCatPost {
     @OneToMany
     private List<PostLike> postLikeList = new ArrayList<>();
 
-    //private List<LostCatPostCommentDto> lostCatPostCommentDtos;
+    //private List<PostCommentDto> postCommentDtos;
 
     private LocalDateTime createdAt;
 

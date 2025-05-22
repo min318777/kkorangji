@@ -1,8 +1,10 @@
-package com.min.meow.lostcatpostcomment.entity;
+package com.min.meow.postcomment.entity;
 
 
-import com.min.meow.lostcatpostcomment.domain.request.RegisterLostCatPostCommentRequest;
-import com.min.meow.lostcatpostcomment.domain.request.UpdateLostCatPostCommentRequest;
+import com.min.meow.boastcatpost.entity.BoastCatPost;
+import com.min.meow.global.BasePost;
+import com.min.meow.postcomment.domain.request.RegisterPostCommentRequest;
+import com.min.meow.postcomment.domain.request.UpdatePostCommentRequest;
 import com.min.meow.lostcatpost.entity.LostCatPost;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -17,17 +19,21 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LostCatPostComment {
+public class PostComment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long lostCatPostCommentId;
+    private Long postCommentId;
 
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lost_cat_post_id")
     private LostCatPost lostCatPost;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "boast_cat_post_id")
+    private BoastCatPost boastCatPost;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -43,16 +49,16 @@ public class LostCatPostComment {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void update(UpdateLostCatPostCommentRequest updateLostCatPostCommentRequest){
+    public void update(UpdatePostCommentRequest updatePostCommentRequest){
 
-        if (updateLostCatPostCommentRequest.getContent() != null) {
-            this.content = updateLostCatPostCommentRequest.getContent();
+        if (updatePostCommentRequest.getContent() != null) {
+            this.content = updatePostCommentRequest.getContent();
         }
     }
 
-    public static LostCatPostComment convertToEntity(RegisterLostCatPostCommentRequest registerLostCatPostCommentRequest, LostCatPost lostCatPost){
-        return LostCatPostComment.builder()
-                .content(registerLostCatPostCommentRequest.getContent())
+    public static PostComment convertToEntity(RegisterPostCommentRequest registerPostCommentRequest, LostCatPost lostCatPost){
+        return PostComment.builder()
+                .content(registerPostCommentRequest.getContent())
                 .lostCatPost(lostCatPost)
                 .build();
     }

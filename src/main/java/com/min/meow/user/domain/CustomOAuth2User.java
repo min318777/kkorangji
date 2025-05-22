@@ -1,5 +1,6 @@
 package com.min.meow.user.domain;
 
+import com.min.meow.user.config.PrincipalUser;
 import com.min.meow.user.domain.dto.UserDto;
 import com.min.meow.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,7 @@ import java.util.Collection;
 import java.util.Map;
 
 @RequiredArgsConstructor
-public class CustomOAuth2User implements OAuth2User {
+public class CustomOAuth2User implements OAuth2User, PrincipalUser {
 
     //private final UserDto userDto;
     private final User user;
@@ -44,5 +45,10 @@ public class CustomOAuth2User implements OAuth2User {
     public String getLoginId(){
 
         return user.getLoginId();
+    }
+
+    @Override
+    public User getUser() {
+        return user;
     }
 }

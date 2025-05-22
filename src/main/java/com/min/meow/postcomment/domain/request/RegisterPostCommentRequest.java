@@ -1,4 +1,4 @@
-package com.min.meow.lostcatpostcomment.domain.request;
+package com.min.meow.postcomment.domain.request;
 
 
 import jakarta.validation.constraints.NotBlank;
@@ -9,9 +9,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Builder
-public class RegisterLostCatPostCommentRequest {
-
+public class RegisterPostCommentRequest {
 
     @NotBlank(message = "최소 다섯글자 이상 작성해 주세요.")
     @Size(min = 2, max = 500, message = "최소 2자 이상, 최대 500자 이하 입력해 주세요.")

@@ -1,5 +1,6 @@
 package com.min.meow.user.domain;
 
+import com.min.meow.user.config.PrincipalUser;
 import com.min.meow.user.entity.User;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,7 @@ import java.util.Collection;
 
 @RequiredArgsConstructor
 @Getter
-public class CustomUserDetails implements UserDetails {
+public class CustomUserDetails implements UserDetails, PrincipalUser {
 
     private final User user;
 
@@ -58,5 +59,15 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public boolean isEnabled() {
         return UserDetails.super.isEnabled();
+    }
+
+    @Override
+    public String getLoginId() {
+        return user.getLoginId();
+    }
+
+    @Override
+    public User getUser() {
+        return user;
     }
 }

@@ -84,7 +84,7 @@ public class JwtFilter extends OncePerRequestFilter {
         if ("/reissue".equals(path)) {
             filterChain.doFilter(request, response);
             return;
-        }else if(path.equals("/user/login") || path.equals("/user/join")){
+        }else if(path.equals("/user/login") || path.equals("/user/join") || path.equals("/meow/lost-cat")){
             filterChain.doFilter(request, response);
             return;
         }

@@ -2,8 +2,6 @@ package com.min.meow.user.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.min.meow.global.Token;
-import com.min.meow.global.exception.CustomException;
-import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.user.domain.request.LoginRequest;
 import com.min.meow.user.entity.RefreshEntity;
 import com.min.meow.user.repository.RefreshEntityRepository;
@@ -29,7 +27,7 @@ import java.util.Date;
 import java.util.Iterator;
 
 @RequiredArgsConstructor
-public class LoginFilter extends UsernamePasswordAuthenticationFilter {
+public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;

@@ -1,11 +1,11 @@
-package com.min.meow.lostcatpostcomment.service;
+package com.min.meow.postcomment.service;
 
-import com.min.meow.lostcatpostcomment.domain.dto.RegisterLostCatPostCommentDto;
-import com.min.meow.lostcatpostcomment.domain.dto.UpdateLostCatPostCommentDto;
-import com.min.meow.lostcatpostcomment.domain.request.RegisterLostCatPostCommentRequest;
-import com.min.meow.lostcatpostcomment.domain.request.UpdateLostCatPostCommentRequest;
-import com.min.meow.lostcatpostcomment.entity.LostCatPostComment;
-import com.min.meow.lostcatpostcomment.repository.LostCatPostCommentRepository;
+import com.min.meow.postcomment.domain.dto.RegisterPostCommentDto;
+import com.min.meow.postcomment.domain.dto.UpdatePostCommentDto;
+import com.min.meow.postcomment.domain.request.RegisterPostCommentRequest;
+import com.min.meow.postcomment.domain.request.UpdatePostCommentRequest;
+import com.min.meow.postcomment.entity.PostComment;
+import com.min.meow.postcomment.repository.PostCommentRepository;
 import com.min.meow.lostcatpost.entity.LostCatPost;
 import com.min.meow.lostcatpost.repository.LostCatRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -22,32 +22,32 @@ import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
-class LostCatPostCommentServiceTest {
+class PostCommentServiceTest {
 
     @Mock
-    private LostCatPostCommentRepository lostCatPostCommentRepository;
+    private PostCommentRepository postCommentRepository;
 
     @Mock
     private LostCatRepository lostCatRepository;
 
     @InjectMocks
-    private LostCatPostCommentService lostCatPostCommentService;
+    private PostCommentService postCommentService;
 
     @Test
     @DisplayName("댓글을 작성한다.")
     public void registerLostCatPostComment(){
         // given
-        RegisterLostCatPostCommentRequest registerLostCatPostCommentRequest = RegisterLostCatPostCommentRequest.builder()
+        RegisterPostCommentRequest registerPostCommentRequest = RegisterPostCommentRequest.builder()
                 .content("고양이를 발견했어요.")
                 .build();
         LostCatPost lostCatPost = LostCatPost.builder()
                 .lostCatPostId(1L)
                 .content("고양이를 찾아요.")
                 .build();
-        LostCatPostComment lostCatPostComment = LostCatPostComment.convertToEntity(registerLostCatPostCommentRequest, lostCatPost);
+        PostComment postComment = PostComment.convertToEntity(registerPostCommentRequest, lostCatPost);
         when(lostCatRepository.findById(1L)).thenReturn(Optional.of(lostCatPost));
         // when
-        RegisterLostCatPostCommentDto result = lostCatPostCommentService.registerLostCatPostComment(registerLostCatPostCommentRequest, lostCatPost.getLostCatPostId());
+        RegisterPostCommentDto result = postCommentService.registerLostCatPostComment(registerPostCommentRequest, lostCatPost.getLostCatPostId());
         // then
         assertThat(result).isNotNull();
         assertThat(result.getLostCatPostId()).isEqualTo(1L);
@@ -64,19 +64,19 @@ class LostCatPostCommentServiceTest {
                 .title("고양이 찾기 글1")
                 .build();
 
-        LostCatPostComment lostCatPostComment = LostCatPostComment.builder()
+        PostComment postComment = PostComment.builder()
                 .lostCatPost(lostCatPost)
                 .content("고양이를 발견했어요.")
                 .build();
 
-        UpdateLostCatPostCommentRequest updateLostCatPostCommentRequest = UpdateLostCatPostCommentRequest.builder()
+        UpdatePostCommentRequest updatePostCommentRequest = UpdatePostCommentRequest.builder()
                 .content("죄송해요. 잘못봤어요.")
                 .build();
 
-        when(lostCatPostCommentRepository.findById(lostCatPostCommentId)).thenReturn(Optional.of(lostCatPostComment));
+        when(postCommentRepository.findById(lostCatPostCommentId)).thenReturn(Optional.of(postComment));
 
         // when
-        UpdateLostCatPostCommentDto result = lostCatPostCommentService.updateLostCatPostComment(updateLostCatPostCommentRequest, lostCatPostCommentId);
+        UpdatePostCommentDto result = postCommentService.updateLostCatPostComment(updatePostCommentRequest, lostCatPostCommentId);
 
         // then
         assertThat(result.getContent()).isEqualTo("죄송해요. 잘못봤어요.");
@@ -88,14 +88,14 @@ class LostCatPostCommentServiceTest {
     void deleteLostCatPostComment(){
         // given
         Long lostCatPostCommentId = 1L;
-        when(lostCatPostCommentRepository.existsById(lostCatPostCommentId)).thenReturn(true);
+        when(postCommentRepository.existsById(lostCatPostCommentId)).thenReturn(true);
 
         // when
-        lostCatPostCommentService.deleteLostCatPostComment(lostCatPostCommentId);
+        postCommentService.deleteLostCatPostComment(lostCatPostCommentId);
 
         // then
-        verify(lostCatPostCommentRepository, times(1)).existsById(lostCatPostCommentId);
-        verify(lostCatPostCommentRepository, times(1)).deleteById(lostCatPostCommentId);
+        verify(postCommentRepository, times(1)).existsById(lostCatPostCommentId);
+        verify(postCommentRepository, times(1)).deleteById(lostCatPostCommentId);
     }
 
 }

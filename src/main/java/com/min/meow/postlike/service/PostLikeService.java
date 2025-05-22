@@ -32,14 +32,14 @@ public class PostLikeService {
         return postLikeRepository.countByBoastCatPost(post);
     }
 
-    public boolean plusLike(Long boastCatPostId, String loginId, User user){
+    public boolean plusLike(Long boastCatPostId, User user){
 
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-        User persistUser = userRepository.findByLoginId(loginId);
+        User persistUser = userRepository.findByLoginId(user.getLoginId());
 
+        Optional<PostLike> postLike = postLikeRepository.findByBoastCatPostIdAndLoginId(boastCatPostId, user.getLoginId());
 
-        Optional<PostLike> postLike = postLikeRepository.findByBoastCatPostIdAndLoginId(boastCatPostId, loginId);
         if(postLike.isPresent()){
 
             postLikeRepository.delete(postLike.get());

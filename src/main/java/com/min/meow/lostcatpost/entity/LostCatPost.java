@@ -1,11 +1,16 @@
 package com.min.meow.lostcatpost.entity;
 
 
-import com.min.meow.lostcatpostcomment.entity.LostCatPostComment;
+import com.min.meow.global.BasePost;
+import com.min.meow.postcomment.entity.PostComment;
 import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
 import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
+import com.min.meow.user.config.PrincipalUser;
+import com.min.meow.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.apache.logging.log4j.util.Lazy;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -48,8 +53,13 @@ public class LostCatPost {
 
     private Integer reward;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "lostCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<LostCatPostComment> lostCatPostComments = new ArrayList<>();
+    private List<PostComment> postComments = new ArrayList<>();
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -64,13 +74,15 @@ public class LostCatPost {
 
     @PreUpdate
     public void preUpdate() {
+
         this.updatedAt = LocalDateTime.now();
     }
 
-    public static LostCatPost convertToEntity(CreateLostCatPostRequest createLostCatPostRequest) {
+    public static LostCatPost convertToEntity(CreateLostCatPostRequest createLostCatPostRequest, User user) {
         return LostCatPost.builder()
                 .title(createLostCatPostRequest.getTitle())
                 .content(createLostCatPostRequest.getContent())
+                .user(user)
                 .lostLocation(createLostCatPostRequest.getLostLocation())
                 .latitude(createLostCatPostRequest.getLatitude())
                 .longitude(createLostCatPostRequest.getLongitude())
