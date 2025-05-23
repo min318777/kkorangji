@@ -59,7 +59,7 @@ public class LostCatPostController {
     public ResponseEntity<?> createLostCatPost(@RequestBody @Valid CreateLostCatPostRequest createLostCatPostRequest,
                                                BindingResult bindingResult, @AuthenticationPrincipal PrincipalUser user){
 
-        CreateLostCatPostDto post = lostCatPostService.createLostCatPost(createLostCatPostRequest, user.getUser());
+        CreateLostCatPostDto post = lostCatPostService.createLostCatPost(createLostCatPostRequest, user.getUser().getLoginId());
 
         return ResponseEntity.ok(new ResponseDto<>(true, "글 생성 성공", post));
     }
@@ -68,18 +68,18 @@ public class LostCatPostController {
     @PutMapping("/update/{lostCatPostId}")
     public ResponseEntity<?> updateLostCatPost(@PathVariable Long lostCatPostId,
                                                @RequestBody @Valid UpdateLostCatPostRequest updateLostCatPostRequest,
-                                               BindingResult bindingResult, PrincipalUser user){
+                                               BindingResult bindingResult, @AuthenticationPrincipal PrincipalUser user){
 
-        UpdateLostCatPostDto post = lostCatPostService.updateLostCatPost(lostCatPostId, updateLostCatPostRequest);
+        UpdateLostCatPostDto post = lostCatPostService.updateLostCatPost(lostCatPostId, updateLostCatPostRequest, user.getUser().getLoginId());
         return ResponseEntity.ok(new ResponseDto<>(true, "글 수정 성공", post));
 
     }
 
     // 글 삭제
     @DeleteMapping("/delete/{lostCatPostId}")
-    public ResponseEntity<?> deleteLostCatPost(@PathVariable Long lostCatPostId){
+    public ResponseEntity<?> deleteLostCatPost(@PathVariable Long lostCatPostId, @AuthenticationPrincipal PrincipalUser user){
 
-        lostCatPostService.deleteLostCatPost(lostCatPostId);
+        lostCatPostService.deleteLostCatPost(lostCatPostId, user.getUser().getLoginId());
 
         return ResponseEntity.ok(new ResponseDto<>(true, "글 삭제 성공", null));
     }

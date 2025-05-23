@@ -10,6 +10,8 @@ import com.min.meow.boastcatpost.entity.BoastCatPost;
 import com.min.meow.boastcatpost.repository.BoastCatPostRepository;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.user.entity.User;
+import com.min.meow.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class BoastCatPostService {
     private final BoastCatPostRepository boastCatPostRepository;
+    private final UserRepository userRepository;
 
     // 모든 글 조회
     public Page<BoastCatPostDto> getAllBoastCatPosts(Pageable pageable){
@@ -29,9 +32,10 @@ public class BoastCatPostService {
 
     // 글 작성
     @Transactional
-    public CreateBoastCatPostDto createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest){
+    public CreateBoastCatPostDto createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest, String loginId){
 
-        BoastCatPost boastCatPost = BoastCatPost.convertToEntity(createBoastCatPostRequest);
+        User writer = userRepository.findByLoginId(loginId);
+        BoastCatPost boastCatPost = BoastCatPost.convertToEntity(createBoastCatPostRequest, writer);
 
         boastCatPostRepository.save(boastCatPost);
 
@@ -40,11 +44,13 @@ public class BoastCatPostService {
 
     // 글 수정
     @Transactional
-    public UpdateBoastCatPostDto updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId){
+    public UpdateBoastCatPostDto updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId, String loginId){
 
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-
+        if(!boastCatPost.getUser().getLoginId().equals(loginId)){
+            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
+        }
         boastCatPost.update(updateBoastCatPostRequest);
 
         return UpdateBoastCatPostDto.convertToDto(boastCatPost);
@@ -52,11 +58,20 @@ public class BoastCatPostService {
 
     // 글 삭제
     @Transactional
-    public void deleteBoastCatPost(Long boastCatPostId){
+    public void deleteBoastCatPost(Long boastCatPostId, String loginId){
 
+        BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+
+        if(!boastCatPost.getUser().getLoginId().equals(loginId)){
+            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
+        }
+        boastCatPostRepository.deleteById(boastCatPostId);
+        /*
         if(!boastCatPostRepository.existsById(boastCatPostId)){
             throw new CustomException(ErrorCode.NOT_FOUND_POST);
         }
         boastCatPostRepository.deleteById(boastCatPostId);
+         */
     }
 }

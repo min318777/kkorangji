@@ -8,6 +8,7 @@ import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
 import com.min.meow.postcomment.domain.dto.PostCommentDto;
 import com.min.meow.postcomment.entity.PostComment;
 import com.min.meow.postlike.entity.PostLike;
+import com.min.meow.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,6 +31,8 @@ public class BoastCatPost {
     private String title;
 
     private String content;
+
+    private User user;
 
     private String catImageUrl;
 
@@ -64,11 +67,12 @@ public class BoastCatPost {
         }
     }
 
-    public static BoastCatPost convertToEntity(CreateBoastCatPostRequest createBoastCatPostRequest){
+    public static BoastCatPost convertToEntity(CreateBoastCatPostRequest createBoastCatPostRequest, User writer){
 
         return BoastCatPost.builder()
                 .title(createBoastCatPostRequest.getTitle())
                 .content(createBoastCatPostRequest.getContent())
+                .user(writer)
                 .catImageUrl(createBoastCatPostRequest.getCatImageUrl())
                 .build();
     }

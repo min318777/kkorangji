@@ -40,9 +40,11 @@ public class LostCatPostService {
     }
 
     // 글 생성
-    public CreateLostCatPostDto createLostCatPost(CreateLostCatPostRequest createLostCatPostRequest, User user){
-        User writer = userRepository.findByLoginId(user.getLoginId());
+    @Transactional
+    public CreateLostCatPostDto createLostCatPost(CreateLostCatPostRequest createLostCatPostRequest, String loginId){
+        User writer = userRepository.findByLoginId(loginId);
         LostCatPost lostCatPost = LostCatPost.convertToEntity(createLostCatPostRequest, writer);
+
         lostCatRepository.save(lostCatPost);
 
         return CreateLostCatPostDto.convertToDto(lostCatPost, writer);
@@ -50,10 +52,14 @@ public class LostCatPostService {
     
     // 글 수정
     @Transactional
-    public UpdateLostCatPostDto updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest){
+    public UpdateLostCatPostDto updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest, String loginId){
 
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+
+        if(!lostCatPost.getUser().getLoginId().equals(loginId)){
+            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
+        }
 
         lostCatPost.update(updateLostCatPostRequest);
         return UpdateLostCatPostDto.convertToDto(lostCatPost);
@@ -63,16 +69,22 @@ public class LostCatPostService {
     // 성능개선-> findById 이후 delete를 db호출 2번발생-> deleteById 한번의 호출로 성능개성 -> existById도 있는데? -> 존재여부만 확인하므로 엔티티 조회보다 가벼운 호출이다. -> query dsl로 해볼까?
     // 물리적삭제 대신 소프트삭제도 고려해보자.
     @Transactional
-    public void deleteLostCatPost(Long lostCatPostId) {
-        /*
+    public void deleteLostCatPost(Long lostCatPostId, String loginId) {
+
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
-        lostCatRepository.delete(lostCatPost);
-        */
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+
+        if(!lostCatPost.getUser().getLoginId().equals(loginId)){
+            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
+        }
+        lostCatRepository.deleteById(lostCatPostId);
+
+
+        /*
         if (!lostCatRepository.existsById(lostCatPostId)) {
             throw new CustomException(ErrorCode.NOT_FOUND_POST);
         }
         lostCatRepository.deleteById(lostCatPostId);
+         */
     }
-
 }

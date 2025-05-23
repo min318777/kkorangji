@@ -10,6 +10,7 @@ import com.min.meow.postcomment.entity.PostComment;
 import com.min.meow.postcomment.repository.PostCommentRepository;
 import com.min.meow.user.config.PrincipalUser;
 import com.min.meow.user.entity.User;
+import com.min.meow.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,9 @@ class LostCatPostServiceTest {
 
     @Mock
     private LostCatRepository lostCatRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private PostCommentRepository postCommentRepository;
@@ -74,13 +78,14 @@ class LostCatPostServiceTest {
                 .catAge(3)
                 .catColor("검정")
                 .build();
-        //User user = new User();
-       // LostCatPost lostCatPost = LostCatPost.convertToEntity(createLostCatPostRequest, user);
-       // when(lostCatRepository.save(any(LostCatPost.class))).thenReturn(lostCatPost);
+        User user = User.builder()
+                .loginId("tempId")
+                .build();
+        LostCatPost lostCatPost = LostCatPost.convertToEntity(createLostCatPostRequest, user);
+        when(lostCatRepository.save(any(LostCatPost.class))).thenReturn(lostCatPost);
 
         // when
-       // CreateLostCatPostDto result = lostCatPostService.createLostCatPost(createLostCatPostRequest, user);
-
+        CreateLostCatPostDto result = lostCatPostService.createLostCatPost(createLostCatPostRequest, user.getLoginId());
         // then
         assertThat(result.getTitle()).isEqualTo("고양이 유기글 추가");
         assertThat(result.getCatAge()).isEqualTo(3);
@@ -110,11 +115,12 @@ class LostCatPostServiceTest {
                 .postComments(List.of(postComment))
                 .catWeight(5)
                 .build();
+        String loginId = "tempId";
 
         when(lostCatRepository.findById(id)).thenReturn(Optional.of(lostCatPost));
 
         // when
-        UpdateLostCatPostDto result = lostCatPostService.updateLostCatPost(id, updateLostCatPostRequest);
+        UpdateLostCatPostDto result = lostCatPostService.updateLostCatPost(id, updateLostCatPostRequest, loginId);
 
         // then
         assertThat(result.getTitle()).isEqualTo("수정한 제목");

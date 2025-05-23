@@ -20,9 +20,10 @@ public enum ErrorCode {
     TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "토큰이 존재하지 않습니다."),
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다."),
     INVALID_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 access 토큰입니다."),
-    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 refresh 토큰입니다." )
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 refresh 토큰입니다." ),
 
-
+    // Validation 예외
+    FORBIDDEN_NOT_AUTHOR(HttpStatus.UNAUTHORIZED, "게시글의 작성자만 수정, 삭제가 가능합니다." )
 
     ;
 
