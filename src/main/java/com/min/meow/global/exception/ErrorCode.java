@@ -23,7 +23,7 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 refresh 토큰입니다." ),
 
     // Validation 예외
-    FORBIDDEN_NOT_AUTHOR(HttpStatus.UNAUTHORIZED, "게시글의 작성자만 수정, 삭제가 가능합니다." )
+    FORBIDDEN_NOT_AUTHOR(HttpStatus.UNAUTHORIZED, "작성자 본인만 수정, 삭제가 가능합니다." )
 
     ;
 
