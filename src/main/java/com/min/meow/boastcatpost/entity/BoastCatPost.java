@@ -32,6 +32,8 @@ public class BoastCatPost {
 
     private String content;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     private String catImageUrl;
@@ -72,7 +74,7 @@ public class BoastCatPost {
         return BoastCatPost.builder()
                 .title(createBoastCatPostRequest.getTitle())
                 .content(createBoastCatPostRequest.getContent())
-                .user(writer)
+                //.user(writer)
                 .catImageUrl(createBoastCatPostRequest.getCatImageUrl())
                 .build();
     }
