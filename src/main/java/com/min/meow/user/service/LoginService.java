@@ -1,0 +1,26 @@
+package com.min.meow.user.service;
+
+
+import com.min.meow.user.domain.dto.LoginDto;
+import com.min.meow.user.domain.request.LoginRequest;
+import com.min.meow.user.entity.User;
+import com.min.meow.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class LoginService {
+
+    private final UserRepository userRepository;
+
+    public LoginDto login(LoginRequest loginRequest){
+
+        User user = userRepository.findByLoginId(loginRequest.getLoginId());
+
+        return LoginDto.builder()
+                .loginId(user.getLoginId())
+                .rememberMe(loginRequest.isRememberMe())
+                .build();
+    }
+}

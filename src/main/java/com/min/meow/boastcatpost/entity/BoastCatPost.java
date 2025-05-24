@@ -3,11 +3,18 @@ package com.min.meow.boastcatpost.entity;
 
 import com.min.meow.boastcatpost.domain.request.CreateBoastCatPostRequest;
 import com.min.meow.boastcatpost.domain.request.UpdateBoastCatPostRequest;
+import com.min.meow.global.BasePost;
 import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
+import com.min.meow.postcomment.domain.dto.PostCommentDto;
+import com.min.meow.postcomment.entity.PostComment;
+import com.min.meow.postlike.entity.PostLike;
+import com.min.meow.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Builder
@@ -25,9 +32,14 @@ public class BoastCatPost {
 
     private String content;
 
+    private User user;
+
     private String catImageUrl;
 
-    //private List<LostCatPostCommentDto> lostCatPostCommentDtos;
+    @OneToMany
+    private List<PostLike> postLikeList = new ArrayList<>();
+
+    //private List<PostCommentDto> postCommentDtos;
 
     private LocalDateTime createdAt;
 
@@ -55,11 +67,12 @@ public class BoastCatPost {
         }
     }
 
-    public static BoastCatPost convertToEntity(CreateBoastCatPostRequest createBoastCatPostRequest){
+    public static BoastCatPost convertToEntity(CreateBoastCatPostRequest createBoastCatPostRequest, User writer){
 
         return BoastCatPost.builder()
                 .title(createBoastCatPostRequest.getTitle())
                 .content(createBoastCatPostRequest.getContent())
+                .user(writer)
                 .catImageUrl(createBoastCatPostRequest.getCatImageUrl())
                 .build();
     }

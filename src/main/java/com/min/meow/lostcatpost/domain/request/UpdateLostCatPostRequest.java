@@ -1,6 +1,7 @@
 package com.min.meow.lostcatpost.domain.request;
 
 
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @Getter

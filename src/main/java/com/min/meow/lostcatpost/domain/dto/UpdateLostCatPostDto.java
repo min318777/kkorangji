@@ -1,6 +1,6 @@
 package com.min.meow.lostcatpost.domain.dto;
 
-import com.min.meow.lostcatpostcomment.domain.dto.LostCatPostCommentDto;
+import com.min.meow.postcomment.domain.dto.PostCommentDto;
 import com.min.meow.lostcatpost.entity.LostCatPost;
 import lombok.*;
 
@@ -41,7 +41,7 @@ public class UpdateLostCatPostDto {
 
     private Integer reward;
 
-    private List<LostCatPostCommentDto> lostCatPostCommentDtos;
+    private List<PostCommentDto> postCommentDtos;
 
     private LocalDateTime createdAt;
 
@@ -63,7 +63,7 @@ public class UpdateLostCatPostDto {
                 .reward(lostCatPost.getReward())
                 .latitude(lostCatPost.getLatitude())
                 .longitude(lostCatPost.getLongitude())
-                .lostCatPostCommentDtos(lostCatPost.getLostCatPostComments().stream().map(LostCatPostCommentDto::convertToDto).collect(Collectors.toList()))
+                .postCommentDtos(lostCatPost.getPostComments().stream().map(PostCommentDto::convertToDto).collect(Collectors.toList()))
                 .createdAt(lostCatPost.getCreatedAt())
                 .updatedAt(lostCatPost.getUpdatedAt())
                 .build();
