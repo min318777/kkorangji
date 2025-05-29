@@ -17,6 +17,17 @@ spring:
       hibernate:
         format_sql: true
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: lost-cat-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
   security:
     oauth2:
       client:
@@ -37,6 +48,7 @@ spring:
             token-uri: https://oauth2.googleapis.com/token
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
             user-name-attribute: sub
+
 jwt:
   secret: "3LmMxJzOZLx6E4msrDzXQY0FfAdrsV+EoV6yg2ovF2E=1dsd"
 

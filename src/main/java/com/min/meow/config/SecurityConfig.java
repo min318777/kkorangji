@@ -1,4 +1,4 @@
-package com.min.meow.user.config;
+package com.min.meow.config;
 
 
 import com.min.meow.user.jwt.CustomLogoutFilter;
@@ -81,7 +81,14 @@ public class SecurityConfig {
         // 경로별 인가 작업
         http.
                 authorizeHttpRequests((auth) -> auth
-                        .requestMatchers( "/user/**","/meow/lost-cat/**","/meow/boast-cat/**", "/reissue").permitAll()
+                        .requestMatchers( "/user/**",
+                                "/meow/lost-cat/**",
+                                "/meow/boast-cat/**",
+                                "/reissue",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated());
         /*

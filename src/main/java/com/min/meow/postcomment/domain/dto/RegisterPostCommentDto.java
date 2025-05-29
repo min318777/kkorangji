@@ -16,6 +16,7 @@ public class RegisterPostCommentDto {
     private Long lostCatPostCommentId;
     private String content;
     private Long lostCatPostId;
+    private String loginId;
     private LocalDateTime createdAt;
 
     public static RegisterPostCommentDto convertToDto(PostComment postComment){

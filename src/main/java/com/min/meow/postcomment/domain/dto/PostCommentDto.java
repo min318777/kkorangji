@@ -12,14 +12,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class PostCommentDto {
 
-    private Long id;
+    private Long postId;
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public static PostCommentDto convertToDto(PostComment postComment) {
         return PostCommentDto.builder()
-                .id(postComment.getPostCommentId())
+                .postId(postComment.getPostCommentId())
                 .content(postComment.getContent())
                 .createdAt(postComment.getCreatedAt())
                 .updatedAt(postComment.getUpdatedAt())

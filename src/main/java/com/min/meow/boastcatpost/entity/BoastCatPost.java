@@ -74,7 +74,7 @@ public class BoastCatPost {
         return BoastCatPost.builder()
                 .title(createBoastCatPostRequest.getTitle())
                 .content(createBoastCatPostRequest.getContent())
-                //.user(writer)
+                .user(writer)
                 .catImageUrl(createBoastCatPostRequest.getCatImageUrl())
                 .build();
     }

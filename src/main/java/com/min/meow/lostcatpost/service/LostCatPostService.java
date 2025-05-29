@@ -9,7 +9,6 @@ import com.min.meow.lostcatpost.entity.LostCatPost;
 import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
 import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
 import com.min.meow.lostcatpost.repository.LostCatRepository;
-import com.min.meow.user.config.PrincipalUser;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -24,6 +23,8 @@ public class LostCatPostService {
 
     private final LostCatRepository lostCatRepository;
     private final UserRepository userRepository;
+
+
     // 글 전체 조회
     public Page<UpdateLostCatPostDto> getAllLostCatPosts(Pageable pageable){
 

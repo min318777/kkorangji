@@ -1,15 +1,12 @@
 package com.min.meow.lostcatpost.entity;
 
 
-import com.min.meow.global.BasePost;
 import com.min.meow.postcomment.entity.PostComment;
 import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
 import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
-import com.min.meow.user.config.PrincipalUser;
 import com.min.meow.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
-import org.apache.logging.log4j.util.Lazy;
 import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;

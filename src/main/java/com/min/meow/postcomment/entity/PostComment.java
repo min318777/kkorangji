@@ -2,7 +2,6 @@ package com.min.meow.postcomment.entity;
 
 
 import com.min.meow.boastcatpost.entity.BoastCatPost;
-import com.min.meow.global.BasePost;
 import com.min.meow.postcomment.domain.request.RegisterPostCommentRequest;
 import com.min.meow.postcomment.domain.request.UpdatePostCommentRequest;
 import com.min.meow.lostcatpost.entity.LostCatPost;

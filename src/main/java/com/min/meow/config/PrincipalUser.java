@@ -1,4 +1,4 @@
-package com.min.meow.user.config;
+package com.min.meow.config;
 
 import com.min.meow.user.entity.User;
 

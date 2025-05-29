@@ -1,4 +1,4 @@
-package com.min.meow.user.config;
+package com.min.meow.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

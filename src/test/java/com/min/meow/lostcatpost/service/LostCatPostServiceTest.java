@@ -8,7 +8,6 @@ import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
 import com.min.meow.lostcatpost.repository.LostCatRepository;
 import com.min.meow.postcomment.entity.PostComment;
 import com.min.meow.postcomment.repository.PostCommentRepository;
-import com.min.meow.user.config.PrincipalUser;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;

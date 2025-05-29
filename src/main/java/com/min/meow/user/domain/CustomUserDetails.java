@@ -1,6 +1,6 @@
 package com.min.meow.user.domain;
 
-import com.min.meow.user.config.PrincipalUser;
+import com.min.meow.config.PrincipalUser;
 import com.min.meow.user.entity.User;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -1,13 +1,9 @@
 package com.min.meow.postlike.controller;
 
 
-import com.min.meow.boastcatpost.entity.BoastCatPost;
 import com.min.meow.global.ResponseDto;
-import com.min.meow.global.exception.CustomException;
 import com.min.meow.postlike.service.PostLikeService;
-import com.min.meow.user.config.PrincipalUser;
-import com.min.meow.user.domain.CustomUserDetails;
-import com.min.meow.user.entity.User;
+import com.min.meow.config.PrincipalUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
