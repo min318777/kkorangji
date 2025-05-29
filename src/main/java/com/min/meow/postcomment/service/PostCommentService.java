@@ -41,6 +41,7 @@ public class PostCommentService {
                 .commentId(postComment.getPostCommentId())
                 .postId(lostCatPostId)
                 .message("게시글에 댓글이 달렸습니다.")
+                .isRead(false)
                 .receiverLoginId(lostCatPost.getUser().getLoginId())
                 .createdAt(LocalDateTime.now())
                 .build();

@@ -85,6 +85,7 @@ public class SecurityConfig {
                                 "/meow/lost-cat/**",
                                 "/meow/boast-cat/**",
                                 "/reissue",
+                                "/notice",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",

@@ -25,5 +25,4 @@ public class KafkaMessageProducer {
             throw new RuntimeException("Kafka 메시지 직렬화 실패", e);
         }
     }
-
 }

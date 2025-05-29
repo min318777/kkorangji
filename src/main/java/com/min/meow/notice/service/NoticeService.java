@@ -33,7 +33,6 @@ public class NoticeService {
                 .message(noticeDto.getMessage())
                 .receiverLoginId(noticeDto.getReceiverLoginId())
                 .isRead(false)
-                .message(noticeDto.getMessage())
                 .build();
 
         noticeRepository.save(notice);

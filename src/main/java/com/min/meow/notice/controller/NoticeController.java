@@ -1,6 +1,7 @@
 package com.min.meow.notice.controller;
 
 
+import com.min.meow.global.PageResponse;
 import com.min.meow.global.ResponseDto;
 import com.min.meow.notice.NoticeDto;
 import com.min.meow.notice.service.NoticeService;
@@ -27,7 +28,8 @@ public class NoticeController {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<NoticeDto> notices = noticeService.getAllNotice(pageable);
+        PageResponse<NoticeDto> pageResponse = PageResponse.from(notices);
 
-        return ResponseEntity.ok(new ResponseDto<>(true, "댓글 알림 조회 성공", notices));
+        return ResponseEntity.ok(new ResponseDto<>(true, "댓글 알림 조회 성공", pageResponse));
     }
 }

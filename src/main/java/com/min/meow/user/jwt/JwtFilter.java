@@ -92,9 +92,9 @@ public class JwtFilter extends OncePerRequestFilter {
                 || path.startsWith("/webjars")
                 || path.equals("/user/join")
                 || path.equals("/meow/lost-cat")
-                || path.equals("/meow/lost-cat/comment/1"
-
-        )){
+                || path.equals("/meow/lost-cat/comment/1")
+                || path.equals("/notice")
+        ){
             filterChain.doFilter(request, response);
             return;
         }
