@@ -1,12 +1,14 @@
 package com.min.meow.lostcatpost.entity;
 
 
-import com.min.meow.postcomment.entity.PostComment;
+import com.min.meow.comment.entity.PostComment;
+import com.min.meow.global.BasePost;
 import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
 import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
 import com.min.meow.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
@@ -14,21 +16,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class LostCatPost {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long lostCatPostId;
-
-    @Column(nullable = false)
-    private String title;
-
-    private String content;
+public class LostCatPost extends BasePost {
 
     private String catName;
 
@@ -50,30 +43,9 @@ public class LostCatPost {
 
     private Integer reward;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
     @BatchSize(size = 100)
     @OneToMany(mappedBy = "lostCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostComment> postComments = new ArrayList<>();
-
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = this.createdAt;
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-
-        this.updatedAt = LocalDateTime.now();
-    }
 
     public static LostCatPost convertToEntity(CreateLostCatPostRequest createLostCatPostRequest, User user) {
         return LostCatPost.builder()

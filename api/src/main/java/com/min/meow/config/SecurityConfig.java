@@ -6,13 +6,12 @@ import com.min.meow.user.jwt.JwtFilter;
 import com.min.meow.user.jwt.JwtUtil;
 import com.min.meow.user.jwt.CustomLoginFilter;
 import com.min.meow.user.oauth2.CustomSuccessHandler;
-import com.min.meow.user.repository.RefreshEntityRepository;
+import com.min.meow.user.repository.RefreshTokenRepository;
 import com.min.meow.user.service.CustomOauth2UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -35,7 +34,7 @@ public class SecurityConfig {
 
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JwtUtil jwtUtil;
-    private final RefreshEntityRepository refreshEntityRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     private final CustomOauth2UserService customOauth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
@@ -43,7 +42,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 
-        CustomLoginFilter customLoginFilter = new CustomLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshEntityRepository);
+        CustomLoginFilter customLoginFilter = new CustomLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshTokenRepository);
         customLoginFilter.setFilterProcessesUrl("/user/login");
         http
                 .cors((cors) -> cors.configurationSource(new CorsConfigurationSource() {
@@ -105,7 +104,7 @@ public class SecurityConfig {
         http.
                 addFilterAt(customLoginFilter, UsernamePasswordAuthenticationFilter.class);
         http.
-                addFilterBefore(new CustomLogoutFilter(refreshEntityRepository, jwtUtil), LogoutFilter.class);
+                addFilterBefore(new CustomLogoutFilter(refreshTokenRepository, jwtUtil), LogoutFilter.class);
         
         // 세션설정
         http.

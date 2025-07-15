@@ -1,7 +1,7 @@
 package com.min.meow.postlike.controller;
 
 
-import com.min.meow.global.ResponseDto;
+import com.min.meow.global.exception.ErrorResponse;
 import com.min.meow.postlike.service.PostLikeService;
 import com.min.meow.config.PrincipalUser;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ public class PostLikeController {
     public ResponseEntity<?> getLikeCount(@PathVariable Long boastCatPostId) {
 
         int count = postLikeService.getLikeCount(boastCatPostId);
-        return ResponseEntity.ok(new ResponseDto<>(true, "좋아요 수 조회 성공", count));
+        return ResponseEntity.ok(new ErrorResponse<>(true, "좋아요 수 조회 성공", count));
     }
 
     @PostMapping("/{boastCatPostId}")
@@ -33,6 +33,6 @@ public class PostLikeController {
         }else {
             message = "좋아요 취소";
         }
-        return ResponseEntity.ok(new ResponseDto<>(true, message, null));
+        return ResponseEntity.ok(new ErrorResponse<>(true, message, null));
     }
 }

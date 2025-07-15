@@ -22,6 +22,16 @@ public class CustomOAuth2User implements OAuth2User, PrincipalUser {
     }
 
     @Override
+    public String getLoginId(){
+        return user.getLoginId();
+    }
+
+    @Override
+    public User getUser() {
+        return user;
+    }
+
+    @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
 
         Collection<GrantedAuthority> collection = new ArrayList<>();
@@ -37,17 +47,19 @@ public class CustomOAuth2User implements OAuth2User, PrincipalUser {
     }
 
     @Override
-    public String getName() {
-        return user.getName();
+    public String getPassword() {
+        return "";
     }
 
-    public String getLoginId(){
-
+    @Override
+    public String getUsername() {
         return user.getLoginId();
     }
 
     @Override
-    public User getUser() {
-        return user;
+    public String getName() {
+        return user.getName();
     }
+
+
 }

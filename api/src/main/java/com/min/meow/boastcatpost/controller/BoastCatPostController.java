@@ -1,14 +1,14 @@
 package com.min.meow.boastcatpost.controller;
 
 
-import com.min.meow.boastcatpost.domain.dto.BoastCatPostDto;
-import com.min.meow.boastcatpost.domain.dto.CreateBoastCatPostDto;
-import com.min.meow.boastcatpost.domain.dto.UpdateBoastCatPostDto;
+import com.min.meow.boastcatpost.domain.dto.BoastCatPostResponse;
+import com.min.meow.boastcatpost.domain.dto.CreateBoastCatPostResponse;
+import com.min.meow.boastcatpost.domain.dto.UpdateBoastCatPostResponse;
 import com.min.meow.boastcatpost.domain.request.CreateBoastCatPostRequest;
 import com.min.meow.boastcatpost.domain.request.UpdateBoastCatPostRequest;
 import com.min.meow.boastcatpost.service.BoastCatPostService;
 import com.min.meow.global.PageResponse;
-import com.min.meow.global.ResponseDto;
+import com.min.meow.global.exception.ErrorResponse;
 import com.min.meow.config.PrincipalUser;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -31,32 +31,32 @@ public class BoastCatPostController {
                                                 @RequestParam (defaultValue = "10") int size ){
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<BoastCatPostDto> posts = boastCatPostService.getAllBoastCatPosts(pageable);
-        PageResponse<BoastCatPostDto> pageResponse = PageResponse.from(posts);
+        Page<BoastCatPostResponse> posts = boastCatPostService.getAllBoastCatPosts(pageable);
+        PageResponse<BoastCatPostResponse> pageResponse = PageResponse.from(posts);
 
-        return ResponseEntity.ok(new ResponseDto<>(true, "모든 글 조회 성공", pageResponse));
+        return ResponseEntity.ok(new ErrorResponse<>(true, "모든 글 조회 성공", pageResponse));
     }
     // 글 생성
     @PostMapping
     public ResponseEntity<?> createBoastCatPost(@RequestBody @Valid CreateBoastCatPostRequest createBoastCatPostRequest, @AuthenticationPrincipal PrincipalUser user){
 
-        CreateBoastCatPostDto post = boastCatPostService.createBoastCatPost(createBoastCatPostRequest, user.getUser().getLoginId());
-        return ResponseEntity.ok(new ResponseDto<>(true, "글 생성 성공", post));
+        CreateBoastCatPostResponse post = boastCatPostService.createBoastCatPost(createBoastCatPostRequest, user.getUser().getLoginId());
+        return ResponseEntity.ok(new ErrorResponse<>(true, "글 생성 성공", post));
     }
 
     // 글 수정
     @PutMapping("/{boastCatPostId}")
     public ResponseEntity<?> updateBoastCatPost(@RequestBody @Valid UpdateBoastCatPostRequest updateBoastCatPostRequest, @PathVariable Long boastCatPostId, @AuthenticationPrincipal PrincipalUser user){
 
-        UpdateBoastCatPostDto post = boastCatPostService.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId, user.getUser().getLoginId());
-        return ResponseEntity.ok(new ResponseDto<>(true, "글 수정 성공", post));
+        UpdateBoastCatPostResponse post = boastCatPostService.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId, user.getUser().getLoginId());
+        return ResponseEntity.ok(new ErrorResponse<>(true, "글 수정 성공", post));
     }
 
     // 글 삭제
     @DeleteMapping("/{boastCatPostId}")
     public ResponseEntity<?> deleteBoastCatPost(@PathVariable Long boastCatPostId, @AuthenticationPrincipal PrincipalUser user){
 
-        boastCatPostService.deleteBoastCatPost(boastCatPostId, user.getUser().getLoginId());
-        return ResponseEntity.ok(new ResponseDto<>(true, "글 삭제 성공", null));
+        boastCatPostService.deleteBoastCatPost(boastCatPostId, user.getUser().getLoginId(), user.getUser().getPassword());
+        return ResponseEntity.ok(new ErrorResponse<>(true, "글 삭제 성공", null));
     }
 }

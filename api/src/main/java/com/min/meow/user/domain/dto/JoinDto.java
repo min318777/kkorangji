@@ -28,7 +28,7 @@ public class JoinDto {
     public static JoinDto convertToDto(User user){
 
         return JoinDto.builder()
-                .userId(user.getUserId())
+                .userId(user.getId())
                 .loginId(user.getLoginId())
                 .name(user.getName())
                 .email(user.getEmail())

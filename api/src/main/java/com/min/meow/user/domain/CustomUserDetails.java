@@ -24,7 +24,6 @@ public class CustomUserDetails implements UserDetails, PrincipalUser {
         collection.add(new GrantedAuthority() {
             @Override
             public String getAuthority() {
-
                 return user.getRole().name();
             }
         });
@@ -42,26 +41,6 @@ public class CustomUserDetails implements UserDetails, PrincipalUser {
     }
 
     @Override
-    public boolean isAccountNonExpired() {
-        return UserDetails.super.isAccountNonExpired();
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return UserDetails.super.isCredentialsNonExpired();
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
-    }
-
-    @Override
     public String getLoginId() {
         return user.getLoginId();
     }
@@ -70,4 +49,25 @@ public class CustomUserDetails implements UserDetails, PrincipalUser {
     public User getUser() {
         return user;
     }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
 }

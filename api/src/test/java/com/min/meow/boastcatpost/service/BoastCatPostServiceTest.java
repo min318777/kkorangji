@@ -1,8 +1,8 @@
 package com.min.meow.boastcatpost.service;
 
-import com.min.meow.boastcatpost.domain.dto.BoastCatPostDto;
-import com.min.meow.boastcatpost.domain.dto.CreateBoastCatPostDto;
-import com.min.meow.boastcatpost.domain.dto.UpdateBoastCatPostDto;
+import com.min.meow.boastcatpost.domain.dto.BoastCatPostResponse;
+import com.min.meow.boastcatpost.domain.dto.CreateBoastCatPostResponse;
+import com.min.meow.boastcatpost.domain.dto.UpdateBoastCatPostResponse;
 import com.min.meow.boastcatpost.domain.request.CreateBoastCatPostRequest;
 import com.min.meow.boastcatpost.domain.request.UpdateBoastCatPostRequest;
 import com.min.meow.boastcatpost.entity.BoastCatPost;
@@ -46,7 +46,7 @@ class BoastCatPostServiceTest {
         when(boastCatPostRepository.findAll(pageable)).thenReturn(mockPage);
 
         // when
-        Page<BoastCatPostDto> result = boastCatPostService.getAllBoastCatPosts(pageable);
+        Page<BoastCatPostResponse> result = boastCatPostService.getAllBoastCatPosts(pageable);
 
         // then
         assertThat(result.getContent().size()).isEqualTo(2);
@@ -69,7 +69,7 @@ class BoastCatPostServiceTest {
         when(boastCatPostRepository.save(any(BoastCatPost.class))).thenReturn(boastCatPost);
 
         // when
-        CreateBoastCatPostDto result = boastCatPostService.createBoastCatPost(createBoastCatPostRequest);
+        CreateBoastCatPostResponse result = boastCatPostService.createBoastCatPost(createBoastCatPostRequest);
 
         // then
         assertThat(result.getTitle()).isEqualTo(boastCatPost.getTitle());
@@ -93,7 +93,7 @@ class BoastCatPostServiceTest {
         when(boastCatPostRepository.findById(boastCatPostId)).thenReturn(Optional.of(boastCatPost));
 
         // when
-        UpdateBoastCatPostDto result = boastCatPostService.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId);
+        UpdateBoastCatPostResponse result = boastCatPostService.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId);
 
         // then
         assertThat(boastCatPost.getTitle()).isEqualTo(result.getTitle());
@@ -107,9 +107,11 @@ class BoastCatPostServiceTest {
     void deleteBoastCatPost(){
         // given
         Long boastCatPostId = 1L;
+        String loginId = "loginId";
+        String password = "password";
         when(boastCatPostRepository.existsById(boastCatPostId)).thenReturn(true);
         // when
-        boastCatPostService.deleteBoastCatPost(boastCatPostId);
+        boastCatPostService.deleteBoastCatPost(boastCatPostId, loginId, password);
 
         // then
         verify(boastCatPostRepository, times(1)).existsById(boastCatPostId);

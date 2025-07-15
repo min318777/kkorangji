@@ -20,13 +20,9 @@ public class CustomUserDetailService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
 
-        User user = userRepository.findByLoginId(loginId);
+        User user = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
-        if(user == null){
-            throw new CustomException(ErrorCode.NOT_FOUND_USER);
-
-            //throw new UsernameNotFoundException("해당 유저가 없습니다"); => Custom예외가 Authentication예외를 상속하지않기때문에 로그인실패핸들러에서 잡히지 않을수있따.
-        }
         return new CustomUserDetails(user);
     }
 }

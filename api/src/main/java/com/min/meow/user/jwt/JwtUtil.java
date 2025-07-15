@@ -21,11 +21,14 @@ public class JwtUtil {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
+    public String getUserId(String token){
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getSubject();
+    }
+
     public String getLoginId(String token){
 
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("loginId", String.class);
     }
-
 
     public Role getRole(String token){
         String roleString = Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("role", String.class);
@@ -50,6 +53,18 @@ public class JwtUtil {
                 .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))
+                .signWith(secretKey)
+                .compact();
+    }
+
+    public String createRefreshToken(Long userId, Long expireMs, Token token){
+        return Jwts.builder()
+                .claims()
+                .subject(String.valueOf(userId))
+                .add("token", token.name())
+                .and()
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + expireMs))
                 .signWith(secretKey)
                 .compact();
     }

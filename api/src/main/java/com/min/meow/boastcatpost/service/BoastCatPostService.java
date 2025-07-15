@@ -1,9 +1,9 @@
 package com.min.meow.boastcatpost.service;
 
 
-import com.min.meow.boastcatpost.domain.dto.BoastCatPostDto;
-import com.min.meow.boastcatpost.domain.dto.CreateBoastCatPostDto;
-import com.min.meow.boastcatpost.domain.dto.UpdateBoastCatPostDto;
+import com.min.meow.boastcatpost.domain.dto.BoastCatPostResponse;
+import com.min.meow.boastcatpost.domain.dto.CreateBoastCatPostResponse;
+import com.min.meow.boastcatpost.domain.dto.UpdateBoastCatPostResponse;
 import com.min.meow.boastcatpost.domain.request.CreateBoastCatPostRequest;
 import com.min.meow.boastcatpost.domain.request.UpdateBoastCatPostRequest;
 import com.min.meow.boastcatpost.entity.BoastCatPost;
@@ -25,26 +25,31 @@ public class BoastCatPostService {
     private final UserRepository userRepository;
 
     // 모든 글 조회
-    public Page<BoastCatPostDto> getAllBoastCatPosts(Pageable pageable){
+    public Page<BoastCatPostResponse> getAllBoastCatPosts(Pageable pageable){
 
-        return boastCatPostRepository.findAll(pageable).map(BoastCatPostDto::convertToDto);
+        return boastCatPostRepository.findAll(pageable).map(BoastCatPostResponse::convertToDto);
     }
 
     // 글 작성
     @Transactional
-    public CreateBoastCatPostDto createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest, String loginId){
+    public CreateBoastCatPostResponse createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest, String loginId){
 
-        User writer = userRepository.findByLoginId(loginId);
+        User writer = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
+
         BoastCatPost boastCatPost = BoastCatPost.convertToEntity(createBoastCatPostRequest, writer);
 
         boastCatPostRepository.save(boastCatPost);
 
-        return CreateBoastCatPostDto.convertToDto(boastCatPost);
+        return CreateBoastCatPostResponse.convertToDto(boastCatPost);
     }
 
     // 글 수정
     @Transactional
-    public UpdateBoastCatPostDto updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId, String loginId){
+    public UpdateBoastCatPostResponse updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId, String loginId){
+
+        User writer = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
@@ -53,12 +58,15 @@ public class BoastCatPostService {
         }
         boastCatPost.update(updateBoastCatPostRequest);
 
-        return UpdateBoastCatPostDto.convertToDto(boastCatPost);
+        return UpdateBoastCatPostResponse.convertToDto(boastCatPost);
     }
 
     // 글 삭제
     @Transactional
-    public void deleteBoastCatPost(Long boastCatPostId, String loginId){
+    public void deleteBoastCatPost(Long boastCatPostId, String loginId, String password){
+
+        User writer = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));

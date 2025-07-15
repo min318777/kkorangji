@@ -13,7 +13,7 @@ import java.util.Optional;
 @Repository
 public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
 
-    @Query("SELECT pl FROM PostLike pl WHERE pl.boastCatPost.boastCatPostId = :boastCatPostId AND pl.user.loginId = :loginId")
+    @Query("SELECT pl FROM PostLike pl WHERE pl.boastCatPost.id = :boastCatPostId AND pl.user.loginId = :loginId")
     Optional<PostLike> findByBoastCatPostIdAndLoginId(@Param("boastCatPostId") Long boastCatPostId, @Param("loginId") String loginId);
 
     //Optional<PostLike> findByBoastCatPostIdAndLoginId(Long boastCatPostId, String loginId);

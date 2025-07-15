@@ -1,11 +1,44 @@
 package com.min.meow.global;
 
-import com.min.meow.postcomment.entity.PostComment;
+import com.min.meow.user.entity.User;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-public interface BasePost {
+import java.time.LocalDateTime;
 
-    Long getId();
+@MappedSuperclass
+@Getter
+@NoArgsConstructor
+@SuperBuilder
+public abstract class BasePost {
 
-    void addComment(PostComment postComment);
-    void removeComment(PostComment postComment);
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    protected Long id;
+
+    @Column(nullable = false)
+    protected String title;
+
+    protected String content;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    protected User user;
+
+    protected LocalDateTime createdAt;
+    protected LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = this.createdAt;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
 }

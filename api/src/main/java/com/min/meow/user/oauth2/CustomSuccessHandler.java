@@ -1,34 +1,36 @@
 package com.min.meow.user.oauth2;
 
 import com.min.meow.global.Token;
+import com.min.meow.global.exception.CustomException;
+import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.user.domain.CustomOAuth2User;
-import com.min.meow.user.entity.RefreshEntity;
+import com.min.meow.user.entity.RefreshToken;
+import com.min.meow.user.entity.User;
 import com.min.meow.user.jwt.JwtUtil;
-import com.min.meow.user.repository.RefreshEntityRepository;
+import com.min.meow.user.repository.RefreshTokenRepository;
+import com.min.meow.user.repository.UserRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
+import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
+    private static final long REFRESH_TOKEN_EXPIRATION = 7 * 24 * 60 * 60 * 1000L;
+
+
     private final JwtUtil jwtUtil;
-    private final RefreshEntityRepository refreshEntityRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final UserRepository userRepository;
 
     //private final OAuth2AuthorizedClientService authorizedClientService;
 
@@ -40,17 +42,14 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         // OAuth2User
         CustomOAuth2User customUserDetails = (CustomOAuth2User) authentication.getPrincipal();
         String loginId = customUserDetails.getLoginId();
-        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
-        GrantedAuthority auth = iterator.next();
-        String role = auth.getAuthority();
 
+        User user = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
+        Long userId = user.getId();
 
+        String refreshToken = jwtUtil.createRefreshToken(userId, REFRESH_TOKEN_EXPIRATION,Token.REFRESH_TOKEN);
 
-        String accessToken = jwtUtil.createJwt(Token.ACCESS_TOKEN, loginId, role, 600000L);
-        String refreshToken = jwtUtil.createJwt(Token.REFRESH_TOKEN, loginId, role, 86400000L);
-
-        addRefreshEntity(loginId, refreshToken, 86400000L);
+        addRefreshToken(loginId, userId, refreshToken);
 
         response.addCookie(createCookie("refresh", refreshToken));
         response.sendRedirect("http://localhost:3000/"); // /reissue를 통해 리프레쉬토큰을 가지고 액세스토큰을 헤더에 담아 재응답 받는다.
@@ -79,14 +78,14 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         return cookie;
     }
 
-    private void addRefreshEntity(String loginId, String refresh, Long expiredMs) {
+    private void addRefreshToken(String loginId, Long userId, String refresh) {
 
-        Date date = new Date(System.currentTimeMillis() + expiredMs);
-        RefreshEntity refreshEntity = new RefreshEntity();
-        refreshEntity.setLoginId(loginId);
-        refreshEntity.setRefreshToken(refresh);
-        refreshEntity.setExpiration(date.toString());
-
-        refreshEntityRepository.save(refreshEntity);
+        RefreshToken refreshToken = RefreshToken.builder()
+                .loginId(loginId)
+                .refreshToken(refresh)
+                .userId(userId)
+                .expiration(LocalDateTime.now().plusSeconds(REFRESH_TOKEN_EXPIRATION / 1000))
+                .build();
+        refreshTokenRepository.save(refreshToken);
     }
 }

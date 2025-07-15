@@ -2,13 +2,13 @@ package com.min.meow.lostcatpost.controller;
 
 
 import com.min.meow.global.PageResponse;
-import com.min.meow.global.ResponseDto;
-import com.min.meow.lostcatpost.domain.dto.CreateLostCatPostDto;
-import com.min.meow.lostcatpost.domain.dto.GetLostCatPostDto;
-import com.min.meow.lostcatpost.domain.dto.UpdateLostCatPostDto;
+import com.min.meow.global.exception.CustomException;
+import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.lostcatpost.domain.dto.CreateLostCatPostResponse;
+import com.min.meow.lostcatpost.domain.dto.GetLostCatPostResponse;
+import com.min.meow.lostcatpost.domain.dto.UpdateLostCatPostResponse;
 import com.min.meow.lostcatpost.domain.request.CreateLostCatPostRequest;
 import com.min.meow.lostcatpost.domain.request.UpdateLostCatPostRequest;
-import com.min.meow.lostcatpost.repository.LostCatRepository;
 import com.min.meow.lostcatpost.service.LostCatPostService;
 import com.min.meow.config.PrincipalUser;
 import jakarta.validation.Valid;
@@ -27,18 +27,17 @@ import org.springframework.web.bind.annotation.*;
 public class LostCatPostController {
 
     private final LostCatPostService lostCatPostService;
-    private final LostCatRepository lostCatRepository;
 
     // 모든 게시물 조회
     @GetMapping
-    public ResponseEntity<?> getAllLostCatPosts(@RequestParam (defaultValue = "0") int page,
-                                                @RequestParam (defaultValue = "10") int size) {
+    public ResponseEntity<PageResponse<UpdateLostCatPostResponse>> getAllLostCatPosts(@RequestParam (defaultValue = "0") int page,
+                                                                                      @RequestParam (defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<UpdateLostCatPostDto> posts = lostCatPostService.getAllLostCatPosts(pageable);
-        PageResponse<UpdateLostCatPostDto> pageResponse = PageResponse.from(posts);
+        Page<UpdateLostCatPostResponse> posts = lostCatPostService.getAllLostCatPosts(pageable);
+        PageResponse<UpdateLostCatPostResponse> pageResponse = PageResponse.from(posts);
 
-        return ResponseEntity.ok(new ResponseDto<>(true, "모든 글 조회 성공", pageResponse));
+        return ResponseEntity.ok(pageResponse);
 
         //n+1 해결->페치 조인 하지만 페이징안됨
         //return ResponseEntity.ok(new ResponseDto<>(true, "모든 글 조회 성공", lostCatRepository.findAllFetch(pageable).stream().map(UpdateLostCatPostDto::convertToDto)));
@@ -46,40 +45,43 @@ public class LostCatPostController {
 
     // 게시물 상세 조회
     @GetMapping("/{lostCatPostId}")
-    public ResponseEntity<?> getLostCatPostDetail(@PathVariable Long lostCatPostId){
+    public ResponseEntity<GetLostCatPostResponse> getLostCatPostDetail(@PathVariable Long lostCatPostId){
 
-        GetLostCatPostDto lostCatPostDto = lostCatPostService.getLostCatPost(lostCatPostId);
-        return ResponseEntity.ok(new ResponseDto<>(true, "상세 조회 성공", lostCatPostDto));
+        GetLostCatPostResponse lostCatPostDto = lostCatPostService.getLostCatPost(lostCatPostId);
+        return ResponseEntity.ok(lostCatPostDto);
     }
 
     // 글 생성
     @PostMapping("/create")
-    public ResponseEntity<?> createLostCatPost(@RequestBody @Valid CreateLostCatPostRequest createLostCatPostRequest,
-                                               BindingResult bindingResult, @AuthenticationPrincipal PrincipalUser user){
+    public ResponseEntity<CreateLostCatPostResponse> createLostCatPost(@RequestBody @Valid CreateLostCatPostRequest createLostCatPostRequest,
+                                                                       BindingResult bindingResult, @AuthenticationPrincipal PrincipalUser user){
 
-        CreateLostCatPostDto post = lostCatPostService.createLostCatPost(createLostCatPostRequest, user.getUser().getLoginId());
+        if(user == null && user.getUser() == null){
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+        CreateLostCatPostResponse post = lostCatPostService.createLostCatPost(createLostCatPostRequest, user.getUser().getLoginId());
 
-        return ResponseEntity.ok(new ResponseDto<>(true, "글 생성 성공", post));
+        return ResponseEntity.ok(post);
     }
 
     // 글 수정
     @PutMapping("/update/{lostCatPostId}")
-    public ResponseEntity<?> updateLostCatPost(@PathVariable Long lostCatPostId,
-                                               @RequestBody @Valid UpdateLostCatPostRequest updateLostCatPostRequest,
-                                               BindingResult bindingResult, @AuthenticationPrincipal PrincipalUser user){
+    public ResponseEntity<UpdateLostCatPostResponse> updateLostCatPost(@PathVariable Long lostCatPostId,
+                                                                       @RequestBody @Valid UpdateLostCatPostRequest updateLostCatPostRequest,
+                                                                       BindingResult bindingResult, @AuthenticationPrincipal PrincipalUser user){
 
-        UpdateLostCatPostDto post = lostCatPostService.updateLostCatPost(lostCatPostId, updateLostCatPostRequest, user.getUser().getLoginId());
-        return ResponseEntity.ok(new ResponseDto<>(true, "글 수정 성공", post));
+        UpdateLostCatPostResponse post = lostCatPostService.updateLostCatPost(lostCatPostId, updateLostCatPostRequest, user.getUser().getLoginId());
+        return ResponseEntity.ok(post);
 
     }
 
     // 글 삭제
     @DeleteMapping("/delete/{lostCatPostId}")
-    public ResponseEntity<?> deleteLostCatPost(@PathVariable Long lostCatPostId, @AuthenticationPrincipal PrincipalUser user){
+    public ResponseEntity<Void> deleteLostCatPost(@PathVariable Long lostCatPostId, @AuthenticationPrincipal PrincipalUser user){
 
-        lostCatPostService.deleteLostCatPost(lostCatPostId, user.getUser().getLoginId());
+        lostCatPostService.deleteLostCatPost(lostCatPostId, user.getUser().getLoginId(), user.getUser().getPassword());
 
-        return ResponseEntity.ok(new ResponseDto<>(true, "글 삭제 성공", null));
+        return ResponseEntity.noContent().build();
     }
 
 

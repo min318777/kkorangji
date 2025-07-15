@@ -3,55 +3,31 @@ package com.min.meow.boastcatpost.entity;
 
 import com.min.meow.boastcatpost.domain.request.CreateBoastCatPostRequest;
 import com.min.meow.boastcatpost.domain.request.UpdateBoastCatPostRequest;
+import com.min.meow.global.BasePost;
 import com.min.meow.postlike.entity.PostLike;
 import com.min.meow.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-public class BoastCatPost {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long boastCatPostId;
-
-    private String title;
-
-    private String content;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+public class BoastCatPost extends BasePost {
 
     private String catImageUrl;
 
     @OneToMany
     private List<PostLike> postLikeList = new ArrayList<>();
 
-    //private List<PostCommentDto> postCommentDtos;
-
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    public void prePersist(){
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = this.createdAt;
-    }
-    @PreUpdate
-    public void preUpdate(){
-        this.updatedAt = LocalDateTime.now();
-    }
+    //private List<commentDto> commentDtos;
 
     public void update(UpdateBoastCatPostRequest updateBoastCatPostRequest){
         if (updateBoastCatPostRequest.getTitle() != null) {

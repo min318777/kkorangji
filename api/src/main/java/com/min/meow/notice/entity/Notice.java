@@ -2,7 +2,6 @@ package com.min.meow.notice.entity;
 
 
 import com.min.kafka.dto.NotificationDto;
-import com.min.meow.notice.NoticeDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,7 +19,7 @@ public class Notice {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long noticeId;
+    private Long id;
 
     private Long commentId;
 

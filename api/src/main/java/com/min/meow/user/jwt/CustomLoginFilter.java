@@ -2,9 +2,10 @@ package com.min.meow.user.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.min.meow.global.Token;
+import com.min.meow.user.domain.CustomUserDetails;
 import com.min.meow.user.domain.request.LoginRequest;
-import com.min.meow.user.entity.RefreshEntity;
-import com.min.meow.user.repository.RefreshEntityRepository;
+import com.min.meow.user.entity.RefreshToken;
+import com.min.meow.user.repository.RefreshTokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -22,16 +23,17 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 
 @RequiredArgsConstructor
 public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
+    private static final long REFRESH_TOKEN_EXPIRATION = 7 * 24 * 60 * 60 * 1000L;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
-    private final RefreshEntityRepository refreshEntityRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
@@ -53,7 +55,11 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
         // 유저정보
-        String loginId = authentication.getName();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        String loginId = userDetails.getUsername();
+        Long userId = userDetails.getUser().getId();
+
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
         GrantedAuthority auth = iterator.next();
@@ -61,10 +67,10 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
         // 토큰 생성
         String accessToken = jwtUtil.createJwt(Token.ACCESS_TOKEN, loginId, role, 600000L);
-        String refreshToken = jwtUtil.createJwt(Token.REFRESH_TOKEN, loginId, role, 86400000L);
+        String refreshToken = jwtUtil.createRefreshToken(userId, REFRESH_TOKEN_EXPIRATION, Token.REFRESH_TOKEN);
 
         // 리프레쉬토큰 저장
-        addRefreshEntity(loginId, refreshToken, 864000000L);
+        addRefreshToken(loginId, userId, refreshToken);
 
         // 응답 설정
         response.setHeader("Authorization", "Bearer " + accessToken);
@@ -112,14 +118,14 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         return cookie;
     }
 
-    private void addRefreshEntity(String loginId, String refresh, Long expiredMs) {
+    private void addRefreshToken(String loginId, Long userId, String refresh) {
 
-        Date date = new Date(System.currentTimeMillis() + expiredMs);
-        RefreshEntity refreshEntity = new RefreshEntity();
-        refreshEntity.setLoginId(loginId);
-        refreshEntity.setRefreshToken(refresh);
-        refreshEntity.setExpiration(date.toString());
-
-        refreshEntityRepository.save(refreshEntity);
+        RefreshToken refreshToken = RefreshToken.builder()
+                .loginId(loginId)
+                .refreshToken(refresh)
+                .userId(userId)
+                .expiration(LocalDateTime.now().plusSeconds(REFRESH_TOKEN_EXPIRATION / 1000))
+                .build();
+        refreshTokenRepository.save(refreshToken);
     }
 }

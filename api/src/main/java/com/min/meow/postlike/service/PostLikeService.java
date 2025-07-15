@@ -36,7 +36,9 @@ public class PostLikeService {
 
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-        User persistUser = userRepository.findByLoginId(user.getLoginId());
+
+        User persistUser = userRepository.findByLoginId(user.getLoginId())
+                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
         Optional<PostLike> postLike = postLikeRepository.findByBoastCatPostIdAndLoginId(boastCatPostId, user.getLoginId());
 

@@ -3,7 +3,7 @@ package com.min.meow.user.jwt;
 import com.min.meow.global.Token;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
-import com.min.meow.user.repository.RefreshEntityRepository;
+import com.min.meow.user.repository.RefreshTokenRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.*;
 import jakarta.servlet.http.Cookie;
@@ -15,7 +15,7 @@ import java.io.IOException;
 
 @RequiredArgsConstructor
 public class CustomLogoutFilter extends GenericFilter {
-    private final RefreshEntityRepository refreshEntityRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtil jwtUtil;
 
     @Override
@@ -76,7 +76,7 @@ public class CustomLogoutFilter extends GenericFilter {
         }
 
         //DB에 저장되어 있는지 확인
-        boolean isExist = refreshEntityRepository.existsByRefreshToken(refresh);
+        boolean isExist = refreshTokenRepository.existsByRefreshToken(refresh);
         if (!isExist) {
             throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
 
@@ -85,7 +85,7 @@ public class CustomLogoutFilter extends GenericFilter {
 
         //로그아웃 진행
         //Refresh 토큰 DB에서 제거
-        refreshEntityRepository.deleteByRefreshToken(refresh);
+        refreshTokenRepository.deleteByRefreshToken(refresh);
 
         //Refresh 토큰 Cookie 값 0
         Cookie cookie = new Cookie("refresh", null);

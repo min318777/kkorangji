@@ -2,7 +2,7 @@ package com.min.meow.notice.controller;
 
 
 import com.min.meow.global.PageResponse;
-import com.min.meow.global.ResponseDto;
+import com.min.meow.global.exception.ErrorResponse;
 import com.min.meow.notice.NoticeDto;
 import com.min.meow.notice.service.NoticeService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +30,6 @@ public class NoticeController {
         Page<NoticeDto> notices = noticeService.getAllNotice(pageable);
         PageResponse<NoticeDto> pageResponse = PageResponse.from(notices);
 
-        return ResponseEntity.ok(new ResponseDto<>(true, "댓글 알림 조회 성공", pageResponse));
+        return ResponseEntity.ok(new ErrorResponse<>(true, "댓글 알림 조회 성공", pageResponse));
     }
 }

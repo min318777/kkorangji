@@ -10,15 +10,14 @@ import com.min.meow.user.domain.dto.UserDto;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -80,8 +79,6 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        System.out.println(oAuth2User);
-
         // 구글에서 온값인지, 네이버에서 온값인지 구분하는 id
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
@@ -97,16 +94,16 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
 
         String loginId = oAuth2Response.getProvider() + " " + oAuth2Response.getProviderId();
         String existEmail = oAuth2Response.getEmail();
-
         User emailConflictUser = userRepository.findByEmail(existEmail);
+
         if (emailConflictUser != null && !emailConflictUser.getLoginId().equals(loginId)) {
             throw new OAuth2AuthenticationException("이미 동일한 이메일로 가입된 계정이 존재합니다.");
             //throw new CustomException(ErrorCode.ALREADY_EXISTING_EMAIL);
         }
 
-        User existUser = userRepository.findByLoginId(loginId);
+        Optional<User> existUser = userRepository.findByLoginId(loginId);
 
-        if(existUser == null){
+        if(existUser.isEmpty()){
             User user = User.builder()
                     .loginId(loginId)
                     .email(oAuth2Response.getEmail())
@@ -126,16 +123,17 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
             return new CustomOAuth2User(user);
         }else{
 
-            existUser.setEmail(oAuth2Response.getEmail());
-            existUser.setName(oAuth2Response.getName());
-            existUser.setLastLoginAt(LocalDateTime.now());
-            userRepository.save(existUser);
+            existUser.get().setEmail(oAuth2Response.getEmail());
+            existUser.get().setName(oAuth2Response.getName());
+            existUser.get().setLastLoginAt(LocalDateTime.now());
+            userRepository.save(existUser.get());
+
             UserDto userDto = new UserDto();
             userDto.setRole("ROLE_USER");
             userDto.setName(oAuth2Response.getName());
-            userDto.setLoginId(existUser.getLoginId());
+            userDto.setLoginId(existUser.get().getLoginId());
 
-            return new CustomOAuth2User(existUser);
+            return new CustomOAuth2User(existUser.get());
         }
     }
 
