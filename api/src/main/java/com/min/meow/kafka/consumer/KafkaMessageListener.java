@@ -1,8 +1,8 @@
 package com.min.meow.kafka.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.min.meow.notice.NoticeDto;
-import com.min.meow.notice.service.NoticeService;
+import com.min.meow.notification.NotificationDto;
+import com.min.meow.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -11,16 +11,16 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class KafkaMessageListener {
 
-    private final NoticeService noticeService;
+    private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "lost-cat-topic", groupId = "meow")
     public void listen(String message) {
         try {
-            NoticeDto noticeDto = objectMapper.readValue(message, NoticeDto.class);
+            NotificationDto notificationDto = objectMapper.readValue(message, NotificationDto.class);
 
-            noticeService.saveNotice(noticeDto);
-            System.out.println("알림 수신: " + noticeDto);
+            notificationService.saveNotice(notificationDto);
+            System.out.println("알림 수신: " + notificationDto);
 
         } catch (Exception e) {
             System.err.println("Kafka 메시지 역직렬화 실패: " + e.getMessage());

@@ -13,15 +13,15 @@ import lombok.Setter;
 public class JoinRequest {
 
     @NotBlank(message = "아이디를 입력해 주세요.")
-    @Size(min = 8, max = 20, message = "최소 8자 이상, 최대 20자 이하로 입력해 주세요.")
+   // @Size(min = 8, max = 20, message = "최소 8자 이상, 최대 20자 이하로 입력해 주세요.")
     private String loginId;
 
     @NotBlank(message = "비밀번호를 입력해 주세요.")
-    @Size(min = 8, max = 20, message = "최소 8자 이상, 최대 20자 이하로 입력해 주세요.")
+    //@Size(min = 8, max = 20, message = "최소 8자 이상, 최대 20자 이하로 입력해 주세요.")
     private String password;
 
     @NotBlank(message = "비밀번호를 한번 더 입력해 주세요.")
-    @Size(min = 8, max = 20, message = "최소 8자 이상, 최대 20자 이하로 입력해 주세요.")
+    //@Size(min = 8, max = 20, message = "최소 8자 이상, 최대 20자 이하로 입력해 주세요.")
     private String passwordConfirm;
 
     @NotBlank(message = "이메일을 입력해 주세요.")

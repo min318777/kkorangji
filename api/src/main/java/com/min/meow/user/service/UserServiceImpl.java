@@ -35,13 +35,14 @@ public class UserServiceImpl implements UserService{
         if (userRepository.existsByEmail(joinRequest.getEmail())) {
             throw new CustomException(ErrorCode.ALREADY_EXISTING_EMAIL);
         }
-        if(userRepository.existsByLoginId(joinRequest.getLoginId())){
+        if (userRepository.existsByLoginId(joinRequest.getLoginId())){
             throw new CustomException(ErrorCode.ALREADY_EXISTING_USER);
         }
 
         String encodedPassword = bCryptPasswordEncoder.encode(joinRequest.getPassword());
         User user = User.convertToEntity(joinRequest);
         user.setPassword(encodedPassword);
+        user.setRole(joinRequest.getRole());
         userRepository.save(user);
 
         return JoinDto.convertToDto(user);

@@ -21,11 +21,13 @@ public abstract class BasePost {
     @Column(nullable = false)
     protected String title;
 
-    protected String content;
+    protected String contents;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     protected User user;
+
+    protected int view;
 
     protected LocalDateTime createdAt;
     protected LocalDateTime updatedAt;

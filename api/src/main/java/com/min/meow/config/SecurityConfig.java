@@ -43,7 +43,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 
         CustomLoginFilter customLoginFilter = new CustomLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshTokenRepository);
-        customLoginFilter.setFilterProcessesUrl("/user/login");
+        customLoginFilter.setFilterProcessesUrl("/api/users/login");
         http
                 .cors((cors) -> cors.configurationSource(new CorsConfigurationSource() {
                     @Override
@@ -55,7 +55,6 @@ public class SecurityConfig {
                         corsConfiguration.setAllowCredentials(true);
                         corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
                         corsConfiguration.setMaxAge(3600L);
-
                         corsConfiguration.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
 
                         return corsConfiguration;
@@ -77,14 +76,13 @@ public class SecurityConfig {
                         .successHandler(customSuccessHandler)
                 );
 
-        // 경로별 인가 작업
         http.
                 authorizeHttpRequests((auth) -> auth
-                        .requestMatchers( "/user/**",
-                                "/meow/lost-cat/**",
-                                "/meow/boast-cat/**",
-                                "/reissue",
-                                "/notice",
+                        .requestMatchers( "api/users/**",
+                                "api/meow/lost-cat/**",
+                                "api/meow/boast-cat/**",
+                                "api/user/reissue",
+                                "api/notice",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
@@ -105,8 +103,6 @@ public class SecurityConfig {
                 addFilterAt(customLoginFilter, UsernamePasswordAuthenticationFilter.class);
         http.
                 addFilterBefore(new CustomLogoutFilter(refreshTokenRepository, jwtUtil), LogoutFilter.class);
-        
-        // 세션설정
         http.
                 sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -116,13 +112,11 @@ public class SecurityConfig {
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder(){
-
         return new BCryptPasswordEncoder();
     }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception{
-
         return authenticationConfiguration.getAuthenticationManager();
     }
 }

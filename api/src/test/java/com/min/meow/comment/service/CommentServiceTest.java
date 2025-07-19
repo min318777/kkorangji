@@ -1,13 +1,14 @@
 package com.min.meow.comment.service;
 
-import com.min.meow.comment.domain.dto.RegisterPostCommentDto;
-import com.min.meow.comment.domain.dto.UpdatePostCommentDto;
-import com.min.meow.comment.domain.request.RegisterPostCommentRequest;
-import com.min.meow.comment.domain.request.UpdatePostCommentRequest;
-import com.min.meow.comment.entity.PostComment;
-import com.min.meow.comment.repository.CommentRepository;
-import com.min.meow.lostcatpost.entity.LostCatPost;
-import com.min.meow.lostcatpost.repository.LostCatRepository;
+import com.min.meow.post.comment.domain.response.RegisterCommentDto;
+import com.min.meow.post.comment.domain.response.UpdateCommentDto;
+import com.min.meow.post.comment.domain.request.RegisterCommentRequest;
+import com.min.meow.post.comment.domain.request.UpdateCommentRequest;
+import com.min.meow.post.comment.entity.Comment;
+import com.min.meow.post.comment.repository.CommentRepository;
+import com.min.meow.post.comment.service.CommentService;
+import com.min.meow.post.lostcatpost.entity.LostCatPost;
+import com.min.meow.post.lostcatpost.repository.LostCatRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,17 +38,17 @@ class CommentServiceTest {
     @DisplayName("댓글을 작성한다.")
     public void registerLostCatPostComment(){
         // given
-        RegisterPostCommentRequest registerPostCommentRequest = RegisterPostCommentRequest.builder()
+        RegisterCommentRequest registerCommentRequest = RegisterCommentRequest.builder()
                 .content("고양이를 발견했어요.")
                 .build();
         LostCatPost lostCatPost = LostCatPost.builder()
                 .id(1L)
-                .content("고양이를 찾아요.")
+                .contents("고양이를 찾아요.")
                 .build();
-        PostComment postComment = PostComment.convertToEntity(registerPostCommentRequest, lostCatPost);
+        Comment comment = Comment.convertToEntity(registerCommentRequest, lostCatPost);
         when(lostCatRepository.findById(1L)).thenReturn(Optional.of(lostCatPost));
         // when
-        RegisterPostCommentDto result = commentService.registerLostCatPostComment(registerPostCommentRequest, lostCatPost.getId());
+        RegisterCommentDto result = commentService.registerLostCatPostComment(registerCommentRequest, lostCatPost.getId());
         // then
         assertThat(result).isNotNull();
         assertThat(result.getLostCatPostId()).isEqualTo(1L);
@@ -64,19 +65,19 @@ class CommentServiceTest {
                 .title("고양이 찾기 글1")
                 .build();
 
-        PostComment postComment = PostComment.builder()
+        Comment comment = Comment.builder()
                 .lostCatPost(lostCatPost)
                 .content("고양이를 발견했어요.")
                 .build();
 
-        UpdatePostCommentRequest updatePostCommentRequest = UpdatePostCommentRequest.builder()
+        UpdateCommentRequest updateCommentRequest = UpdateCommentRequest.builder()
                 .content("죄송해요. 잘못봤어요.")
                 .build();
 
-        when(commentRepository.findById(lostCatPostCommentId)).thenReturn(Optional.of(postComment));
+        when(commentRepository.findById(lostCatPostCommentId)).thenReturn(Optional.of(comment));
 
         // when
-        UpdatePostCommentDto result = commentService.updateLostCatPostComment(updatePostCommentRequest, lostCatPostCommentId);
+        UpdateCommentDto result = commentService.updateLostCatPostComment(updateCommentRequest, lostCatPostCommentId);
 
         // then
         assertThat(result.getContent()).isEqualTo("죄송해요. 잘못봤어요.");

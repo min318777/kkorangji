@@ -2,7 +2,7 @@ package com.min.meow.user.entity;
 
 
 import com.min.meow.global.Role;
-import com.min.meow.postlike.entity.PostLike;
+import com.min.meow.post.postlike.entity.PostLike;
 import com.min.meow.user.domain.request.JoinRequest;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -36,7 +36,7 @@ public class User{
     @Column(nullable = false)
     private String name;
 
-    @OneToMany
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostLike> postLike = new ArrayList<>();
 
     //@Enumerated(EnumType.STRING)

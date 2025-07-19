@@ -83,16 +83,16 @@ public class JwtFilter extends OncePerRequestFilter {
         if ("/reissue".equals(path)) {
             filterChain.doFilter(request, response);
             return;
-        }else if(path.equals("/user/login")
+        }else if(path.equals("/api/users/login")
                 || path.startsWith("/swagger")
                 || path.startsWith("/v3/api-docs")
                 || path.startsWith("/swagger-ui")
                 || path.startsWith("/swagger-resources")
                 || path.startsWith("/webjars")
-                || path.equals("/user/join")
-                || path.equals("/meow/lost-cat")
-                || path.equals("/meow/lost-cat/comment/1")
-                || path.equals("/notice")
+                || path.equals("/api/users/join")
+                || path.equals("/api/meow/lost-cat")
+                || path.equals("/api/meow/lost-cat/comment/1")
+                || path.equals("/api/notification")
         ){
             filterChain.doFilter(request, response);
             return;

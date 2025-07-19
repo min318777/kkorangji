@@ -59,14 +59,10 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
         String loginId = userDetails.getUsername();
         Long userId = userDetails.getUser().getId();
-
-        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
-        GrantedAuthority auth = iterator.next();
-        String role = auth.getAuthority();
+        String role = userDetails.getUser().getRole().name();
 
         // 토큰 생성
-        String accessToken = jwtUtil.createJwt(Token.ACCESS_TOKEN, loginId, role, 600000L);
+        String accessToken = jwtUtil.createAccessToken(userId, Token.ACCESS_TOKEN, loginId, role, 60000000L);
         String refreshToken = jwtUtil.createRefreshToken(userId, REFRESH_TOKEN_EXPIRATION, Token.REFRESH_TOKEN);
 
         // 리프레쉬토큰 저장
@@ -77,15 +73,17 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         response.addCookie(createCookie("refresh", refreshToken));
         response.setStatus(HttpStatus.OK.value());
 
-        /*
-        CustomUserDetails customUserDetails = (CustomUserDetails) userDetails;
-        User user = customUserDetails.getUser();
-        LoginDto loginDto = LoginDto.builder()
-                .loginId(user.getLoginId())
-                .role(user.getRole())
-                .build();
-        //Role role = userDetails.getAuthorities();
-         */
+        // JSON 응답 생성
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        // 필요한 사용자 정보도 같이 내려줘도 좋음
+        String responseBody = String.format(
+                "{\"success\": true, \"accessToken\": \"%s\", \"loginId\": \"%s\", \"role\": \"%s\"}",
+                accessToken, loginId, role
+        );
+        response.getWriter().write(responseBody);
+        response.setStatus(HttpServletResponse.SC_OK);
         System.out.println("로그인 성공");
 
     }

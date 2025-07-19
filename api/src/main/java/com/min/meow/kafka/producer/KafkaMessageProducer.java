@@ -2,7 +2,7 @@ package com.min.meow.kafka.producer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.min.meow.notice.NoticeDto;
+import com.min.meow.notification.NotificationDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -16,9 +16,9 @@ public class KafkaMessageProducer {
     private final ObjectMapper objectMapper;
 
 
-    public void send(String topic, NoticeDto noticeDto) {
+    public void send(String topic, NotificationDto notificationDto) {
         try {
-            String jsonMessage = objectMapper.writeValueAsString(noticeDto);
+            String jsonMessage = objectMapper.writeValueAsString(notificationDto);
             kafkaTemplate.send(topic, jsonMessage);
         } catch (JsonProcessingException e) {
             // 로깅 또는 예외 처리 (실무에서는 로그 필수)

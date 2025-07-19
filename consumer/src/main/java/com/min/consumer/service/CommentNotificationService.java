@@ -1,9 +1,9 @@
 package com.min.consumer.service;
 
 import com.min.kafka.dto.NotificationDto;
-import com.min.meow.notice.entity.Notice;
-import com.min.meow.notice.repository.NoticeRepository;
-import com.min.meow.notice.service.NoticeService;
+import com.min.meow.notification.entity.Notification;
+import com.min.meow.notification.repository.NotificationRepository;
+import com.min.meow.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,15 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CommentNotificationService {
 
-    private final NoticeService noticeService;
-    private final NoticeRepository noticeRepository;
+    private final NotificationService notificationService;
+    private final NotificationRepository notificationRepository;
 
     @Transactional
     public void commentNotice(NotificationDto notificationDto){
 
-        Notice notice = Notice.toEntity(notificationDto);
+        Notification notification = Notification.toEntity(notificationDto);
 
 
-        noticeRepository.save(notice);
+        notificationRepository.save(notification);
     }
 }
