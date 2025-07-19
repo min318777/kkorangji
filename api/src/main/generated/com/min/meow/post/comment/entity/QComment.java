@@ -28,9 +28,9 @@ public class QComment extends EntityPathBase<Comment> {
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
-    public final com.min.meow.post.lostcatpost.entity.QLostCatPost lostCatPost;
+    public final NumberPath<Long> id = createNumber("id", Long.class);
 
-    public final NumberPath<Long> postCommentId = createNumber("postCommentId", Long.class);
+    public final com.min.meow.post.lostcatpost.entity.QLostCatPost lostCatPost;
 
     public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
 

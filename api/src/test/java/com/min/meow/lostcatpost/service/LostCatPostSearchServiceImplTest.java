@@ -50,7 +50,7 @@ class LostCatPostSearchServiceImplTest {
         // given
         Pageable pageable = PageRequest.of(0, 10);
         Comment comment = Comment.builder()
-                .content("고양이를 발견했어요.")
+                .contents("고양이를 발견했어요.")
                 .build();
         List<LostCatPost> posts = List.of(LostCatPost.builder().title("고양이 공고1").comments(List.of(comment)).build(),
                                             LostCatPost.builder().title("고양이 공고2").comments(List.of(comment)).build());
@@ -99,7 +99,7 @@ class LostCatPostSearchServiceImplTest {
         // given
         Long id = 1L;
         Comment comment = Comment.builder()
-                .content("고양이를 발견했어요.")
+                .contents("고양이를 발견했어요.")
                 .build();
 
         UpdateLostCatPostRequest updateLostCatPostRequest = UpdateLostCatPostRequest.builder()

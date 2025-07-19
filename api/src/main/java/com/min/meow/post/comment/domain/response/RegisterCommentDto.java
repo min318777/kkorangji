@@ -15,15 +15,15 @@ public class RegisterCommentDto {
 
     private Long id;
     private String content;
-    private Long lostCatPostId;
+    private Long postId;
     private String loginId;
     private LocalDateTime createdAt;
 
     public static RegisterCommentDto convertToDto(Comment comment){
         return RegisterCommentDto.builder()
                 .id(comment.getId())
-                .content(comment.getContent())
-                .lostCatPostId(comment.getLostCatPost().getId())
+                .content(comment.getContents())
+                .postId(comment.getLostCatPost().getId())
                 .createdAt(comment.getCreatedAt())
                 .build();
 

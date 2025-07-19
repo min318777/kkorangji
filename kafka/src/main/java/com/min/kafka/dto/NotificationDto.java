@@ -26,7 +26,7 @@ public class NotificationDto {
     public static NotificationDto toDto(Notice notice){
 
         return NotificationDto.builder()
-                .commentId(notice.getNoticeId())
+                .id(notice.getNoticeId())
                 .message(notice.getMessage())
                 .postId(notice.getPostId())
                 .receiverLoginId(notice.getReceiverLoginId())

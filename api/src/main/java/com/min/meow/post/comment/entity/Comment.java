@@ -28,7 +28,7 @@ public class Comment {
 
     //private Long subComments;
 
-    private String content;
+    private String contents;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lost_cat_post_id")
@@ -55,13 +55,13 @@ public class Comment {
     public void update(UpdateCommentRequest updateCommentRequest){
 
         if (updateCommentRequest.getContent() != null) {
-            this.content = updateCommentRequest.getContent();
+            this.contents = updateCommentRequest.getContent();
         }
     }
 
     public static Comment convertToEntity(RegisterCommentRequest registerCommentRequest, LostCatPost lostCatPost){
         return Comment.builder()
-                .content(registerCommentRequest.getContent())
+                .contents(registerCommentRequest.getContent())
                 .lostCatPost(lostCatPost)
                 .build();
     }

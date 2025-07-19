@@ -16,15 +16,16 @@ public class UpdateCommentDto {
 
     private Long id;
     private String content;
-    private Long lostCatPostId;
+    private Long postId;
+    private int subCommentId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public static UpdateCommentDto convertToDto(Comment comment){
         return UpdateCommentDto.builder()
                 .id(comment.getId())
-                .content(comment.getContent())
-                .lostCatPostId(comment.getLostCatPost().getId())
+                .content(comment.getContents())
+                .postId(comment.getLostCatPost().getId())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .build();

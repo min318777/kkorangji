@@ -1,4 +1,4 @@
-package com.min.meow.post.comment.domain.response;
+package com.min.meow.post.comment.domain;
 
 import com.min.meow.post.comment.entity.Comment;
 import lombok.*;
@@ -13,14 +13,16 @@ import java.time.LocalDateTime;
 public class CommentDto {
 
     private Long id;
-    private String content;
+    private String contents;
+    private int subCommentId;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public static CommentDto convertToDto(Comment comment) {
         return CommentDto.builder()
                 .id(comment.getId())
-                .content(comment.getContent())
+                .contents(comment.getContents())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .build();

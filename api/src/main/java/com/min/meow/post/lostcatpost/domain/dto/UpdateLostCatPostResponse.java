@@ -1,6 +1,6 @@
 package com.min.meow.post.lostcatpost.domain.dto;
 
-import com.min.meow.post.comment.domain.response.CommentDto;
+import com.min.meow.post.comment.domain.CommentDto;
 import com.min.meow.post.lostcatpost.entity.LostCatPost;
 import lombok.*;
 
