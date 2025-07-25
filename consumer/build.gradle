@@ -16,7 +16,6 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
-
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     runtimeOnly 'com.mysql:mysql-connector-j'
 
@@ -28,7 +27,6 @@ dependencies {
 
     implementation(project(":api"))
     implementation(project(":kafka"))
-
 
 }
 

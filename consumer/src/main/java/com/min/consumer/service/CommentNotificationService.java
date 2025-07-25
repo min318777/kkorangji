@@ -12,15 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CommentNotificationService {
 
-    private final NotificationService notificationService;
     private final NotificationRepository notificationRepository;
 
     @Transactional
     public void commentNotice(NotificationDto notificationDto){
 
         Notification notification = Notification.toEntity(notificationDto);
-
-
         notificationRepository.save(notification);
     }
 }

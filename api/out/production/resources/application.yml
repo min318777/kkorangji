@@ -6,7 +6,7 @@ spring:
     url: jdbc:mysql://localhost:3306/meow
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: 1234
+    password: min3782
 
   jpa:
     hibernate:
@@ -33,10 +33,11 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
-      group-id: lost-cat-group
-      auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.min.kafka.dto"
+        spring.json.value.default.type: com.min.kafka.dto.NotificationDto
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

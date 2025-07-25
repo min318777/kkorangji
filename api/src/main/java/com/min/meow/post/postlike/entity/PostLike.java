@@ -1,7 +1,7 @@
 package com.min.meow.post.postlike.entity;
 
 
-import com.min.meow.post.boastcatpost.entity.BoastCatPost;
+import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

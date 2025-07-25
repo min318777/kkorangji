@@ -13,15 +13,12 @@ import com.min.consumer.service.CommentNotificationService;
 public class CommentNotificationConsumer {
 
     private final CommentNotificationService commentNotificationService;
-    private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "comment-notification", groupId = "meow")
-    public void listen(String message) {
+    public void listen(NotificationDto notificationDto) {
         try {
-            NotificationDto noticeDto = objectMapper.readValue(message, NotificationDto.class);
-
-            commentNotificationService.commentNotice(noticeDto);
-            System.out.println("알림 수신: " + noticeDto);
+            commentNotificationService.commentNotice(notificationDto);
+            System.out.println("알림 수신: " + notificationDto);
 
         } catch (Exception e) {
             System.err.println("Kafka 메시지 역직렬화 실패: " + e.getMessage());

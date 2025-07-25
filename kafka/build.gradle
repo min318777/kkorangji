@@ -20,9 +20,6 @@ dependencies {
 
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
-
-
-
 }
 
 test {

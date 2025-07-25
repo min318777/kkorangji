@@ -1,14 +1,14 @@
 package com.min.meow.comment.service;
 
-import com.min.meow.post.comment.domain.response.RegisterCommentDto;
-import com.min.meow.post.comment.domain.response.UpdateCommentDto;
+import com.min.meow.post.comment.domain.response.RegisterCommentResponse;
+import com.min.meow.post.comment.domain.response.UpdateCommentResponse;
 import com.min.meow.post.comment.domain.request.RegisterCommentRequest;
 import com.min.meow.post.comment.domain.request.UpdateCommentRequest;
 import com.min.meow.post.comment.entity.Comment;
 import com.min.meow.post.comment.repository.CommentRepository;
 import com.min.meow.post.comment.service.impl.CommentServiceImpl;
-import com.min.meow.post.lostcatpost.entity.LostCatPost;
-import com.min.meow.post.lostcatpost.repository.LostCatRepository;
+import com.min.meow.post.entity.LostCatPost;
+import com.min.meow.post.repository.LostCatRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +48,7 @@ class CommentServiceImplTest {
         Comment comment = Comment.convertToEntity(registerCommentRequest, lostCatPost);
         when(lostCatRepository.findById(1L)).thenReturn(Optional.of(lostCatPost));
         // when
-        RegisterCommentDto result = commentServiceImpl.registerLostCatPostComment(registerCommentRequest, lostCatPost.getId());
+        RegisterCommentResponse result = commentServiceImpl.registerLostCatPostComment(registerCommentRequest, lostCatPost.getId());
         // then
         assertThat(result).isNotNull();
         assertThat(result.getPostId()).isEqualTo(1L);
@@ -77,7 +77,7 @@ class CommentServiceImplTest {
         when(commentRepository.findById(lostCatPostCommentId)).thenReturn(Optional.of(comment));
 
         // when
-        UpdateCommentDto result = commentServiceImpl.updateLostCatPostComment(updateCommentRequest, lostCatPostCommentId);
+        UpdateCommentResponse result = commentServiceImpl.updateLostCatPostComment(updateCommentRequest, lostCatPostCommentId);
 
         // then
         assertThat(result.getContent()).isEqualTo("죄송해요. 잘못봤어요.");

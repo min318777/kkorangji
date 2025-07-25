@@ -22,7 +22,7 @@ public class QPostLike extends EntityPathBase<PostLike> {
 
     public static final QPostLike postLike = new QPostLike("postLike");
 
-    public final com.min.meow.post.boastcatpost.entity.QBoastCatPost boastCatPost;
+    public final com.min.meow.post.entity.QBoastCatPost boastCatPost;
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
@@ -46,7 +46,7 @@ public class QPostLike extends EntityPathBase<PostLike> {
 
     public QPostLike(Class<? extends PostLike> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.boastCatPost = inits.isInitialized("boastCatPost") ? new com.min.meow.post.boastcatpost.entity.QBoastCatPost(forProperty("boastCatPost"), inits.get("boastCatPost")) : null;
+        this.boastCatPost = inits.isInitialized("boastCatPost") ? new com.min.meow.post.entity.QBoastCatPost(forProperty("boastCatPost"), inits.get("boastCatPost")) : null;
         this.user = inits.isInitialized("user") ? new com.min.meow.user.entity.QUser(forProperty("user")) : null;
     }
 

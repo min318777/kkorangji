@@ -1,7 +1,7 @@
 package com.min.meow.kafka.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.min.meow.notification.NotificationDto;
+import com.min.meow.notification.domain.NotificationDto;
 import com.min.meow.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -19,7 +19,7 @@ public class KafkaMessageListener {
         try {
             NotificationDto notificationDto = objectMapper.readValue(message, NotificationDto.class);
 
-            notificationService.saveNotice(notificationDto);
+            notificationService.saveNotification(notificationDto);
             System.out.println("알림 수신: " + notificationDto);
 
         } catch (Exception e) {

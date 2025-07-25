@@ -1,8 +1,8 @@
 package com.min.meow.post.postlike.service;
 
 
-import com.min.meow.post.boastcatpost.entity.BoastCatPost;
-import com.min.meow.post.boastcatpost.repository.BoastCatPostRepository;
+import com.min.meow.post.entity.BoastCatPost;
+import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.post.postlike.entity.PostLike;

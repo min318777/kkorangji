@@ -1,4 +1,7 @@
 spring:
+  main:
+    web-application-type: none
+
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
@@ -6,10 +9,25 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.value.default.type: com.min.kafka.dto.NotificationDto
+        spring.json.trusted.packages: "*"
+
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
-  profiles:
-    include:
-      - api
+  datasource:
+    url: jdbc:mysql://localhost:3306/meow
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: min3782
+
+    jpa:
+      hibernate:
+        ddl-auto: update
+        database-platform: org.hibernate.dialect.MySQL8Dialect
+      show-sql: true
+      properties:
+        hibernate:
+          format_sql: true

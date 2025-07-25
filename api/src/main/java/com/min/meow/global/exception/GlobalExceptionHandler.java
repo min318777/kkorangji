@@ -19,7 +19,6 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = e.getErrorCode();
         log.error("CustomException 발생: {}", e.getMessage());
         return createErrorResponse(errorCode.getStatus(), errorCode.getMessage());
-        //return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDto<>(false, e.getMessage(), null));
     }
 
     // Validation 예외 처리

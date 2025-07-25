@@ -22,15 +22,15 @@ public class QComment extends EntityPathBase<Comment> {
 
     public static final QComment comment = new QComment("comment");
 
-    public final com.min.meow.post.boastcatpost.entity.QBoastCatPost boastCatPost;
+    public final com.min.meow.post.entity.QBoastCatPost boastCatPost;
 
-    public final StringPath content = createString("content");
+    public final StringPath contents = createString("contents");
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
-    public final com.min.meow.post.lostcatpost.entity.QLostCatPost lostCatPost;
+    public final com.min.meow.post.entity.QLostCatPost lostCatPost;
 
     public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
 
@@ -52,8 +52,8 @@ public class QComment extends EntityPathBase<Comment> {
 
     public QComment(Class<? extends Comment> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.boastCatPost = inits.isInitialized("boastCatPost") ? new com.min.meow.post.boastcatpost.entity.QBoastCatPost(forProperty("boastCatPost"), inits.get("boastCatPost")) : null;
-        this.lostCatPost = inits.isInitialized("lostCatPost") ? new com.min.meow.post.lostcatpost.entity.QLostCatPost(forProperty("lostCatPost"), inits.get("lostCatPost")) : null;
+        this.boastCatPost = inits.isInitialized("boastCatPost") ? new com.min.meow.post.entity.QBoastCatPost(forProperty("boastCatPost"), inits.get("boastCatPost")) : null;
+        this.lostCatPost = inits.isInitialized("lostCatPost") ? new com.min.meow.post.entity.QLostCatPost(forProperty("lostCatPost"), inits.get("lostCatPost")) : null;
     }
 
 }

@@ -1,7 +1,7 @@
 package com.min.meow.notification.service;
 
 
-import com.min.meow.notification.NotificationDto;
+import com.min.meow.notification.domain.NotificationDto;
 import com.min.meow.notification.entity.Notification;
 import com.min.meow.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class NotificationService {
     
     
     // kafka 컨슈머에서 호출
-    public void saveNotice(NotificationDto notificationDto){
+    public void saveNotification(NotificationDto notificationDto){
 
         Notification notification = Notification.builder()
                 .commentId(notificationDto.getCommentId())

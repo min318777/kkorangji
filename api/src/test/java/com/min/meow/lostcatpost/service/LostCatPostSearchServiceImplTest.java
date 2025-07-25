@@ -1,14 +1,14 @@
 package com.min.meow.lostcatpost.service;
 
-import com.min.meow.post.lostcatpost.domain.dto.CreateLostCatPostResponse;
-import com.min.meow.post.lostcatpost.domain.dto.UpdateLostCatPostResponse;
-import com.min.meow.post.lostcatpost.entity.LostCatPost;
-import com.min.meow.post.lostcatpost.domain.request.CreateLostCatPostRequest;
-import com.min.meow.post.lostcatpost.domain.request.UpdateLostCatPostRequest;
-import com.min.meow.post.lostcatpost.repository.LostCatRepository;
+import com.min.meow.post.domain.response.CreateLostCatPostResponse;
+import com.min.meow.post.domain.response.UpdateLostCatPostResponse;
+import com.min.meow.post.entity.LostCatPost;
+import com.min.meow.post.domain.request.CreateLostCatPostRequest;
+import com.min.meow.post.domain.request.UpdateLostCatPostRequest;
+import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.post.comment.entity.Comment;
 import com.min.meow.post.comment.repository.CommentRepository;
-import com.min.meow.post.lostcatpost.service.LostCatPostServiceImpl;
+import com.min.meow.post.service.impl.LostCatPostServiceImpl;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;

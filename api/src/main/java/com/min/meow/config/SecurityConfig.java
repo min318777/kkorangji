@@ -1,12 +1,13 @@
 package com.min.meow.config;
 
 
-import com.min.meow.user.jwt.CustomLogoutFilter;
+import com.min.meow.user.filter.CustomLogoutFilter;
 import com.min.meow.user.jwt.JwtFilter;
 import com.min.meow.user.jwt.JwtUtil;
-import com.min.meow.user.jwt.CustomLoginFilter;
+import com.min.meow.user.filter.CustomLoginFilter;
 import com.min.meow.user.oauth2.CustomSuccessHandler;
 import com.min.meow.user.repository.RefreshTokenRepository;
+import com.min.meow.user.repository.UserRepository;
 import com.min.meow.user.service.CustomOauth2UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,8 @@ public class SecurityConfig {
 
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JwtUtil jwtUtil;
+
+    private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
 
     private final CustomOauth2UserService customOauth2UserService;
@@ -98,7 +101,7 @@ public class SecurityConfig {
 
         // JwtFilter는 LoginFilter 뒤에 등록하여, 로그인 성공 후 JWT 인증 처리
         http.
-                addFilterAfter(new JwtFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
+                addFilterAfter(new JwtFilter(jwtUtil, userRepository), UsernamePasswordAuthenticationFilter.class);
         http.
                 addFilterAt(customLoginFilter, UsernamePasswordAuthenticationFilter.class);
         http.

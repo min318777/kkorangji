@@ -70,10 +70,10 @@ public class ReissueController {
 
         String loginId = jwtUtil.getLoginId(refresh);
         Long userId = Long.valueOf(jwtUtil.getUserId(refresh));
-        Role role = jwtUtil.getRole(refresh);
+        String role = jwtUtil.getRole(refresh);
         
         // 새로운 jwt발급
-        String newAccess = jwtUtil.createAccessToken(userId, Token.ACCESS_TOKEN, loginId, role.name(), 600000L);
+        String newAccess = jwtUtil.createAccessToken(userId, Token.ACCESS_TOKEN, loginId, role, 600000L);
         String newRefresh = jwtUtil.createRefreshToken(userId, REFRESH_TOKEN_EXPIRATION, Token.REFRESH_TOKEN);
         
         // refresh 토큰 저장 db에 기존의 refresh토큰 삭제후 새 refresh토큰 저장

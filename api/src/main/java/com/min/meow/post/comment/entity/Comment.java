@@ -1,10 +1,10 @@
 package com.min.meow.post.comment.entity;
 
 
-import com.min.meow.post.boastcatpost.entity.BoastCatPost;
+import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.comment.domain.request.RegisterCommentRequest;
 import com.min.meow.post.comment.domain.request.UpdateCommentRequest;
-import com.min.meow.post.lostcatpost.entity.LostCatPost;
+import com.min.meow.post.entity.LostCatPost;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

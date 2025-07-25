@@ -7,6 +7,7 @@ import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.user.domain.CustomUserDetails;
 import com.min.meow.user.entity.User;
+import com.min.meow.user.repository.UserRepository;
 import com.nimbusds.oauth2.sdk.auth.JWTAuthentication;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -26,6 +27,7 @@ import java.io.IOException;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -126,19 +128,14 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // 토큰이 access인지 확인 (발급시 페이로드에 명시)
         Token category = jwtUtil.getTokenCategory(accessToken);
-
         if (!category.equals(Token.ACCESS_TOKEN)) {
             throw new CustomException(ErrorCode.INVALID_ACCESS_TOKEN);
         }
 
-        // 토큰에서 loginId와 role 추출
+        // 토큰에서 loginId추출
         String loginId = jwtUtil.getLoginId(accessToken);
-        Role role = jwtUtil.getRole(accessToken);
-
-        User user = User.builder()
-                .loginId(loginId)
-                .role(role)
-                .build();
+        User user = userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 
         // Userdetails에 회원 정보 객체 담기
         CustomUserDetails customUserDetails = new CustomUserDetails(user);

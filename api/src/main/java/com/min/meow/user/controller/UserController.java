@@ -2,9 +2,8 @@ package com.min.meow.user.controller;
 
 
 import com.min.meow.global.exception.ApiResponse;
-import com.min.meow.global.exception.ErrorResponse;
-import com.min.meow.user.domain.dto.JoinDto;
-import com.min.meow.user.domain.dto.LoginDto;
+import com.min.meow.user.domain.reponse.JoinResponse;
+import com.min.meow.user.domain.reponse.LoginResponse;
 import com.min.meow.user.domain.request.JoinRequest;
 import com.min.meow.user.domain.request.LoginRequest;
 import com.min.meow.user.service.UserService;
@@ -25,16 +24,16 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/join")
-    public ResponseEntity<ApiResponse<JoinDto>> join(@RequestBody @Valid JoinRequest joinRequest){
+    public ResponseEntity<ApiResponse<JoinResponse>> join(@RequestBody @Valid JoinRequest joinRequest){
 
-        JoinDto joinDto = userService.join(joinRequest);
+        JoinResponse joinResponse = userService.join(joinRequest);
 
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "회원가입 성공", joinDto));
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "회원가입 성공", joinResponse));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginDto>> login(@RequestBody @Valid LoginRequest loginRequest){
-        LoginDto loginDto = userService.login(loginRequest);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "로그인 성공", loginDto));
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody @Valid LoginRequest loginRequest){
+        LoginResponse loginResponse = userService.login(loginRequest);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "로그인 성공", loginResponse));
     }
 }

@@ -1,8 +1,8 @@
 package com.min.meow.post.comment.controller;
 
 
-import com.min.meow.post.comment.domain.response.RegisterCommentDto;
-import com.min.meow.post.comment.domain.response.UpdateCommentDto;
+import com.min.meow.post.comment.domain.response.RegisterCommentResponse;
+import com.min.meow.post.comment.domain.response.UpdateCommentResponse;
 import com.min.meow.post.comment.domain.request.RegisterCommentRequest;
 import com.min.meow.post.comment.domain.request.UpdateCommentRequest;
 import com.min.meow.post.comment.service.impl.CommentServiceImpl;
@@ -24,22 +24,22 @@ public class CommentController {
 
     // 댓글 작성
     @PostMapping("/{lostCatPostId}")
-    public ResponseEntity<ApiResponse<RegisterCommentDto>> registerLostCatPostComment(@RequestBody @Valid RegisterCommentRequest registerCommentRequest,
-                                                                                      @PathVariable Long lostCatPostId,
-                                                                                      @AuthenticationPrincipal PrincipalUser user){
+    public ResponseEntity<ApiResponse<RegisterCommentResponse>> registerLostCatPostComment(@RequestBody @Valid RegisterCommentRequest registerCommentRequest,
+                                                                                           @PathVariable Long lostCatPostId,
+                                                                                           @AuthenticationPrincipal PrincipalUser user){
 
-        RegisterCommentDto registerCommentDto = commentServiceImpl.registerLostCatPostComment(registerCommentRequest, lostCatPostId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 작성 성공", registerCommentDto));
+        RegisterCommentResponse registerCommentResponse = commentServiceImpl.registerLostCatPostComment(registerCommentRequest, lostCatPostId);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 작성 성공", registerCommentResponse));
     }
 
     // 댓글 수정
     @PutMapping("/{lostCatPostCommentId}")
-    public ResponseEntity<ApiResponse<UpdateCommentDto>> updateLostCatPostComment(@RequestBody @Valid UpdateCommentRequest updateCommentRequest,
-                                                                                  @PathVariable Long lostCatPostCommentId,
-                                                                                  @AuthenticationPrincipal PrincipalUser user){
+    public ResponseEntity<ApiResponse<UpdateCommentResponse>> updateLostCatPostComment(@RequestBody @Valid UpdateCommentRequest updateCommentRequest,
+                                                                                       @PathVariable Long lostCatPostCommentId,
+                                                                                       @AuthenticationPrincipal PrincipalUser user){
 
-        UpdateCommentDto updateCommentDto = commentServiceImpl.updateLostCatPostComment(updateCommentRequest, lostCatPostCommentId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 수정 성공", updateCommentDto));
+        UpdateCommentResponse updateCommentResponse = commentServiceImpl.updateLostCatPostComment(updateCommentRequest, lostCatPostCommentId);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 수정 성공", updateCommentResponse));
     }
 
     // 댓글 삭제

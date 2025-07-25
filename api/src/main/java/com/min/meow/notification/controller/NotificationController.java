@@ -3,7 +3,7 @@ package com.min.meow.notification.controller;
 
 import com.min.meow.global.PageResponse;
 import com.min.meow.global.exception.ErrorResponse;
-import com.min.meow.notification.NotificationDto;
+import com.min.meow.notification.domain.NotificationDto;
 import com.min.meow.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

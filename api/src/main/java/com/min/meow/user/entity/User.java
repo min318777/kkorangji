@@ -39,7 +39,7 @@ public class User{
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostLike> postLike = new ArrayList<>();
 
-    //@Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING)
     private Role role;
 
     private LocalDateTime registeredAt;

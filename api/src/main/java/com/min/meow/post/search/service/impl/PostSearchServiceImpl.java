@@ -1,8 +1,8 @@
 package com.min.meow.post.search.service.impl;
 
 
-import com.min.meow.post.boastcatpost.entity.BoastCatPost;
-import com.min.meow.post.boastcatpost.repository.BoastCatPostRepositoryImpl;
+import com.min.meow.post.entity.BoastCatPost;
+import com.min.meow.post.repository.BoastCatPostRepositoryImpl;
 import com.min.meow.post.search.domain.PostDto;
 import com.min.meow.post.search.domain.RestPage;
 import com.min.meow.post.search.domain.request.PostSearchRequest;
@@ -10,8 +10,6 @@ import com.min.meow.post.search.service.PostSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +18,6 @@ import org.springframework.stereotype.Service;
 public class PostSearchServiceImpl implements PostSearchService {
 
     private final BoastCatPostRepositoryImpl boastCatPostRepositoryImpl;
-
 
     @Cacheable(value = "search", key = "'getPosts' + #postSearchRequest.getTitle()")
     @Override

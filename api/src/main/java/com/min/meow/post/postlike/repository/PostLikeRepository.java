@@ -1,7 +1,7 @@
 package com.min.meow.post.postlike.repository;
 
 
-import com.min.meow.post.boastcatpost.entity.BoastCatPost;
+import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.postlike.entity.PostLike;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
