@@ -11,7 +11,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "com.min.meow.notification.entity",
         "com.min.meow.notification.repository",
         "com.min.meow.notification.service",
-        "com.min.kafka.dto"
+        "com.min.kafka.dto",
+
 })
 @EnableJpaRepositories(basePackages = "com.min.meow.notification.repository")
 @EntityScan(basePackages = "com.min.meow.notification.entity")
