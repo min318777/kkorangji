@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.min.meow.lostcatpost.service.LostCatPostSearchServiceImplTest" tests="4" skipped="0" failures="3" errors="0" timestamp="2025-08-02T04:44:31.659Z" hostname="DESKTOP-U6CF5AQ" time="0.087">
+  <properties/>
+  <testcase name="고양이 찾기 글을 수정한다." classname="com.min.meow.lostcatpost.service.LostCatPostSearchServiceImplTest" time="0.067">
+    <failure message="com.min.meow.global.exception.CustomException: 로그인이 필요합니다." type="com.min.meow.global.exception.CustomException">com.min.meow.global.exception.CustomException: 로그인이 필요합니다.
+	at app//com.min.meow.post.service.impl.LostCatPostServiceImpl.lambda$updateLostCatPost$2(LostCatPostServiceImpl.java:61)
+	at java.base@17.0.12/java.util.Optional.orElseThrow(Optional.java:403)
+	at app//com.min.meow.post.service.impl.LostCatPostServiceImpl.updateLostCatPost(LostCatPostServiceImpl.java:61)
+	at app//com.min.meow.lostcatpost.service.LostCatPostSearchServiceImplTest.updateLostCatPost(LostCatPostSearchServiceImplTest.java:123)
+	at java.base@17.0.12/java.lang.reflect.Method.invoke(Method.java:568)
+	at java.base@17.0.12/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base@17.0.12/java.util.ArrayList.forEach(ArrayList.java:1511)
+</failure>
+  </testcase>
+  <testcase name="모든 고양이 찾기 글을 조회한다." classname="com.min.meow.lostcatpost.service.LostCatPostSearchServiceImplTest" time="0.009"/>
+  <testcase name="고양이 찾기 글을 삭제한다." classname="com.min.meow.lostcatpost.service.LostCatPostSearchServiceImplTest" time="0.003">
+    <failure message="com.min.meow.global.exception.CustomException: 로그인이 필요합니다." type="com.min.meow.global.exception.CustomException">com.min.meow.global.exception.CustomException: 로그인이 필요합니다.
+	at app//com.min.meow.post.service.impl.LostCatPostServiceImpl.lambda$deleteLostCatPost$4(LostCatPostServiceImpl.java:81)
+	at java.base@17.0.12/java.util.Optional.orElseThrow(Optional.java:403)
+	at app//com.min.meow.post.service.impl.LostCatPostServiceImpl.deleteLostCatPost(LostCatPostServiceImpl.java:81)
+	at app//com.min.meow.lostcatpost.service.LostCatPostSearchServiceImplTest.deleteLostCatPost(LostCatPostSearchServiceImplTest.java:141)
+	at java.base@17.0.12/java.lang.reflect.Method.invoke(Method.java:568)
+	at java.base@17.0.12/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base@17.0.12/java.util.ArrayList.forEach(ArrayList.java:1511)
+</failure>
+  </testcase>
+  <testcase name="고양이 찾기 글을 생성한다." classname="com.min.meow.lostcatpost.service.LostCatPostSearchServiceImplTest" time="0.007">
+    <failure message="com.min.meow.global.exception.CustomException: 로그인이 필요합니다." type="com.min.meow.global.exception.CustomException">com.min.meow.global.exception.CustomException: 로그인이 필요합니다.
+	at app//com.min.meow.post.service.impl.LostCatPostServiceImpl.lambda$createLostCatPost$1(LostCatPostServiceImpl.java:49)
+	at java.base@17.0.12/java.util.Optional.orElseThrow(Optional.java:403)
+	at app//com.min.meow.post.service.impl.LostCatPostServiceImpl.createLostCatPost(LostCatPostServiceImpl.java:49)
+	at app//com.min.meow.lostcatpost.service.LostCatPostSearchServiceImplTest.createLostCatPost(LostCatPostSearchServiceImplTest.java:88)
+	at java.base@17.0.12/java.lang.reflect.Method.invoke(Method.java:568)
+	at java.base@17.0.12/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base@17.0.12/java.util.ArrayList.forEach(ArrayList.java:1511)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
