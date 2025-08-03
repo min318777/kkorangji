@@ -3,7 +3,8 @@ services:
 
   api:
     build:
-      context: ./api
+      context: .
+      dockerfile: ./api/Dockerfile
     ports:
       - "8080:8080"
     depends_on:
@@ -13,7 +14,8 @@ services:
 
   consumer:
     build:
-      context: ./consumer
+      context: .
+      dockerfile: ./consumer/Dockerfile
     ports:
       - "8081:8080"
     depends_on:
