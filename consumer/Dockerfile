@@ -1,4 +1,4 @@
-FROM openjdk:17
+FROM openjdk:17-slim
 WORKDIR /app
 COPY . .
 RUN apt-get update && apt-get install -y findutils
