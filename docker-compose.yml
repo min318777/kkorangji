@@ -8,9 +8,12 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - mysql
-      - kafka
-      - redis
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      redis:
+        condition: service_started
 
   consumer:
     build:
@@ -19,9 +22,12 @@ services:
     ports:
       - "8081:8080"
     depends_on:
-      - mysql
-      - kafka
-      - redis
+      mysql:
+        condition: service_healthy
+      kafka:
+          condition: service_started
+      redis:
+          condition: service_started
 
   mysql:
     image: mysql:8.0
