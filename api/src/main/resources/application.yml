@@ -6,7 +6,7 @@ spring:
     url: jdbc:mysql://mysql:3306/meow
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: 1234
+    password: min3782
 
   jpa:
     hibernate:
