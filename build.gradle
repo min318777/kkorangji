@@ -14,10 +14,10 @@ java {
 }
 
 
-// 루트 프로젝트는 실행 가능한 jar를 만들지 않음
+// 루트 프로젝트는 일반 jar만 생성 (실행 불가능)
 jar {
 	enabled = true
-	archiveClassifier = '' // 기본 jar 생성
+	archiveClassifier = ''
 }
 
 // bootJar 태스크 비활성화 (루트에서는 필요 없음)

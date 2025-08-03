@@ -1,12 +1,11 @@
 package com.min.consumer.kafka;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.min.consumer.service.CommentNotificationService;
 import com.min.kafka.dto.NotificationDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import com.min.consumer.service.CommentNotificationService;
 
 @Component
 @RequiredArgsConstructor

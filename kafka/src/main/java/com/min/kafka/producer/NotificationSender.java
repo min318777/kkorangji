@@ -14,7 +14,5 @@ public class NotificationSender {
 
     public void send(String topic, NotificationDto notificationDto) {
         kafkaTemplate.send(topic, notificationDto);
-        System.out.println("알림생성 성공");
-
     }
 }

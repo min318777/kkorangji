@@ -12,8 +12,9 @@ repositories {
 }
 
 springBoot {
-    mainClass = 'com.meow.consumer.ConsumerApplication'
+    mainClass = 'com.min.consumer.ConsumerApplication'
 }
+
 
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
