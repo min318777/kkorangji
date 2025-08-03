@@ -1,4 +1,6 @@
 FROM openjdk:17
-ARG JAR_FILE=build/libs/api-0.0.1-SNAPSHOT.jar
-COPY ${JAR_FILE} app.jar
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+WORKDIR /app
+COPY . .
+RUN chmod +x ./gradlew && ./gradlew :api:build
+COPY ./api/build/libs/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
