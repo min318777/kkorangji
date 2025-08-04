@@ -8,12 +8,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class CorsMvcConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
+        registry.addMapping("/api/**")
                 .exposedHeaders("Set-Cookie")
-                .allowedOrigins(
-                        "http://localhost:3000",
-                        "https://meow-front.vercel.app"
-                )
+                .allowedOrigins("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
