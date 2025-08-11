@@ -81,11 +81,11 @@ public class SecurityConfig {
 
         http.
                 authorizeHttpRequests((auth) -> auth
-                        .requestMatchers( "api/users/**",
-                                "api/meow/lost-cat/**",
-                                "api/meow/boast-cat/**",
-                                "api/user/reissue",
-                                "api/notice",
+                        .requestMatchers( "/api/users/**",
+                                "/api/meow/lost-cat/**",
+                                "/api/meow/boast-cat/**",
+                                "/api/user/reissue",
+                                "/api/notice",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
