@@ -53,7 +53,7 @@ public class SecurityConfig {
                     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                         CorsConfiguration corsConfiguration = new CorsConfiguration();
 
-                        corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
+                        corsConfiguration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://https://meow-front.vercel.app"));
                         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
                         corsConfiguration.setAllowCredentials(true);
                         corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
@@ -81,7 +81,8 @@ public class SecurityConfig {
 
         http.
                 authorizeHttpRequests((auth) -> auth
-                        .requestMatchers( "/api/users/**",
+                        .requestMatchers(
+                                "/api/users/**",
                                 "/api/meow/lost-cat/**",
                                 "/api/meow/boast-cat/**",
                                 "/api/user/reissue",

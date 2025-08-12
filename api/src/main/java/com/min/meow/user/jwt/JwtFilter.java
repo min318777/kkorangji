@@ -21,6 +21,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 
 @RequiredArgsConstructor
@@ -28,74 +30,28 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private static final List<String> WHITELIST_PATHS = Arrays.asList(
+            "/api/users/login",
+            "/api/users/join",
+            "/api/users/reissue",
+            "/api/meow/lost-cat",
+            "/api/meow/lost-cat/comment/1",
+            "/api/notification",
+            "/swagger-ui",
+            "/v3/api-docs",
+            "/swagger-resources",
+            "/webjars"
+    );
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-
-        /*
-        // request에서 Authorization 헤더를 찾음
-        String authorization = request.getHeader("Authorization");
-
-        if(authorization == null || !authorization.startsWith("Bearer ")){
-
-            System.out.println("토큰이 없습니다.");
-            filterChain.doFilter(request, response);
-            // 조건이 해당되면 메소드 종료
-            return;
-        }
-
-        String token = authorization.split(" ")[1];
-
-        // 토큰 소멸시간 검증
-        if (jwtUtils.isExpiration(token)){
-
-            System.out.println("토큰이 만료되었습니다.");
-            filterChain.doFilter(request, response);
-
-            return;
-        }
-
-        // 토큰에서 loginId와 role 추출
-        String loginId = jwtUtils.getLoginId(token);
-        Role role = jwtUtils.getRole(token);
-
-        User user = User.builder()
-                .loginId(loginId)
-                .password("tempPassword")
-                .build();
-
-        // Userdetails에 회원 정보 객체 담기
-        CustomUserDetails customUserDetails = new CustomUserDetails(user);
-
-        // 스프링 시큐리티 인증 토큰 생성
-        Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
-
-        // 세션에 사용자 등록
-        SecurityContextHolder.getContext().setAuthentication(authToken);
-
-        filterChain.doFilter(request, response);
-    }
-    */
 
         // 헤더에서 access키에 담긴 토큰을 꺼냄
         //String accessToken = request.getHeader("access");
         String path = request.getRequestURI();
 
         // 리프레시 토큰 요청은 토큰 검사하지 않고 바로 필터 체인으로 넘기기
-        if ("/reissue".equals(path)) {
-            filterChain.doFilter(request, response);
-            return;
-        }else if(path.equals("/api/users/login")
-                || path.startsWith("/swagger")
-                || path.startsWith("/v3/api-docs")
-                || path.startsWith("/swagger-ui")
-                || path.startsWith("/swagger-resources")
-                || path.startsWith("/webjars")
-                || path.equals("/api/users/join")
-                || path.equals("/api/meow/lost-cat")
-                || path.equals("/api/meow/lost-cat/comment/1")
-                || path.equals("/api/notification")
-        ){
+        if (isWhitelistPath(path)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -113,9 +69,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // 토큰이 없다면 다음 필터로 넘김
         if (accessToken == null) {
-
             filterChain.doFilter(request, response);
-
             return;
         }
 
@@ -147,5 +101,13 @@ public class JwtFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authToken);
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isWhitelistPath(String path) {
+        return WHITELIST_PATHS.stream()
+                .anyMatch(whitelistPath -> {
+                    // exact match 또는 prefix match 지원
+                    return path.equals(whitelistPath) || path.startsWith(whitelistPath);
+                });
     }
 }
