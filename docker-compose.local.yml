@@ -26,7 +26,7 @@ services:
       mysql:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_started
     environment:
@@ -73,6 +73,11 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
+    healthcheck:
+      test: [ "CMD", "kafka-topics", "--bootstrap-server=localhost:9092", "--list" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
 volumes:
   mysql_data:

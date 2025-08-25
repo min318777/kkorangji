@@ -52,8 +52,8 @@ public class QComment extends EntityPathBase<Comment> {
 
     public QComment(Class<? extends Comment> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.boastCatPost = inits.isInitialized("boastCatPost") ? new com.min.meow.post.entity.QBoastCatPost(forProperty("boastCatPost")) : null;
-        this.lostCatPost = inits.isInitialized("lostCatPost") ? new com.min.meow.post.entity.QLostCatPost(forProperty("lostCatPost")) : null;
+        this.boastCatPost = inits.isInitialized("boastCatPost") ? new com.min.meow.post.entity.QBoastCatPost(forProperty("boastCatPost"), inits.get("boastCatPost")) : null;
+        this.lostCatPost = inits.isInitialized("lostCatPost") ? new com.min.meow.post.entity.QLostCatPost(forProperty("lostCatPost"), inits.get("lostCatPost")) : null;
     }
 
 }
