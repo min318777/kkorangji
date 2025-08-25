@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private static final long REFRESH_TOKEN_EXPIRATION = 7 * 24 * 60 * 60 * 1000L;
+    private static final long ACCESS_TOKEN_EXPIRATION = 24 * 60 * 60 * 1000L;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -60,7 +61,7 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         String role = userDetails.getUser().getRole().name();
 
         // 토큰 생성
-        String accessToken = jwtUtil.createAccessToken(userId, Token.ACCESS_TOKEN, loginId, role, 60000000L);
+        String accessToken = jwtUtil.createAccessToken(userId, Token.ACCESS_TOKEN, loginId, role, ACCESS_TOKEN_EXPIRATION);
         String refreshToken = jwtUtil.createRefreshToken(userId, REFRESH_TOKEN_EXPIRATION, Token.REFRESH_TOKEN);
 
         // 리프레쉬토큰 저장
@@ -114,7 +115,7 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
     }
 
     private void addRefreshToken(String loginId, Long userId, String refresh) {
-
+        refreshTokenRepository.deleteByLoginId(loginId);
         RefreshToken refreshToken = RefreshToken.builder()
                 .loginId(loginId)
                 .refreshToken(refresh)

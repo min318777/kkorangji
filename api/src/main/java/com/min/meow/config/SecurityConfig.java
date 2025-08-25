@@ -85,8 +85,6 @@ public class SecurityConfig {
                                 "/api/users/login",
                                 "/api/users/join",
                                 "/api/users/reissue",
-                                "/api/meow/lost-cat/**",
-                                "/api/meow/boast-cat/**",
                                 "/api/notice",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",

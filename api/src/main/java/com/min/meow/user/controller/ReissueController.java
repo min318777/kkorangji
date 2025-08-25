@@ -34,7 +34,7 @@ public class ReissueController {
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Transactional
-    @PostMapping("/reissue")
+    @PostMapping("/api/reissue")
     public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response, @AuthenticationPrincipal PrincipalUser user){
 
         String refresh = null;

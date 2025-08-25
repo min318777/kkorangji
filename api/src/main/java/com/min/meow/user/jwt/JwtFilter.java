@@ -34,8 +34,6 @@ public class JwtFilter extends OncePerRequestFilter {
             "/api/users/login",
             "/api/users/join",
             "/api/users/reissue",
-            "/api/meow/lost-cat",
-            "/api/meow/lost-cat/comment/1",
             "/api/notification",
             "/swagger-ui",
             "/v3/api-docs",

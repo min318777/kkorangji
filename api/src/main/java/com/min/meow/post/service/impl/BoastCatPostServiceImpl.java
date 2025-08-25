@@ -10,7 +10,6 @@ import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
-import com.min.meow.post.search.domain.RestPage;
 import com.min.meow.post.service.BoastCatPostService;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
@@ -32,9 +31,9 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     // 모든 글 조회
     @Override
     @Cacheable(value = "post", key = "'getAllBoastCatPost'")
-    public RestPage<GetBoastCatPostResponse> getAllBoastCatPosts(Pageable pageable){
-        Page<GetBoastCatPostResponse> posts = boastCatPostRepository.findAll(pageable).map(GetBoastCatPostResponse::convertToResponse);
-        return new RestPage<>(posts);
+    public Page<GetBoastCatPostResponse> getAllBoastCatPosts(Pageable pageable){
+        //org.springframework.data.domain.Page<GetBoastCatPostResponse> posts = boastCatPostRepository.findAll(pageable).map(GetBoastCatPostResponse::convertToResponse);
+        return boastCatPostRepository.findAll(pageable).map(GetBoastCatPostResponse::convertToResponse);
     }
 
     // 글 상세 조회
