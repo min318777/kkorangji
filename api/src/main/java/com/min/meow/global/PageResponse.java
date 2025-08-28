@@ -1,31 +1,32 @@
 package com.min.meow.global;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
 public class PageResponse<T> {
+    private List<T> content;
+    private int page;
+    private int size;
+    private long totalElements;
+    private int totalPages;
+    private boolean last;
 
-    private final List<T> content;
-    private final int pageNumber;
-    private final int pageSize;
-    private final long totalElements;
-    private final int totalPages;
-    private final boolean last;
-
-    public PageResponse(List<T> content, int pageNumber, int pageSize, long totalElements, int totalPages, boolean last) {
+    public PageResponse(List<T> content, int page, int size, long totalElements, int totalPages, boolean last) {
         this.content = content;
-        this.pageNumber = pageNumber;
-        this.pageSize = pageSize;
+        this.page = page;
+        this.size = size;
         this.totalElements = totalElements;
         this.totalPages = totalPages;
         this.last = last;
     }
 
-    public static <T> PageResponse<T> from(org.springframework.data.domain.Page<T> page) {
+    public static <T> PageResponse<T> from(Page<T> page) {
         return new PageResponse<>(
                 page.getContent(),
                 page.getNumber(),
@@ -36,3 +37,4 @@ public class PageResponse<T> {
         );
     }
 }
+

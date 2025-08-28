@@ -1,17 +1,17 @@
 package com.min.meow.post.controller;
 
 
-import com.min.meow.post.domain.response.GetBoastCatPostResponse;
-import com.min.meow.post.domain.response.CreateBoastCatPostResponse;
-import com.min.meow.post.domain.response.UpdateBoastCatPostResponse;
+import com.min.meow.config.PrincipalUser;
+import com.min.meow.global.PageResponse;
+import com.min.meow.global.exception.ApiResponse;
 import com.min.meow.post.domain.request.CreateBoastCatPostRequest;
 import com.min.meow.post.domain.request.UpdateBoastCatPostRequest;
+import com.min.meow.post.domain.response.CreateBoastCatPostResponse;
+import com.min.meow.post.domain.response.GetBoastCatPostResponse;
+import com.min.meow.post.domain.response.UpdateBoastCatPostResponse;
 import com.min.meow.post.service.impl.BoastCatPostServiceImpl;
-import com.min.meow.global.exception.ApiResponse;
-import com.min.meow.config.PrincipalUser;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -27,12 +27,12 @@ public class BoastCatPostController {
 
     // 모든 글 조회
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<GetBoastCatPostResponse>>> getAllBoastCatPost(
+    public ResponseEntity<ApiResponse<PageResponse<GetBoastCatPostResponse>>> getAllBoastCatPost(
                                                         @RequestParam (defaultValue = "0") int page,
                                                         @RequestParam (defaultValue = "10") int size ){
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<GetBoastCatPostResponse> posts = boastCatPostServiceImpl.getAllBoastCatPosts(pageable);
+        PageResponse<GetBoastCatPostResponse> posts = boastCatPostServiceImpl.getAllBoastCatPosts(pageable);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "모든 글 조회 성공", posts));
     }
 
@@ -45,7 +45,7 @@ public class BoastCatPostController {
 
     // 글 생성
     @PostMapping
-    public ResponseEntity<ApiResponse<CreateBoastCatPostResponse>> createBoastCatPost(@RequestBody @Valid CreateBoastCatPostRequest createBoastCatPostRequest,
+    public ResponseEntity<ApiResponse<CreateBoastCatPostResponse>> createBoastCatPost(@ModelAttribute CreateBoastCatPostRequest createBoastCatPostRequest,
                                                                                       @AuthenticationPrincipal PrincipalUser user){
 
         CreateBoastCatPostResponse post = boastCatPostServiceImpl.createBoastCatPost(createBoastCatPostRequest, user.getUser().getLoginId());

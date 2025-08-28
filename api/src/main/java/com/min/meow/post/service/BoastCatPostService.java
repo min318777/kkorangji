@@ -1,5 +1,6 @@
 package com.min.meow.post.service;
 
+import com.min.meow.global.PageResponse;
 import com.min.meow.post.domain.request.CreateBoastCatPostRequest;
 import com.min.meow.post.domain.request.UpdateBoastCatPostRequest;
 import com.min.meow.post.domain.response.GetBoastCatPostResponse;
@@ -11,7 +12,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface BoastCatPostService {
 
-    Page<GetBoastCatPostResponse> getAllBoastCatPosts(Pageable pageable);
+    PageResponse<GetBoastCatPostResponse> getAllBoastCatPosts(Pageable pageable);
 
     GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId);
 

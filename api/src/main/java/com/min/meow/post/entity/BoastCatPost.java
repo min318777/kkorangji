@@ -22,7 +22,8 @@ import java.util.List;
 @Setter
 public class BoastCatPost extends BasePost {
 
-    private String catImageUrl;
+    @ElementCollection
+    private List<String> imageUrls = new ArrayList<>();
 
     @OneToMany(mappedBy = "boastCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostLike> postLikeList = new ArrayList<>();
@@ -36,18 +37,15 @@ public class BoastCatPost extends BasePost {
         if (updateBoastCatPostRequest.getContent() != null) {
             this.contents = updateBoastCatPostRequest.getContent();
         }
-        if (updateBoastCatPostRequest.getCatImageUrl() != null) {
-            this.catImageUrl = updateBoastCatPostRequest.getCatImageUrl();
-        }
     }
 
-    public static BoastCatPost convertToEntity(CreateBoastCatPostRequest createBoastCatPostRequest, User writer){
+    public static BoastCatPost convertToEntity(CreateBoastCatPostRequest createBoastCatPostRequest, List<String> imageUrls, User writer){
 
         return BoastCatPost.builder()
                 .title(createBoastCatPostRequest.getTitle())
                 .contents(createBoastCatPostRequest.getContent())
+                .imageUrls(imageUrls)
                 .user(writer)
-                .catImageUrl(createBoastCatPostRequest.getCatImageUrl())
                 .build();
     }
 
