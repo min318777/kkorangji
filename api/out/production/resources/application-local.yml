@@ -1,4 +1,8 @@
 spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 30MB
   application:
     name: meow
 
@@ -6,7 +10,7 @@ spring:
     url: jdbc:mysql://mysql:3306/meow
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: 1234
+    password: min3782
 
   jpa:
     hibernate:
@@ -66,4 +70,12 @@ spring:
 jwt:
   secret: "3LmMxJzOZLx6E4msrDzXQY0FfAdrsV+EoV6yg2ovF2E=1dsd"
 
-
+cloud:
+  aws:
+    s3:
+      bucket:
+      baseUrl:
+    region:
+    credentials:
+      access-key:
+      secret-key:

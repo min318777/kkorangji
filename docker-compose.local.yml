@@ -13,8 +13,8 @@ services:
         condition: service_started
       redis:
         condition: service_started
-    environment:
-      - SPRING_PROFILES_ACTIVE=local
+    env_file:
+      - .env.local
 
   consumer:
     build:
@@ -29,8 +29,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    environment:
-      - SPRING_PROFILES_ACTIVE=local
+    env_file:
+      - .env.local
 
   mysql:
     image: mysql:8.0

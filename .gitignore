@@ -7,6 +7,12 @@
 # BlueJ files
 *.ctxt
 
+# 환경변수 파일
+.env.local
+.env.*
+claude.md
+
+
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 

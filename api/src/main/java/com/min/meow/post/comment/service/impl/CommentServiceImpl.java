@@ -4,16 +4,17 @@ package com.min.meow.post.comment.service.impl;
 import com.min.kafka.producer.NotificationSender;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
-import com.min.meow.kafka.producer.KafkaMessageProducer;
 import com.min.meow.notification.domain.NotificationDto;
 import com.min.meow.post.comment.domain.request.RegisterCommentRequest;
 import com.min.meow.post.comment.domain.request.UpdateCommentRequest;
+import com.min.meow.post.comment.domain.response.GetCommentResponse;
 import com.min.meow.post.comment.domain.response.RegisterCommentResponse;
 import com.min.meow.post.comment.domain.response.UpdateCommentResponse;
 import com.min.meow.post.comment.entity.Comment;
 import com.min.meow.post.comment.repository.CommentRepository;
 import com.min.meow.post.comment.service.CommentService;
-import com.min.meow.post.entity.LostCatPost;
+import com.min.meow.post.entity.BoastCatPost;
+import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.post.repository.LostCatRepository;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -21,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -28,26 +31,39 @@ import java.time.LocalDateTime;
 public class CommentServiceImpl implements CommentService {
 
     private final LostCatRepository lostCatRepository;
+    private final BoastCatPostRepository boastCatPostRepository;
     private final CommentRepository commentRepository;
     private final NotificationSender notificationSender;
+
+
+    // 댓글 조회
+    @Override
+    public List<GetCommentResponse> getBoastCatPostComment(Long boastCatPostId) {
+
+        List<Comment> comments = commentRepository.findByBoastCatPostIdWithUser(boastCatPostId);
+
+        return comments.stream()
+                .map(GetCommentResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
 
     // 댓글 작성
     @Transactional
     @Override
-    public RegisterCommentResponse registerLostCatPostComment(RegisterCommentRequest registerCommentRequest, Long lostCatPostId){
-        LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
+    public RegisterCommentResponse registerBoastCatPostComment(RegisterCommentRequest registerCommentRequest, Long boastCatPostId, String writer){
+        BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
         
-        Comment comment = Comment.convertToEntity(registerCommentRequest, lostCatPost);
-        lostCatPost.getComments().add(comment);
+        Comment comment = Comment.convertToEntity(registerCommentRequest, boastCatPost, writer);
+        boastCatPost.getComments().add(comment);
         commentRepository.save(comment);
 
         NotificationDto notificationDto = NotificationDto.builder()
                 .commentId(comment.getId())
-                .postId(lostCatPostId)
+                .postId(boastCatPostId)
                 .message("게시글에 댓글이 달렸습니다.")
                 .isRead(false)
-                .receiverLoginId(lostCatPost.getUser().getLoginId())
+                .receiverLoginId(boastCatPost.getUser().getLoginId())
                 .createdAt(LocalDateTime.now())
                 .build();
         produceTopic(notificationDto);
@@ -80,4 +96,6 @@ public class CommentServiceImpl implements CommentService {
 
         notificationSender.send("comment-notification", NotificationDto.toKafkaDto(notificationDto));
     }
+
+
 }

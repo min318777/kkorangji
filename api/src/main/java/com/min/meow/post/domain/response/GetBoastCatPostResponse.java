@@ -5,6 +5,8 @@ import com.min.meow.post.entity.BoastCatPost;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -15,13 +17,19 @@ public class GetBoastCatPostResponse {
 
     private Long id;
 
+    private String writer;
+
     private String title;
 
-    private String content;
+    private String contents;
 
-    private String catImageUrl;
+    private List<String> imageUrls = new ArrayList<>();
 
     //private List<LostCatPostCommentDto> lostCatPostCommentDtos;
+
+    private Long userId;
+
+    private int view;
 
     private LocalDateTime createdAt;
 
@@ -31,9 +39,10 @@ public class GetBoastCatPostResponse {
 
         return GetBoastCatPostResponse.builder()
                 .id(boastCatPost.getId())
+                .writer(boastCatPost.getUser().getLoginId())
                 .title(boastCatPost.getTitle())
-                .content(boastCatPost.getContents())
-                .catImageUrl(boastCatPost.getCatImageUrl())
+                .contents(boastCatPost.getContents())
+                .imageUrls(new ArrayList<>(boastCatPost.getImageUrls()))
                 .createdAt(boastCatPost.getCreatedAt())
                 .updatedAt(boastCatPost.getUpdatedAt())
                 .build();

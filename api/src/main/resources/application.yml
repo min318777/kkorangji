@@ -70,4 +70,11 @@ spring:
 jwt:
   secret: "3LmMxJzOZLx6E4msrDzXQY0FfAdrsV+EoV6yg2ovF2E=1dsd"
 
-
+cloud:
+  aws:
+    s3:
+      bucket: your-bucket-name
+      region: ap-northeast-2
+    credentials:
+      access-key: YOUR_ACCESS_KEY
+      secret-key: YOUR_SECRET_KEY

@@ -24,8 +24,6 @@ public class QBoastCatPost extends EntityPathBase<BoastCatPost> {
 
     public final com.min.meow.global.QBasePost _super;
 
-    public final StringPath catImageUrl = createString("catImageUrl");
-
     //inherited
     public final StringPath contents;
 
@@ -34,6 +32,8 @@ public class QBoastCatPost extends EntityPathBase<BoastCatPost> {
 
     //inherited
     public final NumberPath<Long> id;
+
+    public final ListPath<String, StringPath> imageUrls = this.<String, StringPath>createList("imageUrls", String.class, StringPath.class, PathInits.DIRECT2);
 
     public final ListPath<com.min.meow.post.postlike.entity.PostLike, com.min.meow.post.postlike.entity.QPostLike> postLikeList = this.<com.min.meow.post.postlike.entity.PostLike, com.min.meow.post.postlike.entity.QPostLike>createList("postLikeList", com.min.meow.post.postlike.entity.PostLike.class, com.min.meow.post.postlike.entity.QPostLike.class, PathInits.DIRECT2);
 

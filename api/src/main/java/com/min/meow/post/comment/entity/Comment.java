@@ -30,6 +30,8 @@ public class Comment {
 
     private String contents;
 
+    private String writer;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lost_cat_post_id")
     private LostCatPost lostCatPost;
@@ -59,10 +61,11 @@ public class Comment {
         }
     }
 
-    public static Comment convertToEntity(RegisterCommentRequest registerCommentRequest, LostCatPost lostCatPost){
+    public static Comment convertToEntity(RegisterCommentRequest registerCommentRequest, BoastCatPost boastCatPost, String writer){
         return Comment.builder()
                 .contents(registerCommentRequest.getContent())
-                .lostCatPost(lostCatPost)
+                .writer(writer)
+                .boastCatPost(boastCatPost)
                 .build();
     }
 

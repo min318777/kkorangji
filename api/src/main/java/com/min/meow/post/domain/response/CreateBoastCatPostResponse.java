@@ -5,6 +5,8 @@ import com.min.meow.post.entity.BoastCatPost;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -16,7 +18,8 @@ public class CreateBoastCatPostResponse {
     private Long id;
     private String title;
     private String content;
-    private String catImageUrl;
+    private String writer;
+    private List<String> imageUrls = new ArrayList<>();
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -25,8 +28,9 @@ public class CreateBoastCatPostResponse {
         return CreateBoastCatPostResponse.builder()
                 .id(boastCatPost.getId())
                 .title(boastCatPost.getTitle())
+                .writer(boastCatPost.getUser().getLoginId())
                 .content(boastCatPost.getContents())
-                .catImageUrl(boastCatPost.getCatImageUrl())
+                .imageUrls(boastCatPost.getImageUrls())
                 .createdAt(boastCatPost.getCreatedAt())
                 .updatedAt(boastCatPost.getUpdatedAt())
                 .build();

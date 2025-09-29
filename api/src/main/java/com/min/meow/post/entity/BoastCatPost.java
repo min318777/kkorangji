@@ -1,15 +1,23 @@
 package com.min.meow.post.entity;
 
 
+import com.min.meow.global.BasePost;
+import com.min.meow.post.comment.entity.Comment;
 import com.min.meow.post.domain.request.CreateBoastCatPostRequest;
 import com.min.meow.post.domain.request.UpdateBoastCatPostRequest;
-import com.min.meow.global.BasePost;
 import com.min.meow.post.postlike.entity.PostLike;
 import com.min.meow.post.search.domain.PostDto;
 import com.min.meow.user.entity.User;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +36,9 @@ public class BoastCatPost extends BasePost {
     @OneToMany(mappedBy = "boastCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostLike> postLikeList = new ArrayList<>();
 
-    //private List<commentDto> commentDtos;
+    @BatchSize(size = 100)
+    @OneToMany(mappedBy = "boastCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
 
     public void update(UpdateBoastCatPostRequest updateBoastCatPostRequest){
         if (updateBoastCatPostRequest.getTitle() != null) {

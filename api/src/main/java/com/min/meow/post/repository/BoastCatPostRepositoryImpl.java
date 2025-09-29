@@ -31,8 +31,6 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
     카테고리 / 태그 필터링
     날짜 범위 검색 (작성일, 수정일)
     정렬 조건 (최신순, 조회순 등)
-
-
      */
     @Override
     public Page<BoastCatPost> search(PostSearchRequest postSearchRequest, Pageable pageable) {
@@ -60,6 +58,8 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
 
         return new PageImpl<>(results, pageable, total);
     }
+
+
 
     private BooleanExpression containsId(Long id){
         return id == null ? null : boastCatPost.id.eq(id);

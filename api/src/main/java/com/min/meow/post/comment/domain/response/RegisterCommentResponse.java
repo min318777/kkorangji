@@ -16,14 +16,15 @@ public class RegisterCommentResponse {
     private Long id;
     private String content;
     private Long postId;
-    private String loginId;
+    private String writer;
     private LocalDateTime createdAt;
 
     public static RegisterCommentResponse convertToResponse(Comment comment){
         return RegisterCommentResponse.builder()
                 .id(comment.getId())
                 .content(comment.getContents())
-                .postId(comment.getLostCatPost().getId())
+                .writer(comment.getWriter())
+                .postId(comment.getBoastCatPost() != null ? comment.getBoastCatPost().getId() : null)
                 .createdAt(comment.getCreatedAt())
                 .build();
 

@@ -1,6 +1,7 @@
 package com.min.meow.post.service.impl;
 
 
+import com.min.meow.config.S3Uploader;
 import com.min.meow.global.PageResponse;
 import com.min.meow.post.domain.response.GetBoastCatPostResponse;
 import com.min.meow.post.domain.response.CreateBoastCatPostResponse;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -32,20 +34,35 @@ import java.util.List;
 public class BoastCatPostServiceImpl implements BoastCatPostService {
     private final BoastCatPostRepository boastCatPostRepository;
     private final UserRepository userRepository;
+    private final S3Uploader s3Uploader;
+
 
     // 모든 글 조회
     @Override
-    @Cacheable(value = "post", key = "'getAllBoastCatPost'")
+    @Transactional
+    @Cacheable(value = "post", key = "'getAllBoastCatPost:' + #pageable.pageNumber + ':' + #pageable.pageSize")
     public PageResponse<GetBoastCatPostResponse> getAllBoastCatPosts(Pageable pageable){
-        //org.springframework.data.domain.Page<GetBoastCatPostResponse> posts = boastCatPostRepository.findAll(pageable).map(GetBoastCatPostResponse::convertToResponse);
-        Page<GetBoastCatPostResponse> posts = boastCatPostRepository.findAll(pageable).map(GetBoastCatPostResponse::convertToResponse);
-        return PageResponse.from(posts);
+
+        List<BoastCatPost> posts = boastCatPostRepository.findAllWithImageUrls();
+
+        List<GetBoastCatPostResponse> responses = posts.stream()
+                .map(GetBoastCatPostResponse::convertToResponse)
+                .toList();
+
+        Page<GetBoastCatPostResponse> pageResponses = new PageImpl<>(
+                responses,
+                pageable,
+                responses.size()
+        );
+
+        return PageResponse.from(pageResponses);
     }
 
     // 글 상세 조회
     @Override
+    @Transactional
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
-        BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
+        BoastCatPost boastCatPost = boastCatPostRepository.findByIdWithImages(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
         return GetBoastCatPostResponse.convertToResponse(boastCatPost);
     }
@@ -53,7 +70,7 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     // 글 작성
     @Override
     @Transactional
-    @CacheEvict(value = "post", key = "'getAllBoastCatPost'")
+    @CacheEvict(value = "post", allEntries = true)
     public CreateBoastCatPostResponse createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest, String loginId){
 
         User writer = userRepository.findByLoginId(loginId)
@@ -74,7 +91,7 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     // 글 수정
     @Override
     @Transactional
-    @CacheEvict(value = "post", key = "'getAllBoastCatPost'")
+    @CacheEvict(value = "post", allEntries = true)
     public UpdateBoastCatPostResponse updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId, String loginId){
 
         User writer = userRepository.findByLoginId(loginId)
@@ -93,7 +110,7 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     // 글 삭제
     @Override
     @Transactional
-    @CacheEvict(value = "post", key = "'getAllBoastCatPost'")
+    @CacheEvict(value = "post", allEntries = true)
     public void deleteBoastCatPost(Long boastCatPostId, String loginId, String password){
 
         User writer = userRepository.findByLoginId(loginId)
