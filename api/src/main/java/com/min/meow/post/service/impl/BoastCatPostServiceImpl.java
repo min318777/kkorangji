@@ -64,6 +64,7 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
         BoastCatPost boastCatPost = boastCatPostRepository.findByIdWithImages(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+        boastCatPost.plusView();
         return GetBoastCatPostResponse.convertToResponse(boastCatPost);
     }
 

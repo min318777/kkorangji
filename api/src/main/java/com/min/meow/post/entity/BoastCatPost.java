@@ -70,4 +70,8 @@ public class BoastCatPost extends BasePost {
                 .updatedAt(boastCatPost.updatedAt)
                 .build();
     }
+
+    public void plusView(){
+        this.view += 1;
+    }
 }

@@ -39,6 +39,7 @@ public class GetBoastCatPostResponse {
 
         return GetBoastCatPostResponse.builder()
                 .id(boastCatPost.getId())
+                .view(boastCatPost.getView())
                 .writer(boastCatPost.getUser().getLoginId())
                 .title(boastCatPost.getTitle())
                 .contents(boastCatPost.getContents())
