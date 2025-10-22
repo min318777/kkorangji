@@ -19,7 +19,7 @@ public class GetCommentResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static GetCommentResponse fromEntity(Comment comment){
+    public static GetCommentResponse toResponse(Comment comment){
         return GetCommentResponse.builder()
                 .id(comment.getId())
                 .contents(comment.getContents())

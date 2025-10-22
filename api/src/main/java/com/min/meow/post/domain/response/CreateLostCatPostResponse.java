@@ -14,38 +14,24 @@ import java.time.LocalDateTime;
 public class CreateLostCatPostResponse {
 
     private Long id;
-
     private String title;
-
     private String content;
-
     private String catName;
-
     private String writer;
-
     private String catType;
-
     private String catColor;
-
     private Integer catAge;
-
     private Integer catWeight;
-
     private String catImageUrl;
-
     private String lostLocation;
-
     private Double latitude;
-
     private Double longitude;
-
     private Integer reward;
 
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
 
-    public static CreateLostCatPostResponse convertToResponse(LostCatPost lostCatPost, User user){
+    public static CreateLostCatPostResponse toResponse(LostCatPost lostCatPost, User user){
 
         return CreateLostCatPostResponse.builder()
                 .id(lostCatPost.getId())

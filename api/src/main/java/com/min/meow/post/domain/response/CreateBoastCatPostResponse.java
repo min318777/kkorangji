@@ -24,7 +24,7 @@ public class CreateBoastCatPostResponse {
     private LocalDateTime updatedAt;
 
 
-    public static CreateBoastCatPostResponse convertToDto(BoastCatPost boastCatPost){
+    public static CreateBoastCatPostResponse toResponse(BoastCatPost boastCatPost){
         return CreateBoastCatPostResponse.builder()
                 .id(boastCatPost.getId())
                 .title(boastCatPost.getTitle())

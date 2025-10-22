@@ -1,6 +1,5 @@
 package com.min.meow.post.controller;
 
-
 import com.min.meow.config.PrincipalUser;
 import com.min.meow.global.PageResponse;
 import com.min.meow.global.exception.ApiResponse;
@@ -47,7 +46,6 @@ public class BoastCatPostController {
     @PostMapping
     public ResponseEntity<ApiResponse<CreateBoastCatPostResponse>> createBoastCatPost(@ModelAttribute CreateBoastCatPostRequest createBoastCatPostRequest,
                                                                                       @AuthenticationPrincipal PrincipalUser user){
-
         CreateBoastCatPostResponse post = boastCatPostServiceImpl.createBoastCatPost(createBoastCatPostRequest, user.getUser().getLoginId());
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 생성 성공", post));
     }

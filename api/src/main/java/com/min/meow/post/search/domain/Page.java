@@ -12,7 +12,7 @@ import java.util.List;
 public class Page<T> extends PageImpl<T> {
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
-    public Page(@JsonProperty("content") List<T> content,
+    public Page(@JsonProperty("contents") List<T> content,
                 @JsonProperty("number") int page,
                 @JsonProperty("size") int size,
                 @JsonProperty("totalElements") long total) {

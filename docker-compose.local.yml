@@ -37,6 +37,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: min3782
       MYSQL_DATABASE: meow
+      TZ: Asia/Seoul
     ports:
       - "3307:3306"
     volumes:

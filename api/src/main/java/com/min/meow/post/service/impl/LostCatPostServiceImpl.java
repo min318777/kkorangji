@@ -1,5 +1,6 @@
 package com.min.meow.post.service.impl;
 
+import com.min.meow.global.PageResponse;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.post.domain.response.CreateLostCatPostResponse;
@@ -14,6 +15,8 @@ import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,35 +30,46 @@ public class LostCatPostServiceImpl implements LostCatPostService {
 
     // 글 전체 조회
     @Override
-    public Page<UpdateLostCatPostResponse> getAllLostCatPosts(Pageable pageable){
-        return lostCatRepository.findAll(pageable).map(UpdateLostCatPostResponse::convertToDto);
+    @CacheEvict(value = "post", allEntries = true)
+    @Cacheable(value = "post", key = "'getAllLostCatPost:' + #pageable.pageNumber + ':' + #pageable.pageSize")
+    public PageResponse<UpdateLostCatPostResponse> getAllLostCatPosts(Pageable pageable){
+        // Page 객체를 먼저 생성
+        Page<UpdateLostCatPostResponse> page = lostCatRepository.findAll(pageable)
+                .map(UpdateLostCatPostResponse::convertToDto);
+
+        // PageResponse로 변환하여 반환 (Redis 직렬화 가능한 형태)
+        return PageResponse.from(page);
     }
 
     // 글 상세 조회
     @Override
+    @Transactional
+    @CacheEvict(value = "post", allEntries = true)
     public GetLostCatPostResponse getLostCatPost(Long lostCatPostId){
 
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-
-        return GetLostCatPostResponse.convertToResponse(lostCatPost);
+        lostCatPost.plusView();
+        return GetLostCatPostResponse.toResponse(lostCatPost);
     }
 
     // 글 생성
-    @Transactional
     @Override
+    @Transactional
+    @CacheEvict(value = "post", allEntries = true)
     public CreateLostCatPostResponse createLostCatPost(CreateLostCatPostRequest createLostCatPostRequest, String loginId){
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         LostCatPost lostCatPost = LostCatPost.convertToEntity(createLostCatPostRequest, writer);
         lostCatRepository.save(lostCatPost);
 
-        return CreateLostCatPostResponse.convertToResponse(lostCatPost, writer);
+        return CreateLostCatPostResponse.toResponse(lostCatPost, writer);
     }
 
     // 글 수정
     @Transactional
     @Override
+    @CacheEvict(value = "post", allEntries = true)
     public UpdateLostCatPostResponse updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest, String loginId){
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
@@ -75,6 +89,7 @@ public class LostCatPostServiceImpl implements LostCatPostService {
     // 물리적삭제 대신 소프트삭제도 고려해보자.
     @Transactional
     @Override
+    @CacheEvict(value = "post", allEntries = true)
     public void deleteLostCatPost(Long lostCatPostId, String loginId, String password) {
 
         User writer = userRepository.findByLoginId(loginId)

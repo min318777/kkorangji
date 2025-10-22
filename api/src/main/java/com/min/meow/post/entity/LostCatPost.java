@@ -19,7 +19,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-@Setter
 public class LostCatPost extends BasePost {
 
     private String catName;
@@ -62,6 +61,9 @@ public class LostCatPost extends BasePost {
                 .catImageUrl(createLostCatPostRequest.getCatImageUrl())
                 .reward(createLostCatPostRequest.getReward())
                 .build();
+    }
+    public void plusView(){
+        this.view += 1;
     }
 
     public void update(UpdateLostCatPostRequest updateLostCatPostRequest) {

@@ -18,7 +18,6 @@ public class PostSearchServiceImpl implements PostSearchService {
 
     private final BoastCatPostRepositoryImpl boastCatPostRepositoryImpl;
 
-    @Cacheable(value = "search", key = "'getPosts' + #postSearchRequest.getTitle()")
     @Override
     public Page<PostDto> search(PostSearchRequest postSearchRequest, Pageable pageable) {
         org.springframework.data.domain.Page<BoastCatPost> boastCatPosts = boastCatPostRepositoryImpl.search(postSearchRequest, pageable);

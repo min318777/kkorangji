@@ -36,24 +36,35 @@ public class CommentServiceImpl implements CommentService {
     private final NotificationSender notificationSender;
 
 
-    // 댓글 조회
+    // 고양이 자랑 게시글 댓글 조회
     @Override
     public List<GetCommentResponse> getBoastCatPostComment(Long boastCatPostId) {
 
         List<Comment> comments = commentRepository.findByBoastCatPostIdWithUser(boastCatPostId);
 
         return comments.stream()
-                .map(GetCommentResponse::fromEntity)
+                .map(GetCommentResponse::toResponse)
                 .collect(Collectors.toList());
     }
 
-    // 댓글 작성
+    // 실종 고양이 게시글 댓글 조회
+    @Override
+    public List<GetCommentResponse> getLostCatPostComment(Long lostCatPostId) {
+
+        List<Comment> comments = commentRepository.findByLostCatPostIdWithUser(lostCatPostId);
+
+        return comments.stream()
+                .map(GetCommentResponse::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    // 고양이 자랑 게시글 댓글 작성
     @Transactional
     @Override
     public RegisterCommentResponse registerBoastCatPostComment(RegisterCommentRequest registerCommentRequest, Long boastCatPostId, String writer){
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-        
+
         Comment comment = Comment.convertToEntity(registerCommentRequest, boastCatPost, writer);
         boastCatPost.getComments().add(comment);
         commentRepository.save(comment);
@@ -70,11 +81,34 @@ public class CommentServiceImpl implements CommentService {
         return RegisterCommentResponse.convertToResponse(comment);
     }
 
+    // 실종 고양이 게시글 댓글 작성
+    @Transactional
+    @Override
+    public RegisterCommentResponse registerLostCatPostComment(RegisterCommentRequest registerCommentRequest, Long lostCatPostId, String writer){
+        var lostCatPost = lostCatRepository.findById(lostCatPostId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+
+        Comment comment = Comment.convertToEntityForLostCat(registerCommentRequest, lostCatPost, writer);
+        lostCatPost.getComments().add(comment);
+        commentRepository.save(comment);
+
+        NotificationDto notificationDto = NotificationDto.builder()
+                .commentId(comment.getId())
+                .postId(lostCatPostId)
+                .message("게시글에 댓글이 달렸습니다.")
+                .isRead(false)
+                .receiverLoginId(lostCatPost.getUser().getLoginId())
+                .createdAt(LocalDateTime.now())
+                .build();
+        produceTopic(notificationDto);
+        return RegisterCommentResponse.convertToResponse(comment);
+    }
+
     // 댓글 수정
     @Transactional
     @Override
-    public UpdateCommentResponse updateLostCatPostComment(UpdateCommentRequest updateCommentRequest, Long lostCatPostCommentId){
-        Comment comment = commentRepository.findById(lostCatPostCommentId)
+    public UpdateCommentResponse updateComment(UpdateCommentRequest updateCommentRequest, Long commentId){
+        Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
         comment.update(updateCommentRequest);
@@ -85,11 +119,11 @@ public class CommentServiceImpl implements CommentService {
     // 댓글 삭제
     @Transactional
     @Override
-    public void deleteLostCatPostComment(Long lostCatPostCommentId){
-        if(!commentRepository.existsById(lostCatPostCommentId)){
+    public void deleteComment(Long commentId){
+        if(!commentRepository.existsById(commentId)){
             throw new CustomException(ErrorCode.NOT_FOUND_POST);
         }
-        commentRepository.deleteById(lostCatPostCommentId);
+        commentRepository.deleteById(commentId);
     }
 
     public void produceTopic(NotificationDto notificationDto){

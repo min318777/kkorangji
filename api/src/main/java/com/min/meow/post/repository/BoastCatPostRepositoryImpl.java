@@ -1,6 +1,4 @@
 package com.min.meow.post.repository;
-
-
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.QBoastCatPost;
 import com.min.meow.post.search.domain.request.PostSearchRequest;
@@ -14,7 +12,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-
 @RequiredArgsConstructor
 @Repository
 public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom {
@@ -22,7 +19,6 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
     private final JPAQueryFactory queryFactory;
 
     QBoastCatPost boastCatPost = QBoastCatPost.boastCatPost;
-
 
     /*
     실무에서 흔히 쓰는 검색 조건 예시
@@ -37,7 +33,6 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
         List<BoastCatPost> results = queryFactory
                 .selectFrom(boastCatPost)
                 .where(
-                        containsId(postSearchRequest.getId()),
                         containsTitle(postSearchRequest.getTitle()),
                         containsContents(postSearchRequest.getContents())
                 )
@@ -50,7 +45,6 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                 .select(boastCatPost.count())
                 .from(boastCatPost)
                 .where(
-                        containsId(postSearchRequest.getId()),
                         containsTitle(postSearchRequest.getTitle()),
                         containsContents(postSearchRequest.getContents())
                 )
@@ -59,11 +53,6 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
         return new PageImpl<>(results, pageable, total);
     }
 
-
-
-    private BooleanExpression containsId(Long id){
-        return id == null ? null : boastCatPost.id.eq(id);
-    }
 
     private BooleanExpression containsTitle(String title){
         return (title == null || title.isBlank()) ? null : boastCatPost.title.containsIgnoreCase(title);

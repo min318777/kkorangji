@@ -23,6 +23,8 @@ public class UpdateLostCatPostResponse {
 
     private String catName;
 
+    private int view;
+
     private String catType;
 
     private String catColor;
@@ -52,6 +54,7 @@ public class UpdateLostCatPostResponse {
         return UpdateLostCatPostResponse.builder()
                 .id(lostCatPost.getId())
                 .title(lostCatPost.getTitle())
+                .view(lostCatPost.getView())
                 .content(lostCatPost.getContents())
                 .catName(lostCatPost.getCatName())
                 .catType(lostCatPost.getCatType())

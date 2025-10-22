@@ -1,17 +1,17 @@
 package com.min.meow.post.service;
 
 
+import com.min.meow.global.PageResponse;
 import com.min.meow.post.domain.response.CreateLostCatPostResponse;
 import com.min.meow.post.domain.response.GetLostCatPostResponse;
 import com.min.meow.post.domain.response.UpdateLostCatPostResponse;
 import com.min.meow.post.domain.request.CreateLostCatPostRequest;
 import com.min.meow.post.domain.request.UpdateLostCatPostRequest;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface LostCatPostService {
 
-    Page<UpdateLostCatPostResponse> getAllLostCatPosts(Pageable pageable);
+    PageResponse<UpdateLostCatPostResponse> getAllLostCatPosts(Pageable pageable);
 
     GetLostCatPostResponse getLostCatPost(Long lostCatPostId);
 

@@ -39,14 +39,14 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
 
     // 모든 글 조회
     @Override
-    @Transactional
+    @CacheEvict(value = "post", allEntries = true)
     @Cacheable(value = "post", key = "'getAllBoastCatPost:' + #pageable.pageNumber + ':' + #pageable.pageSize")
     public PageResponse<GetBoastCatPostResponse> getAllBoastCatPosts(Pageable pageable){
 
         List<BoastCatPost> posts = boastCatPostRepository.findAllWithImageUrls();
 
         List<GetBoastCatPostResponse> responses = posts.stream()
-                .map(GetBoastCatPostResponse::convertToResponse)
+                .map(GetBoastCatPostResponse::toResponse)
                 .toList();
 
         Page<GetBoastCatPostResponse> pageResponses = new PageImpl<>(
@@ -61,11 +61,12 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     // 글 상세 조회
     @Override
     @Transactional
+    @CacheEvict(value = "post", allEntries = true)
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
         BoastCatPost boastCatPost = boastCatPostRepository.findByIdWithImages(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
         boastCatPost.plusView();
-        return GetBoastCatPostResponse.convertToResponse(boastCatPost);
+        return GetBoastCatPostResponse.toResponse(boastCatPost);
     }
 
     // 글 작성
@@ -81,12 +82,10 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         if (createBoastCatPostRequest.getImages() != null) {
             imageUrls = s3Uploader.uploadFiles(createBoastCatPostRequest.getImages());
         }
-
         BoastCatPost boastCatPost = BoastCatPost.convertToEntity(createBoastCatPostRequest, imageUrls, writer);
-
         boastCatPostRepository.save(boastCatPost);
 
-        return CreateBoastCatPostResponse.convertToDto(boastCatPost);
+        return CreateBoastCatPostResponse.toResponse(boastCatPost);
     }
 
     // 글 수정

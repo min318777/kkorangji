@@ -2,7 +2,6 @@ package com.min.meow.user.controller;
 
 
 import com.min.meow.config.PrincipalUser;
-import com.min.meow.global.Role;
 import com.min.meow.global.Token;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
@@ -28,7 +27,6 @@ import java.time.LocalDateTime;
 public class ReissueController {
 
     private static final long REFRESH_TOKEN_EXPIRATION = 7 * 24 * 60 * 60 * 1000L;
-
 
     private final JwtUtil jwtUtil;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -77,11 +75,11 @@ public class ReissueController {
         String newRefresh = jwtUtil.createRefreshToken(userId, REFRESH_TOKEN_EXPIRATION, Token.REFRESH_TOKEN);
         
         // refresh 토큰 저장 db에 기존의 refresh토큰 삭제후 새 refresh토큰 저장
-        RefreshToken existingEntity = refreshTokenRepository.findByRefreshToken(refresh);
-        if(existingEntity != null) {
+        RefreshToken existingToken = refreshTokenRepository.findByRefreshToken(refresh);
+        if(existingToken != null) {
             // 기존 엔티티 업데이트
-            existingEntity.setRefreshToken(newRefresh);
-            refreshTokenRepository.save(existingEntity);
+            existingToken.setRefreshToken(newRefresh);
+            refreshTokenRepository.save(existingToken);
         } else {
             // 새로 생성
             addRefreshToken(loginId, userId, newRefresh);

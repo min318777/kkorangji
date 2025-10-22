@@ -10,52 +10,37 @@ import java.util.stream.Collectors;
 
 
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class GetLostCatPostResponse {
 
     private Long id;
-
     private String title;
-
     private String content;
-
     private String writer;
-
+    private int view;
     private String catName;
-
     private String catType;
-
     private String catColor;
-
     private Integer catAge;
-
     private Integer catWeight;
-
     private String catImageUrl;
-
     private String lostLocation;
-
     private Double latitude;
-
     private Double longitude;
-
     private Integer reward;
-
     private List<CommentDto> commentDtos;
-
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
 
-    public static GetLostCatPostResponse convertToResponse(LostCatPost lostCatPost){
+    public static GetLostCatPostResponse toResponse(LostCatPost lostCatPost){
 
         return GetLostCatPostResponse.builder()
                 .id(lostCatPost.getId())
                 .title(lostCatPost.getTitle())
                 .content(lostCatPost.getContents())
+                .view(lostCatPost.getView())
                 .catName(lostCatPost.getCatName())
                 .writer(lostCatPost.getUser().getLoginId())
                 .catType(lostCatPost.getCatType())

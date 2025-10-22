@@ -1,14 +1,12 @@
 package com.min.meow.user.jwt;
 
 
-import com.min.meow.global.Role;
 import com.min.meow.global.Token;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.user.domain.CustomUserDetails;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
-import com.nimbusds.oauth2.sdk.auth.JWTAuthentication;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -30,10 +28,12 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+
     private static final List<String> WHITELIST_PATHS = Arrays.asList(
             "/api/users/login",
             "/api/users/join",
-            "/api/users/reissue",
+            "/api/reissue",
+            "/api/logout",
             "/api/notification",
             "/swagger-ui",
             "/v3/api-docs",
@@ -44,20 +44,17 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        // 헤더에서 access키에 담긴 토큰을 꺼냄
-        //String accessToken = request.getHeader("access");
         String path = request.getRequestURI();
 
-        // 리프레시 토큰 요청은 토큰 검사하지 않고 바로 필터 체인으로 넘기기
+        // 화이트리스트 경로는 JWT 검증을 건너뜀 (로그아웃 포함)
         if (isWhitelistPath(path)) {
+            System.out.println("화이트리스트 경로 감지, JWT 검증 건너뜀: " + path);
             filterChain.doFilter(request, response);
             return;
         }
 
         String authorization = request.getHeader("Authorization");
-
         if(authorization == null || !authorization.startsWith("Bearer ")){
-
             System.out.println("토큰이 없습니다.");
             throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
             //filterChain.doFilter(request, response);
@@ -97,7 +94,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // 세션에 사용자 등록
         SecurityContextHolder.getContext().setAuthentication(authToken);
-
         filterChain.doFilter(request, response);
     }
 

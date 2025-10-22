@@ -61,11 +61,21 @@ public class Comment {
         }
     }
 
+    // BoastCatPost 댓글 변환 메서드
     public static Comment convertToEntity(RegisterCommentRequest registerCommentRequest, BoastCatPost boastCatPost, String writer){
         return Comment.builder()
                 .contents(registerCommentRequest.getContent())
                 .writer(writer)
                 .boastCatPost(boastCatPost)
+                .build();
+    }
+
+    // LostCatPost 댓글 변환 메서드
+    public static Comment convertToEntityForLostCat(RegisterCommentRequest registerCommentRequest, LostCatPost lostCatPost, String writer){
+        return Comment.builder()
+                .contents(registerCommentRequest.getContent())
+                .writer(writer)
+                .lostCatPost(lostCatPost)
                 .build();
     }
 

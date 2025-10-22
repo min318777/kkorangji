@@ -71,26 +71,29 @@ public class SecurityConfig {
         http
                 .httpBasic((auth) -> auth.disable());
 
-        // oauth2
-        http
-                .oauth2Login((oauth2) -> oauth2
-                        .userInfoEndpoint((userInfoEndpointConfig) -> userInfoEndpointConfig
-                                .userService(customOauth2UserService))
-                        .successHandler(customSuccessHandler)
-                );
-
         http.
                 authorizeHttpRequests((auth) -> auth
+                        // 인증 없이 접근 가능한 엔드포인트
                         .requestMatchers(
                                 "/api/users/login",
                                 "/api/users/join",
-                                "/api/users/reissue",
+                                "/api/reissue",
                                 "/api/notice",
+                                "/api/logout",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/webjars/**").permitAll()
+                        // 게시글 및 댓글 조회는 인증 없이 가능 (GET 요청만)
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.GET,
+                                "/api/meow/boast-cat",
+                                "/api/meow/boast-cat/**",
+                                "/api/meow/lost-cat",
+                                "/api/meow/lost-cat/**").permitAll()
+                        // 관리자 권한 필요
                         .requestMatchers("/admin").hasRole("ADMIN")
+                        // 나머지 모든 요청은 인증 필요
                         .anyRequest().authenticated());
         /*
         http.
