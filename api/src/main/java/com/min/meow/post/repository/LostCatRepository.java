@@ -13,4 +13,7 @@ public interface LostCatRepository extends JpaRepository<LostCatPost, Long> {
     @Query("SELECT lo FROM LostCatPost lo LEFT JOIN FETCH lo.comments")
     List<LostCatPost> findAllFetch(Pageable pageable);
 
+
+    @Query("SELECT DISTINCT p FROM LostCatPost p LEFT JOIN FETCH p.imageUrls ORDER BY p.createdAt DESC")
+    List<LostCatPost> findAllWithImageUrls();
 }

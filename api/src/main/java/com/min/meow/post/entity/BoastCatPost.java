@@ -49,7 +49,7 @@ public class BoastCatPost extends BasePost {
         }
     }
 
-    public static BoastCatPost convertToEntity(CreateBoastCatPostRequest createBoastCatPostRequest, List<String> imageUrls, User writer){
+    public static BoastCatPost toEntity(CreateBoastCatPostRequest createBoastCatPostRequest, List<String> imageUrls, User writer){
 
         return BoastCatPost.builder()
                 .title(createBoastCatPostRequest.getTitle())

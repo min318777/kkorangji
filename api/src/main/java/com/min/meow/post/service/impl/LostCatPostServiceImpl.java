@@ -1,5 +1,6 @@
 package com.min.meow.post.service.impl;
 
+import com.min.meow.config.S3Uploader;
 import com.min.meow.global.PageResponse;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
@@ -18,8 +19,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,18 +32,28 @@ public class LostCatPostServiceImpl implements LostCatPostService {
 
     private final LostCatRepository lostCatRepository;
     private final UserRepository userRepository;
+    private final S3Uploader s3Uploader;
 
-    // 글 전체 조회
+    // 모든 글 조회
     @Override
     @CacheEvict(value = "post", allEntries = true)
     @Cacheable(value = "post", key = "'getAllLostCatPost:' + #pageable.pageNumber + ':' + #pageable.pageSize")
-    public PageResponse<UpdateLostCatPostResponse> getAllLostCatPosts(Pageable pageable){
-        // Page 객체를 먼저 생성
-        Page<UpdateLostCatPostResponse> page = lostCatRepository.findAll(pageable)
-                .map(UpdateLostCatPostResponse::convertToDto);
+    public PageResponse<GetLostCatPostResponse> getAllLostCatPosts(Pageable pageable){
+
+        List<LostCatPost> posts = lostCatRepository.findAllWithImageUrls();
+
+        List<GetLostCatPostResponse> responses = posts.stream()
+                .map(GetLostCatPostResponse::toResponse)
+                .toList();
+
+        Page<GetLostCatPostResponse> pageResponse = new PageImpl<>(
+                responses,
+                pageable,
+                responses.size()
+        );
 
         // PageResponse로 변환하여 반환 (Redis 직렬화 가능한 형태)
-        return PageResponse.from(page);
+        return PageResponse.from(pageResponse);
     }
 
     // 글 상세 조회
@@ -60,7 +75,12 @@ public class LostCatPostServiceImpl implements LostCatPostService {
     public CreateLostCatPostResponse createLostCatPost(CreateLostCatPostRequest createLostCatPostRequest, String loginId){
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
-        LostCatPost lostCatPost = LostCatPost.convertToEntity(createLostCatPostRequest, writer);
+
+        List<String> imageUrls = new ArrayList<>();
+        if(createLostCatPostRequest.getImages() != null){
+            imageUrls = s3Uploader.uploadFiles(createLostCatPostRequest.getImages());
+        }
+        LostCatPost lostCatPost = LostCatPost.toEntity(createLostCatPostRequest, imageUrls, writer);
         lostCatRepository.save(lostCatPost);
 
         return CreateLostCatPostResponse.toResponse(lostCatPost, writer);
@@ -81,7 +101,7 @@ public class LostCatPostServiceImpl implements LostCatPostService {
         }
 
         lostCatPost.update(updateLostCatPostRequest);
-        return UpdateLostCatPostResponse.convertToDto(lostCatPost);
+        return UpdateLostCatPostResponse.toResponse(lostCatPost);
     }
 
     // 글 삭제

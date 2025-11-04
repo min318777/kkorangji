@@ -36,7 +36,6 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     private final UserRepository userRepository;
     private final S3Uploader s3Uploader;
 
-
     // 모든 글 조회
     @Override
     @CacheEvict(value = "post", allEntries = true)
@@ -82,7 +81,7 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         if (createBoastCatPostRequest.getImages() != null) {
             imageUrls = s3Uploader.uploadFiles(createBoastCatPostRequest.getImages());
         }
-        BoastCatPost boastCatPost = BoastCatPost.convertToEntity(createBoastCatPostRequest, imageUrls, writer);
+        BoastCatPost boastCatPost = BoastCatPost.toEntity(createBoastCatPostRequest, imageUrls, writer);
         boastCatPostRepository.save(boastCatPost);
 
         return CreateBoastCatPostResponse.toResponse(boastCatPost);

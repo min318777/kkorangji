@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface LostCatPostService {
 
-    PageResponse<UpdateLostCatPostResponse> getAllLostCatPosts(Pageable pageable);
+    PageResponse<GetLostCatPostResponse> getAllLostCatPosts(Pageable pageable);
 
     GetLostCatPostResponse getLostCatPost(Long lostCatPostId);
 

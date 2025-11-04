@@ -31,7 +31,8 @@ public class LostCatPost extends BasePost {
 
     private Integer catWeight;
 
-    private String catImageUrl;
+    @ElementCollection
+    private List<String> imageUrls = new ArrayList<>();
 
     private String lostLocation;
 
@@ -45,7 +46,7 @@ public class LostCatPost extends BasePost {
     @OneToMany(mappedBy = "lostCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
-    public static LostCatPost convertToEntity(CreateLostCatPostRequest createLostCatPostRequest, User user) {
+    public static LostCatPost toEntity(CreateLostCatPostRequest createLostCatPostRequest, List<String> imageUrls, User user) {
         return LostCatPost.builder()
                 .title(createLostCatPostRequest.getTitle())
                 .contents(createLostCatPostRequest.getContent())
@@ -58,12 +59,9 @@ public class LostCatPost extends BasePost {
                 .catType(createLostCatPostRequest.getCatType())
                 .catWeight(createLostCatPostRequest.getCatWeight())
                 .catColor(createLostCatPostRequest.getCatColor())
-                .catImageUrl(createLostCatPostRequest.getCatImageUrl())
+                .imageUrls(imageUrls)
                 .reward(createLostCatPostRequest.getReward())
                 .build();
-    }
-    public void plusView(){
-        this.view += 1;
     }
 
     public void update(UpdateLostCatPostRequest updateLostCatPostRequest) {
@@ -89,8 +87,8 @@ public class LostCatPost extends BasePost {
         if (updateLostCatPostRequest.getCatWeight() != null) {
             this.catWeight = updateLostCatPostRequest.getCatWeight();
         }
-        if (updateLostCatPostRequest.getCatImageUrl() != null) {
-            this.catImageUrl = updateLostCatPostRequest.getCatImageUrl();
+        if (updateLostCatPostRequest.getImageUrls() != null) {
+            this.imageUrls = updateLostCatPostRequest.getImageUrls();
         }
         if (updateLostCatPostRequest.getLostLocation() != null) {
             this.lostLocation = updateLostCatPostRequest.getLostLocation();
@@ -105,4 +103,7 @@ public class LostCatPost extends BasePost {
             this.reward = updateLostCatPostRequest.getReward();
         }
     }
+
+    public void plusView(){this.view += 1;}
+
 }

@@ -3,6 +3,8 @@ package com.min.meow.post.domain.request;
 
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Builder
@@ -24,7 +26,7 @@ public class UpdateLostCatPostRequest {
 
     private Integer catWeight;
 
-    private String catImageUrl;
+    private List<String> imageUrls;
 
     private String lostLocation;
 

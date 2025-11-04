@@ -5,6 +5,7 @@ import com.min.meow.user.entity.User;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -22,7 +23,7 @@ public class CreateLostCatPostResponse {
     private String catColor;
     private Integer catAge;
     private Integer catWeight;
-    private String catImageUrl;
+    private List<String> imageUrls;
     private String lostLocation;
     private Double latitude;
     private Double longitude;
@@ -43,7 +44,7 @@ public class CreateLostCatPostResponse {
                 .catColor(lostCatPost.getCatColor())
                 .catAge(lostCatPost.getCatAge())
                 .catWeight(lostCatPost.getCatWeight())
-                .catImageUrl(lostCatPost.getCatImageUrl())
+                .imageUrls(lostCatPost.getImageUrls())
                 .lostLocation(lostCatPost.getLostLocation())
                 .reward(lostCatPost.getReward())
                 .latitude(lostCatPost.getLatitude())

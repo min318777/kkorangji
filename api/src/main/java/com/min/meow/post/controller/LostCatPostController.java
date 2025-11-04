@@ -31,13 +31,12 @@ public class LostCatPostController {
 
     // 모든 게시물 조회
     @GetMapping
-    public ResponseEntity<ApiResponse<PageResponse<UpdateLostCatPostResponse>>> getAllLostCatPosts(
+    public ResponseEntity<ApiResponse<PageResponse<GetLostCatPostResponse>>> getAllLostCatPosts(
                                                     @RequestParam (defaultValue = "0") int page,
                                                     @RequestParam (defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        // 서비스에서 이미 PageResponse를 반환하므로 중복 변환 제거
-        PageResponse<UpdateLostCatPostResponse> pageResponse = lostCatPostServiceImpl.getAllLostCatPosts(pageable);
+        PageResponse<GetLostCatPostResponse> pageResponse = lostCatPostServiceImpl.getAllLostCatPosts(pageable);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "모든 글 조회 성공", pageResponse));
 
         //n+1 해결->페치 조인 하지만 페이징안됨
@@ -54,7 +53,7 @@ public class LostCatPostController {
 
     // 글 생성
     @PostMapping
-    public ResponseEntity<ApiResponse<CreateLostCatPostResponse>> createLostCatPost(@RequestBody @Valid CreateLostCatPostRequest createLostCatPostRequest,
+    public ResponseEntity<ApiResponse<CreateLostCatPostResponse>> createLostCatPost(@ModelAttribute @Valid CreateLostCatPostRequest createLostCatPostRequest,
                                                                        BindingResult bindingResult, @AuthenticationPrincipal PrincipalUser user){
 
         if(user == null && user.getUser() == null){
