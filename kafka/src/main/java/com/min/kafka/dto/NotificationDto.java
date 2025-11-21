@@ -35,6 +35,5 @@ public class NotificationDto {
                 .updatedAt(notice.getUpdatedAt())
                 .build();
     }
-
      */
 }

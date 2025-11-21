@@ -21,7 +21,7 @@ public class UpdateCommentResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static UpdateCommentResponse convertToResponse(Comment comment){
+    public static UpdateCommentResponse toResponse(Comment comment){
         return UpdateCommentResponse.builder()
                 .id(comment.getId())
                 .content(comment.getContents())

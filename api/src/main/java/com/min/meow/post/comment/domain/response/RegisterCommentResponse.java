@@ -17,16 +17,17 @@ public class RegisterCommentResponse {
     private String content;
     private Long postId;
     private String writer;
+    private boolean isRead;
     private LocalDateTime createdAt;
 
-    public static RegisterCommentResponse convertToResponse(Comment comment){
+    public static RegisterCommentResponse toResponse(Comment comment){
         return RegisterCommentResponse.builder()
                 .id(comment.getId())
                 .content(comment.getContents())
                 .writer(comment.getWriter())
+                .isRead(comment.isRead())
                 .postId(comment.getBoastCatPost() != null ? comment.getBoastCatPost().getId() : null)
                 .createdAt(comment.getCreatedAt())
                 .build();
-
     }
 }

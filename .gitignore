@@ -12,6 +12,9 @@
 .env.*
 claude.md
 
+# Claude Code 설정 파일 (민감한 API 키 포함)
+.claude/
+
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
@@ -32,3 +35,6 @@ claude.md
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Windows 예약 파일명
+NUL

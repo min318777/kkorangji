@@ -30,6 +30,8 @@ public class Comment {
 
     private String contents;
 
+    private boolean isRead;
+
     private String writer;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -55,26 +57,27 @@ public class Comment {
     }
 
     public void update(UpdateCommentRequest updateCommentRequest){
-
         if (updateCommentRequest.getContent() != null) {
             this.contents = updateCommentRequest.getContent();
         }
     }
 
     // BoastCatPost 댓글 변환 메서드
-    public static Comment convertToEntity(RegisterCommentRequest registerCommentRequest, BoastCatPost boastCatPost, String writer){
+    public static Comment toEntity(RegisterCommentRequest registerCommentRequest, BoastCatPost boastCatPost, String writer){
         return Comment.builder()
                 .contents(registerCommentRequest.getContent())
                 .writer(writer)
+                .isRead(false)
                 .boastCatPost(boastCatPost)
                 .build();
     }
 
     // LostCatPost 댓글 변환 메서드
-    public static Comment convertToEntityForLostCat(RegisterCommentRequest registerCommentRequest, LostCatPost lostCatPost, String writer){
+    public static Comment toEntity(RegisterCommentRequest registerCommentRequest, LostCatPost lostCatPost, String writer){
         return Comment.builder()
                 .contents(registerCommentRequest.getContent())
                 .writer(writer)
+                .isRead(false)
                 .lostCatPost(lostCatPost)
                 .build();
     }

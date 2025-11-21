@@ -18,6 +18,7 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
 
     private final JPAQueryFactory queryFactory;
 
+
     QBoastCatPost boastCatPost = QBoastCatPost.boastCatPost;
 
     /*

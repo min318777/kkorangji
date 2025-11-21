@@ -41,7 +41,7 @@ public class NotificationDto {
                 .postId(notificationDto.getPostId())
                 .message(notificationDto.getMessage())
                 .receiverLoginId(notificationDto.getReceiverLoginId())
-                .isRead(notificationDto.isRead)
+                .isRead(notificationDto.isRead())
                 .createdAt(notificationDto.getCreatedAt())
                 .build();
     }

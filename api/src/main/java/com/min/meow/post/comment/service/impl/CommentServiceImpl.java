@@ -65,7 +65,7 @@ public class CommentServiceImpl implements CommentService {
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        Comment comment = Comment.convertToEntity(registerCommentRequest, boastCatPost, writer);
+        Comment comment = Comment.toEntity(registerCommentRequest, boastCatPost, writer);
         boastCatPost.getComments().add(comment);
         commentRepository.save(comment);
 
@@ -78,7 +78,7 @@ public class CommentServiceImpl implements CommentService {
                 .createdAt(LocalDateTime.now())
                 .build();
         produceTopic(notificationDto);
-        return RegisterCommentResponse.convertToResponse(comment);
+        return RegisterCommentResponse.toResponse(comment);
     }
 
     // 실종 고양이 게시글 댓글 작성
@@ -88,7 +88,7 @@ public class CommentServiceImpl implements CommentService {
         var lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        Comment comment = Comment.convertToEntityForLostCat(registerCommentRequest, lostCatPost, writer);
+        Comment comment = Comment.toEntity(registerCommentRequest, lostCatPost, writer);
         lostCatPost.getComments().add(comment);
         commentRepository.save(comment);
 
@@ -101,7 +101,7 @@ public class CommentServiceImpl implements CommentService {
                 .createdAt(LocalDateTime.now())
                 .build();
         produceTopic(notificationDto);
-        return RegisterCommentResponse.convertToResponse(comment);
+        return RegisterCommentResponse.toResponse(comment);
     }
 
     // 댓글 수정
@@ -113,7 +113,7 @@ public class CommentServiceImpl implements CommentService {
 
         comment.update(updateCommentRequest);
 
-        return UpdateCommentResponse.convertToResponse(comment);
+        return UpdateCommentResponse.toResponse(comment);
     }
 
     // 댓글 삭제
@@ -130,6 +130,4 @@ public class CommentServiceImpl implements CommentService {
 
         notificationSender.send("comment-notification", NotificationDto.toKafkaDto(notificationDto));
     }
-
-
 }
