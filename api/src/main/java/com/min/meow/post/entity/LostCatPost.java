@@ -22,25 +22,18 @@ import java.util.List;
 public class LostCatPost extends BasePost {
 
     private String catName;
-
     private String catType;
-
     private String catColor;
-
     private Integer catAge;
-
     private Integer catWeight;
+    private String lostLocation;
+    private Double latitude;
+    private Double longitude;
+    private Integer reward;
+    private boolean isCompleted;
 
     @ElementCollection
     private List<String> imageUrls = new ArrayList<>();
-
-    private String lostLocation;
-
-    private Double latitude;
-
-    private Double longitude;
-
-    private Integer reward;
 
     @BatchSize(size = 100)
     @OneToMany(mappedBy = "lostCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -51,6 +44,7 @@ public class LostCatPost extends BasePost {
                 .title(createLostCatPostRequest.getTitle())
                 .contents(createLostCatPostRequest.getContent())
                 .user(user)
+                .isCompleted(false)
                 .lostLocation(createLostCatPostRequest.getLostLocation())
                 .latitude(createLostCatPostRequest.getLatitude())
                 .longitude(createLostCatPostRequest.getLongitude())
@@ -102,6 +96,7 @@ public class LostCatPost extends BasePost {
         if (updateLostCatPostRequest.getReward() != null) {
             this.reward = updateLostCatPostRequest.getReward();
         }
+
     }
 
     public void plusView(){this.view += 1;}
