@@ -24,4 +24,11 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
     // 단일 게시글 조회 시
     @Query("SELECT p FROM BoastCatPost p LEFT JOIN FETCH p.imageUrls WHERE p.id = :id")
     Optional<BoastCatPost> findByIdWithImages(@Param("id") Long id);
+
+    // 마이페이지: 사용자가 작성한 고양이 자랑글 목록 조회 (페이징)
+    // 참고: comments와 postLikeList는 지연 로딩되지만, DTO 변환 시 size()로 개수만 조회하므로 문제없음
+    @Query("SELECT b FROM BoastCatPost b " +
+           "WHERE b.user.id = :userId " +
+           "ORDER BY b.createdAt DESC")
+    Page<BoastCatPost> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
 }
