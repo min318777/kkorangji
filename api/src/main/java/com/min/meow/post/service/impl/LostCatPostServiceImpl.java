@@ -95,10 +95,7 @@ public class LostCatPostServiceImpl implements LostCatPostService {
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-
-        if(!lostCatPost.getUser().getLoginId().equals(loginId)){
-            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
-        }
+        lostCatPost.validateAuthor(writer);
 
         lostCatPost.update(updateLostCatPostRequest);
         return UpdateLostCatPostResponse.toResponse(lostCatPost);
@@ -118,9 +115,7 @@ public class LostCatPostServiceImpl implements LostCatPostService {
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        if(!lostCatPost.getUser().getLoginId().equals(loginId)){
-            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
-        }
+        lostCatPost.validateAuthor(writer);
         lostCatRepository.deleteById(lostCatPostId);
 
 

@@ -2,6 +2,8 @@ package com.min.meow.post.entity;
 
 
 import com.min.meow.global.BasePost;
+import com.min.meow.global.exception.CustomException;
+import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.post.comment.entity.Comment;
 import com.min.meow.post.domain.request.CreateBoastCatPostRequest;
 import com.min.meow.post.domain.request.UpdateBoastCatPostRequest;
@@ -73,5 +75,14 @@ public class BoastCatPost extends BasePost {
 
     public void plusView(){
         this.view += 1;
+    }
+
+    public boolean isAuthor(User user){
+        return this.user.equals(user);
+    }
+    public void validateAuthor(User user){
+        if (!isAuthor(user)){
+            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
+        }
     }
 }

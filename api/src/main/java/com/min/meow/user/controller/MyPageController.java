@@ -23,9 +23,8 @@ public class MyPageController {
     private final MyPageService myPageService;
 
     /**
-     * 마이페이지 요약 정보 조회
+     * 마이페이지
      * GET /api/users/mypage
-     *
      * @param user 현재 인증된 사용자 정보 (Spring Security Context에서 자동 주입)
      * @return 사용자 기본 정보 및 통계 (작성한 글 수, 댓글 수)
      */
@@ -47,7 +46,6 @@ public class MyPageController {
     /**
      * 내가 쓴 글 목록 조회
      * GET /api/users/mypage/posts
-     *
      * @param user 현재 인증된 사용자 정보 (Spring Security Context에서 자동 주입)
      * @param page 페이지 번호 (0부터 시작, 기본값: 0)
      * @param size 페이지 크기 (기본값: 10)

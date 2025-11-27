@@ -95,12 +95,10 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
 
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
-
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-        if(!boastCatPost.getUser().getLoginId().equals(loginId)){
-            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
-        }
+
+        boastCatPost.validateAuthor(writer);
         boastCatPost.update(updateBoastCatPostRequest);
 
         return UpdateBoastCatPostResponse.convertToResponse(boastCatPost);
@@ -118,9 +116,7 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        if(!boastCatPost.getUser().getLoginId().equals(loginId)){
-            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
-        }
+        boastCatPost.validateAuthor(writer);
         boastCatPostRepository.deleteById(boastCatPostId);
         /*
         if(!boastCatPostRepository.existsById(boastCatPostId)){
