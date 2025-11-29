@@ -69,8 +69,8 @@ public class LostCatPostController {
     public ResponseEntity<ApiResponse<UpdateLostCatPostResponse>> updateLostCatPost(@PathVariable Long lostCatPostId,
                                                                        @RequestBody @Valid UpdateLostCatPostRequest updateLostCatPostRequest,
                                                                        BindingResult bindingResult, @AuthenticationPrincipal PrincipalUser user){
-
-        UpdateLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.updateLostCatPost(lostCatPostId, updateLostCatPostRequest, user.getUser().getLoginId());
+        String loginId = user.getUser().getLoginId();
+        UpdateLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.updateLostCatPost(lostCatPostId, updateLostCatPostRequest, loginId);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 수정 성공", lostCatPostDto));
     }
 
@@ -78,7 +78,9 @@ public class LostCatPostController {
     @DeleteMapping("/{lostCatPostId}")
     public ResponseEntity<ApiResponse<Void>> deleteLostCatPost(@PathVariable Long lostCatPostId, @AuthenticationPrincipal PrincipalUser user){
 
-        lostCatPostServiceImpl.deleteLostCatPost(lostCatPostId, user.getUser().getLoginId(), user.getUser().getPassword());
+        String loginId = user.getUser().getLoginId();
+        String password = user.getUser().getPassword();
+        lostCatPostServiceImpl.deleteLostCatPost(lostCatPostId, loginId, password);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 삭제 성공", null));
     }
 }

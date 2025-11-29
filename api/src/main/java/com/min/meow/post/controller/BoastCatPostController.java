@@ -55,7 +55,8 @@ public class BoastCatPostController {
     public ResponseEntity<ApiResponse<UpdateBoastCatPostResponse>> updateBoastCatPost(@RequestBody @Valid UpdateBoastCatPostRequest updateBoastCatPostRequest,
                                                                                       @PathVariable Long boastCatPostId, @AuthenticationPrincipal PrincipalUser user){
 
-        UpdateBoastCatPostResponse post = boastCatPostServiceImpl.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId, user.getUser().getLoginId());
+        String loginId = user.getUser().getLoginId();
+        UpdateBoastCatPostResponse post = boastCatPostServiceImpl.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId, loginId);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 수정 성공", post));
     }
 
@@ -63,7 +64,9 @@ public class BoastCatPostController {
     @DeleteMapping("/{boastCatPostId}")
     public ResponseEntity<ApiResponse<Void>> deleteBoastCatPost(@PathVariable Long boastCatPostId, @AuthenticationPrincipal PrincipalUser user){
 
-        boastCatPostServiceImpl.deleteBoastCatPost(boastCatPostId, user.getUser().getLoginId(), user.getUser().getPassword());
+        String loginId = user.getUser().getLoginId();
+        String password = user.getUser().getPassword();
+        boastCatPostServiceImpl.deleteBoastCatPost(boastCatPostId, loginId, password);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 삭제 성공", null));
     }
 }
