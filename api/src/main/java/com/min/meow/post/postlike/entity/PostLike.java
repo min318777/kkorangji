@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "boast_cat_post_id"})})
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

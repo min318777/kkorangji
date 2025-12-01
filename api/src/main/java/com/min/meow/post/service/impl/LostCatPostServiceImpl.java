@@ -41,11 +41,9 @@ public class LostCatPostServiceImpl implements LostCatPostService {
     public PageResponse<GetLostCatPostResponse> getAllLostCatPosts(Pageable pageable){
 
         List<LostCatPost> posts = lostCatRepository.findAllWithImageUrls();
-
         List<GetLostCatPostResponse> responses = posts.stream()
                 .map(GetLostCatPostResponse::toResponse)
                 .toList();
-
         Page<GetLostCatPostResponse> pageResponse = new PageImpl<>(
                 responses,
                 pageable,
@@ -111,7 +109,6 @@ public class LostCatPostServiceImpl implements LostCatPostService {
 
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
-
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 

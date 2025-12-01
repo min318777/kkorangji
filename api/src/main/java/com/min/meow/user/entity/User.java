@@ -56,7 +56,7 @@ public class User{
         this.lastLoginAt = LocalDateTime.now();
     }
 
-    public static User convertToEntity(JoinRequest joinRequest){
+    public static User toEntity(JoinRequest joinRequest){
 
         return User.builder()
                 .loginId(joinRequest.getLoginId())

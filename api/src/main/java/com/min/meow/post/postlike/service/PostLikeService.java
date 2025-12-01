@@ -23,25 +23,21 @@ public class PostLikeService {
     private final UserRepository userRepository;
 
     public Integer getLikeCount(Long boastCatPostId){
-
         BoastCatPost post = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
         return postLikeRepository.countByBoastCatPost(post);
     }
 
-    public boolean plusLike(Long boastCatPostId, User user){
+    public boolean toggleLike(Long boastCatPostId, User user){
 
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-
         User persistUser = userRepository.findByLoginId(user.getLoginId())
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
         Optional<PostLike> postLike = postLikeRepository.findByBoastCatPostIdAndLoginId(boastCatPostId, user.getLoginId());
-
         if(postLike.isPresent()){
-
             postLikeRepository.delete(postLike.get());
             return false;
         }

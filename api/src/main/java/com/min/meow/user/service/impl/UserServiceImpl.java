@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
         }
 
         String encodedPassword = bCryptPasswordEncoder.encode(joinRequest.getPassword());
-        User user = User.convertToEntity(joinRequest);
+        User user = User.toEntity(joinRequest);
         user.setPassword(encodedPassword);
         if(joinRequest.getRole() == null){
             user.setRole(Role.ROLE_USER);

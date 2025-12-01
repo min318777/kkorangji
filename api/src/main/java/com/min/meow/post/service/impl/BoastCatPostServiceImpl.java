@@ -41,19 +41,15 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     @CacheEvict(value = "post", allEntries = true)
     @Cacheable(value = "post", key = "'getAllBoastCatPost:' + #pageable.pageNumber + ':' + #pageable.pageSize")
     public PageResponse<GetBoastCatPostResponse> getAllBoastCatPosts(Pageable pageable){
-
         List<BoastCatPost> posts = boastCatPostRepository.findAllWithImageUrls();
-
         List<GetBoastCatPostResponse> responses = posts.stream()
                 .map(GetBoastCatPostResponse::toResponse)
                 .toList();
-
         Page<GetBoastCatPostResponse> pageResponses = new PageImpl<>(
                 responses,
                 pageable,
                 responses.size()
         );
-
         return PageResponse.from(pageResponses);
     }
 
@@ -109,10 +105,8 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     @Transactional
     @CacheEvict(value = "post", allEntries = true)
     public void deleteBoastCatPost(Long boastCatPostId, String loginId, String password){
-
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
-
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 

@@ -26,7 +26,8 @@ public class PostLikeController {
     @PostMapping("/{boastCatPostId}")
     public ResponseEntity<?> plusLike(@PathVariable Long boastCatPostId, @AuthenticationPrincipal PrincipalUser user){
 
-        boolean likeOrCancel = postLikeService.plusLike(boastCatPostId, user.getUser());
+        String loginId = user.getUser().getLoginId();
+        boolean likeOrCancel = postLikeService.toggleLike(boastCatPostId, user.getUser());
         String message;
         if(likeOrCancel){
             message = "좋아요 등록";
