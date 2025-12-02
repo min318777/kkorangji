@@ -4,11 +4,13 @@ import com.min.meow.config.S3Uploader;
 import com.min.meow.global.PageResponse;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.post.domain.request.UpdateBoastCatPostRequest;
 import com.min.meow.post.domain.response.CreateLostCatPostResponse;
 import com.min.meow.post.domain.response.GetLostCatPostResponse;
 import com.min.meow.post.domain.response.UpdateLostCatPostResponse;
 import com.min.meow.post.domain.request.CreateLostCatPostRequest;
 import com.min.meow.post.domain.request.UpdateLostCatPostRequest;
+import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.post.service.LostCatPostService;
@@ -94,8 +96,8 @@ public class LostCatPostServiceImpl implements LostCatPostService {
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
         lostCatPost.validateAuthor(writer);
-
-        lostCatPost.update(updateLostCatPostRequest);
+        List<String> finalImageUrls = updateImage(updateLostCatPostRequest);
+        lostCatPost.update(updateLostCatPostRequest, finalImageUrls);
         return UpdateLostCatPostResponse.toResponse(lostCatPost);
     }
 
@@ -122,5 +124,23 @@ public class LostCatPostServiceImpl implements LostCatPostService {
         }
         lostCatRepository.deleteById(lostCatPostId);
          */
+    }
+
+    private List<String> updateImage(UpdateLostCatPostRequest request){
+        List<String> finalImageUrls = new ArrayList<>();
+        // 1. 유지할 기존 이미지 추가
+        if (request.getKeepImageUrls() != null && !request.getKeepImageUrls().isEmpty()){
+            finalImageUrls.addAll(request.getKeepImageUrls());
+        }
+        // 2. 새로운 이미지 업로드 후 추가
+        if (request.getNewImages() != null && !request.getNewImages().isEmpty()){
+            List<String> newUploadedUrls = s3Uploader.uploadFiles(request.getNewImages());
+            finalImageUrls.addAll(newUploadedUrls);
+        }
+        // 3. 삭제할 이미지 처리 (선택사항: S3에서 실제 파일 삭제)
+        // if (request.getDeleteImageUrls() != null && !request.getDeleteImageUrls().isEmpty()){
+        //     s3Uploader.deleteFiles(request.getDeleteImageUrls());
+        // }
+        return finalImageUrls;
     }
 }

@@ -52,7 +52,7 @@ public class BoastCatPostController {
 
     // 글 수정
     @PutMapping("/{boastCatPostId}")
-    public ResponseEntity<ApiResponse<UpdateBoastCatPostResponse>> updateBoastCatPost(@RequestBody @Valid UpdateBoastCatPostRequest updateBoastCatPostRequest,
+    public ResponseEntity<ApiResponse<UpdateBoastCatPostResponse>> updateBoastCatPost(@ModelAttribute @Valid UpdateBoastCatPostRequest updateBoastCatPostRequest,
                                                                                       @PathVariable Long boastCatPostId, @AuthenticationPrincipal PrincipalUser user){
 
         String loginId = user.getUser().getLoginId();

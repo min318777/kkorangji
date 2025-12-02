@@ -42,12 +42,17 @@ public class BoastCatPost extends BasePost {
     @OneToMany(mappedBy = "boastCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
-    public void update(UpdateBoastCatPostRequest updateBoastCatPostRequest){
+    public void update(UpdateBoastCatPostRequest updateBoastCatPostRequest, List<String> newImageUrls){
         if (updateBoastCatPostRequest.getTitle() != null) {
             this.title = updateBoastCatPostRequest.getTitle();
         }
         if (updateBoastCatPostRequest.getContent() != null) {
             this.contents = updateBoastCatPostRequest.getContent();
+        }
+        // 이미지 업데이트 (전체 교체)
+        if (newImageUrls != null) {
+            this.imageUrls.clear();
+            this.imageUrls.addAll(newImageUrls);
         }
     }
 

@@ -67,7 +67,7 @@ public class LostCatPostController {
     // 글 수정
     @PutMapping("/{lostCatPostId}")
     public ResponseEntity<ApiResponse<UpdateLostCatPostResponse>> updateLostCatPost(@PathVariable Long lostCatPostId,
-                                                                       @RequestBody @Valid UpdateLostCatPostRequest updateLostCatPostRequest,
+                                                                       @ModelAttribute @Valid UpdateLostCatPostRequest updateLostCatPostRequest,
                                                                        BindingResult bindingResult, @AuthenticationPrincipal PrincipalUser user){
         String loginId = user.getUser().getLoginId();
         UpdateLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.updateLostCatPost(lostCatPostId, updateLostCatPostRequest, loginId);

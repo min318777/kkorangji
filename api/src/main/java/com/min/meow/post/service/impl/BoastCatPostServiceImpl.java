@@ -95,7 +95,8 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
         boastCatPost.validateAuthor(writer);
-        boastCatPost.update(updateBoastCatPostRequest);
+        List<String> finalImageUrls = updateImage(updateBoastCatPostRequest);
+        boastCatPost.update(updateBoastCatPostRequest, finalImageUrls);
 
         return UpdateBoastCatPostResponse.convertToResponse(boastCatPost);
     }
@@ -118,5 +119,23 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         }
         boastCatPostRepository.deleteById(boastCatPostId);
          */
+    }
+
+    private List<String> updateImage(UpdateBoastCatPostRequest request){
+        List<String> finalImageUrls = new ArrayList<>();
+        // 1. 유지할 기존 이미지 추가
+        if (request.getKeepImageUrls() != null && !request.getKeepImageUrls().isEmpty()){
+            finalImageUrls.addAll(request.getKeepImageUrls());
+        }
+        // 2. 새로운 이미지 업로드 후 추가
+        if (request.getNewImages() != null && !request.getNewImages().isEmpty()){
+            List<String> newUploadedUrls = s3Uploader.uploadFiles(request.getNewImages());
+            finalImageUrls.addAll(newUploadedUrls);
+        }
+        // 3. 삭제할 이미지 처리 (선택사항: S3에서 실제 파일 삭제)
+        // if (request.getDeleteImageUrls() != null && !request.getDeleteImageUrls().isEmpty()){
+        //     s3Uploader.deleteFiles(request.getDeleteImageUrls());
+        // }
+        return finalImageUrls;
     }
 }

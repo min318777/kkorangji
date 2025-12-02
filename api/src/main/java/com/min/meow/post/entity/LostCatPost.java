@@ -60,7 +60,7 @@ public class LostCatPost extends BasePost {
                 .build();
     }
 
-    public void update(UpdateLostCatPostRequest updateLostCatPostRequest) {
+    public void update(UpdateLostCatPostRequest updateLostCatPostRequest, List<String> newImageUrls) {
 
         if (updateLostCatPostRequest.getTitle() != null) {
             this.title = updateLostCatPostRequest.getTitle();
@@ -83,9 +83,6 @@ public class LostCatPost extends BasePost {
         if (updateLostCatPostRequest.getCatWeight() != null) {
             this.catWeight = updateLostCatPostRequest.getCatWeight();
         }
-        if (updateLostCatPostRequest.getImageUrls() != null) {
-            this.imageUrls = updateLostCatPostRequest.getImageUrls();
-        }
         if (updateLostCatPostRequest.getLostLocation() != null) {
             this.lostLocation = updateLostCatPostRequest.getLostLocation();
         }
@@ -98,7 +95,11 @@ public class LostCatPost extends BasePost {
         if (updateLostCatPostRequest.getReward() != null) {
             this.reward = updateLostCatPostRequest.getReward();
         }
-
+        // 이미지 업데이트 (전체 교체)
+        if (newImageUrls != null) {
+            this.imageUrls.clear();
+            this.imageUrls.addAll(newImageUrls);
+        }
     }
 
     public void plusView(){this.view += 1;}
