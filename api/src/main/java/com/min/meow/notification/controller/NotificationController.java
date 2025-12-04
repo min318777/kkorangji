@@ -2,13 +2,15 @@ package com.min.meow.notification.controller;
 
 
 import com.min.meow.global.PageResponse;
+import com.min.meow.global.exception.ApiResponse;
 import com.min.meow.global.exception.ErrorResponse;
-import com.min.meow.notification.domain.NotificationDto;
+import com.min.meow.notification.dto.NotificationResponse;
 import com.min.meow.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,9 +29,9 @@ public class NotificationController {
                                           @RequestParam (defaultValue = "5") int size){
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<NotificationDto> notices = notificationService.getAllNotice(pageable);
-        PageResponse<NotificationDto> pageResponse = PageResponse.from(notices);
+        Page<NotificationResponse> notices = notificationService.getAllNotifications(pageable);
+        PageResponse<NotificationResponse> pageResponse = PageResponse.from(notices);
 
-        return ResponseEntity.ok(new ErrorResponse<>(true, "댓글 알림 조회 성공", pageResponse));
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 알림 조회 성공", pageResponse));
     }
 }

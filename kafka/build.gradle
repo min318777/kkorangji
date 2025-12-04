@@ -1,6 +1,7 @@
 plugins {
-    id 'java-library'
-    id 'io.spring.dependency-management'
+    id 'java'
+    id 'org.springframework.boot' version '3.4.5'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'com.min'
@@ -10,29 +11,40 @@ repositories {
     mavenCentral()
 }
 
-dependencyManagement {
-    imports {
-        mavenBom "org.springframework.boot:spring-boot-dependencies:3.1.5"
-    }
-}
-
-// bootJar 태스크 비활성화
-jar {
-    enabled = true
-    archiveClassifier = '' // 일반 jar로 생성
+// Spring Boot 메인 클래스 지정
+springBoot {
+    mainClass = 'com.min.kafka.KafkaApplication'
 }
 
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
+    // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
+    // Spring Boot Starter
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // Kafka
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    // Domain 모듈 의존성 (엔티티, 리포지토리 사용)
+    implementation(project(":domain"))
+
+    // 데이터베이스 (domain에서 필요)
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    testImplementation 'com.h2database:h2:2.3.230'
 }
 
 test {
     useJUnitPlatform()
+}
+
+// UTF-8 인코딩 설정
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
 }

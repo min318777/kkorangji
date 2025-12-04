@@ -4,19 +4,17 @@ import com.min.meow.config.S3Uploader;
 import com.min.meow.global.PageResponse;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
-import com.min.meow.post.domain.request.UpdateBoastCatPostRequest;
-import com.min.meow.post.domain.response.CreateLostCatPostResponse;
-import com.min.meow.post.domain.response.GetLostCatPostResponse;
-import com.min.meow.post.domain.response.UpdateLostCatPostResponse;
-import com.min.meow.post.domain.request.CreateLostCatPostRequest;
-import com.min.meow.post.domain.request.UpdateLostCatPostRequest;
-import com.min.meow.post.entity.BoastCatPost;
+import com.min.meow.post.dto.response.CreateLostCatPostResponse;
+import com.min.meow.post.dto.response.GetLostCatPostResponse;
+import com.min.meow.post.dto.response.UpdateLostCatPostResponse;
+import com.min.meow.post.dto.request.CreateLostCatPostRequest;
+import com.min.meow.post.dto.request.UpdateLostCatPostRequest;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.post.service.LostCatPostService;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -64,7 +62,7 @@ public class LostCatPostServiceImpl implements LostCatPostService {
 
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-        lostCatPost.plusView();
+        lostCatPost.increaseView();  // plusView() → increaseView()로 변경
         return GetLostCatPostResponse.toResponse(lostCatPost);
     }
 
@@ -80,7 +78,23 @@ public class LostCatPostServiceImpl implements LostCatPostService {
         if(createLostCatPostRequest.getImages() != null){
             imageUrls = s3Uploader.uploadFiles(createLostCatPostRequest.getImages());
         }
-        LostCatPost lostCatPost = LostCatPost.toEntity(createLostCatPostRequest, imageUrls, writer);
+
+        LostCatPost lostCatPost = LostCatPost.builder()
+                .title(createLostCatPostRequest.getTitle())
+                .contents(createLostCatPostRequest.getContent())
+                .user(writer)
+                .isCompleted(false)
+                .lostLocation(createLostCatPostRequest.getLostLocation())
+                .latitude(createLostCatPostRequest.getLatitude())
+                .longitude(createLostCatPostRequest.getLongitude())
+                .catName(createLostCatPostRequest.getCatName())
+                .catAge(createLostCatPostRequest.getCatAge())
+                .catType(createLostCatPostRequest.getCatType())
+                .catWeight(createLostCatPostRequest.getCatWeight())
+                .catColor(createLostCatPostRequest.getCatColor())
+                .imageUrls(imageUrls)
+                .reward(createLostCatPostRequest.getReward())
+                .build();
         lostCatRepository.save(lostCatPost);
 
         return CreateLostCatPostResponse.toResponse(lostCatPost, writer);
@@ -95,9 +109,26 @@ public class LostCatPostServiceImpl implements LostCatPostService {
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-        lostCatPost.validateAuthor(writer);
+
+        if (!lostCatPost.isAuthor(writer)) {
+            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
+        }
+
         List<String> finalImageUrls = updateImage(updateLostCatPostRequest);
-        lostCatPost.update(updateLostCatPostRequest, finalImageUrls);
+        lostCatPost.updatePost(
+                updateLostCatPostRequest.getTitle(),
+                updateLostCatPostRequest.getContent(),
+                updateLostCatPostRequest.getCatName(),
+                updateLostCatPostRequest.getCatType(),
+                updateLostCatPostRequest.getCatColor(),
+                updateLostCatPostRequest.getCatAge(),
+                updateLostCatPostRequest.getCatWeight(),
+                updateLostCatPostRequest.getLostLocation(),
+                updateLostCatPostRequest.getLatitude(),
+                updateLostCatPostRequest.getLongitude(),
+                updateLostCatPostRequest.getReward(),
+                finalImageUrls
+        );
         return UpdateLostCatPostResponse.toResponse(lostCatPost);
     }
 
@@ -114,7 +145,10 @@ public class LostCatPostServiceImpl implements LostCatPostService {
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        lostCatPost.validateAuthor(writer);
+        if (!lostCatPost.isAuthor(writer)) {
+            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
+        }
+
         lostCatRepository.deleteById(lostCatPostId);
 
 

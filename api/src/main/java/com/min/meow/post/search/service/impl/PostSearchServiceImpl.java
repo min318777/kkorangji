@@ -20,8 +20,25 @@ public class PostSearchServiceImpl implements PostSearchService {
 
     @Override
     public Page<PostDto> search(PostSearchRequest postSearchRequest, Pageable pageable) {
-        org.springframework.data.domain.Page<BoastCatPost> boastCatPosts = boastCatPostRepositoryImpl.search(postSearchRequest, pageable);
-        org.springframework.data.domain.Page<PostDto> postDtos = boastCatPosts.map(BoastCatPost::toDto);
+        // Repository 메서드 시그니처 변경에 맞춰 파라미터 전달
+        org.springframework.data.domain.Page<BoastCatPost> boastCatPosts = boastCatPostRepositoryImpl.search(
+                postSearchRequest.getTitle(),
+                postSearchRequest.getContents(),
+                pageable
+        );
+
+        // toDto 메서드 제거됨 - 직접 변환
+        org.springframework.data.domain.Page<PostDto> postDtos = boastCatPosts.map(post ->
+                PostDto.builder()
+                        .id(post.getId())
+                        .title(post.getTitle())
+                        .contents(post.getContents())
+                        .userId(post.getUser().getId())
+                        .view(post.getView())
+                        .createdAt(post.getCreatedAt())
+                        .updatedAt(post.getUpdatedAt())
+                        .build()
+        );
         return new Page<>(postDtos);
     }
 }

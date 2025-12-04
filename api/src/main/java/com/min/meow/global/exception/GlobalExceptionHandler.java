@@ -28,7 +28,6 @@ public class GlobalExceptionHandler {
         log.error("Validation error 발생: {}", errorMessage);
         return createErrorResponse(HttpStatus.BAD_REQUEST, errorMessage);
     }
-    
 
     // 기타 예외 처리
     @ExceptionHandler(Exception.class)

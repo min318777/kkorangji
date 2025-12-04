@@ -3,10 +3,10 @@ package com.min.meow.user.service;
 
 import com.min.meow.global.Role;
 import com.min.meow.user.oauth2.CustomOAuth2User;
-import com.min.meow.user.domain.reponse.GoogleResponse;
-import com.min.meow.user.domain.reponse.NaverResponse;
-import com.min.meow.user.domain.reponse.OAuth2Response;
-import com.min.meow.user.domain.UserDto;
+import com.min.meow.user.dto.reponse.GoogleResponse;
+import com.min.meow.user.dto.reponse.NaverResponse;
+import com.min.meow.user.dto.reponse.OAuth2Response;
+import com.min.meow.user.dto.UserDto;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

@@ -16,12 +16,12 @@ services:
     env_file:
       - .env.local
 
-  consumer:
+  kafka-consumer:
     build:
       context: .
-      dockerfile: ./consumer/Dockerfile
+      dockerfile: ./kafka/Dockerfile
     ports:
-      - "8081:8080"
+      - "8081:8081"
     depends_on:
       mysql:
         condition: service_healthy

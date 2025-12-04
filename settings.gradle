@@ -1,4 +1,5 @@
 rootProject.name = 'meow'
 include 'kafka'
-include 'consumer'
 include 'api'
+include 'domain'
+

@@ -3,19 +3,19 @@ package com.min.meow.post.service.impl;
 
 import com.min.meow.config.S3Uploader;
 import com.min.meow.global.PageResponse;
-import com.min.meow.post.domain.response.GetBoastCatPostResponse;
-import com.min.meow.post.domain.response.CreateBoastCatPostResponse;
-import com.min.meow.post.domain.response.UpdateBoastCatPostResponse;
-import com.min.meow.post.domain.request.CreateBoastCatPostRequest;
-import com.min.meow.post.domain.request.UpdateBoastCatPostRequest;
+import com.min.meow.post.dto.response.GetBoastCatPostResponse;
+import com.min.meow.post.dto.response.CreateBoastCatPostResponse;
+import com.min.meow.post.dto.response.UpdateBoastCatPostResponse;
+import com.min.meow.post.dto.request.CreateBoastCatPostRequest;
+import com.min.meow.post.dto.request.UpdateBoastCatPostRequest;
 import com.min.meow.post.entity.BoastCatPost;
-import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.post.service.BoastCatPostService;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -60,7 +60,7 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
         BoastCatPost boastCatPost = boastCatPostRepository.findByIdWithImages(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-        boastCatPost.plusView();
+        boastCatPost.increaseView();  // plusView() → increaseView()로 변경
         return GetBoastCatPostResponse.toResponse(boastCatPost);
     }
 
@@ -77,7 +77,14 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         if (createBoastCatPostRequest.getImages() != null) {
             imageUrls = s3Uploader.uploadFiles(createBoastCatPostRequest.getImages());
         }
-        BoastCatPost boastCatPost = BoastCatPost.toEntity(createBoastCatPostRequest, imageUrls, writer);
+
+        // 엔티티 직접 생성 (toEntity 메서드 제거됨)
+        BoastCatPost boastCatPost = BoastCatPost.builder()
+                .title(createBoastCatPostRequest.getTitle())
+                .contents(createBoastCatPostRequest.getContent())
+                .imageUrls(imageUrls)
+                .user(writer)
+                .build();
         boastCatPostRepository.save(boastCatPost);
 
         return CreateBoastCatPostResponse.toResponse(boastCatPost);
@@ -94,9 +101,17 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        boastCatPost.validateAuthor(writer);
+        if (!boastCatPost.isAuthor(writer)) {
+            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
+        }
+
         List<String> finalImageUrls = updateImage(updateBoastCatPostRequest);
-        boastCatPost.update(updateBoastCatPostRequest, finalImageUrls);
+        // 업데이트 메서드 파라미터 변경됨
+        boastCatPost.updatePost(
+                updateBoastCatPostRequest.getTitle(),
+                updateBoastCatPostRequest.getContent(),
+                finalImageUrls
+        );
 
         return UpdateBoastCatPostResponse.convertToResponse(boastCatPost);
     }
@@ -111,7 +126,11 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        boastCatPost.validateAuthor(writer);
+        // 작성자 검증 (validateAuthor 메서드 제거됨)
+        if (!boastCatPost.isAuthor(writer)) {
+            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
+        }
+
         boastCatPostRepository.deleteById(boastCatPostId);
         /*
         if(!boastCatPostRepository.existsById(boastCatPostId)){

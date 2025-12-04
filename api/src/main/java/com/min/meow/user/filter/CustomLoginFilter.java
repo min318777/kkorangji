@@ -2,8 +2,8 @@ package com.min.meow.user.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.min.meow.global.Token;
-import com.min.meow.user.domain.CustomUserDetails;
-import com.min.meow.user.domain.request.LoginRequest;
+import com.min.meow.user.dto.CustomUserDetails;
+import com.min.meow.user.dto.request.LoginRequest;
 import com.min.meow.user.entity.RefreshToken;
 import com.min.meow.user.jwt.JwtUtil;
 import com.min.meow.user.repository.RefreshTokenRepository;

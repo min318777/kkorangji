@@ -3,10 +3,10 @@ package com.min.meow.user.service.impl;
 import com.min.meow.global.Role;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
-import com.min.meow.user.domain.reponse.JoinResponse;
-import com.min.meow.user.domain.reponse.LoginResponse;
-import com.min.meow.user.domain.request.JoinRequest;
-import com.min.meow.user.domain.request.LoginRequest;
+import com.min.meow.user.dto.reponse.JoinResponse;
+import com.min.meow.user.dto.reponse.LoginResponse;
+import com.min.meow.user.dto.request.JoinRequest;
+import com.min.meow.user.dto.request.LoginRequest;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import com.min.meow.user.service.UserService;
@@ -42,13 +42,17 @@ public class UserServiceImpl implements UserService {
         }
 
         String encodedPassword = bCryptPasswordEncoder.encode(joinRequest.getPassword());
-        User user = User.toEntity(joinRequest);
-        user.setPassword(encodedPassword);
-        if(joinRequest.getRole() == null){
-            user.setRole(Role.ROLE_USER);
-        }else{
-            user.setRole(joinRequest.getRole());
-        }
+
+        // 엔티티 직접 생성 (toEntity 메서드 제거됨)
+        User user = User.builder()
+                .loginId(joinRequest.getLoginId())
+                .password(encodedPassword)
+                .name(joinRequest.getName())
+                .email(joinRequest.getEmail())
+                .role(joinRequest.getRole() != null ? joinRequest.getRole() : Role.ROLE_USER)
+                .isDelete(false)
+                .build();
+
         userRepository.save(user);
 
         return JoinResponse.convertToDto(user);

@@ -9,7 +9,7 @@ import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.post.repository.LostCatRepository;
-import com.min.meow.user.domain.reponse.*;
+import com.min.meow.user.dto.reponse.*;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import com.min.meow.user.service.MyPageService;

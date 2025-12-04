@@ -2,7 +2,7 @@ package com.min.meow.user.service;
 
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
-import com.min.meow.user.domain.CustomUserDetails;
+import com.min.meow.user.dto.CustomUserDetails;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
