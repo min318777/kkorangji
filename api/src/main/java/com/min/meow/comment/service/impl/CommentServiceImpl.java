@@ -1,6 +1,5 @@
 package com.min.meow.comment.service.impl;
 
-
 import com.min.kafka.producer.NotificationSender;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
@@ -9,11 +8,12 @@ import com.min.meow.comment.dto.request.UpdateCommentRequest;
 import com.min.meow.comment.dto.response.GetCommentResponse;
 import com.min.meow.comment.dto.response.RegisterCommentResponse;
 import com.min.meow.comment.dto.response.UpdateCommentResponse;
-import com.min.meow.notification.event.CommentCreateEvent;
+import com.min.meow.notification.event.CommentEvent;
 import com.min.meow.post.comment.entity.Comment;
 import com.min.meow.post.comment.repository.CommentRepository;
 import com.min.meow.comment.service.CommentService;
 import com.min.meow.post.entity.BoastCatPost;
+import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.post.repository.LostCatRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +33,6 @@ public class CommentServiceImpl implements CommentService {
     private final BoastCatPostRepository boastCatPostRepository;
     private final CommentRepository commentRepository;
     private final NotificationSender notificationSender;
-
 
     // 고양이 자랑 게시글 댓글 조회
     @Override
@@ -74,10 +73,11 @@ public class CommentServiceImpl implements CommentService {
         boastCatPost.getComments().add(comment);
         commentRepository.save(comment);
 
-        CommentCreateEvent event = new CommentCreateEvent(
+        CommentEvent event = new CommentEvent(
                 comment.getId(),
                 boastCatPostId,
-                writer
+                writer,
+                boastCatPost.getUser().getLoginId()
         );
         notificationSender.publish(event);
         return RegisterCommentResponse.toResponse(comment);
@@ -87,7 +87,7 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     @Override
     public RegisterCommentResponse registerLostCatPostComment(RegisterCommentRequest registerCommentRequest, Long lostCatPostId, String writer){
-        var lostCatPost = lostCatRepository.findById(lostCatPostId)
+        LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
         // 엔티티 직접 생성 (toEntity 메서드 제거됨)
@@ -100,10 +100,11 @@ public class CommentServiceImpl implements CommentService {
         lostCatPost.getComments().add(comment);
         commentRepository.save(comment);
 
-        CommentCreateEvent event = new CommentCreateEvent(
+        CommentEvent event = new CommentEvent(
                 comment.getId(),
                 lostCatPostId,
-                writer
+                writer,
+                lostCatPost.getUser().getLoginId()
         );
         notificationSender.publish(event);
         return RegisterCommentResponse.toResponse(comment);

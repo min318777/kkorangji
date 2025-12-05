@@ -40,7 +40,7 @@ public class GetBoastCatPostResponse {
         return GetBoastCatPostResponse.builder()
                 .id(boastCatPost.getId())
                 .view(boastCatPost.getView())
-                .commentDtoList(boastCatPost.getComments().stream().map(CommentDto::convertToDto).toList())
+                .commentDtoList(boastCatPost.getComments().stream().map(CommentDto::toDto).toList())
                 .writer(boastCatPost.getUser().getLoginId())
                 .title(boastCatPost.getTitle())
                 .contents(boastCatPost.getContents())

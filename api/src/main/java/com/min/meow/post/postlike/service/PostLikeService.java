@@ -1,8 +1,9 @@
-package com.min.meow.postlike.service;
+package com.min.meow.post.postlike.service;
 
 
 import com.min.kafka.dto.NotificationDto;
 import com.min.kafka.producer.NotificationSender;
+import com.min.meow.notification.event.LikeEvent;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.global.exception.CustomException;
@@ -36,7 +37,7 @@ public class PostLikeService {
 
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-        User persistUser = userRepository.findByLoginId(loginId)
+        User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
         Optional<PostLike> postLike = postLikeRepository.findByBoastCatPostIdAndLoginId(boastCatPostId, loginId);
@@ -45,14 +46,17 @@ public class PostLikeService {
             return false;
         }
         PostLike like = PostLike.builder()
-                .user(persistUser)
+                .user(user)
                 .boastCatPost(boastCatPost)
                 .build();
         postLikeRepository.save(like);
-        NotificationDto notificationDto = NotificationDto.builder()
 
-                .build();
-
+        LikeEvent event = new LikeEvent(
+                like.getId(),
+                boastCatPostId,
+                boastCatPost.getUser().getLoginId()
+        );
+        notificationSender.publish(event);
         return true;
     }
 }

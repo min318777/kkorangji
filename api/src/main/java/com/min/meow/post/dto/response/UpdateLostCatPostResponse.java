@@ -50,7 +50,7 @@ public class UpdateLostCatPostResponse {
                 .reward(lostCatPost.getReward())
                 .latitude(lostCatPost.getLatitude())
                 .longitude(lostCatPost.getLongitude())
-                .commentDtoList(lostCatPost.getComments().stream().map(CommentDto::convertToDto).collect(Collectors.toList()))
+                .commentDtoList(lostCatPost.getComments().stream().map(CommentDto::toDto).collect(Collectors.toList()))
                 .createdAt(lostCatPost.getCreatedAt())
                 .updatedAt(lostCatPost.getUpdatedAt())
                 .build();

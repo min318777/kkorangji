@@ -6,9 +6,11 @@ import com.min.meow.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Getter
 @Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "boast_cat_post_id"})})
 @NoArgsConstructor
 @AllArgsConstructor
