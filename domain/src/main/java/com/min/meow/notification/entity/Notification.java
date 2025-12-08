@@ -30,16 +30,10 @@ public class Notification {
     private String receiverLoginId;
     private boolean isRead;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
     @PrePersist
     public void prePersist(){
         this.createdAt = LocalDateTime.now();
-        this.updatedAt = this.createdAt;
     }
 
-    @PreUpdate
-    public void preUpdate(){
-        this.updatedAt = LocalDateTime.now();
-    }
 }

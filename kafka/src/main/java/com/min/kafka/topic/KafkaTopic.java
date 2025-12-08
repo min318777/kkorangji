@@ -5,7 +5,6 @@ public enum KafkaTopic {
     LIKE_NOTIFICATION("like-notification");
 
     private final String topic;
-
     KafkaTopic(String topic){
         this.topic = topic;
     }

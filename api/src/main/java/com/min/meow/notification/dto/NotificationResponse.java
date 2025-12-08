@@ -24,7 +24,6 @@ public class NotificationResponse {
     private String receiverLoginId;
     private boolean isRead;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 
 
     public static NotificationResponse from(Notification notification) {
@@ -37,7 +36,6 @@ public class NotificationResponse {
                 .receiverLoginId(notification.getReceiverLoginId())
                 .isRead(notification.isRead())
                 .createdAt(notification.getCreatedAt())
-                .updatedAt(notification.getUpdatedAt())
                 .build();
     }
 }
