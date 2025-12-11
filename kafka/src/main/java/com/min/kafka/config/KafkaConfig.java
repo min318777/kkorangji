@@ -38,6 +38,11 @@ public class KafkaConfig {
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "meow");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+
+        // JsonDeserializer 신뢰 패키지 설정 (역직렬화 에러 방지)
+        props.put(JsonDeserializer.TRUSTED_PACKAGES, "com.min.kafka.dto");
+        // 또는 특정 클래스만: props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.min.kafka.dto.NotificationDto");
+
         return new DefaultKafkaConsumerFactory<>(props);
     }
 

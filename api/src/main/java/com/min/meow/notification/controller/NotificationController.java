@@ -6,7 +6,7 @@ import com.min.meow.global.PageResponse;
 import com.min.meow.global.exception.ApiResponse;
 import com.min.meow.global.exception.ErrorResponse;
 import com.min.meow.notification.dto.NotificationResponse;
-import com.min.meow.notification.service.NotificationService;
+import com.min.meow.notification.service.NotificationQueryService;
 import com.min.meow.notification.sse.SseEmitterManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequestMapping("api/notice")
 public class NotificationController {
 
-    private final NotificationService notificationService;
+    private final NotificationQueryService notificationQueryService;
     private final SseEmitterManager sseEmitterManager;
 
     @GetMapping
@@ -37,7 +37,7 @@ public class NotificationController {
                                           @RequestParam (defaultValue = "5") int size){
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<NotificationResponse> notices = notificationService.getAllNotifications(pageable);
+        Page<NotificationResponse> notices = notificationQueryService.getAllNotifications(pageable);
         PageResponse<NotificationResponse> pageResponse = PageResponse.from(notices);
 
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 알림 조회 성공", pageResponse));
