@@ -42,7 +42,7 @@ public class NotificationConsumer {
                 NotificationType.COMMENT,
                 "새로운 댓글이 달렸습니다."
         );
-        // 도메인 서비스 호출 → DB 저장 + 이벤트 발행
+
         notificationService.saveNotification(command);
     }
 
