@@ -58,7 +58,7 @@ public class NotificationConsumer {
                 notificationDto.getPostId(),
                 notificationDto.getReceiverLoginId(),
                 NotificationType.LIKE,
-                "게시글에 좋아요가 추가되었습니다."
+                "게시글에 좋아요가 추가되었습니다. "
         );
         notificationService.saveNotification(command);
     }
