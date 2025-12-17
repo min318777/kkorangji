@@ -1,8 +1,7 @@
 package com.min.meow.post.postlike.service;
 
 
-import com.min.kafka.dto.NotificationDto;
-import com.min.kafka.producer.NotificationSender;
+import com.min.meow.kafka.producer.NotificationEventPublisher;
 import com.min.meow.notification.event.LikeEvent;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
@@ -22,7 +21,7 @@ import java.util.Optional;
 public class PostLikeService {
 
     private final PostLikeRepository postLikeRepository;
-    private final NotificationSender notificationSender;
+    private final NotificationEventPublisher notificationEventPublisher;
     private final BoastCatPostRepository boastCatPostRepository;
     private final UserRepository userRepository;
 
@@ -56,7 +55,7 @@ public class PostLikeService {
                 boastCatPostId,
                 boastCatPost.getUser().getLoginId()
         );
-        notificationSender.publish(event);
+        notificationEventPublisher.publishLikeEvent(event);
         return true;
     }
 }

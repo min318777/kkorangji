@@ -1,5 +1,13 @@
+// Gradle 플러그인을 다운로드할 저장소 설정
+pluginManagement {
+    repositories {
+        gradlePluginPortal()  // Gradle 공식 플러그인 포털
+        mavenCentral()         // Maven Central (Spring Boot 플러그인 등)
+    }
+}
+
 rootProject.name = 'meow'
-include 'kafka'
 include 'api'
 include 'domain'
+include 'notification'
 

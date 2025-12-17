@@ -1,0 +1,45 @@
+spring:
+  profiles:
+    active: local
+  application:
+    name: notification-service
+
+  # 데이터베이스 설정
+  datasource:
+    url: jdbc:mysql://mysql:3306/meow
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: min3782
+
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Seoul
+
+  # Kafka Consumer 설정
+  kafka:
+    bootstrap-servers: kafka:9092
+    consumer:
+      group-id: notification-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.min.meow.notification.event"
+
+# 서버 포트
+server:
+  port: 8082
+
+# 로깅 설정
+logging:
+  level:
+    com.min.notification: INFO
+    org.springframework.kafka: INFO

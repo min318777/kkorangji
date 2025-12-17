@@ -1,6 +1,6 @@
 package com.min.meow.comment.service.impl;
 
-import com.min.kafka.producer.NotificationSender;
+import com.min.meow.kafka.producer.NotificationEventPublisher;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.comment.dto.request.RegisterCommentRequest;
@@ -32,7 +32,7 @@ public class CommentServiceImpl implements CommentService {
     private final LostCatRepository lostCatRepository;
     private final BoastCatPostRepository boastCatPostRepository;
     private final CommentRepository commentRepository;
-    private final NotificationSender notificationSender;
+    private final NotificationEventPublisher notificationEventPublisher;
 
     // 고양이 자랑 게시글 댓글 조회
     @Override
@@ -79,7 +79,7 @@ public class CommentServiceImpl implements CommentService {
                 writer,
                 boastCatPost.getUser().getLoginId()
         );
-        notificationSender.publish(event);
+        notificationEventPublisher.publishCommentEvent(event);
         return RegisterCommentResponse.toResponse(comment);
     }
 
@@ -106,7 +106,7 @@ public class CommentServiceImpl implements CommentService {
                 writer,
                 lostCatPost.getUser().getLoginId()
         );
-        notificationSender.publish(event);
+        notificationEventPublisher.publishCommentEvent(event);
         return RegisterCommentResponse.toResponse(comment);
     }
 
