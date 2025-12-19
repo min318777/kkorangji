@@ -1,7 +1,7 @@
 package com.min.meow.post.search.controller;
 
 
-import com.min.meow.global.exception.ApiResponse;
+import com.min.meow.global.ApiResponse;
 import com.min.meow.post.search.domain.PostDto;
 import com.min.meow.post.search.domain.Page;
 import com.min.meow.post.search.domain.request.PostSearchRequest;

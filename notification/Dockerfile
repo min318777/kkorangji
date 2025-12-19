@@ -2,7 +2,7 @@
 FROM eclipse-temurin:17-jdk-jammy AS builder
 WORKDIR /app
 COPY . .
-RUN apt-get update && apt-get install -y findutils
+
 RUN chmod +x ./gradlew && ./gradlew :notification:build --no-daemon
 
 # 실행 스테이지

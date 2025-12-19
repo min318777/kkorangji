@@ -2,7 +2,7 @@ package com.min.meow.user.controller;
 
 import com.min.meow.config.PrincipalUser;
 import com.min.meow.global.PostType;
-import com.min.meow.global.exception.ApiResponse;
+import com.min.meow.global.ApiResponse;
 import com.min.meow.user.dto.reponse.MyCommentListResponse;
 import com.min.meow.user.dto.reponse.MyPageSummaryResponse;
 import com.min.meow.user.dto.reponse.MyPostListResponse;

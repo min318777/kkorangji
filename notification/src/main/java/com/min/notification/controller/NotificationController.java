@@ -1,8 +1,10 @@
 package com.min.notification.controller;
 
 import com.min.notification.dto.NotificationResponse;
+import com.min.notification.dto.NotificationRequest;
 import com.min.notification.service.NotificationQueryService;
 import com.min.notification.sse.SseEmitterManager;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -12,6 +14,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Notification API Controller
@@ -41,6 +46,76 @@ public class NotificationController {
         return ResponseEntity.ok(notifications);
     }
 
+    /**
+     * 단일 알림 읽음 처리
+     * - RESTful한 설계: 특정 리소스({id})에 대한 상태 변경
+     * @param notificationId 읽음 처리할 알림 ID
+     * @param userLoginId 요청한 사용자의 로그인 ID (헤더에서 추출)
+     * @return 읽음 처리된 알림 정보
+     */
+    @PatchMapping("/{notificationId}/read")
+    public ResponseEntity<NotificationResponse> readSingleNotification(
+            @PathVariable Long notificationId,
+            @RequestHeader("X-User-Login-Id") String userLoginId) {
+
+        log.info("단일 알림 읽음 요청 - NotificationId: {}, User: {}", notificationId, userLoginId);
+
+        NotificationResponse response = notificationQueryService
+                .readSingleNotification(notificationId, userLoginId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 여러 개의 알림 읽음 처리
+     * - Request Body에 알림 ID 목록을 받아서 일괄 처리
+     * - 존재하지 않는 ID나 권한 없는 알림은 자동으로 필터링됨
+     * @param request 읽음 처리할 알림 ID 목록
+     * @param userLoginId 요청한 사용자의 로그인 ID (헤더에서 추출)
+     * @return 읽음 처리된 알림 개수
+     */
+    @PatchMapping("/read")
+    public ResponseEntity<Map<String, Object>> readMultipleNotifications(
+            @Valid @RequestBody NotificationRequest request,
+            @RequestHeader("X-User-Login-Id") String userLoginId) {
+
+        log.info("여러 개 알림 읽음 요청 - Count: {}, User: {}",
+                request.getNotificationIds().size(), userLoginId);
+
+        int readCount = notificationQueryService
+                .readMultipleNotifications(request.getNotificationIds(), userLoginId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", readCount + "개의 알림을 읽음 처리했습니다.");
+        response.put("readCount", readCount);
+        response.put("requestedCount", request.getNotificationIds().size());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 전체 알림 읽음 처리
+     * - 요청한 사용자의 모든 읽지 않은 알림을 일괄 읽음 처리
+     * - "모두 읽음" 기능 구현에 사용
+     * @param userLoginId 요청한 사용자의 로그인 ID (헤더에서 추출)
+     * @return 읽음 처리된 알림 개수
+     */
+    @PatchMapping("/read-all")
+    public ResponseEntity<Map<String, Object>> readAllNotifications(
+            @RequestHeader("X-User-Login-Id") String userLoginId) {
+
+        log.info("전체 알림 읽음 요청 - User: {}", userLoginId);
+
+        int readCount = notificationQueryService.readAllNotifications(userLoginId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "모든 알림을 읽음 처리했습니다.");
+        response.put("readCount", readCount);
+
+        return ResponseEntity.ok(response);
+    }
     /**
      * SSE 구독 엔드포인트
      * - 프론트엔드가 실시간 알림을 받기 위해 연결

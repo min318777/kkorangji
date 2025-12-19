@@ -7,8 +7,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /**
  * Notification Service - 알림 전용 마이크로서비스
- *
- * 주요 기능:
  * - Kafka에서 알림 이벤트 수신 (Consumer)
  * - 알림 데이터베이스 저장
  * - SSE(Server-Sent Events)를 통한 실시간 알림 전송

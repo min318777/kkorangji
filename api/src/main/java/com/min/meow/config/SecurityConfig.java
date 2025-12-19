@@ -52,7 +52,6 @@ public class SecurityConfig {
                     @Override
                     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                         CorsConfiguration corsConfiguration = new CorsConfiguration();
-
                         corsConfiguration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://meow-front.vercel.app"));
                         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
                         corsConfiguration.setAllowCredentials(true);
@@ -84,7 +83,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/webjars/**").permitAll()
-                        // 게시글 및 댓글 조회는 인증 없이 가능 (GET 요청만)
+                        // 게시글 및 댓글 조회는 인증 없이 가능
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.GET,
                                 "/api/meow/boast-cat",
@@ -95,13 +94,6 @@ public class SecurityConfig {
                         .requestMatchers("/admin").hasRole("ADMIN")
                         // 나머지 모든 요청은 인증 필요
                         .anyRequest().authenticated());
-        /*
-        http.
-                addFilterAfter(new JwtFilter(jwtUtil), OAuth2LoginAuthenticationFilter.class);
-        http.
-                addFilterBefore(new JwtFilter(jwtUtil), LoginFilter.class);
-        */
-
         // JwtFilter는 LoginFilter 뒤에 등록하여, 로그인 성공 후 JWT 인증 처리
         http.
                 addFilterAfter(new JwtFilter(jwtUtil, userRepository), UsernamePasswordAuthenticationFilter.class);

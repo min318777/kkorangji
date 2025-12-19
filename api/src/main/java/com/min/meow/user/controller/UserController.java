@@ -1,7 +1,7 @@
 package com.min.meow.user.controller;
 
 
-import com.min.meow.global.exception.ApiResponse;
+import com.min.meow.global.ApiResponse;
 import com.min.meow.user.dto.reponse.JoinResponse;
 import com.min.meow.user.dto.reponse.LoginResponse;
 import com.min.meow.user.dto.request.JoinRequest;

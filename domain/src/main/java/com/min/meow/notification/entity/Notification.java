@@ -36,4 +36,8 @@ public class Notification {
         this.createdAt = LocalDateTime.now();
     }
 
+    public void markAsRead() {
+        this.isRead = true;
+    }
+
 }

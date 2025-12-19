@@ -34,7 +34,6 @@ public class S3Uploader {
 
     public String uploadFile(MultipartFile file) {
         String key = "meow/" + UUID.randomUUID() + "-" + file.getOriginalFilename();
-
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucket)
@@ -50,5 +49,4 @@ public class S3Uploader {
             throw new RuntimeException("파일 업로드 실패", e);
         }
     }
-
 }

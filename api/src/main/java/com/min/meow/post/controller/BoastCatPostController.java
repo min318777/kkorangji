@@ -2,7 +2,7 @@ package com.min.meow.post.controller;
 
 import com.min.meow.config.PrincipalUser;
 import com.min.meow.global.PageResponse;
-import com.min.meow.global.exception.ApiResponse;
+import com.min.meow.global.ApiResponse;
 import com.min.meow.post.dto.request.CreateBoastCatPostRequest;
 import com.min.meow.post.dto.request.UpdateBoastCatPostRequest;
 import com.min.meow.post.dto.response.CreateBoastCatPostResponse;

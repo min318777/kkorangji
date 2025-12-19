@@ -4,14 +4,12 @@ spring:
   application:
     name: notification-service
 
-  # 데이터베이스 설정
   datasource:
     url: jdbc:mysql://mysql:3306/meow
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: min3782
 
-  # JPA 설정
   jpa:
     hibernate:
       ddl-auto: update
@@ -23,7 +21,6 @@ spring:
         jdbc:
           time_zone: Asia/Seoul
 
-  # Kafka Consumer 설정
   kafka:
     bootstrap-servers: kafka:9092
     consumer:
@@ -34,11 +31,9 @@ spring:
       properties:
         spring.json.trusted.packages: "com.min.meow.notification.event"
 
-# 서버 포트
 server:
   port: 8082
 
-# 로깅 설정
 logging:
   level:
     com.min.notification: INFO

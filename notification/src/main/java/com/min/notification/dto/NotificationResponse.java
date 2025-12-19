@@ -19,13 +19,13 @@ import java.time.LocalDateTime;
 public class NotificationResponse {
 
     private Long id;
-    private Long sourceId;          // 댓글 ID 또는 좋아요 ID
-    private Long postId;             // 게시글 ID
-    private NotificationType type;   // 알림 타입 (COMMENT, LIKE)
-    private String message;          // 알림 메시지
-    private String receiverLoginId;  // 받는 사람 로그인 ID
-    private boolean isRead;          // 읽음 여부
-    private LocalDateTime createdAt; // 생성 시간
+    private Long sourceId;
+    private Long postId;
+    private NotificationType type;
+    private String message;
+    private String receiverLoginId;
+    private boolean isRead;
+    private LocalDateTime createdAt;
 
     public static NotificationResponse from(Notification notification) {
         return NotificationResponse.builder()
