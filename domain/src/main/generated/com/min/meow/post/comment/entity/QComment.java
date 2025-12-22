@@ -2,6 +2,7 @@ package com.min.meow.post.comment.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
+import com.min.meow.comment.entity.Comment;
 import com.querydsl.core.types.dsl.*;
 
 import com.querydsl.core.types.PathMetadata;

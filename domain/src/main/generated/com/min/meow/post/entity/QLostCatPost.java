@@ -2,6 +2,7 @@ package com.min.meow.post.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
+import com.min.meow.comment.entity.Comment;
 import com.querydsl.core.types.dsl.*;
 
 import com.querydsl.core.types.PathMetadata;
@@ -34,7 +35,7 @@ public class QLostCatPost extends EntityPathBase<LostCatPost> {
 
     public final NumberPath<Integer> catWeight = createNumber("catWeight", Integer.class);
 
-    public final ListPath<com.min.meow.post.comment.entity.Comment, com.min.meow.post.comment.entity.QComment> comments = this.<com.min.meow.post.comment.entity.Comment, com.min.meow.post.comment.entity.QComment>createList("comments", com.min.meow.post.comment.entity.Comment.class, com.min.meow.post.comment.entity.QComment.class, PathInits.DIRECT2);
+    public final ListPath<Comment, com.min.meow.post.comment.entity.QComment> comments = this.<Comment, com.min.meow.post.comment.entity.QComment>createList("comments", Comment.class, com.min.meow.post.comment.entity.QComment.class, PathInits.DIRECT2);
 
     //inherited
     public final StringPath contents;

@@ -1,7 +1,6 @@
 package com.min.meow.user.jwt;
 
 
-import com.min.meow.global.Role;
 import com.min.meow.global.Token;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;

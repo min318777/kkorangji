@@ -1,7 +1,7 @@
 package com.min.meow.user.entity;
 
 import com.min.meow.global.Role;
-import com.min.meow.post.postlike.entity.PostLike;
+import com.min.meow.postlike.entity.PostLike;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.*;

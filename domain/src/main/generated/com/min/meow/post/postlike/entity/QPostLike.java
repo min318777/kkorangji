@@ -2,6 +2,7 @@ package com.min.meow.post.postlike.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
+import com.min.meow.postlike.entity.PostLike;
 import com.querydsl.core.types.dsl.*;
 
 import com.querydsl.core.types.PathMetadata;

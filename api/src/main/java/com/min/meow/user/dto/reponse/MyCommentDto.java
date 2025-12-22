@@ -1,6 +1,6 @@
 package com.min.meow.user.dto.reponse;
 
-import com.min.meow.post.comment.entity.Comment;
+import com.min.meow.comment.entity.Comment;
 import lombok.*;
 
 import java.time.LocalDateTime;

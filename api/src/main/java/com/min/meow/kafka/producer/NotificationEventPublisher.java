@@ -23,7 +23,7 @@ public class NotificationEventPublisher {
      * 댓글 이벤트 발행
      */
     public void publishCommentEvent(CommentEvent event) {
-        log.info("📤 [Kafka] 댓글 알림 발행 - commentId: {}, postId: {}, receiver: {}",
+        log.info("댓글 알림 발행 - commentId: {}, postId: {}, receiver: {}",
                 event.commentId(), event.postId(), event.receiverLoginId());
 
         commentEventKafkaTemplate.send("comment-notification", event);
@@ -33,7 +33,7 @@ public class NotificationEventPublisher {
      * 좋아요 이벤트 발행
      */
     public void publishLikeEvent(LikeEvent event) {
-        log.info("📤 [Kafka] 좋아요 알림 발행 - likeId: {}, postId: {}, receiver: {}",
+        log.info("좋아요 알림 발행 - likeId: {}, postId: {}, receiver: {}",
                 event.likeId(), event.postId(), event.receiverLoginId());
 
         likeEventKafkaTemplate.send("like-notification", event);

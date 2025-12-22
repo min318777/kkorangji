@@ -26,8 +26,7 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                 .selectFrom(boastCatPost)
                 .where(
                         containsTitle(title),
-                        containsContents(contents)
-                )
+                        containsContents(contents))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .orderBy(boastCatPost.createdAt.desc())
@@ -38,8 +37,7 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                 .from(boastCatPost)
                 .where(
                         containsTitle(title),
-                        containsContents(contents)
-                )
+                        containsContents(contents))
                 .fetchOne();
 
         return new PageImpl<>(results, pageable, total);

@@ -1,6 +1,6 @@
 package com.min.meow.post.entity;
 
-import com.min.meow.post.comment.entity.Comment;
+import com.min.meow.comment.entity.Comment;
 import com.min.meow.global.BasePost;
 import com.min.meow.user.entity.User;
 import jakarta.persistence.*;
