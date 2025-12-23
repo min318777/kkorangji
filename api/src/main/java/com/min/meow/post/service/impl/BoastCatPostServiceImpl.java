@@ -15,6 +15,7 @@ import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.post.service.BoastCatPostService;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,7 @@ import java.util.List;
 
 @Service
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class BoastCatPostServiceImpl implements BoastCatPostService {
     private final BoastCatPostRepository boastCatPostRepository;
     private final UserRepository userRepository;
@@ -38,7 +39,6 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
 
     // 모든 글 조회
     @Override
-    @CacheEvict(value = "post", allEntries = true)
     @Cacheable(value = "post", key = "'getAllBoastCatPost:' + #pageable.pageNumber + ':' + #pageable.pageSize")
     public PageResponse<GetBoastCatPostResponse> getAllBoastCatPosts(Pageable pageable){
         List<BoastCatPost> posts = boastCatPostRepository.findAllWithImageUrls();

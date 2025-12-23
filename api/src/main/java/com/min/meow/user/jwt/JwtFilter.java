@@ -33,6 +33,8 @@ public class JwtFilter extends OncePerRequestFilter {
             "/api/users/login",
             "/api/users/join",
             "/api/reissue",
+            "/api/meow/boast-cat",
+            "/api/meow/lost-cat",
             "/api/logout",
             "/api/notification",
             "/swagger-ui",
@@ -48,14 +50,12 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // 화이트리스트 경로는 JWT 검증을 건너뜀 (로그아웃 포함)
         if (isWhitelistPath(path)) {
-            System.out.println("화이트리스트 경로 감지, JWT 검증 건너뜀: " + path);
             filterChain.doFilter(request, response);
             return;
         }
 
         String authorization = request.getHeader("Authorization");
         if(authorization == null || !authorization.startsWith("Bearer ")){
-            System.out.println("토큰이 없습니다.");
             throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
             //filterChain.doFilter(request, response);
             // 조건이 해당되면 메소드 종료
