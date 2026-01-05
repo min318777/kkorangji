@@ -205,7 +205,7 @@ export function teardown(data) {
     최종 조회수: ${finalViewCount}
     증가량: ${increase}
 
-    ${increase > 0 ? '✅ 조회수가 정상적으로 증가했습니다!' : '❌ 조회수가 증가하지 않았습니다!'}
+    ${increase > 0 ? '조회수가 정상적으로 증가했습니다!' : '조회수가 증가하지 않았습니다!'}
 
     💡 참고:
     - @Transactional이 적용되어 있어 조회수가 DB에 반영됩니다
