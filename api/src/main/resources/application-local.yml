@@ -80,3 +80,22 @@ cloud:
     credentials:
       access-key:
       secret-key:
+
+# Actuator 및 Prometheus 설정 (로컬 환경)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus, metrics  # 외부에 노출할 엔드포인트
+      base-path: /actuator  # 엔드포인트 기본 경로
+  endpoint:
+    health:
+      show-details: always  # 상세 헬스체크 정보 표시
+    prometheus:
+      enabled: true  # Prometheus 엔드포인트 활성화
+  metrics:
+    tags:
+      application: ${spring.application.name}  # 메트릭에 애플리케이션 이름 태그 추가
+    export:
+      prometheus:
+        enabled: true  # Prometheus 메트릭 내보내기 활성화

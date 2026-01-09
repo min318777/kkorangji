@@ -73,13 +73,21 @@ public class CommentServiceImpl implements CommentService {
         boastCatPost.getComments().add(comment);
         commentRepository.save(comment);
 
-        CommentEvent event = new CommentEvent(
-                comment.getId(),
-                boastCatPostId,
-                writer,
-                boastCatPost.getUser().getLoginId()
-        );
-        notificationEventPublisher.publishCommentEvent(event);
+        // 게시글 작성자가 탈퇴하지 않은 경우에만 알림 발송
+        // - 탈퇴한 사용자에게는 알림을 보내지 않음
+        // - 자기 자신의 게시글에 댓글을 달 경우도 알림 발송하지 않음
+        if (!boastCatPost.getUser().isWithdrawn() && !writer.equals(boastCatPost.getUser().getLoginId())) {
+            CommentEvent event = new CommentEvent(
+                    comment.getId(),
+                    boastCatPostId,
+                    writer,
+                    boastCatPost.getUser().getLoginId()
+            );
+            notificationEventPublisher.publishCommentEvent(event);
+            log.debug("댓글 알림 발송 - postId: {}, receiver: {}", boastCatPostId, boastCatPost.getUser().getLoginId());
+        } else {
+            log.debug("댓글 알림 미발송 - 게시글 작성자 탈퇴 또는 본인 댓글");
+        }
         return RegisterCommentResponse.toResponse(comment);
     }
 
@@ -100,13 +108,21 @@ public class CommentServiceImpl implements CommentService {
         lostCatPost.getComments().add(comment);
         commentRepository.save(comment);
 
-        CommentEvent event = new CommentEvent(
-                comment.getId(),
-                lostCatPostId,
-                writer,
-                lostCatPost.getUser().getLoginId()
-        );
-        notificationEventPublisher.publishCommentEvent(event);
+        // 게시글 작성자가 탈퇴하지 않은 경우에만 알림 발송
+        // - 탈퇴한 사용자에게는 알림을 보내지 않음
+        // - 자기 자신의 게시글에 댓글을 달 경우도 알림 발송하지 않음
+        if (!lostCatPost.getUser().isWithdrawn() && !writer.equals(lostCatPost.getUser().getLoginId())) {
+            CommentEvent event = new CommentEvent(
+                    comment.getId(),
+                    lostCatPostId,
+                    writer,
+                    lostCatPost.getUser().getLoginId()
+            );
+            notificationEventPublisher.publishCommentEvent(event);
+            log.debug("댓글 알림 발송 - postId: {}, receiver: {}", lostCatPostId, lostCatPost.getUser().getLoginId());
+        } else {
+            log.debug("댓글 알림 미발송 - 게시글 작성자 탈퇴 또는 본인 댓글");
+        }
         return RegisterCommentResponse.toResponse(comment);
     }
 

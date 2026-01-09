@@ -1,7 +1,7 @@
 package com.min.meow.comment.controller;
 
 
-import com.min.meow.config.PrincipalUser;
+import com.min.meow.global.PrincipalUser;
 import com.min.meow.global.ApiResponse;
 import com.min.meow.comment.dto.request.RegisterCommentRequest;
 import com.min.meow.comment.dto.request.UpdateCommentRequest;

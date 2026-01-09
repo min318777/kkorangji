@@ -1,7 +1,7 @@
 package com.min.meow.user.controller;
 
 
-import com.min.meow.config.PrincipalUser;
+import com.min.meow.global.PrincipalUser;
 import com.min.meow.global.Token;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;

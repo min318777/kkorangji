@@ -3,7 +3,7 @@ package com.min.meow.post.postlike.controller;
 
 import com.min.meow.global.exception.ErrorResponse;
 import com.min.meow.post.postlike.service.PostLikeService;
-import com.min.meow.config.PrincipalUser;
+import com.min.meow.global.PrincipalUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

@@ -72,7 +72,6 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         response.addCookie(createCookie("refresh", refreshToken));
         response.setStatus(HttpStatus.OK.value());
 
-        // JSON 응답 생성
         // 사용자 정보
         String responseBody = String.format(
                 "{\"success\": true, \"accessToken\": \"%s\", \"loginId\": \"%s\", \"role\": \"%s\"}",
@@ -82,8 +81,6 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(responseBody);
         response.setStatus(HttpServletResponse.SC_OK);
-        System.out.println("로그인 성공");
-
     }
 
     @Override
@@ -101,7 +98,6 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
         response.getWriter().write("{\"success\":false,\"message\":\"" + message + "\"}");
-        System.out.println("로그인 실패");
     }
 
     private Cookie createCookie(String key, String value){

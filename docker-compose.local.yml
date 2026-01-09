@@ -64,6 +64,49 @@ services:
       timeout: 10s
       retries: 5
 
+  # ===== 모니터링 서비스 =====
+
+  # Prometheus - 메트릭 수집 및 저장
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"  # Prometheus UI 접속 포트
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml  # 설정 파일 마운트
+      - prometheus_data:/prometheus  # 메트릭 데이터 영속화
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'        # 설정 파일 경로
+      - '--storage.tsdb.path=/prometheus'                      # 데이터 저장 경로
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'                               # API를 통한 설정 리로드 활성화
+      - '--storage.tsdb.retention.time=15d'                    # 메트릭 보존 기간 (15일)
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # Grafana - 메트릭 시각화 대시보드
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: grafana
+    ports:
+      - "3001:3000"  # Grafana UI 접속 포트 (React가 3000을 사용할 수 있으므로 3001로 설정)
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin           # 관리자 사용자명
+      - GF_SECURITY_ADMIN_PASSWORD=admin123    # 관리자 비밀번호 (운영 환경에서는 반드시 변경!)
+      - GF_USERS_ALLOW_SIGN_UP=false           # 회원가입 비활성화
+      - GF_SERVER_ROOT_URL=http://localhost:3001  # 루트 URL 설정
+      - GF_INSTALL_PLUGINS=                    # 추가 플러그인 설치 (필요시)
+    volumes:
+      - grafana_data:/var/lib/grafana                                          # Grafana 데이터 영속화
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning            # 프로비저닝 설정
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
 volumes:
   mysql_data:
   redis_data:
+  prometheus_data:    # Prometheus 메트릭 데이터 저장
+  grafana_data:       # Grafana 설정 및 대시보드 저장

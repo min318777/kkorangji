@@ -1,6 +1,6 @@
 package com.min.meow.user.oauth2;
 
-import com.min.meow.config.PrincipalUser;
+import com.min.meow.global.PrincipalUser;
 import com.min.meow.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;

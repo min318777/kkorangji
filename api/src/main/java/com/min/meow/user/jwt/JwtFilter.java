@@ -40,7 +40,8 @@ public class JwtFilter extends OncePerRequestFilter {
             "/swagger-ui",
             "/v3/api-docs",
             "/swagger-resources",
-            "/webjars"
+            "/webjars",
+            "/actuator"  // 모니터링 엔드포인트 (Prometheus, Health Check)
     );
 
     @Override

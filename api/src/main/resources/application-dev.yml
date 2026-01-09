@@ -1,3 +1,7 @@
+# 로컬 개발용 설정 (docker-compose.dev.yml과 함께 사용)
+# 인프라는 Docker로, 애플리케이션은 로컬에서 실행할 때 사용
+# 실행 방법: ./gradlew :api:bootRun --args='--spring.profiles.active=dev'
+
 spring:
   servlet:
     multipart:
@@ -6,8 +10,9 @@ spring:
   application:
     name: meow
 
+  # MySQL - localhost:3307로 접근 (Docker 포트 매핑)
   datasource:
-    url: jdbc:mysql://mysql:3306/meow
+    url: jdbc:mysql://localhost:3307/meow?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: min3782
@@ -15,7 +20,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-      database-platform: org.hibernate.dialect.MySQL8Dialect
+    database-platform: org.hibernate.dialect.MySQL8Dialect
     show-sql: true
     properties:
       hibernate:
@@ -27,16 +32,18 @@ spring:
     redis:
       time-to-live: 3600
 
+  # Redis - localhost:6379로 접근
   data:
     redis:
-      host: redis
+      host: localhost
       port: 6379
       password: ""
       repositories:
         enabled: false
 
+  # Kafka - localhost:9092로 접근
   kafka:
-    bootstrap-servers: kafka:9092
+    bootstrap-servers: localhost:9092
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
@@ -53,8 +60,8 @@ spring:
         registration:
           google:
             client-name: Google
-            client-id: 647042100012-18jjd3m439a5nb8il0gfd5qq7d7gq6tt.apps.googleusercontent.com
-            client-secret: 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
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
             redirect-uri: "http://localhost:8080/login/oauth2/code/google"
             authorization-grant-type: authorization_code
             scope:
@@ -74,28 +81,28 @@ jwt:
 cloud:
   aws:
     s3:
-      bucket:
-      baseUrl:
-    region:
+      bucket: ${AWS_S3_BUCKET:}
+      baseUrl: ${AWS_S3_BASE_URL:}
+    region: ${AWS_REGION:ap-northeast-2}
     credentials:
-      access-key:
-      secret-key:
+      access-key: ${AWS_ACCESS_KEY_ID:}
+      secret-key: ${AWS_SECRET_ACCESS_KEY:}
 
-# Actuator 및 Prometheus 설정 (로컬 환경)
+# Actuator 및 Prometheus 설정 (개발 환경)
 management:
   endpoints:
     web:
       exposure:
         include: health, info, prometheus, metrics  # 외부에 노출할 엔드포인트
-      base-path: /actuator  # 엔드포인트 기본 경로
+      base-path: /actuator
   endpoint:
     health:
       show-details: always  # 상세 헬스체크 정보 표시
     prometheus:
-      enabled: true  # Prometheus 엔드포인트 활성화
+      enabled: true
   metrics:
     tags:
       application: ${spring.application.name}  # 메트릭에 애플리케이션 이름 태그 추가
     export:
       prometheus:
-        enabled: true  # Prometheus 메트릭 내보내기 활성화
+        enabled: true

@@ -1,7 +1,7 @@
 package com.min.meow.post.controller;
 
 
-import com.min.meow.config.PrincipalUser;
+import com.min.meow.global.PrincipalUser;
 import com.min.meow.global.PageResponse;
 import com.min.meow.global.ApiResponse;
 import com.min.meow.global.exception.CustomException;

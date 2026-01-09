@@ -1,8 +1,7 @@
-package com.min.meow.post.postlike.entity;
+package com.min.meow.postlike.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import com.min.meow.postlike.entity.PostLike;
 import com.querydsl.core.types.dsl.*;
 
 import com.querydsl.core.types.PathMetadata;
@@ -17,7 +16,7 @@ import com.querydsl.core.types.dsl.PathInits;
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
 public class QPostLike extends EntityPathBase<PostLike> {
 
-    private static final long serialVersionUID = 87416372L;
+    private static final long serialVersionUID = 167266128L;
 
     private static final PathInits INITS = PathInits.DIRECT2;
 

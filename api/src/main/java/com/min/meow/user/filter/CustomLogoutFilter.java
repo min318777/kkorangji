@@ -50,7 +50,7 @@ public class CustomLogoutFilter extends GenericFilter {
         }
 
         // refresh 토큰이 있는 경우에만 처리
-        // 토큰이 없거나 만료되었어도 로그아웃은 성공해야 함
+        // 토큰이 없거나 만료되었어도 로그아웃은 성공
         if (refresh != null) {
             try {
                 // 토큰이 유효한 경우에만 DB에서 제거 시도

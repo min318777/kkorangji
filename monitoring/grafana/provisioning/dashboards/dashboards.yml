@@ -1,0 +1,17 @@
+# Grafana 대시보드 프로비저닝 설정
+# 대시보드 JSON 파일들을 자동으로 로드
+
+apiVersion: 1
+
+providers:
+  # 기본 대시보드 프로바이더
+  - name: 'default'
+    orgId: 1
+    folder: ''
+    folderUid: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30  # 대시보드 업데이트 주기 (초)
+    allowUiUpdates: true        # UI에서 대시보드 수정 허용
+    options:
+      path: /etc/grafana/provisioning/dashboards  # 대시보드 JSON 파일 경로

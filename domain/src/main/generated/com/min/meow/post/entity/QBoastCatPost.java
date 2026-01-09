@@ -2,8 +2,6 @@ package com.min.meow.post.entity;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import com.min.meow.comment.entity.Comment;
-import com.min.meow.postlike.entity.PostLike;
 import com.querydsl.core.types.dsl.*;
 
 import com.querydsl.core.types.PathMetadata;
@@ -26,7 +24,7 @@ public class QBoastCatPost extends EntityPathBase<BoastCatPost> {
 
     public final com.min.meow.global.QBasePost _super;
 
-    public final ListPath<Comment, com.min.meow.post.comment.entity.QComment> comments = this.<Comment, com.min.meow.post.comment.entity.QComment>createList("comments", Comment.class, com.min.meow.post.comment.entity.QComment.class, PathInits.DIRECT2);
+    public final ListPath<com.min.meow.comment.entity.Comment, com.min.meow.comment.entity.QComment> comments = this.<com.min.meow.comment.entity.Comment, com.min.meow.comment.entity.QComment>createList("comments", com.min.meow.comment.entity.Comment.class, com.min.meow.comment.entity.QComment.class, PathInits.DIRECT2);
 
     //inherited
     public final StringPath contents;
@@ -39,7 +37,7 @@ public class QBoastCatPost extends EntityPathBase<BoastCatPost> {
 
     public final ListPath<String, StringPath> imageUrls = this.<String, StringPath>createList("imageUrls", String.class, StringPath.class, PathInits.DIRECT2);
 
-    public final ListPath<PostLike, com.min.meow.post.postlike.entity.QPostLike> postLikeList = this.<PostLike, com.min.meow.post.postlike.entity.QPostLike>createList("postLikeList", PostLike.class, com.min.meow.post.postlike.entity.QPostLike.class, PathInits.DIRECT2);
+    public final ListPath<com.min.meow.postlike.entity.PostLike, com.min.meow.postlike.entity.QPostLike> postLikeList = this.<com.min.meow.postlike.entity.PostLike, com.min.meow.postlike.entity.QPostLike>createList("postLikeList", com.min.meow.postlike.entity.PostLike.class, com.min.meow.postlike.entity.QPostLike.class, PathInits.DIRECT2);
 
     //inherited
     public final StringPath title;

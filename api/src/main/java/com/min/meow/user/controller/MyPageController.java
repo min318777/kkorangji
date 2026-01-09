@@ -1,6 +1,6 @@
 package com.min.meow.user.controller;
 
-import com.min.meow.config.PrincipalUser;
+import com.min.meow.global.PrincipalUser;
 import com.min.meow.global.PostType;
 import com.min.meow.global.ApiResponse;
 import com.min.meow.user.dto.reponse.MyCommentListResponse;
@@ -32,9 +32,7 @@ public class MyPageController {
     public ResponseEntity<ApiResponse<MyPageSummaryResponse>> getMyPageSummary(
             @AuthenticationPrincipal PrincipalUser user) {
 
-        // SecurityContext에서 loginId 추출
         String loginId = user.getLoginId();
-
         // 마이페이지 요약 정보 조회
         MyPageSummaryResponse response = myPageService.getMyPageSummary(loginId);
 
@@ -61,11 +59,7 @@ public class MyPageController {
 
         // SecurityContext에서 loginId 추출
         String loginId = user.getLoginId();
-
-        // 페이징 객체 생성
         Pageable pageable = PageRequest.of(page, size);
-
-        // 내가 쓴 글 목록 조회
         MyPostListResponse response = myPageService.getMyPosts(loginId, pageable, type);
 
         return ResponseEntity.ok(
@@ -76,7 +70,6 @@ public class MyPageController {
     /**
      * 내가 쓴 댓글 목록 조회
      * GET /api/users/mypage/comments
-     *
      * @param user 현재 인증된 사용자 정보 (Spring Security Context에서 자동 주입)
      * @param page 페이지 번호 (0부터 시작, 기본값: 0)
      * @param size 페이지 크기 (기본값: 10)
@@ -88,13 +81,8 @@ public class MyPageController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        // SecurityContext에서 loginId 추출
         String loginId = user.getLoginId();
-
-        // 페이징 객체 생성
         Pageable pageable = PageRequest.of(page, size);
-
-        // 내가 쓴 댓글 목록 조회
         MyCommentListResponse response = myPageService.getMyComments(loginId, pageable);
 
         return ResponseEntity.ok(

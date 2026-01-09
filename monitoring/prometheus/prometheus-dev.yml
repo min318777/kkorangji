@@ -1,0 +1,26 @@
+# Prometheus 개발 환경 설정 파일
+# API는 로컬에서 실행되고, Prometheus는 Docker에서 실행되는 구조
+# host.docker.internal을 통해 로컬 호스트의 API에 접근
+
+global:
+  scrape_interval: 15s      # 메트릭 수집 주기 (15초마다)
+  evaluation_interval: 15s   # 알림 규칙 평가 주기
+  scrape_timeout: 10s        # 스크래핑 타임아웃
+
+scrape_configs:
+  # Prometheus 자체 메트릭 수집
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+
+  # Meow API 서비스 메트릭 수집 (로컬에서 실행 중인 Spring Boot)
+  # host.docker.internal = Docker 컨테이너에서 호스트 머신을 가리키는 특수 DNS
+  - job_name: 'meow-api'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:8080']  # 로컬에서 실행 중인 API
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'meow-api-local'

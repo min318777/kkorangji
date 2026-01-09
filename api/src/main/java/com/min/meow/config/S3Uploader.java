@@ -20,10 +20,10 @@ public class S3Uploader {
 
     private final S3Client s3Client;
 
-    @Value("${AWS_S3_BUCKET}")
+    @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    @Value("${AWS_S3_BASE_URL}")
+    @Value("${cloud.aws.s3.baseUrl}")
     private String baseUrl;
 
     public List<String> uploadFiles(List<MultipartFile> files){
@@ -40,10 +40,8 @@ public class S3Uploader {
                     .key(key)
                     .contentType(file.getContentType())
                     .build();
-
             s3Client.putObject(putObjectRequest,
                     RequestBody.fromBytes(file.getBytes()));
-
             return baseUrl + "/" + key;
         } catch (IOException e) {
             throw new RuntimeException("파일 업로드 실패", e);

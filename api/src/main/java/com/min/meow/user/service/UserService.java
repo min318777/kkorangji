@@ -10,7 +10,6 @@ public interface UserService {
 
     LoginResponse login(LoginRequest loginRequest);
     JoinResponse join(JoinRequest joinRequest);
-
-
+    void withdraw(String loginId);
 
 }

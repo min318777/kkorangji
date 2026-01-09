@@ -16,6 +16,8 @@ public enum ErrorCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."),
     ALREADY_EXISTING_USER(HttpStatus.CONFLICT, "중복된 아이디가 존재합니다."),
     ALREADY_EXISTING_EMAIL(HttpStatus.CONFLICT, "동일한 이메일의 계정이 존재합니다." ),
+    ALREADY_WITHDRAWN_USER(HttpStatus.BAD_REQUEST, "이미 탈퇴한 회원입니다."),
+    WITHDRAWN_USER(HttpStatus.FORBIDDEN, "탈퇴한 회원은 이용할 수 없습니다."),
 
 
     // jwt 예외

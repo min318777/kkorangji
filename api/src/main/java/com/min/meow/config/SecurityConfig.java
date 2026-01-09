@@ -79,10 +79,13 @@ public class SecurityConfig {
                                 "/api/reissue",
                                 "/api/notice",
                                 "/api/logout",
+                                "/error",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
-                                "/webjars/**").permitAll()
+                                "/webjars/**",
+                                // 모니터링 엔드포인트 (Prometheus, Actuator)
+                                "/actuator/**").permitAll()
                         // 게시글 및 댓글 조회는 인증 없이 가능
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.GET,

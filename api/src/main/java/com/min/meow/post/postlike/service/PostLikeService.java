@@ -12,10 +12,12 @@ import com.min.meow.postlike.repository.PostLikeRepository;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostLikeService {
@@ -48,12 +50,20 @@ public class PostLikeService {
                 .build();
         postLikeRepository.save(like);
 
-        LikeEvent event = new LikeEvent(
-                like.getId(),
-                boastCatPostId,
-                boastCatPost.getUser().getLoginId()
-        );
-        notificationEventPublisher.publishLikeEvent(event);
+        // 게시글 작성자가 탈퇴하지 않은 경우에만 알림 발송
+        // - 탈퇴한 사용자에게는 알림을 보내지 않음
+        // - 자기 자신의 게시글에 좋아요를 누를 경우도 알림 발송하지 않음
+        if (!boastCatPost.getUser().isWithdrawn() && !loginId.equals(boastCatPost.getUser().getLoginId())) {
+            LikeEvent event = new LikeEvent(
+                    like.getId(),
+                    boastCatPostId,
+                    boastCatPost.getUser().getLoginId()
+            );
+            notificationEventPublisher.publishLikeEvent(event);
+            log.debug("좋아요 알림 발송 - postId: {}, receiver: {}", boastCatPostId, boastCatPost.getUser().getLoginId());
+        } else {
+            log.debug("좋아요 알림 미발송 - 게시글 작성자 탈퇴 또는 본인 좋아요");
+        }
         return true;
     }
 }

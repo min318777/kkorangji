@@ -1,0 +1,43 @@
+# Prometheus 설정 파일
+# Meow 프로젝트 모니터링을 위한 스크래핑 설정
+
+global:
+  scrape_interval: 15s      # 메트릭 수집 주기 (15초마다)
+  evaluation_interval: 15s   # 알림 규칙 평가 주기
+  scrape_timeout: 10s        # 스크래핑 타임아웃
+
+# Alertmanager 설정 (필요시 활성화)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# 스크래핑 대상 설정
+scrape_configs:
+  # Prometheus 자체 메트릭 수집
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+
+  # Meow API 서비스 메트릭 수집
+  - job_name: 'meow-api'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['api:8080']
+    # 메트릭에 추가 레이블 부여
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'meow-api'
+
+  # MySQL Exporter (선택사항 - 추후 추가 가능)
+  # - job_name: 'mysql'
+  #   static_configs:
+  #     - targets: ['mysql-exporter:9104']
+
+  # Redis Exporter (선택사항 - 추후 추가 가능)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis-exporter:9121']

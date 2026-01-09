@@ -51,10 +51,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-    //flyway
-    //implementation 'org.flywaydb:flyway-core'
-    //implementation 'org.flywaydb:flyway-mysql'
-
     // S3
     implementation 'software.amazon.awssdk:s3:2.20.45'
     implementation 'software.amazon.awssdk:auth:2.20.45'
@@ -63,6 +59,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // 모니터링 - Actuator & Prometheus
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 
     // kafka
     implementation 'org.springframework.kafka:spring-kafka'
