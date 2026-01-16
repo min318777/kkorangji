@@ -2,107 +2,123 @@ package com.min.meow.user.jwt;
 
 
 import com.min.meow.global.Token;
-import com.min.meow.global.exception.CustomException;
-import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.user.dto.CustomUserDetails;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 
+/**
+ * JWT 인증 필터
+ *
+ * 역할: Authorization 헤더에서 JWT 토큰을 추출하고 검증하여 SecurityContext에 인증 정보를 설정
+ *
+ * 동작 방식:
+ * 1. 토큰이 있으면 → 검증 후 인증 설정, 다음 필터로 진행
+ * 2. 토큰이 없으면 → 인증 없이 다음 필터로 진행 (SecurityConfig의 AuthorizationFilter가 접근 제어)
+ * 3. 토큰이 유효하지 않으면 → 에러 응답 반환 (필터 체인 중단)
+ *
+ * 주의: 접근 제어(permitAll, authenticated)는 SecurityConfig에서만 관리
+ */
+@Slf4j
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
 
-    private static final List<String> WHITELIST_PATHS = Arrays.asList(
-            "/api/users/login",
-            "/api/users/join",
-            "/api/reissue",
-            "/api/meow/boast-cat",
-            "/api/meow/lost-cat",
-            "/api/logout",
-            "/api/notification",
-            "/swagger-ui",
-            "/v3/api-docs",
-            "/swagger-resources",
-            "/webjars",
-            "/actuator"  // 모니터링 엔드포인트 (Prometheus, Health Check)
-    );
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        String path = request.getRequestURI();
-
-        // 화이트리스트 경로는 JWT 검증을 건너뜀 (로그아웃 포함)
-        if (isWhitelistPath(path)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
+        // Authorization 헤더에서 토큰 추출
         String authorization = request.getHeader("Authorization");
-        if(authorization == null || !authorization.startsWith("Bearer ")){
-            throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
-            //filterChain.doFilter(request, response);
-            // 조건이 해당되면 메소드 종료
-        }
-        String accessToken = authorization.split(" ")[1];
 
-        // 토큰이 없다면 다음 필터로 넘김
-        if (accessToken == null) {
+        // 토큰이 없으면 인증 없이 다음 필터로 진행
+        // SecurityConfig의 AuthorizationFilter가 접근 권한을 체크함
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 토큰 만료 여부 확인, 만료시 다음 필터로 넘기지 않음
+        String accessToken = authorization.substring(7); // "Bearer " 제거
+
+        // 토큰 만료 여부 확인
         try {
             jwtUtil.isExpired(accessToken);
         } catch (ExpiredJwtException e) {
-            throw new CustomException(ErrorCode.TOKEN_EXPIRED);
+            log.warn("만료된 토큰으로 접근 시도: {}", request.getRequestURI());
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED", "토큰이 만료되었습니다.");
+            return;
+        } catch (JwtException e) {
+            log.warn("유효하지 않은 토큰: {}", e.getMessage());
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "INVALID_TOKEN", "유효하지 않은 토큰입니다.");
+            return;
         }
 
         // 토큰이 access인지 확인 (발급시 페이로드에 명시)
         Token category = jwtUtil.getTokenCategory(accessToken);
         if (!category.equals(Token.ACCESS_TOKEN)) {
-            throw new CustomException(ErrorCode.INVALID_ACCESS_TOKEN);
+            log.warn("Access 토큰이 아닌 토큰으로 접근 시도");
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "INVALID_ACCESS_TOKEN", "유효하지 않은 Access 토큰입니다.");
+            return;
         }
 
-        // 토큰에서 loginId추출
-        String loginId = jwtUtil.getLoginId(accessToken);
-        User user = userRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
+        // 토큰에서 userId 추출 및 사용자 조회
+        Long userId = jwtUtil.getUserId(accessToken);
+        Optional<User> userOptional = userRepository.findById(userId);
 
-        // Userdetails에 회원 정보 객체 담기
+        if (userOptional.isEmpty()) {
+            log.warn("토큰의 사용자를 찾을 수 없음 - userId: {}", userId);
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND", "사용자를 찾을 수 없습니다.");
+            return;
+        }
+
+        User user = userOptional.get();
+
+        // UserDetails에 회원 정보 객체 담기
         CustomUserDetails customUserDetails = new CustomUserDetails(user);
 
         // 스프링 시큐리티 인증 토큰 생성
-        Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
+        Authentication authToken = new UsernamePasswordAuthenticationToken(
+                customUserDetails, null, customUserDetails.getAuthorities());
 
-        // 세션에 사용자 등록
+        // SecurityContext에 인증 정보 설정
         SecurityContextHolder.getContext().setAuthentication(authToken);
+
+        // 다음 필터로 진행
         filterChain.doFilter(request, response);
     }
 
-    private boolean isWhitelistPath(String path) {
-        return WHITELIST_PATHS.stream()
-                .anyMatch(whitelistPath -> {
-                    // exact match 또는 prefix match 지원
-                    return path.equals(whitelistPath) || path.startsWith(whitelistPath);
-                });
+    /**
+     * 에러 응답을 직접 작성하여 반환
+     * 필터에서는 예외를 throw하면 안 되므로 response에 직접 에러를 작성
+     */
+    private void sendErrorResponse(HttpServletResponse response, int status, String errorCode, String message) throws IOException {
+        response.setStatus(status);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+
+        String jsonResponse = String.format(
+                "{\"error\": \"%s\", \"message\": \"%s\", \"status\": %d}",
+                errorCode, message, status
+        );
+
+        response.getWriter().write(jsonResponse);
     }
 }

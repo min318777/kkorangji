@@ -71,8 +71,8 @@ public class RedisConfig {
         //💡 해결 원리
         //activateDefaultTyping() 설정으로 JSON에 타입 정보를 함께 저장해서 정확한 타입으로 복원할 수 있게 됩니다.
 
-
-        RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
+        // 기본 캐시 설정 (defaultTtl 사용)
+        RedisCacheConfiguration defaultConfiguration = RedisCacheConfiguration.defaultCacheConfig()
                 .disableCachingNullValues()
                 .entryTtl(Duration.ofSeconds(defaultTtl))
                 .serializeKeysWith(RedisSerializationContext
@@ -80,9 +80,24 @@ public class RedisConfig {
                         .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
+
+        // 메인페이지 캐시 설정 (TTL 60초 = 1분)
+        // 트래픽이 많은 메인페이지용으로 짧은 TTL 적용
+        // 정합성이 중요하지 않으므로 1분간 캐시 유지
+        RedisCacheConfiguration mainPageConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+                .disableCachingNullValues()
+                .entryTtl(Duration.ofSeconds(60))  // TTL 1분
+                .serializeKeysWith(RedisSerializationContext
+                        .SerializationPair
+                        .fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
+
         return RedisCacheManager.RedisCacheManagerBuilder
                 .fromConnectionFactory(redisConnectionFactory)
-                .cacheDefaults(configuration)
+                .cacheDefaults(defaultConfiguration)
+                // mainPage 캐시에만 별도 TTL(60초) 적용
+                .withCacheConfiguration("mainPage", mainPageConfiguration)
                 .build();
     }
 

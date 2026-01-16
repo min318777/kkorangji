@@ -17,14 +17,10 @@ public class RefreshToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String loginId;
-
     private Long userId;
-
     @Column(length = 1000)
     private String refreshToken;
-
     private LocalDateTime expiration;
 
 }

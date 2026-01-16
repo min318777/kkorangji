@@ -1,5 +1,4 @@
 services:
-
   api:
     build:
       context: .
@@ -63,8 +62,6 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
-
-  # ===== 모니터링 서비스 =====
 
   # Prometheus - 메트릭 수집 및 저장
   prometheus:

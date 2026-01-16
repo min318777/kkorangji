@@ -16,27 +16,17 @@ import java.util.List;
 public class GetBoastCatPostResponse {
 
     private Long id;
-
     private String writer;
-
     private String title;
-
     private String contents;
-
     private List<String> imageUrls = new ArrayList<>();
-
     private List<CommentDto> commentDtoList;
-
     private Long userId;
-
     private int view;
-
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
 
     public static GetBoastCatPostResponse toResponse(BoastCatPost boastCatPost){
-
         return GetBoastCatPostResponse.builder()
                 .id(boastCatPost.getId())
                 .view(boastCatPost.getView())

@@ -3,11 +3,10 @@ package com.min.meow.user.oauth2;
 import com.min.meow.global.Token;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
-import com.min.meow.user.entity.RefreshToken;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.jwt.JwtUtil;
-import com.min.meow.user.repository.RefreshTokenRepository;
 import com.min.meow.user.repository.UserRepository;
+import com.min.meow.user.service.RefreshTokenService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,16 +17,16 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private static final long REFRESH_TOKEN_EXPIRATION = 7 * 24 * 60 * 60 * 1000L;
+    // Refresh Token: 14일
+    private static final long REFRESH_TOKEN_EXPIRATION = 14 * 24 * 60 * 60 * 1000L;
 
     private final JwtUtil jwtUtil;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
 
     //private final OAuth2AuthorizedClientService authorizedClientService;
@@ -45,8 +44,10 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         Long userId = user.getId();
 
-        String refreshToken = jwtUtil.createRefreshToken(userId, REFRESH_TOKEN_EXPIRATION,Token.REFRESH_TOKEN);
-        addRefreshToken(loginId, userId, refreshToken);
+        String refreshToken = jwtUtil.createRefreshToken(userId, Token.REFRESH_TOKEN, REFRESH_TOKEN_EXPIRATION);
+
+        // Redis에 Refresh Token 저장
+        refreshTokenService.save(userId, refreshToken);
 
         response.addCookie(createCookie("refresh", refreshToken));
         response.sendRedirect("http://localhost:3000/");
@@ -62,23 +63,11 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     }
 
     private Cookie createCookie(String key, String value){
-
         Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(60*60*60);
-        //cookie.setSecure(true);
+        cookie.setMaxAge(14 * 24 * 60 * 60); // 14일
+        //cookie.setSecure(true); -> https 통신시 필요
         cookie.setPath("/");
-        cookie.setHttpOnly(true);
+        cookie.setHttpOnly(true); // XSS 공격 방어
         return cookie;
-    }
-
-    private void addRefreshToken(String loginId, Long userId, String refresh) {
-
-        RefreshToken refreshToken = RefreshToken.builder()
-                .loginId(loginId)
-                .refreshToken(refresh)
-                .userId(userId)
-                .expiration(LocalDateTime.now().plusSeconds(REFRESH_TOKEN_EXPIRATION / 1000))
-                .build();
-        refreshTokenRepository.save(refreshToken);
     }
 }

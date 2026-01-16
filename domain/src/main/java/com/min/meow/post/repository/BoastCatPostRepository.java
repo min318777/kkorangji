@@ -15,11 +15,15 @@ import java.util.Optional;
 @Repository
 public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long>, BoastCatPostRepositoryCustom {
 
-    Page<BoastCatPost> findAll(Pageable pageable);
-
-    // 모든 게시글 + 이미지Urls 한 번에 가져오기
-    @Query("SELECT DISTINCT p FROM BoastCatPost p LEFT JOIN FETCH p.imageUrls ORDER BY p.createdAt DESC")
-    List<BoastCatPost> findAllWithImageUrls();
+    /**
+     * 페이징 목록 조회 (N+1 문제 해결)
+     *
+     * User를 Fetch Join으로 함께 조회하여 N+1 문제를 방지합니다.
+     * countQuery를 별도로 지정하여 페이징 카운트 쿼리 최적화합니다.
+     */
+    @Query(value = "SELECT b FROM BoastCatPost b LEFT JOIN FETCH b.user ORDER BY b.createdAt DESC",
+           countQuery = "SELECT COUNT(b) FROM BoastCatPost b")
+    Page<BoastCatPost> findAllWithUser(Pageable pageable);
 
     // 단일 게시글 조회 시
     @Query("SELECT p FROM BoastCatPost p LEFT JOIN FETCH p.imageUrls WHERE p.id = :id")
@@ -31,4 +35,18 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
            "WHERE b.user.id = :userId " +
            "ORDER BY b.createdAt DESC")
     Page<BoastCatPost> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
+
+    /**
+     * 메인페이지용: 최근 자랑글 20개 조회
+     *
+     * N+1 문제 방지를 위해 User를 Fetch Join으로 함께 조회합니다.
+     * imageUrls는 ElementCollection이므로 별도 쿼리로 조회됩니다.
+     * 정렬: 최신순 (createdAt DESC)
+     */
+    @Query("SELECT DISTINCT b FROM BoastCatPost b " +
+           "LEFT JOIN FETCH b.user " +
+           "LEFT JOIN FETCH b.imageUrls " +
+           "ORDER BY b.createdAt DESC " +
+           "LIMIT 20")
+    List<BoastCatPost> findTop20RecentPosts();
 }

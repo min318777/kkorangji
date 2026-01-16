@@ -19,8 +19,6 @@ public class QNotification extends EntityPathBase<Notification> {
 
     public static final QNotification notification = new QNotification("notification");
 
-    public final NumberPath<Long> commentId = createNumber("commentId", Long.class);
-
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
@@ -33,9 +31,9 @@ public class QNotification extends EntityPathBase<Notification> {
 
     public final StringPath receiverLoginId = createString("receiverLoginId");
 
-    public final EnumPath<com.min.kafka.dto.NotificationType> type = createEnum("type", com.min.kafka.dto.NotificationType.class);
+    public final NumberPath<Long> sourceId = createNumber("sourceId", Long.class);
 
-    public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
+    public final EnumPath<com.min.meow.global.NotificationType> type = createEnum("type", com.min.meow.global.NotificationType.class);
 
     public QNotification(String variable) {
         super(Notification.class, forVariable(variable));

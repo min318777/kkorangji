@@ -20,6 +20,10 @@ public class QUser extends EntityPathBase<User> {
 
     public static final QUser user = new QUser("user");
 
+    public final DateTimePath<java.time.LocalDateTime> anonymizedAt = createDateTime("anonymizedAt", java.time.LocalDateTime.class);
+
+    public final DateTimePath<java.time.LocalDateTime> deletedAt = createDateTime("deletedAt", java.time.LocalDateTime.class);
+
     public final StringPath email = createString("email");
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
@@ -34,7 +38,7 @@ public class QUser extends EntityPathBase<User> {
 
     public final StringPath password = createString("password");
 
-    public final ListPath<com.min.meow.post.postlike.entity.PostLike, com.min.meow.post.postlike.entity.QPostLike> postLike = this.<com.min.meow.post.postlike.entity.PostLike, com.min.meow.post.postlike.entity.QPostLike>createList("postLike", com.min.meow.post.postlike.entity.PostLike.class, com.min.meow.post.postlike.entity.QPostLike.class, PathInits.DIRECT2);
+    public final ListPath<com.min.meow.postlike.entity.PostLike, com.min.meow.postlike.entity.QPostLike> postLike = this.<com.min.meow.postlike.entity.PostLike, com.min.meow.postlike.entity.QPostLike>createList("postLike", com.min.meow.postlike.entity.PostLike.class, com.min.meow.postlike.entity.QPostLike.class, PathInits.DIRECT2);
 
     public final DateTimePath<java.time.LocalDateTime> registeredAt = createDateTime("registeredAt", java.time.LocalDateTime.class);
 

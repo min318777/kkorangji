@@ -50,10 +50,11 @@ public class SseEmitterManager {
             log.info("SSE 연결 완료: {}", userLoginId);
         });
 
-        // 5. 타임아웃 시 Map에서 제거
+        // 5. 타임아웃 시 Map에서 제거하고 연결 완료 처리
         emitter.onTimeout(() -> {
             emitters.remove(userLoginId);
-            log.warn("SSE 타임아웃: {}", userLoginId);
+            emitter.complete();  // 타임아웃 시 명시적으로 완료 처리
+            log.debug("SSE 타임아웃: {} - 클라이언트 재연결 필요", userLoginId);
         });
 
         // 6. 에러 발생 시 Map에서 제거

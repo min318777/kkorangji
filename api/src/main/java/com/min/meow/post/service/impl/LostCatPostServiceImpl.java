@@ -14,14 +14,13 @@ import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.post.service.LostCatPostService;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,42 +33,30 @@ public class LostCatPostServiceImpl implements LostCatPostService {
     private final UserRepository userRepository;
     private final S3Uploader s3Uploader;
 
-    // 모든 글 조회
+    // 모든 글 조회 (DB 레벨 페이징)
+    // 해당 페이지의 데이터만 DB에서 조회하여 메모리 효율적으로 처리
     @Override
-    @CacheEvict(value = "post", allEntries = true)
-    @Cacheable(value = "post", key = "'getAllLostCatPost:' + #pageable.pageNumber + ':' + #pageable.pageSize")
     public PageResponse<GetLostCatPostResponse> getAllLostCatPosts(Pageable pageable){
+        Page<LostCatPost> posts = lostCatRepository.findAllWithUser(pageable);
 
-        List<LostCatPost> posts = lostCatRepository.findAllWithImageUrls();
-        List<GetLostCatPostResponse> responses = posts.stream()
-                .map(GetLostCatPostResponse::toResponse)
-                .toList();
-        Page<GetLostCatPostResponse> pageResponse = new PageImpl<>(
-                responses,
-                pageable,
-                responses.size()
-        );
-
-        // PageResponse로 변환하여 반환 (Redis 직렬화 가능한 형태)
-        return PageResponse.from(pageResponse);
+        return PageResponse.from(posts.map(GetLostCatPostResponse::toResponse));
     }
 
     // 글 상세 조회
     @Override
     @Transactional
-    @CacheEvict(value = "post", allEntries = true)
     public GetLostCatPostResponse getLostCatPost(Long lostCatPostId){
 
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-        lostCatPost.increaseView();  // plusView() → increaseView()로 변경
+        lostCatPost.increaseView();
         return GetLostCatPostResponse.toResponse(lostCatPost);
     }
 
     // 글 생성
     @Override
     @Transactional
-    @CacheEvict(value = "post", allEntries = true)
+    @CacheEvict(value = "mainPage", allEntries = true)
     public CreateLostCatPostResponse createLostCatPost(CreateLostCatPostRequest createLostCatPostRequest, String loginId){
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
@@ -103,7 +90,7 @@ public class LostCatPostServiceImpl implements LostCatPostService {
     // 글 수정
     @Transactional
     @Override
-    @CacheEvict(value = "post", allEntries = true)
+    @CacheEvict(value = "mainPage", allEntries = true)
     public UpdateLostCatPostResponse updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest, String loginId){
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
@@ -133,11 +120,9 @@ public class LostCatPostServiceImpl implements LostCatPostService {
     }
 
     // 글 삭제
-    // 성능개선-> findById 이후 delete를 db호출 2번발생-> deleteById 한번의 호출로 성능개성 -> existById도 있는데? -> 존재여부만 확인하므로 엔티티 조회보다 가벼운 호출이다. -> query dsl로 해볼까?
-    // 물리적삭제 대신 소프트삭제도 고려해보자.
     @Transactional
     @Override
-    @CacheEvict(value = "post", allEntries = true)
+    @CacheEvict(value = "mainPage", allEntries = true)
     public void deleteLostCatPost(Long lostCatPostId, String loginId, String password) {
 
         User writer = userRepository.findByLoginId(loginId)
@@ -176,5 +161,16 @@ public class LostCatPostServiceImpl implements LostCatPostService {
         //     s3Uploader.deleteFiles(request.getDeleteImageUrls());
         // }
         return finalImageUrls;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "mainPage", key = "'recentLostPosts'")
+    public List<GetLostCatPostResponse> getRecentLostCatPosts() {
+        List<LostCatPost> posts = lostCatRepository.findTop20RecentPosts();
+
+        return posts.stream()
+                .map(GetLostCatPostResponse::toResponse)
+                .toList();
     }
 }

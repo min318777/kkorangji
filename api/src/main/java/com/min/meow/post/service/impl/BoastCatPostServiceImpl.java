@@ -16,15 +16,13 @@ import com.min.meow.post.service.BoastCatPostService;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,26 +35,18 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     private final UserRepository userRepository;
     private final S3Uploader s3Uploader;
 
-    // 모든 글 조회
+    // 모든 글 조회 (DB 레벨 페이징)
+    // 해당 페이지의 데이터만 DB에서 조회하여 메모리 효율적으로 처리
     @Override
-    @Cacheable(value = "post", key = "'getAllBoastCatPost:' + #pageable.pageNumber + ':' + #pageable.pageSize")
     public PageResponse<GetBoastCatPostResponse> getAllBoastCatPosts(Pageable pageable){
-        List<BoastCatPost> posts = boastCatPostRepository.findAllWithImageUrls();
-        List<GetBoastCatPostResponse> responses = posts.stream()
-                .map(GetBoastCatPostResponse::toResponse)
-                .toList();
-        Page<GetBoastCatPostResponse> pageResponses = new PageImpl<>(
-                responses,
-                pageable,
-                responses.size()
-        );
-        return PageResponse.from(pageResponses);
+        Page<BoastCatPost> posts = boastCatPostRepository.findAllWithUser(pageable);
+
+        return PageResponse.from(posts.map(GetBoastCatPostResponse::toResponse));
     }
 
     // 글 상세 조회
     @Override
     @Transactional
-    @CacheEvict(value = "post", allEntries = true)
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
         BoastCatPost boastCatPost = boastCatPostRepository.findByIdWithImages(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
@@ -65,9 +55,10 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     }
 
     // 글 작성
+    // mainPage 캐시 무효화 (새 글이 메인페이지 최근글 목록에 반영되어야 함)
     @Override
     @Transactional
-    @CacheEvict(value = "post", allEntries = true)
+    @CacheEvict(value = "mainPage", allEntries = true)
     public CreateBoastCatPostResponse createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest, String loginId){
 
         User writer = userRepository.findByLoginId(loginId)
@@ -91,9 +82,10 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     }
 
     // 글 수정
+    // mainPage 캐시 무효화 (수정된 내용이 메인페이지 최근글 목록에 반영되어야 함)
     @Override
     @Transactional
-    @CacheEvict(value = "post", allEntries = true)
+    @CacheEvict(value = "mainPage", allEntries = true)
     public UpdateBoastCatPostResponse updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId, String loginId){
 
         User writer = userRepository.findByLoginId(loginId)
@@ -117,9 +109,10 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     }
 
     // 글 삭제
+    // mainPage 캐시 무효화 (삭제된 글이 메인페이지 최근글 목록에서 제거되어야 함)
     @Override
     @Transactional
-    @CacheEvict(value = "post", allEntries = true)
+    @CacheEvict(value = "mainPage", allEntries = true)
     public void deleteBoastCatPost(Long boastCatPostId, String loginId, String password){
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
@@ -156,5 +149,19 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         //     s3Uploader.deleteFiles(request.getDeleteImageUrls());
         // }
         return finalImageUrls;
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "mainPage", key = "'recentBoastPosts'")
+    public List<GetBoastCatPostResponse> getRecentBoastCatPosts() {
+        log.info("DB에서 최근 자랑글 20개 조회 (캐시 미스시 DB 직접 조회)");
+
+        List<BoastCatPost> posts = boastCatPostRepository.findTop20RecentPosts();
+
+        return posts.stream()
+                .map(GetBoastCatPostResponse::toResponse)
+                .toList();
     }
 }

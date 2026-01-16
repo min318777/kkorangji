@@ -22,6 +22,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/meow/lost-cat")
@@ -56,9 +58,6 @@ public class LostCatPostController {
     public ResponseEntity<ApiResponse<CreateLostCatPostResponse>> createLostCatPost(@ModelAttribute @Valid CreateLostCatPostRequest createLostCatPostRequest,
                                                                        BindingResult bindingResult, @AuthenticationPrincipal PrincipalUser user){
 
-        if(user == null && user.getUser() == null){
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
-        }
         CreateLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.createLostCatPost(createLostCatPostRequest, user.getUser().getLoginId());
 
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 생성 성공", lostCatPostDto));
@@ -82,5 +81,11 @@ public class LostCatPostController {
         String password = user.getUser().getPassword();
         lostCatPostServiceImpl.deleteLostCatPost(lostCatPostId, loginId, password);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 삭제 성공", null));
+    }
+
+    @GetMapping("/recent")
+    public ResponseEntity<ApiResponse<List<GetLostCatPostResponse>>> getRecentLostCatPosts() {
+        List<GetLostCatPostResponse> posts = lostCatPostServiceImpl.getRecentLostCatPosts();
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "최근 실종글 20개 조회 성공", posts));
     }
 }

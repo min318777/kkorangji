@@ -20,13 +20,12 @@ public class JwtUtil {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String getUserId(String token){
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getSubject();
+    // userId를 Long 타입으로 반환
+    public Long getUserId(String token){
+        String subject = Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getSubject();
+        return Long.valueOf(subject);
     }
 
-    public String getLoginId(String token){
-        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("loginId", String.class);
-    }
 
 
     public String getRole(String token) {
@@ -43,13 +42,12 @@ public class JwtUtil {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration().before(new Date());
     }
 
-    public String createAccessToken(Long userId, Token token, String loginId, String role, Long expiredMs){
-
+    // Access Token 생성 (subject: userId, payload: role)
+    public String createAccessToken(Long userId, Token token, String role, Long expiredMs){
         return Jwts.builder()
                 .claims()
                 .subject(String.valueOf(userId))
                 .add("token", token.name())
-                .add("loginId", loginId)
                 .add("role", role)
                 .and()
                 .issuedAt(new Date(System.currentTimeMillis()))
@@ -58,14 +56,15 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String createRefreshToken(Long userId, Long expireMs, Token token){
+    // Refresh Token 생성 (subject: userId)
+    public String createRefreshToken(Long userId, Token token, Long expiredMs){
         return Jwts.builder()
                 .claims()
                 .subject(String.valueOf(userId))
                 .add("token", token.name())
                 .and()
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expireMs))
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expiredMs))
                 .signWith(secretKey)
                 .compact();
     }

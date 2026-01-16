@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api/meow/boast-cat")
@@ -34,6 +36,7 @@ public class BoastCatPostController {
         PageResponse<GetBoastCatPostResponse> posts = boastCatPostServiceImpl.getAllBoastCatPosts(pageable);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "모든 글 조회 성공", posts));
     }
+
 
     // 글 상세 조회
     @GetMapping("/{boastCatPostId}")
@@ -68,5 +71,11 @@ public class BoastCatPostController {
         String password = user.getUser().getPassword();
         boastCatPostServiceImpl.deleteBoastCatPost(boastCatPostId, loginId, password);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 삭제 성공", null));
+    }
+
+    @GetMapping("/recent")
+    public ResponseEntity<ApiResponse<List<GetBoastCatPostResponse>>> getRecentBoastCatPosts() {
+        List<GetBoastCatPostResponse> posts = boastCatPostServiceImpl.getRecentBoastCatPosts();
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "최근 자랑글 20개 조회 성공", posts));
     }
 }

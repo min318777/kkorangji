@@ -4,9 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.min.meow.global.Token;
 import com.min.meow.user.dto.CustomUserDetails;
 import com.min.meow.user.dto.request.LoginRequest;
-import com.min.meow.user.entity.RefreshToken;
 import com.min.meow.user.jwt.JwtUtil;
-import com.min.meow.user.repository.RefreshTokenRepository;
+import com.min.meow.user.service.RefreshTokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -23,16 +22,18 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 @RequiredArgsConstructor
 public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
-    private static final long REFRESH_TOKEN_EXPIRATION = 7 * 24 * 60 * 60 * 1000L;
-    private static final long ACCESS_TOKEN_EXPIRATION = 24 * 60 * 60 * 1000L;
+    // Access Token: 30분 (짧게 설정하여 탈취 리스크 최소화)
+    private static final long ACCESS_TOKEN_EXPIRATION = 30 * 60 * 1000L;
+    // Refresh Token: 14일 (서버에서 관리)
+    private static final long REFRESH_TOKEN_EXPIRATION = 14 * 24 * 60 * 60 * 1000L;
+
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
@@ -56,31 +57,29 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         // 유저정보
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        String loginId = userDetails.getUsername();
         Long userId = userDetails.getUser().getId();
         String role = userDetails.getUser().getRole().name();
 
-        // 토큰 생성
-        String accessToken = jwtUtil.createAccessToken(userId, Token.ACCESS_TOKEN, loginId, role, ACCESS_TOKEN_EXPIRATION);
-        String refreshToken = jwtUtil.createRefreshToken(userId, REFRESH_TOKEN_EXPIRATION, Token.REFRESH_TOKEN);
+        // 토큰 생성 (Access Token: userId, role / Refresh Token: userId)
+        String accessToken = jwtUtil.createAccessToken(userId, Token.ACCESS_TOKEN, role, ACCESS_TOKEN_EXPIRATION);
+        String refreshToken = jwtUtil.createRefreshToken(userId, Token.REFRESH_TOKEN, REFRESH_TOKEN_EXPIRATION);
 
-        // 리프레쉬토큰 저장
-        addRefreshToken(loginId, userId, refreshToken);
+        // 리프레쉬토큰 Redis에 저장
+        refreshTokenService.save(userId, refreshToken);
 
         // 응답 설정
         response.setHeader("Authorization", "Bearer " + accessToken);
         response.addCookie(createCookie("refresh", refreshToken));
         response.setStatus(HttpStatus.OK.value());
 
-        // 사용자 정보
+        // 사용자 정보 응답
         String responseBody = String.format(
-                "{\"success\": true, \"accessToken\": \"%s\", \"loginId\": \"%s\", \"role\": \"%s\"}",
-                accessToken, loginId, role
+                "{\"success\": true, \"accessToken\": \"%s\", \"userId\": %d, \"role\": \"%s\"}",
+                accessToken, userId, role
         );
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(responseBody);
-        response.setStatus(HttpServletResponse.SC_OK);
     }
 
     @Override
@@ -102,22 +101,11 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private Cookie createCookie(String key, String value){
         Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(24*60*60);
-        //cookie.setSecure(ture); -> https통신시 필요
-        cookie.setPath("/"); //-> 쿠키가 적용될 범위
-        cookie.setHttpOnly(true); // 자바스크립트로 해당쿠키에 접근하지 못하도록 하는 로직
+        cookie.setMaxAge(14 * 24 * 60 * 60); // 14일 (Refresh Token과 동일)
+        //cookie.setSecure(true); -> https통신시 필요
+        cookie.setPath("/"); // 쿠키가 적용될 범위
+        cookie.setHttpOnly(true); // XSS 공격 방어: 자바스크립트로 쿠키 접근 불가
 
         return cookie;
-    }
-
-    private void addRefreshToken(String loginId, Long userId, String refresh) {
-        refreshTokenRepository.deleteByLoginId(loginId);
-        RefreshToken refreshToken = RefreshToken.builder()
-                .loginId(loginId)
-                .refreshToken(refresh)
-                .userId(userId)
-                .expiration(LocalDateTime.now().plusSeconds(REFRESH_TOKEN_EXPIRATION / 1000))
-                .build();
-        refreshTokenRepository.save(refreshToken);
     }
 }

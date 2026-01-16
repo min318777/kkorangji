@@ -13,11 +13,15 @@ import java.util.List;
 @Repository
 public interface LostCatRepository extends JpaRepository<LostCatPost, Long> {
 
-    @Query("SELECT lo FROM LostCatPost lo LEFT JOIN FETCH lo.comments")
-    List<LostCatPost> findAllFetch(Pageable pageable);
-
-    @Query("SELECT DISTINCT p FROM LostCatPost p LEFT JOIN FETCH p.imageUrls ORDER BY p.createdAt DESC")
-    List<LostCatPost> findAllWithImageUrls();
+    /**
+     * 페이징 목록 조회 (N+1 문제 해결)
+     *
+     * User를 Fetch Join으로 함께 조회하여 N+1 문제를 방지합니다.
+     * countQuery를 별도로 지정하여 페이징 카운트 쿼리 최적화합니다.
+     */
+    @Query(value = "SELECT l FROM LostCatPost l LEFT JOIN FETCH l.user ORDER BY l.createdAt DESC",
+           countQuery = "SELECT COUNT(l) FROM LostCatPost l")
+    Page<LostCatPost> findAllWithUser(Pageable pageable);
 
     // 마이페이지: 사용자가 작성한 실종 고양이글 목록 조회 (페이징)
     // 참고: comments는 지연 로딩되지만, DTO 변환 시 size()로 개수만 조회하므로 문제없음
@@ -25,4 +29,18 @@ public interface LostCatRepository extends JpaRepository<LostCatPost, Long> {
            "WHERE l.user.id = :userId " +
            "ORDER BY l.createdAt DESC")
     Page<LostCatPost> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
+
+    /**
+     * 메인페이지용: 최근 실종글 20개 조회
+     *
+     * N+1 문제 방지를 위해 User를 Fetch Join으로 함께 조회합니다.
+     * imageUrls는 ElementCollection이므로 별도 쿼리로 조회됩니다.
+     * 정렬: 최신순 (createdAt DESC)
+     */
+    @Query("SELECT DISTINCT l FROM LostCatPost l " +
+           "LEFT JOIN FETCH l.user " +
+           "LEFT JOIN FETCH l.imageUrls " +
+           "ORDER BY l.createdAt DESC " +
+           "LIMIT 20")
+    List<LostCatPost> findTop20RecentPosts();
 }

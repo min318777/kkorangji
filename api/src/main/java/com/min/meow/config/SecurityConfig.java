@@ -6,9 +6,9 @@ import com.min.meow.user.jwt.JwtFilter;
 import com.min.meow.user.jwt.JwtUtil;
 import com.min.meow.user.filter.CustomLoginFilter;
 import com.min.meow.user.oauth2.CustomSuccessHandler;
-import com.min.meow.user.repository.RefreshTokenRepository;
 import com.min.meow.user.repository.UserRepository;
 import com.min.meow.user.service.CustomOauth2UserService;
+import com.min.meow.user.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -37,7 +37,7 @@ public class SecurityConfig {
     private final JwtUtil jwtUtil;
 
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenService refreshTokenService;
 
     private final CustomOauth2UserService customOauth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
@@ -45,7 +45,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 
-        CustomLoginFilter customLoginFilter = new CustomLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshTokenRepository);
+        CustomLoginFilter customLoginFilter = new CustomLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshTokenService);
         customLoginFilter.setFilterProcessesUrl("/api/users/login");
         http
                 .cors((cors) -> cors.configurationSource(new CorsConfigurationSource() {
@@ -77,7 +77,6 @@ public class SecurityConfig {
                                 "/api/users/login",
                                 "/api/users/join",
                                 "/api/reissue",
-                                "/api/notice",
                                 "/api/logout",
                                 "/error",
                                 "/swagger-ui/**",
@@ -86,16 +85,21 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 // 모니터링 엔드포인트 (Prometheus, Actuator)
                                 "/actuator/**").permitAll()
-                        // 게시글 및 댓글 조회는 인증 없이 가능
+                        // 게시글 및 댓글 조회는 인증 없이 가능 (GET 요청만)
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.GET,
                                 "/api/meow/boast-cat",
                                 "/api/meow/boast-cat/**",
                                 "/api/meow/lost-cat",
                                 "/api/meow/lost-cat/**").permitAll()
+                        // 알림 목록 조회만 인증 없이 가능 (GET 요청만)
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.GET,
+                                "/api/notice",
+                                "/api/notice/status").permitAll()
                         // 관리자 권한 필요
                         .requestMatchers("/admin").hasRole("ADMIN")
-                        // 나머지 모든 요청은 인증 필요
+                        // 나머지 모든 요청은 인증 필요 (알림 구독, 읽음 처리 등)
                         .anyRequest().authenticated());
         // JwtFilter는 LoginFilter 뒤에 등록하여, 로그인 성공 후 JWT 인증 처리
         http.
@@ -103,7 +107,7 @@ public class SecurityConfig {
         http.
                 addFilterAt(customLoginFilter, UsernamePasswordAuthenticationFilter.class);
         http.
-                addFilterBefore(new CustomLogoutFilter(refreshTokenRepository, jwtUtil), LogoutFilter.class);
+                addFilterBefore(new CustomLogoutFilter(refreshTokenService, jwtUtil), LogoutFilter.class);
         http.
                 sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
