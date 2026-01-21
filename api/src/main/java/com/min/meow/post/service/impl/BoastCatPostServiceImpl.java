@@ -45,12 +45,20 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     }
 
     // 글 상세 조회
+    // 조회수 증가는 원자적 쿼리로 처리하여 동시성 문제 해결
     @Override
     @Transactional
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
+        // 1. 원자적 조회수 증가 (DB 레벨에서 view = view + 1 수행)
+        int updatedCount = boastCatPostRepository.incrementViewCount(boastCatPostId);
+        if (updatedCount == 0) {
+            throw new CustomException(ErrorCode.NOT_FOUND_POST);
+        }
+
+        // 2. 게시글 조회 (증가된 조회수 포함)
         BoastCatPost boastCatPost = boastCatPostRepository.findByIdWithImages(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-        boastCatPost.increaseView();
+
         return GetBoastCatPostResponse.toResponse(boastCatPost);
     }
 

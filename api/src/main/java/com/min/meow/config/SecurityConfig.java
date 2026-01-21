@@ -46,7 +46,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 
         CustomLoginFilter customLoginFilter = new CustomLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshTokenService);
-        customLoginFilter.setFilterProcessesUrl("/api/users/login");
+        customLoginFilter.setFilterProcessesUrl("/login");
         http
                 .cors((cors) -> cors.configurationSource(new CorsConfigurationSource() {
                     @Override
@@ -74,7 +74,7 @@ public class SecurityConfig {
                 authorizeHttpRequests((auth) -> auth
                         // 인증 없이 접근 가능한 엔드포인트
                         .requestMatchers(
-                                "/api/users/login",
+                                "/login",
                                 "/api/users/join",
                                 "/api/reissue",
                                 "/api/logout",

@@ -4,6 +4,7 @@ import com.min.meow.post.entity.LostCatPost;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -43,4 +44,17 @@ public interface LostCatRepository extends JpaRepository<LostCatPost, Long> {
            "ORDER BY l.createdAt DESC " +
            "LIMIT 20")
     List<LostCatPost> findTop20RecentPosts();
+
+    /**
+     * 조회수 원자적 증가 (동시성 문제 해결)
+     *
+     * DB 레벨에서 view = view + 1을 수행하여 Race Condition을 방지합니다.
+     * 여러 스레드가 동시에 호출해도 정확한 조회수가 보장됩니다.
+     *
+     * @param id 게시글 ID
+     * @return 업데이트된 행의 수 (정상: 1, 게시글 없음: 0)
+     */
+    @Modifying
+    @Query("UPDATE LostCatPost l SET l.view = l.view + 1 WHERE l.id = :id")
+    int incrementViewCount(@Param("id") Long id);
 }

@@ -48,7 +48,6 @@ public class UserServiceImpl implements UserService {
 
         String encodedPassword = bCryptPasswordEncoder.encode(joinRequest.getPassword());
 
-        // 엔티티 직접 생성 (toEntity 메서드 제거됨)
         User user = User.builder()
                 .loginId(joinRequest.getLoginId())
                 .password(encodedPassword)
