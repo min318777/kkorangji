@@ -1,7 +1,7 @@
 package com.min.meow.post.postlike.service;
 
 
-import com.min.meow.kafka.producer.NotificationEventPublisher;
+import com.min.meow.notification.event.NotificationEventPublisher;
 import com.min.meow.notification.event.LikeEvent;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;

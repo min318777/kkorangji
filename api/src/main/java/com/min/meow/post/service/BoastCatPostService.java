@@ -24,10 +24,8 @@ public interface BoastCatPostService {
 
     /**
      * 메인페이지용: 최근 자랑글 20개 조회
-     *
      * Redis 캐싱이 적용되어 있으며, TTL은 1분입니다.
      * 캐싱 테스트 시 @Cacheable 어노테이션을 주석 처리하여 비교할 수 있습니다.
-     *
      * @return 최근 자랑글 20개 목록
      */
     List<GetBoastCatPostResponse> getRecentBoastCatPosts();

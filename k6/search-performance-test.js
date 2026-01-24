@@ -36,6 +36,7 @@ export default function () {
   };
 
   // POST /api/meow/search 엔드포인트 호출
+
   const res = http.post(`${BASE_URL}/api/meow/search?page=0&size=10`, payload, params);
 
   check(res, {

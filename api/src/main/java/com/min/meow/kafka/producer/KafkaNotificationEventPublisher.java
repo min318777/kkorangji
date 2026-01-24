@@ -10,11 +10,13 @@ import org.springframework.stereotype.Component;
 /**
  * 알림 이벤트 Kafka 발행자
  * - CommentEvent, LikeEvent를 Kafka로 전송
+ * - 현재 Spring Event 방식(NotificationEventPublisher)을 사용 중
+ * - 추후 분산 환경 전환 시 이 클래스 활용 가능
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class NotificationEventPublisher {
+public class KafkaNotificationEventPublisher {
 
     private final KafkaTemplate<String, CommentEvent> commentEventKafkaTemplate;
     private final KafkaTemplate<String, LikeEvent> likeEventKafkaTemplate;

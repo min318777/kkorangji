@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 토큰 재발급 컨트롤러
- *
  * 책임: HTTP 요청/응답 처리 (쿠키 추출, 헤더/쿠키 설정)
  */
 @RestController

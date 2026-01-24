@@ -14,14 +14,14 @@ services:
         condition: service_started
       redis:
         condition: service_started
-    environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+    env_file:
+      - .env.local
 
   mysql:
     image: mysql:8.0
+    env_file:
+      - .env.local
     environment:
-      MYSQL_ROOT_PASSWORD: min3782
-      MYSQL_DATABASE: meow
       TZ: Asia/Seoul
     ports:
       - "3307:3306"

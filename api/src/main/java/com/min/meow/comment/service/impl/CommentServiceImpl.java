@@ -1,6 +1,6 @@
 package com.min.meow.comment.service.impl;
 
-import com.min.meow.kafka.producer.NotificationEventPublisher;
+import com.min.meow.notification.event.NotificationEventPublisher;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.comment.dto.request.RegisterCommentRequest;

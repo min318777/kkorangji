@@ -68,7 +68,7 @@ public class RedisConfig {
         // 문제 원인
         //타입 정보 손실: GenericJackson2JsonRedisSerializer가 복잡한 제네릭 타입(RestPage<PostDto>)을 Redis에 저장할 때 타입 정보를 잃어버림
         //역직렬화 실패: 캐시에서 가져올 때 LinkedHashMap으로 변환되지만 RestPage<PostDto>로 캐스팅할 수 없음
-        //💡 해결 원리
+        // 해결 원리
         //activateDefaultTyping() 설정으로 JSON에 타입 정보를 함께 저장해서 정확한 타입으로 복원할 수 있게 됩니다.
 
         // 기본 캐시 설정 (defaultTtl 사용)

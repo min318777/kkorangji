@@ -22,7 +22,6 @@ public class RefreshTokenService {
     // Refresh Token 만료 시간: 14일
     private static final long REFRESH_TOKEN_EXPIRATION_DAYS = 14;
 
-    // Redis 키 prefix
     private static final String KEY_PREFIX = "refresh:";
 
     /**

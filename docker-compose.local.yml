@@ -17,9 +17,9 @@ services:
 
   mysql:
     image: mysql:8.0
+    env_file:
+      - .env.local
     environment:
-      MYSQL_ROOT_PASSWORD: min3782
-      MYSQL_DATABASE: meow
       TZ: Asia/Seoul
     ports:
       - "3307:3306"
@@ -89,12 +89,13 @@ services:
     container_name: grafana
     ports:
       - "3001:3000"  # Grafana UI 접속 포트 (React가 3000을 사용할 수 있으므로 3001로 설정)
+    env_file:
+      - .env.local
     environment:
-      - GF_SECURITY_ADMIN_USER=admin           # 관리자 사용자명
-      - GF_SECURITY_ADMIN_PASSWORD=admin123    # 관리자 비밀번호 (운영 환경에서는 반드시 변경!)
+      - GF_SECURITY_ADMIN_USER=${GF_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_ADMIN_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false           # 회원가입 비활성화
       - GF_SERVER_ROOT_URL=http://localhost:3001  # 루트 URL 설정
-      - GF_INSTALL_PLUGINS=                    # 추가 플러그인 설치 (필요시)
     volumes:
       - grafana_data:/var/lib/grafana                                          # Grafana 데이터 영속화
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning            # 프로비저닝 설정
