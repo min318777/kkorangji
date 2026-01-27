@@ -21,11 +21,11 @@ spring:
     hibernate:
       ddl-auto: update
     database-platform: org.hibernate.dialect.MySQL8Dialect
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
-        use_sql_comments: true
+        format_sql: false
+        use_sql_comments: false
 
   cache:
     type: redis
@@ -76,7 +76,7 @@ spring:
             user-name-attribute: sub
 
 jwt:
-  secret: "3LmMxJzOZLx6E4msrDzXQY0FfAdrsV+EoV6yg2ovF2E=1dsd"
+  secret: ${JWT_SECRET}
 
 cloud:
   aws:

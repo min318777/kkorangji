@@ -16,11 +16,11 @@ spring:
     hibernate:
       ddl-auto: update
       database-platform: org.hibernate.dialect.MySQL8Dialect
-    show-sql: true
+    show-sql: false  # p6spy가 대신 출력하므로 끔
     properties:
       hibernate:
-        format_sql: true
-        use_sql_comments: true
+        format_sql: false
+        use_sql_comments: false
 
   cache:
     type: redis
@@ -69,17 +69,17 @@ spring:
             user-name-attribute: sub
 
 jwt:
-  secret: "3LmMxJzOZLx6E4msrDzXQY0FfAdrsV+EoV6yg2ovF2E=1dsd"
+  secret: ${JWT_SECRET}
 
 cloud:
   aws:
     s3:
-      bucket:
-      baseUrl:
-    region:
+      bucket: ${AWS_S3_BUCKET:}
+      baseUrl: ${AWS_S3_BASE_URL:}
+    region: ${AWS_REGION:ap-northeast-2}
     credentials:
-      access-key:
-      secret-key:
+      access-key: ${AWS_ACCESS_KEY_ID:}
+      secret-key: ${AWS_SECRET_ACCESS_KEY:}
 
 # Actuator 및 Prometheus 설정 (로컬 환경)
 management:

@@ -68,16 +68,17 @@ spring:
             user-name-attribute: sub
 
 jwt:
-  secret: "3LmMxJzOZLx6E4msrDzXQY0FfAdrsV+EoV6yg2ovF2E=1dsd"
+  secret: ${JWT_SECRET}
 
 cloud:
   aws:
     s3:
-      bucket: your-bucket-name
-      region: ap-northeast-2
+      bucket: ${AWS_S3_BUCKET:}
+      baseUrl: ${AWS_S3_BASE_URL:}
+    region: ${AWS_REGION:ap-northeast-2}
     credentials:
-      access-key: YOUR_ACCESS_KEY
-      secret-key: YOUR_SECRET_KEY
+      access-key: ${AWS_ACCESS_KEY_ID:}
+      secret-key: ${AWS_SECRET_ACCESS_KEY:}
 
 # Actuator 및 Prometheus 설정
 management:

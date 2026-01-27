@@ -34,6 +34,7 @@ dependencies {
 
     // JPA 관련 (QueryDSL 사용을 위해 필요)
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
 
     // QueryDSL
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'

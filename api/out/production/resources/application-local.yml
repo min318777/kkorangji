@@ -16,11 +16,11 @@ spring:
     hibernate:
       ddl-auto: update
       database-platform: org.hibernate.dialect.MySQL8Dialect
-    show-sql: true
+    show-sql: false  # p6spy가 대신 출력하므로 끔
     properties:
       hibernate:
-        format_sql: true
-        use_sql_comments: true
+        format_sql: false
+        use_sql_comments: false
 
   cache:
     type: redis
