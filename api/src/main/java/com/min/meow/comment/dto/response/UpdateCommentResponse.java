@@ -16,8 +16,8 @@ public class UpdateCommentResponse {
 
     private Long id;
     private String content;
-    private Long postId;
-    private int subCommentId;
+    private Long userId;
+    private String userName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -25,7 +25,8 @@ public class UpdateCommentResponse {
         return UpdateCommentResponse.builder()
                 .id(comment.getId())
                 .content(comment.getContents())
-                .postId(comment.getLostCatPost().getId())
+                .userId(comment.getUser().getId())
+                .userName(comment.getUser().getName())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .build();

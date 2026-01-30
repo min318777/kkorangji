@@ -30,4 +30,11 @@ public interface LostCatPostService {
      * @return 최근 실종글 20개 목록
      */
     List<GetLostCatPostResponse> getRecentLostCatPosts();
+
+    /**
+     * 조회수 증가 (별도 API)
+     * 원자적 쿼리로 동시성 문제를 해결합니다.
+     * @param lostCatPostId 게시글 ID
+     */
+    void incrementViewCount(Long lostCatPostId);
 }

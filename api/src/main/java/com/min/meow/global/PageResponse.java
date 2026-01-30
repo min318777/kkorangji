@@ -9,15 +9,15 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 public class PageResponse<T> {
-    private List<T> content;
+    private List<T> data;
     private int page;
     private int size;
     private long totalElements;
     private int totalPages;
     private boolean last;
 
-    public PageResponse(List<T> content, int page, int size, long totalElements, int totalPages, boolean last) {
-        this.content = content;
+    public PageResponse(List<T> data, int page, int size, long totalElements, int totalPages, boolean last) {
+        this.data = data;
         this.page = page;
         this.size = size;
         this.totalElements = totalElements;

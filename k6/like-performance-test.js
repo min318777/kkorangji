@@ -3,11 +3,10 @@ import { check, sleep } from 'k6';
 import { randomString } from 'https://jslib.k6.io/k6-utils/1.2.0/index.js';
 
 // ================= 설정 영역 =================
-const BASE_URL = 'http://localhost:8080'; // 서버 주소
+const BASE_URL = 'http://localhost:8080';
 const TARGET_POST_ID = 1; // 테스트할 게시글 ID (DB에 미리 생성해두세요!)
 
 export const options = {
-  // 부하 시나리오 설정
   scenarios: {
     like_storm: {
       executor: 'ramping-vus', // 점진적으로 유저 증가

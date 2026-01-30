@@ -23,7 +23,7 @@ export const options = {
 const BASE_URL = 'http://localhost:8080';
 
 export default function () {
-  // 검색 요청 페이로드 (PostSearchRequest 구조에 맞춤)
+
   const payload = JSON.stringify({
     title: "고양이", // 실제 DB에 존재할 법한 검색어
     // contents: "내용" // 필요시 추가

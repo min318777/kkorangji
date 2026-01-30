@@ -33,7 +33,6 @@ public class MyPageController {
             @AuthenticationPrincipal PrincipalUser user) {
 
         String loginId = user.getLoginId();
-        // 마이페이지 요약 정보 조회
         MyPageSummaryResponse response = myPageService.getMyPageSummary(loginId);
 
         return ResponseEntity.ok(
@@ -81,9 +80,9 @@ public class MyPageController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        String loginId = user.getLoginId();
+        Long userId = user.getUser().getId();
         Pageable pageable = PageRequest.of(page, size);
-        MyCommentListResponse response = myPageService.getMyComments(loginId, pageable);
+        MyCommentListResponse response = myPageService.getMyComments(userId, pageable);
 
         return ResponseEntity.ok(
                 new ApiResponse<>(HttpStatus.OK, "내가 쓴 댓글 조회 성공", response)

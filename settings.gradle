@@ -8,5 +8,4 @@ pluginManagement {
 
 rootProject.name = 'meow'
 include 'api'
-include 'domain'
 

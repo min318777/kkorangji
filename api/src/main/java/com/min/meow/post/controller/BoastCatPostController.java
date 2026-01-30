@@ -5,8 +5,10 @@ import com.min.meow.global.PageResponse;
 import com.min.meow.global.ApiResponse;
 import com.min.meow.post.dto.request.CreateBoastCatPostRequest;
 import com.min.meow.post.dto.request.UpdateBoastCatPostRequest;
+import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.CreateBoastCatPostResponse;
 import com.min.meow.post.dto.response.GetBoastCatPostResponse;
+import com.min.meow.post.dto.response.RecentBoastCatPostResponse;
 import com.min.meow.post.dto.response.UpdateBoastCatPostResponse;
 import com.min.meow.post.service.impl.BoastCatPostServiceImpl;
 import jakarta.validation.Valid;
@@ -28,12 +30,12 @@ public class BoastCatPostController {
 
     // 모든 글 조회
     @GetMapping
-    public ResponseEntity<ApiResponse<PageResponse<GetBoastCatPostResponse>>> getAllBoastCatPost(
+    public ResponseEntity<ApiResponse<PageResponse<BoastCatPostListResponse>>> getAllBoastCatPost(
                                                         @RequestParam (defaultValue = "0") int page,
                                                         @RequestParam (defaultValue = "10") int size ){
 
         Pageable pageable = PageRequest.of(page, size);
-        PageResponse<GetBoastCatPostResponse> posts = boastCatPostServiceImpl.getAllBoastCatPosts(pageable);
+        PageResponse<BoastCatPostListResponse> posts = boastCatPostServiceImpl.getAllBoastCatPosts(pageable);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "모든 글 조회 성공", posts));
     }
 
@@ -73,9 +75,17 @@ public class BoastCatPostController {
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 삭제 성공", null));
     }
 
+    // 최근게시물
     @GetMapping("/recent")
-    public ResponseEntity<ApiResponse<List<GetBoastCatPostResponse>>> getRecentBoastCatPosts() {
-        List<GetBoastCatPostResponse> posts = boastCatPostServiceImpl.getRecentBoastCatPosts();
+    public ResponseEntity<ApiResponse<List<RecentBoastCatPostResponse>>> getRecentBoastCatPosts() {
+        List<RecentBoastCatPostResponse> posts = boastCatPostServiceImpl.getRecentBoastCatPosts();
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "최근 자랑글 20개 조회 성공", posts));
+    }
+
+    // 조회수 증가
+    @PostMapping("/{boastCatPostId}/view")
+    public ResponseEntity<ApiResponse<Void>> incrementViewCount(@PathVariable Long boastCatPostId) {
+        boastCatPostServiceImpl.incrementViewCount(boastCatPostId);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "조회수 증가 성공", null));
     }
 }

@@ -78,16 +78,30 @@ dependencies {
     // db
     runtimeOnly 'com.mysql:mysql-connector-j'
     testImplementation 'com.h2database:h2:2.3.230'
-
-    // module
-    implementation(project(":domain"))
 }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
 
-// UTF-8 인코딩 설정
+// QueryDSL Q클래스 생성 디렉토리 설정
+def generated = file("src/main/generated")
+
+sourceSets {
+    main {
+        java {
+            srcDir generated
+        }
+    }
+}
+
+// UTF-8 인코딩 설정 + QueryDSL 생성 경로
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+    options.annotationProcessorGeneratedSourcesDirectory = generated
+}
+
+// clean 시 generated 폴더도 삭제
+clean {
+    delete generated
 }

@@ -37,17 +37,18 @@ public class MyPageServiceImpl implements MyPageService {
     private final BoastCatPostRepository boastCatPostRepository;
     private final LostCatRepository lostCatRepository;
     private final CommentRepository commentRepository;
-    
+
     @Override
     public MyPageSummaryResponse getMyPageSummary(String loginId) {
-      
+
         User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));
-        
+
         long boastCatPostCount = userRepository.countBoastCatPostsByUserId(user.getId());
         long lostCatPostCount = userRepository.countLostCatPostsByUserId(user.getId());
-        long commentCount = userRepository.countCommentsByWriter(loginId);
-        
+        long commentCount = commentRepository.countByUser(user);
+
+
         return MyPageSummaryResponse.of(user, boastCatPostCount, lostCatPostCount, commentCount);
     }
 
@@ -83,13 +84,13 @@ public class MyPageServiceImpl implements MyPageService {
      * - 페이징 처리
      */
     @Override
-    public MyCommentListResponse getMyComments(String loginId, Pageable pageable) {
+    public MyCommentListResponse getMyComments(Long userId, Pageable pageable) {
         // 1. 사용자 존재 여부 확인
-        userRepository.findByLoginId(loginId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));
 
         // 2. 댓글 조회 (페이징)
-        Page<Comment> commentPage = commentRepository.findByWriterOrderByCreatedAtDesc(loginId, pageable);
+        Page<Comment> commentPage = commentRepository.findByUserOrderByCreatedAtDesc(user, pageable);
 
         // 3. DTO 변환
         Page<MyCommentDto> commentDtoPage = commentPage.map(MyCommentDto::fromComment);
@@ -97,17 +98,17 @@ public class MyPageServiceImpl implements MyPageService {
         // 4. Response 생성
         return MyCommentListResponse.of(commentDtoPage);
     }
-    
+
     private Page<MyPostDto> getBoastPostsOnly(Long userId, Pageable pageable) {
         Page<BoastCatPost> boastPosts = boastCatPostRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         return boastPosts.map(MyPostDto::fromBoastCatPost);
     }
-    
+
     private Page<MyPostDto> getLostPostsOnly(Long userId, Pageable pageable) {
         Page<LostCatPost> lostPosts = lostCatRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         return lostPosts.map(MyPostDto::fromLostCatPost);
     }
-    
+
     private Page<MyPostDto> getAllPosts(Long userId, Pageable pageable) {
         // 1. 각각의 게시글 리스트를 모두 가져옴 (페이징 전)
         List<BoastCatPost> boastPosts = boastCatPostRepository
@@ -126,7 +127,7 @@ public class MyPageServiceImpl implements MyPageService {
         allPosts.addAll(lostPosts.stream()
                 .map(MyPostDto::fromLostCatPost)
                 .collect(Collectors.toList()));
-        
+
         allPosts.sort(Comparator.comparing(MyPostDto::getCreatedAt).reversed());
 
         // 4. 수동 페이징 처리
@@ -134,7 +135,7 @@ public class MyPageServiceImpl implements MyPageService {
         int end = Math.min(start + pageable.getPageSize(), allPosts.size());
 
         List<MyPostDto> pagedPosts = allPosts.subList(start, end);
-        
+
         return new PageImpl<>(pagedPosts, pageable, allPosts.size());
     }
-}
+}    

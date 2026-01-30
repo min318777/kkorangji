@@ -88,4 +88,11 @@ public class LostCatPostController {
         List<GetLostCatPostResponse> posts = lostCatPostServiceImpl.getRecentLostCatPosts();
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "최근 실종글 20개 조회 성공", posts));
     }
+
+    // 조회수 증가 API (별도 분리)
+    @PostMapping("/{lostCatPostId}/view")
+    public ResponseEntity<ApiResponse<Void>> incrementViewCount(@PathVariable Long lostCatPostId) {
+        lostCatPostServiceImpl.incrementViewCount(lostCatPostId);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "조회수 증가 성공", null));
+    }
 }

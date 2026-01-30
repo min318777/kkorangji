@@ -16,6 +16,8 @@ import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.post.repository.LostCatRepository;
+import com.min.meow.user.entity.User;
+import com.min.meow.user.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,7 @@ public class CommentServiceImpl implements CommentService {
     private final BoastCatPostRepository boastCatPostRepository;
     private final CommentRepository commentRepository;
     private final NotificationEventPublisher notificationEventPublisher;
+    private final UserRepository userRepository;
 
     // 고양이 자랑 게시글 댓글 조회
     @Override
@@ -59,28 +62,31 @@ public class CommentServiceImpl implements CommentService {
     // 고양이 자랑 게시글 댓글 작성
     @Transactional
     @Override
-    public RegisterCommentResponse registerBoastCatPostComment(RegisterCommentRequest registerCommentRequest, Long boastCatPostId, String writer){
+    public RegisterCommentResponse registerBoastCatPostComment(RegisterCommentRequest registerCommentRequest, Long boastCatPostId, Long userId){
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 
         // 엔티티 직접 생성 (toEntity 메서드 제거됨)
         Comment comment = Comment.builder()
                 .contents(registerCommentRequest.getContent())
-                .writer(writer)
+                .user(user)
                 .isRead(false)
                 .boastCatPost(boastCatPost)
                 .build();
         boastCatPost.getComments().add(comment);
+        boastCatPost.incrementCommentCount();  // 댓글 수 증가
         commentRepository.save(comment);
 
         // 게시글 작성자가 탈퇴하지 않은 경우에만 알림 발송
         // - 탈퇴한 사용자에게는 알림을 보내지 않음
         // - 자기 자신의 게시글에 댓글을 달 경우도 알림 발송하지 않음
-        if (!boastCatPost.getUser().isWithdrawn() && !writer.equals(boastCatPost.getUser().getLoginId())) {
+        if (!boastCatPost.getUser().isWithdrawn() && !user.getLoginId().equals(boastCatPost.getUser().getLoginId())) {
             CommentEvent event = new CommentEvent(
                     comment.getId(),
                     boastCatPostId,
-                    writer,
+                    user.getLoginId(),
                     boastCatPost.getUser().getLoginId()
             );
             notificationEventPublisher.publishCommentEvent(event);
@@ -94,28 +100,32 @@ public class CommentServiceImpl implements CommentService {
     // 실종 고양이 게시글 댓글 작성
     @Transactional
     @Override
-    public RegisterCommentResponse registerLostCatPostComment(RegisterCommentRequest registerCommentRequest, Long lostCatPostId, String writer){
+    public RegisterCommentResponse registerLostCatPostComment(RegisterCommentRequest registerCommentRequest, Long lostCatPostId, Long userId){
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
+
 
         // 엔티티 직접 생성 (toEntity 메서드 제거됨)
         Comment comment = Comment.builder()
                 .contents(registerCommentRequest.getContent())
-                .writer(writer)
+                .user(user)
                 .isRead(false)
                 .lostCatPost(lostCatPost)
                 .build();
         lostCatPost.getComments().add(comment);
+        lostCatPost.incrementCommentCount();  // 댓글 수 증가
         commentRepository.save(comment);
 
         // 게시글 작성자가 탈퇴하지 않은 경우에만 알림 발송
         // - 탈퇴한 사용자에게는 알림을 보내지 않음
         // - 자기 자신의 게시글에 댓글을 달 경우도 알림 발송하지 않음
-        if (!lostCatPost.getUser().isWithdrawn() && !writer.equals(lostCatPost.getUser().getLoginId())) {
+        if (!lostCatPost.getUser().isWithdrawn() && !user.getLoginId().equals(lostCatPost.getUser().getLoginId())) {
             CommentEvent event = new CommentEvent(
                     comment.getId(),
                     lostCatPostId,
-                    writer,
+                    user.getLoginId(),
                     lostCatPost.getUser().getLoginId()
             );
             notificationEventPublisher.publishCommentEvent(event);
@@ -142,9 +152,17 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     @Override
     public void deleteComment(Long commentId){
-        if(!commentRepository.existsById(commentId)){
-            throw new CustomException(ErrorCode.NOT_FOUND_POST);
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+
+        // 게시글의 댓글 수 감소
+        if (comment.getBoastCatPost() != null) {
+            comment.getBoastCatPost().decrementCommentCount();
         }
+        if (comment.getLostCatPost() != null) {
+            comment.getLostCatPost().decrementCommentCount();
+        }
+
         commentRepository.deleteById(commentId);
     }
 }

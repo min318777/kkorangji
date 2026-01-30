@@ -15,8 +15,8 @@ public class RegisterCommentResponse {
 
     private Long id;
     private String content;
-    private Long postId;
-    private String writer;
+    private Long userId;
+    private String userName;
     private boolean isRead;
     private LocalDateTime createdAt;
 
@@ -24,9 +24,9 @@ public class RegisterCommentResponse {
         return RegisterCommentResponse.builder()
                 .id(comment.getId())
                 .content(comment.getContents())
-                .writer(comment.getWriter())
+                .userId(comment.getUser().getId())
+                .userName(comment.getUser().getName())
                 .isRead(comment.isRead())
-                .postId(comment.getBoastCatPost() != null ? comment.getBoastCatPost().getId() : null)
                 .createdAt(comment.getCreatedAt())
                 .build();
     }

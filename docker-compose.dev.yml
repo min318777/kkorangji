@@ -50,12 +50,14 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_started
     healthcheck:
-      test: [ "CMD", "kafka-topics", "--bootstrap-server=localhost:9092", "--list" ]
+      test: [ "CMD-SHELL", "kafka-broker-api-versions --bootstrap-server=localhost:9092 || exit 1" ]
       interval: 10s
       timeout: 10s
-      retries: 5
+      retries: 10
+      start_period: 30s
 
   # Prometheus - 메트릭 수집 및 저장
   prometheus:

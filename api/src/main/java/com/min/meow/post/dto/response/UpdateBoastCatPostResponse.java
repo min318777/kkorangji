@@ -22,7 +22,7 @@ public class UpdateBoastCatPostResponse {
     private LocalDateTime updatedAt;
 
 
-    public static UpdateBoastCatPostResponse convertToResponse(BoastCatPost boastCatPost){
+    public static UpdateBoastCatPostResponse from(BoastCatPost boastCatPost){
         return UpdateBoastCatPostResponse.builder()
                 .id(boastCatPost.getId())
                 .title(boastCatPost.getTitle())

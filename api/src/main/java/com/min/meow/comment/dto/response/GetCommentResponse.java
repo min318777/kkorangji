@@ -14,8 +14,8 @@ public class GetCommentResponse {
 
     private Long id;
     private String contents;
-    private Long postId;
-    private String writer;
+    private Long userId;
+    private String userName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -23,7 +23,8 @@ public class GetCommentResponse {
         return GetCommentResponse.builder()
                 .id(comment.getId())
                 .contents(comment.getContents())
-                .writer(comment.getWriter())
+                .userId(comment.getUser().getId())
+                .userName(comment.getUser().getName())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .build();

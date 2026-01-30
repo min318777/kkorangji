@@ -43,21 +43,25 @@ public class LostCatPostServiceImpl implements LostCatPostService {
     }
 
     // 글 상세 조회
-    // 조회수 증가는 원자적 쿼리로 처리하여 동시성 문제 해결
+    // 조회수 증가는 별도 API로 분리됨
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public GetLostCatPostResponse getLostCatPost(Long lostCatPostId){
-        // 1. 원자적 조회수 증가 (DB 레벨에서 view = view + 1 수행)
-        int updatedCount = lostCatRepository.incrementViewCount(lostCatPostId);
-        if (updatedCount == 0) {
-            throw new CustomException(ErrorCode.NOT_FOUND_POST);
-        }
-
-        // 2. 게시글 조회 (증가된 조회수 포함)
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
         return GetLostCatPostResponse.toResponse(lostCatPost);
+    }
+
+
+    // 원자적 쿼리로 동시성 문제 해결
+    @Override
+    @Transactional
+    public void incrementViewCount(Long lostCatPostId) {
+        int updatedCount = lostCatRepository.incrementViewCount(lostCatPostId);
+        if (updatedCount == 0) {
+            throw new CustomException(ErrorCode.NOT_FOUND_POST);
+        }
     }
 
     // 글 생성

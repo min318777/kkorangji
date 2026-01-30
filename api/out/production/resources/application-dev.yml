@@ -76,7 +76,7 @@ spring:
             user-name-attribute: sub
 
 jwt:
-  secret: "3LmMxJzOZLx6E4msrDzXQY0FfAdrsV+EoV6yg2ovF2E=1dsd"
+  secret: ${JWT_SECRET}
 
 cloud:
   aws:

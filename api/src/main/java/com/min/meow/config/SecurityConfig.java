@@ -92,6 +92,11 @@ public class SecurityConfig {
                                 "/api/meow/boast-cat/**",
                                 "/api/meow/lost-cat",
                                 "/api/meow/lost-cat/**").permitAll()
+                        // 조회수 증가 API는 인증 없이 가능 (POST 요청)
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.POST,
+                                "/api/meow/boast-cat/*/view",
+                                "/api/meow/lost-cat/*/view").permitAll()
                         // 알림 목록 조회만 인증 없이 가능 (GET 요청만)
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.GET,

@@ -39,7 +39,7 @@ public class CommentController {
                                                                                            @PathVariable Long boastCatPostId,
                                                                                            @AuthenticationPrincipal PrincipalUser user){
 
-        RegisterCommentResponse registerCommentResponse = commentServiceImpl.registerBoastCatPostComment(registerCommentRequest, boastCatPostId, user.getLoginId());
+        RegisterCommentResponse registerCommentResponse = commentServiceImpl.registerBoastCatPostComment(registerCommentRequest, boastCatPostId, user.getUser().getId());
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 작성 성공", registerCommentResponse));
     }
 
@@ -60,7 +60,7 @@ public class CommentController {
                                                                                             @PathVariable Long lostCatPostId,
                                                                                             @AuthenticationPrincipal PrincipalUser user){
 
-        RegisterCommentResponse registerCommentResponse = commentServiceImpl.registerLostCatPostComment(registerCommentRequest, lostCatPostId, user.getLoginId());
+        RegisterCommentResponse registerCommentResponse = commentServiceImpl.registerLostCatPostComment(registerCommentRequest, lostCatPostId, user.getUser().getId());
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 작성 성공", registerCommentResponse));
     }
 

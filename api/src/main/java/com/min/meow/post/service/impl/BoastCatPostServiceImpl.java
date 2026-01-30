@@ -3,7 +3,9 @@ package com.min.meow.post.service.impl;
 
 import com.min.meow.config.S3Uploader;
 import com.min.meow.global.PageResponse;
+import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.GetBoastCatPostResponse;
+import com.min.meow.post.dto.response.RecentBoastCatPostResponse;
 import com.min.meow.post.dto.response.CreateBoastCatPostResponse;
 import com.min.meow.post.dto.response.UpdateBoastCatPostResponse;
 import com.min.meow.post.dto.request.CreateBoastCatPostRequest;
@@ -18,7 +20,6 @@ import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,31 +36,46 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     private final UserRepository userRepository;
     private final S3Uploader s3Uploader;
 
-    // 모든 글 조회 (DB 레벨 페이징)
-    // 해당 페이지의 데이터만 DB에서 조회하여 메모리 효율적으로 처리
+    /**
+     * 모든 글 조회 (Projection 적용으로 성능 최적화)
+     *
+     * 성능 개선 내역:
+     * - Before: Entity 전체 조회 + DTO 변환 → contents, imageUrls, comments 모두 조회
+     * - After: Projection으로 필요한 7개 컬럼만 SELECT (id, title, writer, likeCount, commentCount, view, createdAt)
+     *
+     * 실행되는 쿼리:
+     * SELECT b.id, b.title, u.login_id, b.like_count, b.comment_count, b.view, b.created_at
+     * FROM boast_cat_post b LEFT JOIN user u ON b.user_id = u.id
+     * ORDER BY b.created_at DESC LIMIT ? OFFSET ?
+     */
     @Override
-    public PageResponse<GetBoastCatPostResponse> getAllBoastCatPosts(Pageable pageable){
-        Page<BoastCatPost> posts = boastCatPostRepository.findAllWithUser(pageable);
+    @Transactional(readOnly = true)
+    public PageResponse<BoastCatPostListResponse> getAllBoastCatPosts(Pageable pageable){
+        // Projection으로 DB에서 필요한 컬럼만 조회 (Entity 변환 불필요)
+        Page<BoastCatPostListResponse> posts = boastCatPostRepository.findAllWithProjection(pageable);
 
-        return PageResponse.from(posts.map(GetBoastCatPostResponse::toResponse));
+        return PageResponse.from(posts);
     }
 
     // 글 상세 조회
-    // 조회수 증가는 원자적 쿼리로 처리하여 동시성 문제 해결
+    // 조회수 증가는 별도 API로 분리됨
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
-        // 1. 원자적 조회수 증가 (DB 레벨에서 view = view + 1 수행)
-        int updatedCount = boastCatPostRepository.incrementViewCount(boastCatPostId);
-        if (updatedCount == 0) {
-            throw new CustomException(ErrorCode.NOT_FOUND_POST);
-        }
-
-        // 2. 게시글 조회 (증가된 조회수 포함)
         BoastCatPost boastCatPost = boastCatPostRepository.findByIdWithImages(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
         return GetBoastCatPostResponse.toResponse(boastCatPost);
+    }
+
+    // 원자적 쿼리로 동시성 문제 해결
+    @Override
+    @Transactional
+    public void incrementViewCount(Long boastCatPostId) {
+        int updatedCount = boastCatPostRepository.incrementViewCount(boastCatPostId);
+        if (updatedCount == 0) {
+            throw new CustomException(ErrorCode.NOT_FOUND_POST);
+        }
     }
 
     // 글 작성
@@ -77,7 +93,7 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
             imageUrls = s3Uploader.uploadFiles(createBoastCatPostRequest.getImages());
         }
 
-        // 엔티티 직접 생성 (toEntity 메서드 제거됨)
+        // 엔티티 생성
         BoastCatPost boastCatPost = BoastCatPost.builder()
                 .title(createBoastCatPostRequest.getTitle())
                 .contents(createBoastCatPostRequest.getContent())
@@ -86,7 +102,7 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
                 .build();
         boastCatPostRepository.save(boastCatPost);
 
-        return CreateBoastCatPostResponse.toResponse(boastCatPost);
+        return CreateBoastCatPostResponse.from(boastCatPost);
     }
 
     // 글 수정
@@ -113,7 +129,7 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
                 finalImageUrls
         );
 
-        return UpdateBoastCatPostResponse.convertToResponse(boastCatPost);
+        return UpdateBoastCatPostResponse.from(boastCatPost);
     }
 
     // 글 삭제
@@ -126,19 +142,11 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-
-        // 작성자 검증 (validateAuthor 메서드 제거됨)
+        // 작성자 검증
         if (!boastCatPost.isAuthor(writer)) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
-
         boastCatPostRepository.deleteById(boastCatPostId);
-        /*
-        if(!boastCatPostRepository.existsById(boastCatPostId)){
-            throw new CustomException(ErrorCode.NOT_FOUND_POST);
-        }
-        boastCatPostRepository.deleteById(boastCatPostId);
-         */
     }
 
     private List<String> updateImage(UpdateBoastCatPostRequest request){
@@ -160,16 +168,18 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     }
 
 
+    /**
+     * 최근 게시물 20개 조회 (Projection 적용)
+     * 성능 개선 내역:
+     * - Before: Entity 전체 조회 + 변환 → 700ms
+     * - After: Projection으로 필요한 컬럼만 조회 → 예상 50~100ms
+     * 캐싱 적용 시 추가 개선 가능: @Cacheable(value = "mainPage", key = "'recentBoastPosts'")
+     */
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "mainPage", key = "'recentBoastPosts'")
-    public List<GetBoastCatPostResponse> getRecentBoastCatPosts() {
-        log.info("DB에서 최근 자랑글 20개 조회 (캐시 미스시 DB 직접 조회)");
-
-        List<BoastCatPost> posts = boastCatPostRepository.findTop20RecentPosts();
-
-        return posts.stream()
-                .map(GetBoastCatPostResponse::toResponse)
-                .toList();
+    //@Cacheable(value = "mainPage", key = "'recentBoastPosts'")
+    public List<RecentBoastCatPostResponse> getRecentBoastCatPosts() {
+        // Projection으로 DB에서 필요한 컬럼만 조회 (Entity 변환 불필요)
+        return boastCatPostRepository.findTop20RecentWithProjection();
     }
 }

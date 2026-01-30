@@ -11,5 +11,5 @@ public interface MyPageService {
 
     MyPageSummaryResponse getMyPageSummary(String loginId);
     MyPostListResponse getMyPosts(String loginId, Pageable pageable, PostType type);
-    MyCommentListResponse getMyComments(String loginId, Pageable pageable);
+    MyCommentListResponse getMyComments(Long userId, Pageable pageable);
 }

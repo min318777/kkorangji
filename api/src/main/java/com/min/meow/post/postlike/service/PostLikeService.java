@@ -14,6 +14,7 @@ import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -33,6 +34,7 @@ public class PostLikeService {
         return postLikeRepository.countByBoastCatPost(post);
     }
 
+    @Transactional
     public boolean toggleLike(Long boastCatPostId, String loginId){
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
@@ -42,6 +44,7 @@ public class PostLikeService {
         Optional<PostLike> postLike = postLikeRepository.findByBoastCatPostIdAndLoginId(boastCatPostId, loginId);
         if(postLike.isPresent()){
             postLikeRepository.delete(postLike.get());
+            boastCatPost.decrementLikeCount();  // 좋아요 수 감소
             return false;
         }
         PostLike like = PostLike.builder()
@@ -49,6 +52,7 @@ public class PostLikeService {
                 .boastCatPost(boastCatPost)
                 .build();
         postLikeRepository.save(like);
+        boastCatPost.incrementLikeCount();  // 좋아요 수 증가
 
         // 게시글 작성자가 탈퇴하지 않은 경우에만 알림 발송
         // - 탈퇴한 사용자에게는 알림을 보내지 않음

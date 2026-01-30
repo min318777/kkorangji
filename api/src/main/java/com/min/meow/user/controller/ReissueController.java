@@ -24,18 +24,15 @@ public class ReissueController {
     @PostMapping("/api/reissue")
     public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) {
 
-        // 1. 쿠키에서 Refresh Token 추출
         String refreshToken = extractRefreshToken(request);
         TokenResponse tokenResponse = reissueService.reissue(refreshToken);
 
-        // 3. 응답 설정
         response.setHeader("Authorization", "Bearer " + tokenResponse.getAccessToken());
         response.addCookie(createCookie("refresh", tokenResponse.getRefreshToken()));
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    // 쿠키에서 Refresh Token 추출
     private String extractRefreshToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
