@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface LostCatRepository extends JpaRepository<LostCatPost, Long> {
@@ -22,6 +23,27 @@ public interface LostCatRepository extends JpaRepository<LostCatPost, Long> {
     @Query(value = "SELECT l FROM LostCatPost l LEFT JOIN FETCH l.user ORDER BY l.createdAt DESC",
            countQuery = "SELECT COUNT(l) FROM LostCatPost l")
     Page<LostCatPost> findAllWithUser(Pageable pageable);
+
+    /**
+     * 단일 게시글 상세 조회 (N+1 문제 해결)
+     *
+     * User는 @ManyToOne (N:1) 관계이므로 Fetch Join 적용
+     * - 결과 행이 뻥튀기되지 않아 안전함
+     * - 한 번의 쿼리로 게시글 + 작성자 정보 조회
+     *
+     * imageUrls, comments는 @OneToMany (1:N) 관계이므로 @BatchSize로 해결
+     * - Fetch Join 시 카테시안 곱 발생 (데이터 중복)
+     * - 두 개 이상 컬렉션 Fetch Join 시 MultipleBagFetchException 발생
+     * - @BatchSize(100)로 IN절 배치 처리하여 추가 쿼리 최소화
+     *
+     * 쿼리 최적화 결과: 4개 → 3개
+     * - Before: Post 1 + User 1 + ImageUrls 1 + Comments 1 = 4개
+     * - After: Post+User 1 + ImageUrls 1 + Comments 1 = 3개
+     */
+    @Query("SELECT l FROM LostCatPost l " +
+           "LEFT JOIN FETCH l.user " +
+           "WHERE l.id = :id")
+    Optional<LostCatPost> findByIdWithUser(@Param("id") Long id);
 
     // 마이페이지: 사용자가 작성한 실종 고양이글 목록 조회 (페이징)
     // 참고: comments는 지연 로딩되지만, DTO 변환 시 size()로 개수만 조회하므로 문제없음

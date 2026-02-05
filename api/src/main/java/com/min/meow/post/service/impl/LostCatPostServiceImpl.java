@@ -42,12 +42,20 @@ public class LostCatPostServiceImpl implements LostCatPostService {
         return PageResponse.from(posts.map(GetLostCatPostResponse::toResponse));
     }
 
-    // 글 상세 조회
-    // 조회수 증가는 별도 API로 분리됨
+    /**
+     * 글 상세 조회 (N+1 최적화 적용)
+     *
+     * findByIdWithUser()로 User를 Fetch Join하여 N+1 문제 해결
+     * - User: Fetch Join (N:1 관계 → 카테시안 곱 없음)
+     * - imageUrls: @BatchSize(100) 적용 (1:N 관계)
+     * - comments: @BatchSize(100) 적용 (1:N 관계)
+     *
+     * 조회수 증가는 별도 API로 분리됨
+     */
     @Override
     @Transactional(readOnly = true)
     public GetLostCatPostResponse getLostCatPost(Long lostCatPostId){
-        LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
+        LostCatPost lostCatPost = lostCatRepository.findByIdWithUser(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
         return GetLostCatPostResponse.toResponse(lostCatPost);

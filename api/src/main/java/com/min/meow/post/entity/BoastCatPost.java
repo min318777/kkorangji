@@ -23,6 +23,14 @@ import java.util.List;
 @Setter
 public class BoastCatPost extends BasePost {
 
+    /**
+     * @BatchSize(100) 적용 이유:
+     * - @ElementCollection은 1:N 관계와 동일하게 동작
+     * - Fetch Join 시 카테시안 곱 발생 (게시글 데이터 중복)
+     * - 목록 조회 시 N+1 문제 방지 (IN절로 배치 처리)
+     * - 상세 조회 시에도 별도 쿼리 1개로 처리
+     */
+    @BatchSize(size = 100)
     @ElementCollection
     private List<String> imageUrls = new ArrayList<>();
 
