@@ -4,8 +4,6 @@ package com.min.meow.post.controller;
 import com.min.meow.global.PrincipalUser;
 import com.min.meow.global.PageResponse;
 import com.min.meow.global.ApiResponse;
-import com.min.meow.global.exception.CustomException;
-import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.post.dto.request.CreateLostCatPostRequest;
 import com.min.meow.post.dto.request.UpdateLostCatPostRequest;
 import com.min.meow.post.dto.response.CreateLostCatPostResponse;
@@ -19,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -53,21 +50,35 @@ public class LostCatPostController {
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 조회 성공", lostCatPostDto));
     }
 
-    // 글 생성
+    /**
+     * 글 생성 (Presigned URL 기반 이미지 업로드)
+     * 이미지 업로드 플로우:
+     * 1. 클라이언트가 /api/images/presigned-urls 로 Presigned URL 요청
+     * 2. 클라이언트가 Presigned URL로 S3에 이미지 직접 업로드
+     * 3. 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 이 API 호출
+     */
     @PostMapping
-    public ResponseEntity<ApiResponse<CreateLostCatPostResponse>> createLostCatPost(@ModelAttribute @Valid CreateLostCatPostRequest createLostCatPostRequest,
-                                                                       BindingResult bindingResult, @AuthenticationPrincipal PrincipalUser user){
+    public ResponseEntity<ApiResponse<CreateLostCatPostResponse>> createLostCatPost(
+            @RequestBody @Valid CreateLostCatPostRequest createLostCatPostRequest,
+            @AuthenticationPrincipal PrincipalUser user){
 
         CreateLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.createLostCatPost(createLostCatPostRequest, user.getUser().getLoginId());
 
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 생성 성공", lostCatPostDto));
     }
 
-    // 글 수정
+    /**
+     * 글 수정 (Presigned URL 기반 이미지 업로드)
+     * 이미지 처리:
+     * - newImageKeys: 새로 업로드된 이미지의 S3 key
+     * - keepImageUrls: 유지할 기존 이미지의 CloudFront URL
+     * - deleteImageUrls: 삭제할 이미지의 CloudFront URL
+     */
     @PutMapping("/{lostCatPostId}")
-    public ResponseEntity<ApiResponse<UpdateLostCatPostResponse>> updateLostCatPost(@PathVariable Long lostCatPostId,
-                                                                       @ModelAttribute @Valid UpdateLostCatPostRequest updateLostCatPostRequest,
-                                                                       BindingResult bindingResult, @AuthenticationPrincipal PrincipalUser user){
+    public ResponseEntity<ApiResponse<UpdateLostCatPostResponse>> updateLostCatPost(
+            @PathVariable Long lostCatPostId,
+            @RequestBody @Valid UpdateLostCatPostRequest updateLostCatPostRequest,
+            @AuthenticationPrincipal PrincipalUser user){
         String loginId = user.getUser().getLoginId();
         UpdateLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.updateLostCatPost(lostCatPostId, updateLostCatPostRequest, loginId);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 수정 성공", lostCatPostDto));

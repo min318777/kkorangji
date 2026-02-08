@@ -14,6 +14,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * - 사용자가 접속하면 연결을 저장
  * - 사용자에게 알림이 오면 저장된 연결로 실시간 전송
  * - ConcurrentHashMap: 멀티스레드 환경에서 안전하게 Map 사용
+ *
+ * [중요] SSE 연결 교체 시 complete() 호출 금지!
+ * 문제: 기존 연결에 complete()를 호출하면 Servlet Container(Tomcat)가
+ *       Async Dispatch를 실행하여 Security Filter Chain을 재실행함.
+ *       이때 새 스레드에는 SecurityContext가 없어서 AuthorizationDeniedException 발생.
+ * 해결: put()으로 덮어쓰기 방식 사용. 기존 연결은 타임아웃/클라이언트 종료 시 자연스럽게 정리됨.
  */
 @Slf4j
 @Component
@@ -27,6 +33,16 @@ public class SseEmitterManager {
 
     /**
      * SSE 연결 생성 및 저장
+     *
+     * 중복 연결 처리 전략: put()으로 덮어쓰기
+     * - 기존 연결에 complete() 호출 시 Servlet Async Dispatch가 발생하여
+     *   Security Filter Chain이 재실행되고, 새 스레드에 SecurityContext가 없어서
+     *   AuthorizationDeniedException이 발생하는 문제가 있었음.
+     * - 해결: complete() 호출 없이 Map에서 덮어쓰기. 기존 연결은 아래 방식으로 자연스럽게 정리됨:
+     *   1) 클라이언트가 새 연결을 열면서 브라우저가 기존 연결을 종료
+     *   2) 타임아웃 발생 시 onTimeout 콜백에서 정리
+     *   3) 네트워크 에러 시 onError 콜백에서 정리
+     *
      * @param userLoginId 사용자 로그인 ID
      * @return 생성된 SseEmitter
      */
@@ -34,33 +50,38 @@ public class SseEmitterManager {
         // 1. 새로운 SSE 연결 생성 (타임아웃 30분)
         SseEmitter emitter = new SseEmitter(TIMEOUT);
 
-        // 2. 기존 연결이 있으면 종료 (중복 방지)
-        if (emitters.containsKey(userLoginId)) {
-            emitters.get(userLoginId).complete();
-            log.info("연결 종료: {}", userLoginId);
+        // 2. Map에 저장 (기존 연결이 있으면 덮어쓰기 - complete() 호출 안 함!)
+        //    put()은 이전 값을 반환하므로 로깅에 활용
+        SseEmitter oldEmitter = emitters.put(userLoginId, emitter);
+        if (oldEmitter != null) {
+            log.info("기존 SSE 연결 교체: {} (기존 연결은 자연스럽게 정리됨)", userLoginId);
         }
-
-        // 3. Map에 저장
-        emitters.put(userLoginId, emitter);
         log.info("SSE 연결 생성: {} (현재 {}명 접속)", userLoginId, emitters.size());
 
-        // 4. 연결이 완료되면 Map에서 제거
+        // 3. 연결 완료 시 Map에서 제거 (현재 emitter일 때만!)
+        //    중요: 새 연결이 생성된 후 기존 연결이 완료되면 새 연결을 제거하면 안 됨
         emitter.onCompletion(() -> {
-            emitters.remove(userLoginId);
-            log.info("SSE 연결 완료: {}", userLoginId);
+            // remove(key, value): 현재 Map에 저장된 값이 이 emitter일 때만 제거
+            boolean removed = emitters.remove(userLoginId, emitter);
+            if (removed) {
+                log.info("SSE 연결 완료: {}", userLoginId);
+            }
         });
 
-        // 5. 타임아웃 시 Map에서 제거하고 연결 완료 처리
+        // 4. 타임아웃 시 Map에서 제거 (현재 emitter일 때만)
         emitter.onTimeout(() -> {
-            emitters.remove(userLoginId);
-            emitter.complete();  // 타임아웃 시 명시적으로 완료 처리
-            log.debug("SSE 타임아웃: {} - 클라이언트 재연결 필요", userLoginId);
+            boolean removed = emitters.remove(userLoginId, emitter);
+            if (removed) {
+                log.debug("SSE 타임아웃: {} - 클라이언트 재연결 필요", userLoginId);
+            }
         });
 
-        // 6. 에러 발생 시 Map에서 제거
+        // 5. 에러 발생 시 Map에서 제거 (현재 emitter일 때만)
         emitter.onError(e -> {
-            emitters.remove(userLoginId);
-            log.error("SSE 에러: {}", userLoginId, e);
+            boolean removed = emitters.remove(userLoginId, emitter);
+            if (removed) {
+                log.error("SSE 에러: {}", userLoginId, e);
+            }
         });
 
         return emitter;

@@ -47,18 +47,33 @@ public class BoastCatPostController {
         return ResponseEntity.ok(new ApiResponse<GetBoastCatPostResponse>(HttpStatus.OK, "글 조회 성공", getBoastCatPostResponse));
     }
 
-    // 글 생성
+    /**
+     * 글 생성 (Presigned URL 기반 이미지 업로드)
+     * 이미지 업로드 플로우:
+     * 1. 클라이언트가 /api/images/presigned-urls 로 Presigned URL 요청
+     * 2. 클라이언트가 Presigned URL로 S3에 이미지 직접 업로드
+     * 3. 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 이 API 호출
+     */
     @PostMapping
-    public ResponseEntity<ApiResponse<CreateBoastCatPostResponse>> createBoastCatPost(@ModelAttribute CreateBoastCatPostRequest createBoastCatPostRequest,
-                                                                                      @AuthenticationPrincipal PrincipalUser user){
+    public ResponseEntity<ApiResponse<CreateBoastCatPostResponse>> createBoastCatPost(
+            @RequestBody @Valid CreateBoastCatPostRequest createBoastCatPostRequest,
+            @AuthenticationPrincipal PrincipalUser user){
         CreateBoastCatPostResponse post = boastCatPostServiceImpl.createBoastCatPost(createBoastCatPostRequest, user.getUser().getLoginId());
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 생성 성공", post));
     }
 
-    // 글 수정
+    /**
+     * 글 수정 (Presigned URL 기반 이미지 업로드)
+     * 이미지 처리:
+     * - newImageKeys: 새로 업로드된 이미지의 S3 key
+     * - keepImageUrls: 유지할 기존 이미지의 CloudFront URL
+     * - deleteImageUrls: 삭제할 이미지의 CloudFront URL
+     */
     @PutMapping("/{boastCatPostId}")
-    public ResponseEntity<ApiResponse<UpdateBoastCatPostResponse>> updateBoastCatPost(@ModelAttribute @Valid UpdateBoastCatPostRequest updateBoastCatPostRequest,
-                                                                                      @PathVariable Long boastCatPostId, @AuthenticationPrincipal PrincipalUser user){
+    public ResponseEntity<ApiResponse<UpdateBoastCatPostResponse>> updateBoastCatPost(
+            @RequestBody @Valid UpdateBoastCatPostRequest updateBoastCatPostRequest,
+            @PathVariable Long boastCatPostId,
+            @AuthenticationPrincipal PrincipalUser user){
 
         String loginId = user.getUser().getLoginId();
         UpdateBoastCatPostResponse post = boastCatPostServiceImpl.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId, loginId);

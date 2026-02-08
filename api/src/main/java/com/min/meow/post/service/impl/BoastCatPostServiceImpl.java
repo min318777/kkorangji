@@ -1,7 +1,7 @@
 package com.min.meow.post.service.impl;
 
 
-import com.min.meow.config.S3Uploader;
+import com.min.meow.config.S3Service;
 import com.min.meow.global.PageResponse;
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.GetBoastCatPostResponse;
@@ -34,15 +34,13 @@ import java.util.List;
 public class BoastCatPostServiceImpl implements BoastCatPostService {
     private final BoastCatPostRepository boastCatPostRepository;
     private final UserRepository userRepository;
-    private final S3Uploader s3Uploader;
+    private final S3Service s3Service;
 
     /**
      * 모든 글 조회 (Projection 적용으로 성능 최적화)
-     *
      * 성능 개선 내역:
      * - Before: Entity 전체 조회 + DTO 변환 → contents, imageUrls, comments 모두 조회
      * - After: Projection으로 필요한 7개 컬럼만 SELECT (id, title, writer, likeCount, commentCount, view, createdAt)
-     *
      * 실행되는 쿼리:
      * SELECT b.id, b.title, u.login_id, b.like_count, b.comment_count, b.view, b.created_at
      * FROM boast_cat_post b LEFT JOIN user u ON b.user_id = u.id
@@ -59,12 +57,10 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
 
     /**
      * 글 상세 조회 (N+1 최적화 적용)
-     *
      * findByIdWithUser()로 User를 Fetch Join하여 N+1 문제 해결
      * - User: Fetch Join (N:1 관계 → 카테시안 곱 없음)
      * - imageUrls: @BatchSize(100) 적용 (1:N 관계)
      * - comments: @BatchSize(100) 적용 (1:N 관계)
-     *
      * 조회수 증가는 별도 API로 분리됨
      */
     @Override
@@ -86,8 +82,17 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         }
     }
 
-    // 글 작성
-    // mainPage 캐시 무효화 (새 글이 메인페이지 최근글 목록에 반영되어야 함)
+    /**
+     * 글 작성 (Presigned URL 기반 이미지 업로드)
+     *
+     * 이미지 업로드 플로우:
+     * 1. 클라이언트가 /api/images/presigned-urls 로 Presigned URL 요청
+     * 2. 클라이언트가 Presigned URL로 S3에 이미지 직접 업로드
+     * 3. 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 이 API 호출
+     * 4. 서버는 key를 CloudFront URL로 변환하여 DB 저장
+     *
+     * mainPage 캐시 무효화 (새 글이 메인페이지 최근글 목록에 반영되어야 함)
+     */
     @Override
     @Transactional
     @CacheEvict(value = "mainPage", allEntries = true)
@@ -96,9 +101,10 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
+        // S3 key를 CloudFront URL로 변환
         List<String> imageUrls = new ArrayList<>();
-        if (createBoastCatPostRequest.getImages() != null) {
-            imageUrls = s3Uploader.uploadFiles(createBoastCatPostRequest.getImages());
+        if (createBoastCatPostRequest.getImageKeys() != null && !createBoastCatPostRequest.getImageKeys().isEmpty()) {
+            imageUrls = s3Service.toCloudFrontUrls(createBoastCatPostRequest.getImageKeys());
         }
 
         // 엔티티 생성
@@ -113,8 +119,16 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         return CreateBoastCatPostResponse.from(boastCatPost);
     }
 
-    // 글 수정
-    // mainPage 캐시 무효화 (수정된 내용이 메인페이지 최근글 목록에 반영되어야 함)
+    /**
+     * 글 수정 (Presigned URL 기반 이미지 업로드)
+     *
+     * 이미지 처리:
+     * - 새 이미지: newImageKeys의 S3 key를 CloudFront URL로 변환
+     * - 유지할 이미지: keepImageUrls 그대로 사용
+     * - 삭제할 이미지: deleteImageUrls의 URL에서 S3 key 추출 후 삭제
+     *
+     * mainPage 캐시 무효화 (수정된 내용이 메인페이지 최근글 목록에 반영되어야 함)
+     */
     @Override
     @Transactional
     @CacheEvict(value = "mainPage", allEntries = true)
@@ -130,7 +144,6 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         }
 
         List<String> finalImageUrls = updateImage(updateBoastCatPostRequest);
-        // 업데이트 메서드 파라미터 변경됨
         boastCatPost.updatePost(
                 updateBoastCatPostRequest.getTitle(),
                 updateBoastCatPostRequest.getContent(),
@@ -157,21 +170,35 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         boastCatPostRepository.deleteById(boastCatPostId);
     }
 
+    /**
+     * 이미지 업데이트 처리 (Presigned URL 방식)
+     *
+     * @param request 수정 요청 DTO
+     * @return 최종 이미지 URL 목록 (CloudFront URL)
+     */
     private List<String> updateImage(UpdateBoastCatPostRequest request){
         List<String> finalImageUrls = new ArrayList<>();
-        // 1. 유지할 기존 이미지 추가
+
+        // 1. 유지할 기존 이미지 추가 (CloudFront URL 그대로)
         if (request.getKeepImageUrls() != null && !request.getKeepImageUrls().isEmpty()){
             finalImageUrls.addAll(request.getKeepImageUrls());
         }
-        // 2. 새로운 이미지 업로드 후 추가
-        if (request.getNewImages() != null && !request.getNewImages().isEmpty()){
-            List<String> newUploadedUrls = s3Uploader.uploadFiles(request.getNewImages());
-            finalImageUrls.addAll(newUploadedUrls);
+
+        // 2. 새로운 이미지 URL 추가 (S3 key → CloudFront URL 변환)
+        if (request.getNewImageKeys() != null && !request.getNewImageKeys().isEmpty()){
+            List<String> newCloudFrontUrls = s3Service.toCloudFrontUrls(request.getNewImageKeys());
+            finalImageUrls.addAll(newCloudFrontUrls);
         }
-        // 3. 삭제할 이미지 처리 (선택사항: S3에서 실제 파일 삭제)
-        // if (request.getDeleteImageUrls() != null && !request.getDeleteImageUrls().isEmpty()){
-        //     s3Uploader.deleteFiles(request.getDeleteImageUrls());
-        // }
+
+        // 3. 삭제할 이미지 S3에서 제거
+        if (request.getDeleteImageUrls() != null && !request.getDeleteImageUrls().isEmpty()){
+            // CloudFront URL에서 S3 key 추출 후 삭제
+            List<String> keysToDelete = request.getDeleteImageUrls().stream()
+                    .map(s3Service::extractKeyFromUrl)
+                    .toList();
+            s3Service.deleteFiles(keysToDelete);
+        }
+
         return finalImageUrls;
     }
 

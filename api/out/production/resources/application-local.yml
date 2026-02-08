@@ -76,6 +76,8 @@ cloud:
     s3:
       bucket: ${AWS_S3_BUCKET:}
       baseUrl: ${AWS_S3_BASE_URL:}
+    cloudfront:
+        domain: ${AWS_CLOUDFRONT_DOMAIN:}
     region: ${AWS_REGION:ap-northeast-2}
     credentials:
       access-key: ${AWS_ACCESS_KEY_ID:}

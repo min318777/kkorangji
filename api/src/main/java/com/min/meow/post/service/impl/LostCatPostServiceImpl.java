@@ -1,6 +1,6 @@
 package com.min.meow.post.service.impl;
 
-import com.min.meow.config.S3Uploader;
+import com.min.meow.config.S3Service;
 import com.min.meow.global.PageResponse;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
@@ -25,13 +25,21 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 실종 고양이 게시글 서비스 구현체
+ *
+ * Presigned URL 기반 이미지 업로드 방식 적용:
+ * - 클라이언트가 S3에 직접 업로드 후 key 전달ㄴ
+ * - 서버는 key를 CloudFront URL로 변환하여 저장
+ * - 서버 트래픽 비용 절감 및 보안 강화
+ */
 @Service
 @RequiredArgsConstructor
 public class LostCatPostServiceImpl implements LostCatPostService {
 
     private final LostCatRepository lostCatRepository;
     private final UserRepository userRepository;
-    private final S3Uploader s3Uploader;
+    private final S3Service s3Service;
 
     // 모든 글 조회 (DB 레벨 페이징)
     // 해당 페이지의 데이터만 DB에서 조회하여 메모리 효율적으로 처리
@@ -44,12 +52,10 @@ public class LostCatPostServiceImpl implements LostCatPostService {
 
     /**
      * 글 상세 조회 (N+1 최적화 적용)
-     *
      * findByIdWithUser()로 User를 Fetch Join하여 N+1 문제 해결
      * - User: Fetch Join (N:1 관계 → 카테시안 곱 없음)
      * - imageUrls: @BatchSize(100) 적용 (1:N 관계)
      * - comments: @BatchSize(100) 적용 (1:N 관계)
-     *
      * 조회수 증가는 별도 API로 분리됨
      */
     @Override
@@ -72,7 +78,17 @@ public class LostCatPostServiceImpl implements LostCatPostService {
         }
     }
 
-    // 글 생성
+    /**
+     * 글 작성 (Presigned URL 기반 이미지 업로드)
+     *
+     * 이미지 업로드 플로우:
+     * 1. 클라이언트가 /api/images/presigned-urls 로 Presigned URL 요청
+     * 2. 클라이언트가 Presigned URL로 S3에 이미지 직접 업로드
+     * 3. 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 이 API 호출
+     * 4. 서버는 key를 CloudFront URL로 변환하여 DB 저장
+     *
+     * mainPage 캐시 무효화 (새 글이 메인페이지 최근글 목록에 반영되어야 함)
+     */
     @Override
     @Transactional
     @CacheEvict(value = "mainPage", allEntries = true)
@@ -80,11 +96,13 @@ public class LostCatPostServiceImpl implements LostCatPostService {
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
+        // S3 key를 CloudFront URL로 변환
         List<String> imageUrls = new ArrayList<>();
-        if(createLostCatPostRequest.getImages() != null){
-            imageUrls = s3Uploader.uploadFiles(createLostCatPostRequest.getImages());
+        if (createLostCatPostRequest.getImageKeys() != null && !createLostCatPostRequest.getImageKeys().isEmpty()) {
+            imageUrls = s3Service.toCloudFrontUrls(createLostCatPostRequest.getImageKeys());
         }
 
+        // 엔티티 생성
         LostCatPost lostCatPost = LostCatPost.builder()
                 .title(createLostCatPostRequest.getTitle())
                 .contents(createLostCatPostRequest.getContent())
@@ -106,7 +124,16 @@ public class LostCatPostServiceImpl implements LostCatPostService {
         return CreateLostCatPostResponse.toResponse(lostCatPost, writer);
     }
 
-    // 글 수정
+    /**
+     * 글 수정 (Presigned URL 기반 이미지 업로드)
+     *
+     * 이미지 처리:
+     * - 새 이미지: newImageKeys의 S3 key를 CloudFront URL로 변환
+     * - 유지할 이미지: keepImageUrls 그대로 사용
+     * - 삭제할 이미지: deleteImageUrls의 URL에서 S3 key 추출 후 삭제
+     *
+     * mainPage 캐시 무효화 (수정된 내용이 메인페이지 최근글 목록에 반영되어야 함)
+     */
     @Transactional
     @Override
     @CacheEvict(value = "mainPage", allEntries = true)
@@ -164,21 +191,35 @@ public class LostCatPostServiceImpl implements LostCatPostService {
          */
     }
 
+    /**
+     * 이미지 업데이트 처리 (Presigned URL 방식)
+     *
+     * @param request 수정 요청 DTO
+     * @return 최종 이미지 URL 목록 (CloudFront URL)
+     */
     private List<String> updateImage(UpdateLostCatPostRequest request){
         List<String> finalImageUrls = new ArrayList<>();
-        // 1. 유지할 기존 이미지 추가
+
+        // 1. 유지할 기존 이미지 추가 (CloudFront URL 그대로)
         if (request.getKeepImageUrls() != null && !request.getKeepImageUrls().isEmpty()){
             finalImageUrls.addAll(request.getKeepImageUrls());
         }
-        // 2. 새로운 이미지 업로드 후 추가
-        if (request.getNewImages() != null && !request.getNewImages().isEmpty()){
-            List<String> newUploadedUrls = s3Uploader.uploadFiles(request.getNewImages());
-            finalImageUrls.addAll(newUploadedUrls);
+
+        // 2. 새로운 이미지 URL 추가 (S3 key → CloudFront URL 변환)
+        if (request.getNewImageKeys() != null && !request.getNewImageKeys().isEmpty()){
+            List<String> newCloudFrontUrls = s3Service.toCloudFrontUrls(request.getNewImageKeys());
+            finalImageUrls.addAll(newCloudFrontUrls);
         }
-        // 3. 삭제할 이미지 처리 (선택사항: S3에서 실제 파일 삭제)
-        // if (request.getDeleteImageUrls() != null && !request.getDeleteImageUrls().isEmpty()){
-        //     s3Uploader.deleteFiles(request.getDeleteImageUrls());
-        // }
+
+        // 3. 삭제할 이미지 S3에서 제거
+        if (request.getDeleteImageUrls() != null && !request.getDeleteImageUrls().isEmpty()){
+            // CloudFront URL에서 S3 key 추출 후 삭제
+            List<String> keysToDelete = request.getDeleteImageUrls().stream()
+                    .map(s3Service::extractKeyFromUrl)
+                    .toList();
+            s3Service.deleteFiles(keysToDelete);
+        }
+
         return finalImageUrls;
     }
 
