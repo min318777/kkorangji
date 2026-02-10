@@ -81,12 +81,22 @@ public class RedisConfig {
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
 
-        // 메인페이지 캐시 설정 (TTL 60초 = 1분)
-        // 트래픽이 많은 메인페이지용으로 짧은 TTL 적용
-        // 정합성이 중요하지 않으므로 1분간 캐시 유지
-        RedisCacheConfiguration mainPageConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+        // 최근글 목록 캐시 설정 (TTL 5분)
+        // 메인페이지 최근글 목록용, 글 작성/수정/삭제 시 즉시 무효화됨
+        RedisCacheConfiguration recentPostsConfiguration = RedisCacheConfiguration.defaultCacheConfig()
                 .disableCachingNullValues()
-                .entryTtl(Duration.ofSeconds(60))  // TTL 1분
+                .entryTtl(Duration.ofMinutes(5))  // TTL 5분
+                .serializeKeysWith(RedisSerializationContext
+                        .SerializationPair
+                        .fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
+
+        // 게시글 상세 캐시 설정 (TTL 10분)
+        // 개별 게시글 상세 조회용, 수정/삭제 시 해당 게시글만 무효화됨
+        RedisCacheConfiguration postDetailConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+                .disableCachingNullValues()
+                .entryTtl(Duration.ofMinutes(10))  // TTL 10분
                 .serializeKeysWith(RedisSerializationContext
                         .SerializationPair
                         .fromSerializer(new StringRedisSerializer()))
@@ -96,8 +106,12 @@ public class RedisConfig {
         return RedisCacheManager.RedisCacheManagerBuilder
                 .fromConnectionFactory(redisConnectionFactory)
                 .cacheDefaults(defaultConfiguration)
-                // mainPage 캐시에만 별도 TTL(60초) 적용
-                .withCacheConfiguration("mainPage", mainPageConfiguration)
+                // 최근글 목록 캐시 (TTL 5분)
+                .withCacheConfiguration("post:boast:recent", recentPostsConfiguration)
+                .withCacheConfiguration("post:lost:recent", recentPostsConfiguration)
+                // 게시글 상세 캐시 (TTL 10분)
+                .withCacheConfiguration("post:boast:detail", postDetailConfiguration)
+                .withCacheConfiguration("post:lost:detail", postDetailConfiguration)
                 .build();
     }
 

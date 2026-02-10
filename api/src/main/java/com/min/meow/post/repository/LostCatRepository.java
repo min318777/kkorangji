@@ -13,16 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface LostCatRepository extends JpaRepository<LostCatPost, Long> {
+public interface LostCatRepository extends JpaRepository<LostCatPost, Long>, LostCatRepositoryCustom {
 
-    /**
-     * 페이징 목록 조회 (N+1 문제 해결)
-     * User를 Fetch Join으로 함께 조회하여 N+1 문제를 방지합니다.
-     * countQuery를 별도로 지정하여 페이징 카운트 쿼리 최적화합니다.
-     */
-    @Query(value = "SELECT l FROM LostCatPost l LEFT JOIN FETCH l.user ORDER BY l.createdAt DESC",
-           countQuery = "SELECT COUNT(l) FROM LostCatPost l")
-    Page<LostCatPost> findAllWithUser(Pageable pageable);
 
     /**
      * 단일 게시글 상세 조회 (N+1 문제 해결)
@@ -38,8 +30,8 @@ public interface LostCatRepository extends JpaRepository<LostCatPost, Long> {
      * - After: Post+User 1 + ImageUrls 1 + Comments 1 = 3개
      */
     @Query("SELECT l FROM LostCatPost l " +
-           "LEFT JOIN FETCH l.user " +
-           "WHERE l.id = :id")
+            "LEFT JOIN FETCH l.user " +
+            "WHERE l.id = :id")
     Optional<LostCatPost> findByIdWithUser(@Param("id") Long id);
 
     // 마이페이지: 사용자가 작성한 실종 고양이글 목록 조회 (페이징)
@@ -57,7 +49,6 @@ public interface LostCatRepository extends JpaRepository<LostCatPost, Long> {
      */
     @Query("SELECT DISTINCT l FROM LostCatPost l " +
            "LEFT JOIN FETCH l.user " +
-           "LEFT JOIN FETCH l.imageUrls " +
            "ORDER BY l.createdAt DESC " +
            "LIMIT 20")
     List<LostCatPost> findTop20RecentPosts();

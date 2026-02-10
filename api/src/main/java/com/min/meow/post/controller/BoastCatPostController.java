@@ -8,7 +8,6 @@ import com.min.meow.post.dto.request.UpdateBoastCatPostRequest;
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.CreateBoastCatPostResponse;
 import com.min.meow.post.dto.response.GetBoastCatPostResponse;
-import com.min.meow.post.dto.response.RecentBoastCatPostResponse;
 import com.min.meow.post.dto.response.UpdateBoastCatPostResponse;
 import com.min.meow.post.service.impl.BoastCatPostServiceImpl;
 import jakarta.validation.Valid;
@@ -90,10 +89,18 @@ public class BoastCatPostController {
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 삭제 성공", null));
     }
 
-    // 최근게시물
+    /**
+     * 최근 자랑글 20개 조회 (DTO Projection 적용)
+     *
+     * 성능 최적화:
+     * - QueryDSL Projection으로 필요한 컬럼만 SELECT
+     * - contents, imageUrls 등 불필요한 데이터 제외
+     * - Entity 변환 오버헤드 제거
+     * - BoastCatPostListResponse를 재사용하여 코드 중복 제거
+     */
     @GetMapping("/recent")
-    public ResponseEntity<ApiResponse<List<RecentBoastCatPostResponse>>> getRecentBoastCatPosts() {
-        List<RecentBoastCatPostResponse> posts = boastCatPostServiceImpl.getRecentBoastCatPosts();
+    public ResponseEntity<ApiResponse<List<BoastCatPostListResponse>>> getRecentBoastCatPosts() {
+        List<BoastCatPostListResponse> posts = boastCatPostServiceImpl.getRecentBoastCatPosts();
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "최근 자랑글 20개 조회 성공", posts));
     }
 

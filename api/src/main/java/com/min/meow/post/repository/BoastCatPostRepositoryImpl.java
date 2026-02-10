@@ -2,8 +2,6 @@ package com.min.meow.post.repository;
 
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.QBoastCatPostListResponse;
-import com.min.meow.post.dto.response.QRecentBoastCatPostResponse;
-import com.min.meow.post.dto.response.RecentBoastCatPostResponse;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.QBoastCatPost;
 import com.min.meow.user.entity.QUser;
@@ -28,28 +26,33 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
     private final QUser user = QUser.user;
 
     /**
+     * 최근 게시물 20개 Projection 조회
+     *
      * 성능 최적화 포인트:
      * 1. SELECT 절에 필요한 컬럼만 명시 (contents 등 불필요한 컬럼 제외)
      * 2. Entity 변환 없이 DTO로 직접 매핑 (영속성 컨텍스트 오버헤드 제거)
      * 3. User 테이블에서 loginId만 조회 (User 전체 로딩 X)
+     *
      * 실행되는 쿼리:
-     * SELECT b.id, b.title, u.login_id, b.created_at, b.comment_count, b.like_count, b.view
+     * SELECT b.id, b.title, u.login_id, b.like_count, b.comment_count, b.view, b.created_at
      * FROM boast_cat_post b
      * LEFT JOIN users u ON b.user_id = u.id
      * ORDER BY b.created_at DESC
      * LIMIT 20
+     *
+     * BoastCatPostListResponse를 재사용하여 코드 중복 제거
      */
     @Override
-    public List<RecentBoastCatPostResponse> findTop20RecentWithProjection() {
+    public List<BoastCatPostListResponse> findTop20RecentWithProjection() {
         return queryFactory
-                .select(new QRecentBoastCatPostResponse(
+                .select(new QBoastCatPostListResponse(
                         boastCatPost.id,
                         boastCatPost.title,
                         boastCatPost.user.loginId,  // User에서 loginId만 조회
-                        boastCatPost.createdAt,
-                        boastCatPost.commentCount,
                         boastCatPost.likeCount,
-                        boastCatPost.view
+                        boastCatPost.commentCount,
+                        boastCatPost.view,
+                        boastCatPost.createdAt
                 ))
                 .from(boastCatPost)
                 .leftJoin(boastCatPost.user, user)  // FETCH가 아닌 일반 JOIN

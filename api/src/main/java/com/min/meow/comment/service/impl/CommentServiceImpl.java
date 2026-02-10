@@ -18,6 +18,9 @@ import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
+import com.min.meow.global.PageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,26 +40,40 @@ public class CommentServiceImpl implements CommentService {
     private final NotificationEventPublisher notificationEventPublisher;
     private final UserRepository userRepository;
 
-    // 고양이 자랑 게시글 댓글 조회
+    // 고양이 자랑 게시글 댓글 조회 (전체)
     @Override
+    @Transactional(readOnly = true)
     public List<GetCommentResponse> getBoastCatPostComment(Long boastCatPostId) {
-
         List<Comment> comments = commentRepository.findByBoastCatPostIdWithUser(boastCatPostId);
-
         return comments.stream()
                 .map(GetCommentResponse::toResponse)
                 .collect(Collectors.toList());
     }
 
-    // 실종 고양이 게시글 댓글 조회
+    // 고양이 자랑 게시글 댓글 조회 (페이지네이션)
     @Override
+    @Transactional(readOnly = true)
+    public PageResponse<GetCommentResponse> getBoastCatPostComment(Long boastCatPostId, Pageable pageable) {
+        Page<Comment> comments = commentRepository.findByBoastCatPostIdWithUser(boastCatPostId, pageable);
+        return PageResponse.from(comments.map(GetCommentResponse::toResponse));
+    }
+
+    // 실종 고양이 게시글 댓글 조회 (전체)
+    @Override
+    @Transactional(readOnly = true)
     public List<GetCommentResponse> getLostCatPostComment(Long lostCatPostId) {
-
         List<Comment> comments = commentRepository.findByLostCatPostIdWithUser(lostCatPostId);
-
         return comments.stream()
                 .map(GetCommentResponse::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    // 실종 고양이 게시글 댓글 조회 (페이지네이션)
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<GetCommentResponse> getLostCatPostComment(Long lostCatPostId, Pageable pageable) {
+        Page<Comment> comments = commentRepository.findByLostCatPostIdWithUser(lostCatPostId, pageable);
+        return PageResponse.from(comments.map(GetCommentResponse::toResponse));
     }
 
     // 고양이 자랑 게시글 댓글 작성

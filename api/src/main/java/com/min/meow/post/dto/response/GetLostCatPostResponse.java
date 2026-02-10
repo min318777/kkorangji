@@ -1,14 +1,19 @@
 package com.min.meow.post.dto.response;
 
 import com.min.meow.post.entity.LostCatPost;
-import com.min.meow.comment.dto.CommentDto;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-
+/**
+ * 실종글 상세 조회 응답 DTO
+ *
+ * 캐싱을 위해 정적 데이터만 포함:
+ * - 댓글은 별도 API로 조회: GET /api/meow/lost-cat/comments/{postId}
+ * - 조회수는 별도 API로 증가: POST /api/meow/lost-cat/{postId}/view
+ */
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,7 +24,7 @@ public class GetLostCatPostResponse {
     private String title;
     private String content;
     private String writer;
-    private int view;
+    private Long userId;
     private String catName;
     private String catType;
     private String catColor;
@@ -30,7 +35,7 @@ public class GetLostCatPostResponse {
     private Double latitude;
     private Double longitude;
     private Integer reward;
-    private List<CommentDto> commentDtoList;
+    private int commentCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -40,19 +45,19 @@ public class GetLostCatPostResponse {
                 .id(lostCatPost.getId())
                 .title(lostCatPost.getTitle())
                 .content(lostCatPost.getContents())
-                .view(lostCatPost.getView())
-                .catName(lostCatPost.getCatName())
                 .writer(lostCatPost.getUser().getLoginId())
+                .userId(lostCatPost.getUser().getId())
+                .catName(lostCatPost.getCatName())
                 .catType(lostCatPost.getCatType())
                 .catColor(lostCatPost.getCatColor())
                 .catAge(lostCatPost.getCatAge())
                 .catWeight(lostCatPost.getCatWeight())
-                .imageUrls(lostCatPost.getImageUrls())
+                .imageUrls(new ArrayList<>(lostCatPost.getImageUrls()))
                 .lostLocation(lostCatPost.getLostLocation())
                 .reward(lostCatPost.getReward())
                 .latitude(lostCatPost.getLatitude())
                 .longitude(lostCatPost.getLongitude())
-                .commentDtoList(lostCatPost.getComments().stream().map(CommentDto::toDto).collect(Collectors.toList()))
+                .commentCount(lostCatPost.getCommentCount())
                 .createdAt(lostCatPost.getCreatedAt())
                 .updatedAt(lostCatPost.getUpdatedAt())
                 .build();

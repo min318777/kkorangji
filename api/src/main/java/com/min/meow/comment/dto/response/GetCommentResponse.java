@@ -15,7 +15,7 @@ public class GetCommentResponse {
     private Long id;
     private String contents;
     private Long userId;
-    private String userName;
+    private String loginId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -24,7 +24,7 @@ public class GetCommentResponse {
                 .id(comment.getId())
                 .contents(comment.getContents())
                 .userId(comment.getUser().getId())
-                .userName(comment.getUser().getName())
+                .loginId(comment.getUser().getLoginId())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .build();

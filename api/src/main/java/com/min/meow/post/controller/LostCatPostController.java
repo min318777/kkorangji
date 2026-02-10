@@ -8,6 +8,7 @@ import com.min.meow.post.dto.request.CreateLostCatPostRequest;
 import com.min.meow.post.dto.request.UpdateLostCatPostRequest;
 import com.min.meow.post.dto.response.CreateLostCatPostResponse;
 import com.min.meow.post.dto.response.GetLostCatPostResponse;
+import com.min.meow.post.dto.response.LostCatPostListResponse;
 import com.min.meow.post.dto.response.UpdateLostCatPostResponse;
 import com.min.meow.post.service.impl.LostCatPostServiceImpl;
 import jakarta.validation.Valid;
@@ -28,18 +29,22 @@ public class LostCatPostController {
 
     private final LostCatPostServiceImpl lostCatPostServiceImpl;
 
-    // 모든 게시물 조회
+    /**
+     * 모든 게시물 조회 (Projection 적용)
+     *
+     * 성능 최적화:
+     * - DTO Projection으로 필요한 컬럼만 SELECT
+     * - LazyInitializationException 방지
+     * - 네트워크 트래픽 감소
+     */
     @GetMapping
-    public ResponseEntity<ApiResponse<PageResponse<GetLostCatPostResponse>>> getAllLostCatPosts(
+    public ResponseEntity<ApiResponse<PageResponse<LostCatPostListResponse>>> getAllLostCatPosts(
                                                     @RequestParam (defaultValue = "0") int page,
                                                     @RequestParam (defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        PageResponse<GetLostCatPostResponse> pageResponse = lostCatPostServiceImpl.getAllLostCatPosts(pageable);
+        PageResponse<LostCatPostListResponse> pageResponse = lostCatPostServiceImpl.getAllLostCatPosts(pageable);
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "모든 글 조회 성공", pageResponse));
-
-        //n+1 해결->페치 조인 하지만 페이징안됨
-        //return ResponseEntity.ok(new ResponseDto<>(true, "모든 글 조회 성공", lostCatRepository.findAllFetch(pageable).stream().map(UpdateLostCatPostDto::convertToDto)));
     }
 
     // 글 상세 조회
@@ -94,9 +99,17 @@ public class LostCatPostController {
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 삭제 성공", null));
     }
 
+    /**
+     * 최근 실종글 20개 조회 (DTO Projection 적용)
+     *
+     * 성능 최적화:
+     * - QueryDSL Projection으로 필요한 컬럼만 SELECT
+     * - contents, imageUrls 등 불필요한 데이터 제외
+     * - Entity 변환 오버헤드 제거
+     */
     @GetMapping("/recent")
-    public ResponseEntity<ApiResponse<List<GetLostCatPostResponse>>> getRecentLostCatPosts() {
-        List<GetLostCatPostResponse> posts = lostCatPostServiceImpl.getRecentLostCatPosts();
+    public ResponseEntity<ApiResponse<List<LostCatPostListResponse>>> getRecentLostCatPosts() {
+        List<LostCatPostListResponse> posts = lostCatPostServiceImpl.getRecentLostCatPosts();
         return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "최근 실종글 20개 조회 성공", posts));
     }
 

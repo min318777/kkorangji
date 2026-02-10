@@ -1,6 +1,7 @@
 package com.min.meow.comment.controller;
 
 
+import com.min.meow.global.PageResponse;
 import com.min.meow.global.PrincipalUser;
 import com.min.meow.global.ApiResponse;
 import com.min.meow.comment.dto.request.RegisterCommentRequest;
@@ -11,6 +12,8 @@ import com.min.meow.comment.dto.response.UpdateCommentResponse;
 import com.min.meow.comment.service.impl.CommentServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,13 +27,31 @@ public class CommentController {
 
     private final CommentServiceImpl commentServiceImpl;
 
-    // 고양이 자랑 게시글 댓글 조회
-    @GetMapping("/api/meow/boast-cat/comments/{boastCatPostId}")
-    public ResponseEntity<ApiResponse<List<GetCommentResponse>>> getBoastCatPostComment(@PathVariable Long boastCatPostId,
-                                                                             @AuthenticationPrincipal PrincipalUser user){
-        List<GetCommentResponse> getBoastCatPostResponse = commentServiceImpl.getBoastCatPostComment(boastCatPostId);
+    /**
+     * 고양이 자랑 게시글 댓글 조회 (페이지네이션)
+     * - 댓글은 게시글 상세와 분리되어 별도 API로 조회
+     * - 프론트엔드에서 무한 스크롤 또는 페이지네이션 UI 구현 가능
+     */
+    @GetMapping("/api/meow/boast-cat/{boastCatPostId}/comments")
+    public ResponseEntity<ApiResponse<PageResponse<GetCommentResponse>>> getBoastCatPostCommentPaged(
+            @PathVariable Long boastCatPostId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
 
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 조회 성공", getBoastCatPostResponse));
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<GetCommentResponse> comments = commentServiceImpl.getBoastCatPostComment(boastCatPostId, pageable);
+
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 조회 성공", comments));
+    }
+
+    // 고양이 자랑 게시글 댓글 조회 (전체 - 하위 호환용)
+    @GetMapping("/api/meow/boast-cat/comments/{boastCatPostId}")
+    public ResponseEntity<ApiResponse<List<GetCommentResponse>>> getBoastCatPostComment(
+            @PathVariable Long boastCatPostId,
+            @AuthenticationPrincipal PrincipalUser user) {
+
+        List<GetCommentResponse> comments = commentServiceImpl.getBoastCatPostComment(boastCatPostId);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 조회 성공", comments));
     }
 
     // 고양이 자랑 게시글 댓글 작성
@@ -45,13 +66,31 @@ public class CommentController {
 
     // ==================== 실종 고양이 게시글 댓글 API ====================
 
-    // 실종 고양이 게시글 댓글 조회
-    @GetMapping("/api/meow/lost-cat/comments/{lostCatPostId}")
-    public ResponseEntity<ApiResponse<List<GetCommentResponse>>> getLostCatPostComment(@PathVariable Long lostCatPostId,
-                                                                                         @AuthenticationPrincipal PrincipalUser user){
-        List<GetCommentResponse> getLostCatPostResponse = commentServiceImpl.getLostCatPostComment(lostCatPostId);
+    /**
+     * 실종 고양이 게시글 댓글 조회 (페이지네이션)
+     * - 댓글은 게시글 상세와 분리되어 별도 API로 조회
+     * - 프론트엔드에서 무한 스크롤 또는 페이지네이션 UI 구현 가능
+     */
+    @GetMapping("/api/meow/lost-cat/{lostCatPostId}/comments")
+    public ResponseEntity<ApiResponse<PageResponse<GetCommentResponse>>> getLostCatPostCommentPaged(
+            @PathVariable Long lostCatPostId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
 
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 조회 성공", getLostCatPostResponse));
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<GetCommentResponse> comments = commentServiceImpl.getLostCatPostComment(lostCatPostId, pageable);
+
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 조회 성공", comments));
+    }
+
+    // 실종 고양이 게시글 댓글 조회 (전체 - 하위 호환용)
+    @GetMapping("/api/meow/lost-cat/comments/{lostCatPostId}")
+    public ResponseEntity<ApiResponse<List<GetCommentResponse>>> getLostCatPostComment(
+            @PathVariable Long lostCatPostId,
+            @AuthenticationPrincipal PrincipalUser user) {
+
+        List<GetCommentResponse> comments = commentServiceImpl.getLostCatPostComment(lostCatPostId);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 조회 성공", comments));
     }
 
     // 실종 고양이 게시글 댓글 작성

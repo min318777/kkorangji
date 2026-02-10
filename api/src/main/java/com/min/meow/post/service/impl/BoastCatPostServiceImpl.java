@@ -5,7 +5,6 @@ import com.min.meow.config.S3Service;
 import com.min.meow.global.PageResponse;
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.GetBoastCatPostResponse;
-import com.min.meow.post.dto.response.RecentBoastCatPostResponse;
 import com.min.meow.post.dto.response.CreateBoastCatPostResponse;
 import com.min.meow.post.dto.response.UpdateBoastCatPostResponse;
 import com.min.meow.post.dto.request.CreateBoastCatPostRequest;
@@ -20,6 +19,8 @@ import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -56,15 +57,21 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
     }
 
     /**
-     * 글 상세 조회 (N+1 최적화 적용)
+     * 글 상세 조회 (N+1 최적화 적용 + 캐싱)
      * findByIdWithUser()로 User를 Fetch Join하여 N+1 문제 해결
      * - User: Fetch Join (N:1 관계 → 카테시안 곱 없음)
      * - imageUrls: @BatchSize(100) 적용 (1:N 관계)
      * - comments: @BatchSize(100) 적용 (1:N 관계)
      * 조회수 증가는 별도 API로 분리됨
+     *
+     * 캐시 설정:
+     * - 캐시명: post:boast:detail
+     * - 키: 게시글 ID (예: post:boast:detail::123)
+     * - TTL: 10분
      */
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "post:boast:detail", key = "#boastCatPostId")
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
         BoastCatPost boastCatPost = boastCatPostRepository.findByIdWithUser(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
@@ -91,11 +98,12 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
      * 3. 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 이 API 호출
      * 4. 서버는 key를 CloudFront URL로 변환하여 DB 저장
      *
-     * mainPage 캐시 무효화 (새 글이 메인페이지 최근글 목록에 반영되어야 함)
+     * 캐시 무효화:
+     * - post:boast:recent (새 글이 메인페이지 최근글 목록에 반영되어야 함)
      */
     @Override
     @Transactional
-    @CacheEvict(value = "mainPage", allEntries = true)
+    @CacheEvict(cacheNames = "post:boast:recent", allEntries = true)
     public CreateBoastCatPostResponse createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest, String loginId){
 
         User writer = userRepository.findByLoginId(loginId)
@@ -127,11 +135,16 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
      * - 유지할 이미지: keepImageUrls 그대로 사용
      * - 삭제할 이미지: deleteImageUrls의 URL에서 S3 key 추출 후 삭제
      *
-     * mainPage 캐시 무효화 (수정된 내용이 메인페이지 최근글 목록에 반영되어야 함)
+     * 캐시 무효화:
+     * - post:boast:recent (수정된 내용이 메인페이지 최근글 목록에 반영되어야 함)
+     * - post:boast:detail (해당 게시글 상세 캐시 무효화)
      */
     @Override
     @Transactional
-    @CacheEvict(value = "mainPage", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "post:boast:recent", allEntries = true),
+            @CacheEvict(cacheNames = "post:boast:detail", key = "#boastCatPostId")
+    })
     public UpdateBoastCatPostResponse updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId, String loginId){
 
         User writer = userRepository.findByLoginId(loginId)
@@ -153,11 +166,19 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         return UpdateBoastCatPostResponse.from(boastCatPost);
     }
 
-    // 글 삭제
-    // mainPage 캐시 무효화 (삭제된 글이 메인페이지 최근글 목록에서 제거되어야 함)
+    /**
+     * 글 삭제
+     *
+     * 캐시 무효화:
+     * - post:boast:recent (삭제된 글이 메인페이지 최근글 목록에서 제거되어야 함)
+     * - post:boast:detail (해당 게시글 상세 캐시 무효화)
+     */
     @Override
     @Transactional
-    @CacheEvict(value = "mainPage", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "post:boast:recent", allEntries = true),
+            @CacheEvict(cacheNames = "post:boast:detail", key = "#boastCatPostId")
+    })
     public void deleteBoastCatPost(Long boastCatPostId, String loginId, String password){
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
@@ -204,17 +225,24 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
 
 
     /**
-     * 최근 게시물 20개 조회 (Projection 적용)
-     * 성능 개선 내역:
-     * - Before: Entity 전체 조회 + 변환 → 700ms
-     * - After: Projection으로 필요한 컬럼만 조회 → 예상 50~100ms
-     * 캐싱 적용 시 추가 개선 가능: @Cacheable(value = "mainPage", key = "'recentBoastPosts'")
+     * 최근 게시물 20개 조회 (DTO Projection + 캐싱 적용)
+     *
+     * 성능 최적화:
+     * - QueryDSL Projection으로 DB에서 필요한 컬럼만 SELECT
+     * - Entity 변환 오버헤드 제거 (직접 DTO로 매핑)
+     * - contents, imageUrls 등 불필요한 데이터 조회 제거
+     * - BoastCatPostListResponse를 재사용하여 코드 중복 제거
+     *
+     * 캐시 설정:
+     * - 캐시명: post:boast:recent
+     * - 키: 없음 (단일 목록이므로 캐시명 자체가 키)
+     * - TTL: 5분
      */
     @Override
     @Transactional(readOnly = true)
-    //@Cacheable(value = "mainPage", key = "'recentBoastPosts'")
-    public List<RecentBoastCatPostResponse> getRecentBoastCatPosts() {
-        // Projection으로 DB에서 필요한 컬럼만 조회 (Entity 변환 불필요)
+    @Cacheable(cacheNames = "post:boast:recent")
+    public List<BoastCatPostListResponse> getRecentBoastCatPosts() {
+        // DTO Projection으로 필요한 컬럼만 조회 (Entity 변환 없음)
         return boastCatPostRepository.findTop20RecentWithProjection();
     }
 }

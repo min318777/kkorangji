@@ -6,6 +6,7 @@ import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.post.dto.response.CreateLostCatPostResponse;
 import com.min.meow.post.dto.response.GetLostCatPostResponse;
+import com.min.meow.post.dto.response.LostCatPostListResponse;
 import com.min.meow.post.dto.response.UpdateLostCatPostResponse;
 import com.min.meow.post.dto.request.CreateLostCatPostRequest;
 import com.min.meow.post.dto.request.UpdateLostCatPostRequest;
@@ -17,6 +18,7 @@ import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -41,25 +43,48 @@ public class LostCatPostServiceImpl implements LostCatPostService {
     private final UserRepository userRepository;
     private final S3Service s3Service;
 
-    // 모든 글 조회 (DB 레벨 페이징)
-    // 해당 페이지의 데이터만 DB에서 조회하여 메모리 효율적으로 처리
+    /**
+     * 모든 실종 고양이 게시글 목록 조회 (Projection 적용으로 성능 최적화)
+     *
+     * 성능 개선 내역:
+     * - Before: Entity 전체 조회 + DTO 변환 → contents, imageUrls, comments 모두 조회
+     *           → LazyInitializationException 발생 가능
+     * - After: Projection으로 필요한 9개 컬럼만 SELECT
+     *          (id, title, writer, catName, lostLocation, commentCount, view, isCompleted, createdAt)
+     *
+     * 실행되는 쿼리:
+     * SELECT l.id, l.title, u.login_id, l.cat_name, l.lost_location,
+     *        l.comment_count, l.view, l.is_completed, l.created_at
+     * FROM lost_cat_post l
+     * LEFT JOIN users u ON l.user_id = u.id
+     * ORDER BY l.created_at DESC
+     * LIMIT ? OFFSET ?
+     */
     @Override
-    public PageResponse<GetLostCatPostResponse> getAllLostCatPosts(Pageable pageable){
-        Page<LostCatPost> posts = lostCatRepository.findAllWithUser(pageable);
+    @Transactional(readOnly = true)
+    public PageResponse<LostCatPostListResponse> getAllLostCatPosts(Pageable pageable){
+        // Projection으로 DB에서 필요한 컬럼만 조회 (Entity 변환 불필요)
+        Page<LostCatPostListResponse> posts = lostCatRepository.findAllWithProjection(pageable);
 
-        return PageResponse.from(posts.map(GetLostCatPostResponse::toResponse));
+        return PageResponse.from(posts);
     }
 
     /**
-     * 글 상세 조회 (N+1 최적화 적용)
+     * 글 상세 조회 (N+1 최적화 적용 + 캐싱)
      * findByIdWithUser()로 User를 Fetch Join하여 N+1 문제 해결
      * - User: Fetch Join (N:1 관계 → 카테시안 곱 없음)
      * - imageUrls: @BatchSize(100) 적용 (1:N 관계)
      * - comments: @BatchSize(100) 적용 (1:N 관계)
      * 조회수 증가는 별도 API로 분리됨
+     *
+     * 캐시 설정:
+     * - 캐시명: post:lost:detail
+     * - 키: 게시글 ID (예: post:lost:detail::123)
+     * - TTL: 10분
      */
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "post:lost:detail", key = "#lostCatPostId")
     public GetLostCatPostResponse getLostCatPost(Long lostCatPostId){
         LostCatPost lostCatPost = lostCatRepository.findByIdWithUser(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
@@ -87,11 +112,12 @@ public class LostCatPostServiceImpl implements LostCatPostService {
      * 3. 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 이 API 호출
      * 4. 서버는 key를 CloudFront URL로 변환하여 DB 저장
      *
-     * mainPage 캐시 무효화 (새 글이 메인페이지 최근글 목록에 반영되어야 함)
+     * 캐시 무효화:
+     * - post:lost:recent (새 글이 메인페이지 최근글 목록에 반영되어야 함)
      */
     @Override
     @Transactional
-    @CacheEvict(value = "mainPage", allEntries = true)
+    @CacheEvict(cacheNames = "post:lost:recent", allEntries = true)
     public CreateLostCatPostResponse createLostCatPost(CreateLostCatPostRequest createLostCatPostRequest, String loginId){
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
@@ -132,11 +158,16 @@ public class LostCatPostServiceImpl implements LostCatPostService {
      * - 유지할 이미지: keepImageUrls 그대로 사용
      * - 삭제할 이미지: deleteImageUrls의 URL에서 S3 key 추출 후 삭제
      *
-     * mainPage 캐시 무효화 (수정된 내용이 메인페이지 최근글 목록에 반영되어야 함)
+     * 캐시 무효화:
+     * - post:lost:recent (수정된 내용이 메인페이지 최근글 목록에 반영되어야 함)
+     * - post:lost:detail (해당 게시글 상세 캐시 무효화)
      */
     @Transactional
     @Override
-    @CacheEvict(value = "mainPage", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "post:lost:recent", allEntries = true),
+            @CacheEvict(cacheNames = "post:lost:detail", key = "#lostCatPostId")
+    })
     public UpdateLostCatPostResponse updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest, String loginId){
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
@@ -165,10 +196,19 @@ public class LostCatPostServiceImpl implements LostCatPostService {
         return UpdateLostCatPostResponse.toResponse(lostCatPost);
     }
 
-    // 글 삭제
+    /**
+     * 글 삭제
+     *
+     * 캐시 무효화:
+     * - post:lost:recent (삭제된 글이 메인페이지 최근글 목록에서 제거되어야 함)
+     * - post:lost:detail (해당 게시글 상세 캐시 무효화)
+     */
     @Transactional
     @Override
-    @CacheEvict(value = "mainPage", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "post:lost:recent", allEntries = true),
+            @CacheEvict(cacheNames = "post:lost:detail", key = "#lostCatPostId")
+    })
     public void deleteLostCatPost(Long lostCatPostId, String loginId, String password) {
 
         User writer = userRepository.findByLoginId(loginId)
@@ -223,14 +263,24 @@ public class LostCatPostServiceImpl implements LostCatPostService {
         return finalImageUrls;
     }
 
+    /**
+     * 최근 실종글 20개 조회 (DTO Projection + 캐싱 적용)
+     *
+     * 성능 최적화:
+     * - QueryDSL Projection으로 DB에서 필요한 컬럼만 SELECT
+     * - Entity 변환 오버헤드 제거 (직접 DTO로 매핑)
+     * - contents, imageUrls 등 불필요한 데이터 조회 제거
+     *
+     * 캐시 설정:
+     * - 캐시명: post:lost:recent
+     * - 키: 없음 (단일 목록이므로 캐시명 자체가 키)
+     * - TTL: 5분
+     */
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "mainPage", key = "'recentLostPosts'")
-    public List<GetLostCatPostResponse> getRecentLostCatPosts() {
-        List<LostCatPost> posts = lostCatRepository.findTop20RecentPosts();
-
-        return posts.stream()
-                .map(GetLostCatPostResponse::toResponse)
-                .toList();
+    @Cacheable(cacheNames = "post:lost:recent")
+    public List<LostCatPostListResponse> getRecentLostCatPosts() {
+        // DTO Projection으로 필요한 컬럼만 조회 (Entity 변환 없음)
+        return lostCatRepository.findTop20RecentWithProjection();
     }
 }

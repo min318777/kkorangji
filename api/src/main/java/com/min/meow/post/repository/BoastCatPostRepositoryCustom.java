@@ -1,7 +1,6 @@
 package com.min.meow.post.repository;
 
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
-import com.min.meow.post.dto.response.RecentBoastCatPostResponse;
 import com.min.meow.post.entity.BoastCatPost;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,8 +16,9 @@ public interface BoastCatPostRepositoryCustom {
      * 최근 게시물 20개 Projection 조회
      * - DB에서 필요한 컬럼만 SELECT하여 성능 최적화
      * - Entity 변환 없이 DTO로 직접 조회
+     * - BoastCatPostListResponse를 재사용하여 코드 중복 제거
      */
-    List<RecentBoastCatPostResponse> findTop20RecentWithProjection();
+    List<BoastCatPostListResponse> findTop20RecentWithProjection();
 
     /**
      * 게시글 목록 페이징 조회 (Projection 적용)
