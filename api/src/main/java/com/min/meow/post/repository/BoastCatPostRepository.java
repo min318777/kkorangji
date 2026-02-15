@@ -54,4 +54,44 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
     @Modifying
     @Query("UPDATE BoastCatPost b SET b.view = b.view + 1 WHERE b.id = :id")
     int incrementViewCount(@Param("id") Long id);
+
+    /**
+     * 조회수 델타값 일괄 증가 (Redis → DB 동기화용)
+     *
+     * Redis에 누적된 조회수를 DB에 한 번에 반영합니다.
+     * 스케줄러에 의해 주기적으로 호출됩니다.
+     *
+     * 실행되는 쿼리:
+     * UPDATE boast_cat_post SET view = view + :delta WHERE id = :id
+     *
+     * @param id 게시글 ID
+     * @param delta 증가시킬 조회수
+     * @return 업데이트된 행의 수
+     */
+    @Modifying
+    @Query("UPDATE BoastCatPost b SET b.view = b.view + :delta WHERE b.id = :id")
+    int incrementViewCountByDelta(@Param("id") Long id, @Param("delta") int delta);
+
+    /**
+     * 좋아요 수 델타값 일괄 증가/감소 (Redis → DB 동기화용)
+     *
+     * Redis에 누적된 좋아요 변경분을 DB에 한 번에 반영합니다.
+     * 스케줄러에 의해 주기적으로 호출됩니다.
+     *
+     * 실행되는 쿼리:
+     * UPDATE boast_cat_post SET like_count = like_count + :delta WHERE id = :id
+     *
+     * 음수 delta도 처리 가능 (좋아요 취소 시)
+     * 단, likeCount가 음수가 되지 않도록 별도 검증 필요
+     *
+     * @param id 게시글 ID
+     * @param delta 증가/감소시킬 좋아요 수 (음수 가능)
+     * @return 업데이트된 행의 수
+     */
+    @Modifying
+    @Query("UPDATE BoastCatPost b SET b.likeCount = CASE " +
+            "WHEN b.likeCount + :delta < 0 THEN 0 " +
+            "ELSE b.likeCount + :delta END " +
+            "WHERE b.id = :id")
+    int incrementLikeCountByDelta(@Param("id") Long id, @Param("delta") int delta);
 }

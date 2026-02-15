@@ -49,9 +49,33 @@ public interface LostCatPostService {
     List<LostCatPostListResponse> getRecentLostCatPosts();
 
     /**
-     * 조회수 증가 (별도 API)
-     * 원자적 쿼리로 동시성 문제를 해결합니다.
+     * 조회수 증가 - 원자적 쿼리 방식 (v2 - 개선된 버전)
+     *
+     * DB 레벨에서 view = view + 1을 수행하여 동시성 문제를 해결합니다.
+     * K6 동시성 테스트에서 더티 체킹 방식의 Lost Update 문제를 발견한 후 개선한 버전입니다.
+     *
      * @param lostCatPostId 게시글 ID
      */
     void incrementViewCount(Long lostCatPostId);
+
+    /**
+     * 조회수 증가 - 더티 체킹 방식 (v1 - 동시성 이슈 있음)
+     *
+     * ⚠️ 동시성 문제 (Lost Update):
+     * JPA 더티 체킹을 사용한 조회수 증가 방식입니다.
+     * read-modify-write 패턴으로 동시 요청 시 일부 업데이트가 손실됩니다.
+     *
+     * 문제 시나리오:
+     * 1. 트랜잭션 A: SELECT로 view=100 조회
+     * 2. 트랜잭션 B: SELECT로 view=100 조회
+     * 3. 트랜잭션 A: view++ → UPDATE view=101
+     * 4. 트랜잭션 B: view++ → UPDATE view=101 (A의 업데이트 덮어씀)
+     * 5. 결과: 2회 요청 → 1만 증가 (Lost Update)
+     *
+     * K6 동시성 테스트로 발견 후 incrementViewCount()로 개선하였습니다.
+     *
+     * @param lostCatPostId 게시글 ID
+     * @deprecated 동시성 이슈로 인해 incrementViewCount() 사용 권장
+     */
+    void incrementViewCountWithDirtyChecking(Long lostCatPostId);
 }

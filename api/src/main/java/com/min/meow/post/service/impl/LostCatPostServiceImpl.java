@@ -93,7 +93,23 @@ public class LostCatPostServiceImpl implements LostCatPostService {
     }
 
 
-    // 원자적 쿼리로 동시성 문제 해결
+    /**
+     * 조회수 증가 - 원자적 쿼리 방식 (v2 - 개선된 버전)
+     *
+     * DB 레벨에서 view = view + 1을 수행하여 Race Condition을 방지합니다.
+     * 여러 스레드가 동시에 호출해도 정확한 조회수가 보장됩니다.
+     *
+     * 실행되는 쿼리:
+     * UPDATE lost_cat_post SET view = view + 1 WHERE id = ?
+     *
+     * 이 쿼리는 DB 레벨에서 원자적으로 실행되므로:
+     * - Read-Modify-Write 패턴이 아님
+     * - 동시 요청 시에도 모든 증가가 정확히 반영됨
+     *
+     * K6 동시성 테스트 결과:
+     * - 더티 체킹 방식: 1000 VU 동시 요청 → 약 800~900 증가 (Lost Update)
+     * - 원자적 쿼리: 1000 VU 동시 요청 → 정확히 1000 증가 ✅
+     */
     @Override
     @Transactional
     public void incrementViewCount(Long lostCatPostId) {
@@ -101,6 +117,36 @@ public class LostCatPostServiceImpl implements LostCatPostService {
         if (updatedCount == 0) {
             throw new CustomException(ErrorCode.NOT_FOUND_POST);
         }
+    }
+
+    /**
+     * 조회수 증가 - 더티 체킹 방식 (v1 - 동시성 이슈 있음)
+     *
+     * ⚠️ 동시성 문제 (Lost Update):
+     * 이 방식은 아래와 같은 Read-Modify-Write 패턴으로 동작합니다:
+     * 1. SELECT * FROM lost_cat_post WHERE id = ? (조회)
+     * 2. Java에서 view++ 연산 수행
+     * 3. UPDATE lost_cat_post SET view = 101 WHERE id = ? (절대값으로 UPDATE)
+     *
+     * 문제 시나리오 (현재 view = 100, 동시 2개 요청):
+     * - Thread A: view 읽기 (100) → view++ → 101로 UPDATE
+     * - Thread B: view 읽기 (100) → view++ → 101로 UPDATE (동시에!)
+     * - 결과: 2번 증가 요청 → 실제 1만 증가 (Lost Update)
+     *
+     * K6 동시성 테스트로 이 문제를 발견하여
+     * incrementViewCount() 원자적 쿼리 방식으로 개선하였습니다.
+     *
+     * @deprecated 동시성 이슈로 인해 incrementViewCount() 사용 권장
+     */
+    @Override
+    @Transactional
+    public void incrementViewCountWithDirtyChecking(Long lostCatPostId) {
+        LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+
+        // 더티 체킹으로 조회수 증가 (동시성 이슈 발생 가능)
+        lostCatPost.incrementView();
+        // 트랜잭션 종료 시 JPA가 변경 감지하여 UPDATE 쿼리 실행
     }
 
     /**

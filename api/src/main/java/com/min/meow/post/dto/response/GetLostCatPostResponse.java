@@ -36,6 +36,7 @@ public class GetLostCatPostResponse {
     private Double longitude;
     private Integer reward;
     private int commentCount;
+    private int view;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -58,6 +59,7 @@ public class GetLostCatPostResponse {
                 .latitude(lostCatPost.getLatitude())
                 .longitude(lostCatPost.getLongitude())
                 .commentCount(lostCatPost.getCommentCount())
+                .view(lostCatPost.getView())
                 .createdAt(lostCatPost.getCreatedAt())
                 .updatedAt(lostCatPost.getUpdatedAt())
                 .build();

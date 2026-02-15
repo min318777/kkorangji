@@ -29,6 +29,7 @@ public class GetBoastCatPostResponse {
     private List<String> imageUrls;
     private int likeCount;
     private int commentCount;
+    private int view;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -39,6 +40,7 @@ public class GetBoastCatPostResponse {
                 .userId(boastCatPost.getUser().getId())
                 .title(boastCatPost.getTitle())
                 .contents(boastCatPost.getContents())
+                .view(boastCatPost.getView())
                 .imageUrls(new ArrayList<>(boastCatPost.getImageUrls()))
                 .likeCount(boastCatPost.getLikeCount())
                 .commentCount(boastCatPost.getCommentCount())

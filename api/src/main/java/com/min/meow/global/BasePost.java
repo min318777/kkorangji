@@ -42,4 +42,27 @@ public abstract class BasePost {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    /**
+     * 조회수 증가 (더티 체킹 방식)
+     *
+     * ⚠️ 동시성 문제 (Lost Update):
+     * 이 방식은 read-modify-write 패턴으로 동시성 이슈가 발생합니다.
+     *
+     * 문제 시나리오 (현재 view = 100):
+     * 1. Thread A: view 읽기 (100)
+     * 2. Thread B: view 읽기 (100)
+     * 3. Thread A: view++ → 101로 UPDATE
+     * 4. Thread B: view++ → 101로 UPDATE (Thread A의 업데이트 덮어씀!)
+     * 5. 결과: 2번 증가했지만 실제로는 1만 증가 (Lost Update)
+     *
+     * K6 동시성 테스트로 이 문제를 발견하여
+     * 원자적 쿼리 방식(incrementViewCount)으로 개선하였습니다.
+     *
+     * @see com.min.meow.post.repository.LostCatRepository#incrementViewCount
+     * @see com.min.meow.post.repository.BoastCatPostRepository#incrementViewCount
+     */
+    public void incrementView() {
+        this.view++;
+    }
 }

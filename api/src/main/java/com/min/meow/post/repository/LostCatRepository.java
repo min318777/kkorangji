@@ -63,4 +63,21 @@ public interface LostCatRepository extends JpaRepository<LostCatPost, Long>, Los
     @Modifying
     @Query("UPDATE LostCatPost l SET l.view = l.view + 1 WHERE l.id = :id")
     int incrementViewCount(@Param("id") Long id);
+
+    /**
+     * 조회수 델타값 일괄 증가 (Redis → DB 동기화용)
+     *
+     * Redis에 누적된 조회수를 DB에 한 번에 반영합니다.
+     * 스케줄러에 의해 주기적으로 호출됩니다.
+     *
+     * 실행되는 쿼리:
+     * UPDATE lost_cat_post SET view = view + :delta WHERE id = :id
+     *
+     * @param id 게시글 ID
+     * @param delta 증가시킬 조회수
+     * @return 업데이트된 행의 수
+     */
+    @Modifying
+    @Query("UPDATE LostCatPost l SET l.view = l.view + :delta WHERE l.id = :id")
+    int incrementViewCountByDelta(@Param("id") Long id, @Param("delta") int delta);
 }

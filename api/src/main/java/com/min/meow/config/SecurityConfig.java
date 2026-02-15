@@ -93,10 +93,17 @@ public class SecurityConfig {
                                 "/api/meow/lost-cat",
                                 "/api/meow/lost-cat/**").permitAll()
                         // 조회수 증가 API는 인증 없이 가능 (POST 요청)
+                        // v2: /api/meow/boast-cat/{id}/view (원자적 업데이트)
+                        // v1: /api/meow/boast-cat/v1/{id}/view (더티체킹 - 동시성 테스트용)
+                        // v3: /api/meow/boast-cat/v3/{id}/view (Redis INCR 방식)
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.POST,
                                 "/api/meow/boast-cat/*/view",
-                                "/api/meow/lost-cat/*/view").permitAll()
+                                "/api/meow/boast-cat/v1/*/view",
+                                "/api/meow/boast-cat/v3/*/view",
+                                "/api/meow/lost-cat/*/view",
+                                "/api/meow/lost-cat/v1/*/view",
+                                "/api/meow/lost-cat/v3/*/view").permitAll()
                         // 알림 목록 조회만 인증 없이 가능 (GET 요청만)
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.GET,

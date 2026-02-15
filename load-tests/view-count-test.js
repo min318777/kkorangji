@@ -1,6 +1,9 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Counter } from 'k6/metrics';
+import { textSummary } from 'https://raw.githubusercontent.com/grafana/k6-reporter/main/dist/bundle.js';
+
+let teardownMessage = '';
 
 // 커스텀 메트릭
 const viewCountErrors = new Counter('view_count_errors');
