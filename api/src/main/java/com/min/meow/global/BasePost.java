@@ -18,9 +18,11 @@ public abstract class BasePost {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Long id;
 
-    @Column(nullable = false)
+    // DB 레벨 제약 (검증은 Request DTO에서 처리)
+    @Column(nullable = false, length = 100)
     protected String title;
 
+    @Column(length = 2000)
     protected String contents;
 
     @ManyToOne(fetch = FetchType.LAZY)

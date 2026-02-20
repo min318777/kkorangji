@@ -12,8 +12,9 @@ import lombok.*;
 @Builder
 public class RegisterCommentRequest {
 
-    @NotBlank(message = "최소 5자 이상 작성해 주세요.")
-    @Size(min = 5, max = 500, message = "최소 5자 이상, 최대 500자 이하 입력해 주세요.")
+    // 댓글: 1~500자, 필수
+    @NotBlank(message = "댓글을 입력해 주세요.")
+    @Size(min = 1, max = 500, message = "댓글은 1자 이상 500자 이하로 입력해주세요.")
     private String content;
 
 }

@@ -22,6 +22,8 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // DB 레벨 제약 (검증은 Request DTO에서 처리)
+    @Column(nullable = false, length = 500)
     private String contents;
 
     private boolean isRead;

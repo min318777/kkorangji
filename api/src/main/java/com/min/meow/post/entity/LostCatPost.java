@@ -18,12 +18,22 @@ import java.util.List;
 @Getter
 public class LostCatPost extends BasePost {
 
+    // DB 레벨 제약 (검증은 Request DTO에서 처리)
+    @Column(length = 20)
     private String catName;
+
+    @Column(length = 30)
     private String catType;
+
+    @Column(length = 20)
     private String catColor;
+
     private Integer catAge;
     private Integer catWeight;
+
+    @Column(length = 100)
     private String lostLocation;
+
     private Double latitude;
     private Double longitude;
     private Integer reward;

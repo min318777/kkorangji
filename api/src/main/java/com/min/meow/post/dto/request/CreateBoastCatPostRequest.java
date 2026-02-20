@@ -21,11 +21,13 @@ import java.util.List;
 @NoArgsConstructor
 public class CreateBoastCatPostRequest {
 
+    // 제목: 2~100자, 필수
     @NotBlank(message = "제목을 입력해 주세요.")
     @Size(min = 2, max = 100, message = "제목은 2자 이상 100자 이하로 입력해주세요.")
     private String title;
 
-    @Size(max = 1000, message = "내용은 1000자 이하로 입력해주세요.")
+    // 본문: 최대 2000자, 선택 (자랑글은 사진만으로도 작성 가능)
+    @Size(max = 2000, message = "내용은 2000자 이하로 입력해주세요.")
     private String content;
 
     /**
@@ -33,6 +35,6 @@ public class CreateBoastCatPostRequest {
      * Presigned URL로 업로드 완료 후 받은 key를 전달
      * 예: ["meow/uuid-1.jpg", "meow/uuid-2.png"]
      */
-    @Size(max = 10, message = "이미지는 10장 이하로 업로드해주세요.")
+    @Size(max = 10, message = "이미지는 최대 10장까지 업로드 가능합니다.")
     private List<String> imageKeys;
 }
