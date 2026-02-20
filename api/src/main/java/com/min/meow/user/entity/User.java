@@ -23,16 +23,18 @@ public class User{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    // DB 레벨 제약만 적용 (검증은 Request DTO에서 처리)
+    @Column(unique = true, nullable = false, length = 20)
     private String loginId;
 
+    @Column(length = 100)
     private String password;
 
     @Column(nullable = false, unique = true)
     @Email
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 10)
     private String name;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
