@@ -10,7 +10,6 @@ import com.min.meow.user.service.MyPageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +35,7 @@ public class MyPageController {
         MyPageSummaryResponse response = myPageService.getMyPageSummary(loginId);
 
         return ResponseEntity.ok(
-                new ApiResponse<>(HttpStatus.OK, "마이페이지 조회 성공", response)
+                ApiResponse.success( "마이페이지 조회 성공", response)
         );
     }
 
@@ -62,7 +61,7 @@ public class MyPageController {
         MyPostListResponse response = myPageService.getMyPosts(loginId, pageable, type);
 
         return ResponseEntity.ok(
-                new ApiResponse<>(HttpStatus.OK, "내가 쓴 글 조회 성공", response)
+                ApiResponse.success( "내가 쓴 글 조회 성공", response)
         );
     }
 
@@ -85,7 +84,7 @@ public class MyPageController {
         MyCommentListResponse response = myPageService.getMyComments(userId, pageable);
 
         return ResponseEntity.ok(
-                new ApiResponse<>(HttpStatus.OK, "내가 쓴 댓글 조회 성공", response)
+                ApiResponse.success( "내가 쓴 댓글 조회 성공", response)
         );
     }
 }

@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +23,6 @@ public class PostSearchController {
                                                              @RequestBody PostSearchRequest postSearchRequest){
         Pageable pageable = PageRequest.of(page, size);
         Page<PostDto> posts = postSearchServiceImpl.search(postSearchRequest, pageable);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "검색 성공", posts));
+        return ResponseEntity.ok(ApiResponse.success("검색 성공", posts));
     }
 }

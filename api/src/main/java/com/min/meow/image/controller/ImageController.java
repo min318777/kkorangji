@@ -7,7 +7,6 @@ import com.min.meow.image.dto.response.PresignedUrlResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -69,7 +68,7 @@ public class ImageController {
                 .map(PresignedUrlResponse::from)
                 .collect(Collectors.toList());
 
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "Presigned URL 발급 성공", responses));
+        return ResponseEntity.ok(ApiResponse.success("Presigned URL 발급 성공", responses));
     }
 
     /**
@@ -86,7 +85,7 @@ public class ImageController {
         S3Service.PresignedUrlInfo urlInfo = s3Service.generatePresignedUrl(contentType);
         PresignedUrlResponse response = PresignedUrlResponse.from(urlInfo);
 
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "Presigned URL 발급 성공", response));
+        return ResponseEntity.ok(ApiResponse.success("Presigned URL 발급 성공", response));
     }
 
     /**

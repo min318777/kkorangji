@@ -3,13 +3,12 @@ package com.min.meow.post.postlike.controller;
 
 import com.min.meow.global.ApiResponse;
 import com.min.meow.global.PostType;
-import com.min.meow.global.exception.ErrorResponse;
+// ErrorResponse 제거 - ApiResponse로 통합
 import com.min.meow.post.postlike.dto.LikeResponse;
 import com.min.meow.post.postlike.service.LikeCountService;
 import com.min.meow.post.postlike.service.PostLikeService;
 import com.min.meow.global.PrincipalUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +32,7 @@ public class PostLikeController {
     public ResponseEntity<?> getLikeCount(@PathVariable Long boastCatPostId) {
 
         int count = postLikeService.getLikeCount(boastCatPostId);
-        return ResponseEntity.ok(new ErrorResponse<>(true, "좋아요 수 조회 성공", count));
+        return ResponseEntity.ok(ApiResponse.success("좋아요 수 조회 성공", count));
     }
 
     /**
@@ -56,7 +55,7 @@ public class PostLikeController {
         }else {
             message = "좋아요 취소";
         }
-        return ResponseEntity.ok(new ErrorResponse<>(true, message, null));
+        return ResponseEntity.ok(ApiResponse.success(message, null));
     }
 
     // ==================== v2: Redis + 배치 동기화 방식 (권장) ====================
@@ -100,7 +99,7 @@ public class PostLikeController {
         String message = liked ? "좋아요 등록 성공" : "좋아요 취소 성공";
         LikeResponse response = new LikeResponse(liked, likeCount);
 
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, message, response));
+        return ResponseEntity.ok(ApiResponse.success(message, response));
     }
 
     /**
@@ -114,7 +113,7 @@ public class PostLikeController {
     @GetMapping("/v2/{boastCatPostId}")
     public ResponseEntity<ApiResponse<Long>> getLikeCountV2(@PathVariable Long boastCatPostId) {
         Long count = likeCountService.getLikeCount(PostType.BOAST, boastCatPostId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "좋아요 수 조회 성공", count));
+        return ResponseEntity.ok(ApiResponse.success("좋아요 수 조회 성공", count));
     }
 
     /**
@@ -133,6 +132,6 @@ public class PostLikeController {
 
         Long userId = user.getUser().getId();
         boolean liked = likeCountService.isLiked(PostType.BOAST, boastCatPostId, userId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "좋아요 여부 조회 성공", liked));
+        return ResponseEntity.ok(ApiResponse.success("좋아요 여부 조회 성공", liked));
     }
 }

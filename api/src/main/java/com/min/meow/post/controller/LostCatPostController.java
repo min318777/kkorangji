@@ -47,7 +47,7 @@ public class LostCatPostController {
 
         Pageable pageable = PageRequest.of(page, size);
         PageResponse<LostCatPostListResponse> pageResponse = lostCatPostServiceImpl.getAllLostCatPosts(pageable);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "모든 글 조회 성공", pageResponse));
+        return ResponseEntity.ok(ApiResponse.success("모든 글 조회 성공", pageResponse));
     }
 
     // 글 상세 조회
@@ -55,7 +55,7 @@ public class LostCatPostController {
     public ResponseEntity<ApiResponse<GetLostCatPostResponse>> getLostCatPostDetail(@PathVariable Long lostCatPostId){
 
         GetLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.getLostCatPost(lostCatPostId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 조회 성공", lostCatPostDto));
+        return ResponseEntity.ok(ApiResponse.success("글 조회 성공", lostCatPostDto));
     }
 
     /**
@@ -72,7 +72,8 @@ public class LostCatPostController {
 
         CreateLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.createLostCatPost(createLostCatPostRequest, user.getUser().getLoginId());
 
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 생성 성공", lostCatPostDto));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("글 생성 성공", lostCatPostDto));
     }
 
     /**
@@ -89,17 +90,17 @@ public class LostCatPostController {
             @AuthenticationPrincipal PrincipalUser user){
         String loginId = user.getUser().getLoginId();
         UpdateLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.updateLostCatPost(lostCatPostId, updateLostCatPostRequest, loginId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 수정 성공", lostCatPostDto));
+        return ResponseEntity.ok(ApiResponse.success("글 수정 성공", lostCatPostDto));
     }
 
     // 글 삭제
     @DeleteMapping("/{lostCatPostId}")
-    public ResponseEntity<ApiResponse<Void>> deleteLostCatPost(@PathVariable Long lostCatPostId, @AuthenticationPrincipal PrincipalUser user){
+    public ResponseEntity<Void> deleteLostCatPost(@PathVariable Long lostCatPostId, @AuthenticationPrincipal PrincipalUser user){
 
         String loginId = user.getUser().getLoginId();
         String password = user.getUser().getPassword();
         lostCatPostServiceImpl.deleteLostCatPost(lostCatPostId, loginId, password);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 삭제 성공", null));
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -113,7 +114,7 @@ public class LostCatPostController {
     @GetMapping("/recent")
     public ResponseEntity<ApiResponse<List<LostCatPostListResponse>>> getRecentLostCatPosts() {
         List<LostCatPostListResponse> posts = lostCatPostServiceImpl.getRecentLostCatPosts();
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "최근 실종글 20개 조회 성공", posts));
+        return ResponseEntity.ok(ApiResponse.success("최근 실종글 20개 조회 성공", posts));
     }
 
     /**
@@ -128,7 +129,7 @@ public class LostCatPostController {
     @PostMapping("/{lostCatPostId}/view")
     public ResponseEntity<ApiResponse<Void>> incrementViewCount(@PathVariable Long lostCatPostId) {
         lostCatPostServiceImpl.incrementViewCount(lostCatPostId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "조회수 증가 성공", null));
+        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공", null));
     }
 
     /**
@@ -148,7 +149,7 @@ public class LostCatPostController {
     @PostMapping("/v1/{lostCatPostId}/view")
     public ResponseEntity<ApiResponse<Void>> incrementViewCountV1(@PathVariable Long lostCatPostId) {
         lostCatPostServiceImpl.incrementViewCountWithDirtyChecking(lostCatPostId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "조회수 증가 성공 (더티 체킹 방식)", null));
+        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (더티 체킹 방식)", null));
     }
 
     /**
@@ -175,6 +176,6 @@ public class LostCatPostController {
     @PostMapping("/v3/{lostCatPostId}/view")
     public ResponseEntity<ApiResponse<Long>> incrementViewCountV3(@PathVariable Long lostCatPostId) {
         Long newCount = viewCountService.incrementViewCount(PostType.LOST, lostCatPostId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "조회수 증가 성공 (Redis INCR 방식)", newCount));
+        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (Redis INCR 방식)", newCount));
     }
 }

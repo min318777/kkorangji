@@ -1,5 +1,7 @@
 package com.min.meow.user.controller;
 
+import com.min.meow.global.exception.CustomException;
+import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.user.dto.response.TokenResponse;
 import com.min.meow.user.service.ReissueService;
 import jakarta.servlet.http.Cookie;
@@ -25,6 +27,12 @@ public class ReissueController {
     public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) {
 
         String refreshToken = extractRefreshToken(request);
+
+        // refreshToken이 없으면 조기 검증하여 서비스 레이어 도달 전에 차단
+        if (refreshToken == null) {
+            throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
+        }
+
         TokenResponse tokenResponse = reissueService.reissue(refreshToken);
 
         response.setHeader("Authorization", "Bearer " + tokenResponse.getAccessToken());

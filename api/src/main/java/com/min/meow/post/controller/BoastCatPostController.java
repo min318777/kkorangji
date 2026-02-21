@@ -38,7 +38,7 @@ public class BoastCatPostController {
 
         Pageable pageable = PageRequest.of(page, size);
         PageResponse<BoastCatPostListResponse> posts = boastCatPostServiceImpl.getAllBoastCatPosts(pageable);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "모든 글 조회 성공", posts));
+        return ResponseEntity.ok(ApiResponse.success("모든 글 조회 성공", posts));
     }
 
 
@@ -46,7 +46,7 @@ public class BoastCatPostController {
     @GetMapping("/{boastCatPostId}")
     public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastPostId(@PathVariable Long boastCatPostId){
         GetBoastCatPostResponse getBoastCatPostResponse = boastCatPostServiceImpl.getBoastCatPost(boastCatPostId);
-        return ResponseEntity.ok(new ApiResponse<GetBoastCatPostResponse>(HttpStatus.OK, "글 조회 성공", getBoastCatPostResponse));
+        return ResponseEntity.ok(ApiResponse.success("글 조회 성공", getBoastCatPostResponse));
     }
 
     /**
@@ -61,7 +61,8 @@ public class BoastCatPostController {
             @RequestBody @Valid CreateBoastCatPostRequest createBoastCatPostRequest,
             @AuthenticationPrincipal PrincipalUser user){
         CreateBoastCatPostResponse post = boastCatPostServiceImpl.createBoastCatPost(createBoastCatPostRequest, user.getUser().getLoginId());
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 생성 성공", post));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("글 생성 성공", post));
     }
 
     /**
@@ -79,17 +80,17 @@ public class BoastCatPostController {
 
         String loginId = user.getUser().getLoginId();
         UpdateBoastCatPostResponse post = boastCatPostServiceImpl.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId, loginId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 수정 성공", post));
+        return ResponseEntity.ok(ApiResponse.success("글 수정 성공", post));
     }
 
     // 글 삭제
     @DeleteMapping("/{boastCatPostId}")
-    public ResponseEntity<ApiResponse<Void>> deleteBoastCatPost(@PathVariable Long boastCatPostId, @AuthenticationPrincipal PrincipalUser user){
+    public ResponseEntity<Void> deleteBoastCatPost(@PathVariable Long boastCatPostId, @AuthenticationPrincipal PrincipalUser user){
 
         String loginId = user.getUser().getLoginId();
         String password = user.getUser().getPassword();
         boastCatPostServiceImpl.deleteBoastCatPost(boastCatPostId, loginId, password);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "글 삭제 성공", null));
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -104,7 +105,7 @@ public class BoastCatPostController {
     @GetMapping("/recent")
     public ResponseEntity<ApiResponse<List<BoastCatPostListResponse>>> getRecentBoastCatPosts() {
         List<BoastCatPostListResponse> posts = boastCatPostServiceImpl.getRecentBoastCatPosts();
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "최근 자랑글 20개 조회 성공", posts));
+        return ResponseEntity.ok(ApiResponse.success("최근 자랑글 20개 조회 성공", posts));
     }
 
     /**
@@ -119,7 +120,7 @@ public class BoastCatPostController {
     @PostMapping("/{boastCatPostId}/view")
     public ResponseEntity<ApiResponse<Void>> incrementViewCount(@PathVariable Long boastCatPostId) {
         boastCatPostServiceImpl.incrementViewCount(boastCatPostId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "조회수 증가 성공", null));
+        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공", null));
     }
 
     /**
@@ -139,7 +140,7 @@ public class BoastCatPostController {
     @PostMapping("/v1/{boastCatPostId}/view")
     public ResponseEntity<ApiResponse<Void>> incrementViewCountV1(@PathVariable Long boastCatPostId) {
         boastCatPostServiceImpl.incrementViewCountWithDirtyChecking(boastCatPostId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "조회수 증가 성공 (더티 체킹 방식)", null));
+        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (더티 체킹 방식)", null));
     }
 
     /**
@@ -166,6 +167,6 @@ public class BoastCatPostController {
     @PostMapping("/v3/{boastCatPostId}/view")
     public ResponseEntity<ApiResponse<Long>> incrementViewCountV3(@PathVariable Long boastCatPostId) {
         Long newCount = viewCountService.incrementViewCount(PostType.BOAST, boastCatPostId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "조회수 증가 성공 (Redis INCR 방식)", newCount));
+        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (Redis INCR 방식)", newCount));
     }
 }

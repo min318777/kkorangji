@@ -31,13 +31,14 @@ public class UserController {
 
         JoinResponse joinResponse = userService.join(joinRequest);
 
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "회원가입 성공", joinResponse));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("회원가입 성공", joinResponse));
     }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody @Valid LoginRequest loginRequest){
         LoginResponse loginResponse = userService.login(loginRequest);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "로그인 성공", loginResponse));
+        return ResponseEntity.ok(ApiResponse.success("로그인 성공", loginResponse));
     }
 
     /**
@@ -49,9 +50,9 @@ public class UserController {
      * @return 탈퇴 완료 메시지
      */
     @DeleteMapping("/withdraw")
-    public ResponseEntity<ApiResponse<Void>> withdraw(@AuthenticationPrincipal PrincipalUser user) {
+    public ResponseEntity<Void> withdraw(@AuthenticationPrincipal PrincipalUser user) {
         userService.withdraw(user.getLoginId());
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "회원 탈퇴가 완료되었습니다.", null));
+        return ResponseEntity.noContent().build();
     }
 
 }

@@ -41,7 +41,7 @@ public class CommentController {
         Pageable pageable = PageRequest.of(page, size);
         PageResponse<GetCommentResponse> comments = commentServiceImpl.getBoastCatPostComment(boastCatPostId, pageable);
 
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 조회 성공", comments));
+        return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
     }
 
     // 고양이 자랑 게시글 댓글 조회 (전체 - 하위 호환용)
@@ -51,7 +51,7 @@ public class CommentController {
             @AuthenticationPrincipal PrincipalUser user) {
 
         List<GetCommentResponse> comments = commentServiceImpl.getBoastCatPostComment(boastCatPostId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 조회 성공", comments));
+        return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
     }
 
     // 고양이 자랑 게시글 댓글 작성
@@ -61,7 +61,8 @@ public class CommentController {
                                                                                            @AuthenticationPrincipal PrincipalUser user){
 
         RegisterCommentResponse registerCommentResponse = commentServiceImpl.registerBoastCatPostComment(registerCommentRequest, boastCatPostId, user.getUser().getId());
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 작성 성공", registerCommentResponse));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("댓글 작성 성공", registerCommentResponse));
     }
 
     // ==================== 실종 고양이 게시글 댓글 API ====================
@@ -80,7 +81,7 @@ public class CommentController {
         Pageable pageable = PageRequest.of(page, size);
         PageResponse<GetCommentResponse> comments = commentServiceImpl.getLostCatPostComment(lostCatPostId, pageable);
 
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 조회 성공", comments));
+        return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
     }
 
     // 실종 고양이 게시글 댓글 조회 (전체 - 하위 호환용)
@@ -90,7 +91,7 @@ public class CommentController {
             @AuthenticationPrincipal PrincipalUser user) {
 
         List<GetCommentResponse> comments = commentServiceImpl.getLostCatPostComment(lostCatPostId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 조회 성공", comments));
+        return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
     }
 
     // 실종 고양이 게시글 댓글 작성
@@ -100,7 +101,8 @@ public class CommentController {
                                                                                             @AuthenticationPrincipal PrincipalUser user){
 
         RegisterCommentResponse registerCommentResponse = commentServiceImpl.registerLostCatPostComment(registerCommentRequest, lostCatPostId, user.getUser().getId());
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 작성 성공", registerCommentResponse));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("댓글 작성 성공", registerCommentResponse));
     }
 
     // ==================== 공통 댓글 관리 API ====================
@@ -112,15 +114,15 @@ public class CommentController {
                                                                                        @AuthenticationPrincipal PrincipalUser user){
 
         UpdateCommentResponse updateCommentResponse = commentServiceImpl.updateComment(updateCommentRequest, commentId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 수정 성공", updateCommentResponse));
+        return ResponseEntity.ok(ApiResponse.success("댓글 수정 성공", updateCommentResponse));
     }
 
     // 댓글 삭제 (게시글 타입 무관)
     @DeleteMapping("/api/meow/comments/{commentId}")
-    public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable Long commentId,
+    public ResponseEntity<Void> deleteComment(@PathVariable Long commentId,
                                                                       @AuthenticationPrincipal PrincipalUser user){
 
         commentServiceImpl.deleteComment(commentId);
-        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK, "댓글 삭제 성공", null));
+        return ResponseEntity.noContent().build();
     }
 }
