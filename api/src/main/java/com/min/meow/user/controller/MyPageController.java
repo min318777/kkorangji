@@ -7,6 +7,9 @@ import com.min.meow.user.dto.reponse.MyCommentListResponse;
 import com.min.meow.user.dto.reponse.MyPageSummaryResponse;
 import com.min.meow.user.dto.reponse.MyPostListResponse;
 import com.min.meow.user.service.MyPageService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "마이페이지", description = "사용자 마이페이지 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users/mypage")
@@ -21,15 +25,11 @@ public class MyPageController {
 
     private final MyPageService myPageService;
 
-    /**
-     * 마이페이지
-     * GET /api/users/mypage
-     * @param user 현재 인증된 사용자 정보 (Spring Security Context에서 자동 주입)
-     * @return 사용자 기본 정보 및 통계 (작성한 글 수, 댓글 수)
-     */
+    @Operation(summary = "마이페이지 요약 조회",
+            description = "사용자 기본 정보 및 통계(작성 글 수, 댓글 수)를 조회합니다. 인증 필요.")
     @GetMapping
     public ResponseEntity<ApiResponse<MyPageSummaryResponse>> getMyPageSummary(
-            @AuthenticationPrincipal PrincipalUser user) {
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
         String loginId = user.getLoginId();
         MyPageSummaryResponse response = myPageService.getMyPageSummary(loginId);
@@ -39,23 +39,19 @@ public class MyPageController {
         );
     }
 
-    /**
-     * 내가 쓴 글 목록 조회
-     * GET /api/users/mypage/posts
-     * @param user 현재 인증된 사용자 정보 (Spring Security Context에서 자동 주입)
-     * @param page 페이지 번호 (0부터 시작, 기본값: 0)
-     * @param size 페이지 크기 (기본값: 10)
-     * @param type 게시글 타입 (ALL: 전체, BOAST: 자랑글, LOST: 실종글, 기본값: ALL)
-     * @return 내가 쓴 게시글 목록 (페이징)
-     */
+    @Operation(summary = "내가 쓴 글 목록 조회",
+            description = "현재 사용자가 작성한 게시글 목록을 페이징으로 조회합니다. type으로 게시글 종류를 필터링할 수 있습니다. 인증 필요.")
     @GetMapping("/posts")
     public ResponseEntity<ApiResponse<MyPostListResponse>> getMyPosts(
-            @AuthenticationPrincipal PrincipalUser user,
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10")
             @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "게시글 타입 필터", example = "ALL",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"ALL", "BOAST", "LOST"}))
             @RequestParam(defaultValue = "ALL") PostType type) {
 
-        // SecurityContext에서 loginId 추출
         String loginId = user.getLoginId();
         Pageable pageable = PageRequest.of(page, size);
         MyPostListResponse response = myPageService.getMyPosts(loginId, pageable, type);
@@ -65,18 +61,14 @@ public class MyPageController {
         );
     }
 
-    /**
-     * 내가 쓴 댓글 목록 조회
-     * GET /api/users/mypage/comments
-     * @param user 현재 인증된 사용자 정보 (Spring Security Context에서 자동 주입)
-     * @param page 페이지 번호 (0부터 시작, 기본값: 0)
-     * @param size 페이지 크기 (기본값: 10)
-     * @return 내가 쓴 댓글 목록 (페이징)
-     */
+    @Operation(summary = "내가 쓴 댓글 목록 조회",
+            description = "현재 사용자가 작성한 댓글 목록을 페이징으로 조회합니다. 인증 필요.")
     @GetMapping("/comments")
     public ResponseEntity<ApiResponse<MyCommentListResponse>> getMyComments(
-            @AuthenticationPrincipal PrincipalUser user,
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10")
             @RequestParam(defaultValue = "10") int size) {
 
         Long userId = user.getUser().getId();

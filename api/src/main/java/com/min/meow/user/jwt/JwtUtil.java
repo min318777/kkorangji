@@ -26,8 +26,6 @@ public class JwtUtil {
         return Long.valueOf(subject);
     }
 
-
-
     public String getRole(String token) {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("role", String.class);
     }

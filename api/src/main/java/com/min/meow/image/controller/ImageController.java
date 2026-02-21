@@ -4,6 +4,9 @@ import com.min.meow.config.S3Service;
 import com.min.meow.global.ApiResponse;
 import com.min.meow.image.dto.request.PresignedUrlRequest;
 import com.min.meow.image.dto.response.PresignedUrlResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,19 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * 이미지 업로드용 Presigned URL 발급 API
- *
- * 클라이언트 사용 플로우:
- * 1. POST /api/images/presigned-urls 로 Presigned URL 요청
- * 2. 응답받은 presignedUrl로 PUT 요청하여 S3에 직접 업로드
- * 3. 업로드 완료 후 key를 게시글 생성 API에 전달
- *
- * 장점:
- * - 서버 트래픽 비용 절감 (이미지가 서버를 거치지 않음)
- * - 서버 메모리 부담 감소
- * - 대용량 파일 업로드 가능 (서버 타임아웃 걱정 없음)
- */
+@Tag(name = "이미지", description = "S3 Presigned URL 발급 API")
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -34,25 +25,9 @@ public class ImageController {
 
     private final S3Service s3Service;
 
-    /**
-     * Presigned URL 발급
-     *
-     * 요청 예시:
-     * POST /api/images/presigned-urls
-     * {
-     *   "contentTypes": ["image/jpeg", "image/png"]
-     * }
-     *
-     * 응답 예시:
-     * {
-     *   "status": "OK",
-     *   "message": "Presigned URL 발급 성공",
-     *   "data": [
-     *     { "presignedUrl": "https://...", "key": "meow/uuid-1.jpg" },
-     *     { "presignedUrl": "https://...", "key": "meow/uuid-2.png" }
-     *   ]
-     * }
-     */
+    @Operation(summary = "Presigned URL 다건 발급",
+            description = "업로드할 이미지 개수만큼 S3 Presigned URL을 발급합니다. "
+                    + "허용 형식: image/jpeg, image/jpg, image/png, image/gif, image/webp. 인증 필요.")
     @PostMapping("/presigned-urls")
     public ResponseEntity<ApiResponse<List<PresignedUrlResponse>>> getPresignedUrls(
             @Valid @RequestBody PresignedUrlRequest request) {
@@ -71,11 +46,14 @@ public class ImageController {
         return ResponseEntity.ok(ApiResponse.success("Presigned URL 발급 성공", responses));
     }
 
-    /**
-     * 단일 Presigned URL 발급 (간편 API)
-     */
+    @Operation(summary = "Presigned URL 단건 발급",
+            description = "단일 이미지 업로드용 Presigned URL을 발급합니다. "
+                    + "허용 형식: image/jpeg, image/jpg, image/png, image/gif, image/webp. 인증 필요.")
     @GetMapping("/presigned-url")
     public ResponseEntity<ApiResponse<PresignedUrlResponse>> getPresignedUrl(
+            @Parameter(description = "이미지 Content-Type", example = "image/jpeg",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                            allowableValues = {"image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"}))
             @RequestParam String contentType) {
 
         log.info("단일 Presigned URL 요청 - contentType: {}", contentType);

@@ -12,6 +12,10 @@ import com.min.meow.post.dto.response.GetBoastCatPostResponse;
 import com.min.meow.post.dto.response.UpdateBoastCatPostResponse;
 import com.min.meow.post.service.ViewCountService;
 import com.min.meow.post.service.impl.BoastCatPostServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "자랑글", description = "고양이 자랑 게시글 CRUD API")
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api/meow/boast-cat")
@@ -30,11 +35,14 @@ public class BoastCatPostController {
     private final BoastCatPostServiceImpl boastCatPostServiceImpl;
     private final ViewCountService viewCountService;
 
-    // 모든 글 조회
+    @Operation(summary = "자랑글 목록 조회", description = "페이징된 자랑글 목록을 조회합니다. 인증 불필요.")
+    @SecurityRequirements
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<BoastCatPostListResponse>>> getAllBoastCatPost(
-                                                        @RequestParam (defaultValue = "0") int page,
-                                                        @RequestParam (defaultValue = "10") int size ){
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+            @RequestParam (defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10")
+            @RequestParam (defaultValue = "10") int size ){
 
         Pageable pageable = PageRequest.of(page, size);
         PageResponse<BoastCatPostListResponse> posts = boastCatPostServiceImpl.getAllBoastCatPosts(pageable);
@@ -42,9 +50,12 @@ public class BoastCatPostController {
     }
 
 
-    // 글 상세 조회
+    @Operation(summary = "자랑글 상세 조회", description = "게시글 ID로 상세 정보를 조회합니다. 인증 불필요.")
+    @SecurityRequirements
     @GetMapping("/{boastCatPostId}")
-    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastPostId(@PathVariable Long boastCatPostId){
+    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastPostId(
+            @Parameter(description = "자랑글 ID", example = "1")
+            @PathVariable Long boastCatPostId){
         GetBoastCatPostResponse getBoastCatPostResponse = boastCatPostServiceImpl.getBoastCatPost(boastCatPostId);
         return ResponseEntity.ok(ApiResponse.success("글 조회 성공", getBoastCatPostResponse));
     }
@@ -56,10 +67,12 @@ public class BoastCatPostController {
      * 2. 클라이언트가 Presigned URL로 S3에 이미지 직접 업로드
      * 3. 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 이 API 호출
      */
+    @Operation(summary = "자랑글 생성",
+            description = "새 자랑글을 작성합니다. 이미지는 Presigned URL로 S3에 먼저 업로드 후 key를 전달합니다. 인증 필요.")
     @PostMapping
     public ResponseEntity<ApiResponse<CreateBoastCatPostResponse>> createBoastCatPost(
             @RequestBody @Valid CreateBoastCatPostRequest createBoastCatPostRequest,
-            @AuthenticationPrincipal PrincipalUser user){
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
         CreateBoastCatPostResponse post = boastCatPostServiceImpl.createBoastCatPost(createBoastCatPostRequest, user.getUser().getLoginId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("글 생성 성공", post));
@@ -72,20 +85,27 @@ public class BoastCatPostController {
      * - keepImageUrls: 유지할 기존 이미지의 CloudFront URL
      * - deleteImageUrls: 삭제할 이미지의 CloudFront URL
      */
+    @Operation(summary = "자랑글 수정",
+            description = "자랑글을 수정합니다. 본인 게시글만 수정 가능합니다. 인증 필요.")
     @PutMapping("/{boastCatPostId}")
     public ResponseEntity<ApiResponse<UpdateBoastCatPostResponse>> updateBoastCatPost(
             @RequestBody @Valid UpdateBoastCatPostRequest updateBoastCatPostRequest,
+            @Parameter(description = "자랑글 ID", example = "1")
             @PathVariable Long boastCatPostId,
-            @AuthenticationPrincipal PrincipalUser user){
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
         String loginId = user.getUser().getLoginId();
         UpdateBoastCatPostResponse post = boastCatPostServiceImpl.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId, loginId);
         return ResponseEntity.ok(ApiResponse.success("글 수정 성공", post));
     }
 
-    // 글 삭제
+    @Operation(summary = "자랑글 삭제",
+            description = "자랑글을 삭제합니다. 본인 게시글만 삭제 가능합니다. 인증 필요.")
     @DeleteMapping("/{boastCatPostId}")
-    public ResponseEntity<Void> deleteBoastCatPost(@PathVariable Long boastCatPostId, @AuthenticationPrincipal PrincipalUser user){
+    public ResponseEntity<Void> deleteBoastCatPost(
+            @Parameter(description = "자랑글 ID", example = "1")
+            @PathVariable Long boastCatPostId,
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
         String loginId = user.getUser().getLoginId();
         String password = user.getUser().getPassword();
@@ -102,6 +122,9 @@ public class BoastCatPostController {
      * - Entity 변환 오버헤드 제거
      * - BoastCatPostListResponse를 재사용하여 코드 중복 제거
      */
+    @Operation(summary = "최근 자랑글 20개 조회",
+            description = "최신 자랑글 20개를 Projection으로 조회합니다. 인증 불필요.")
+    @SecurityRequirements
     @GetMapping("/recent")
     public ResponseEntity<ApiResponse<List<BoastCatPostListResponse>>> getRecentBoastCatPosts() {
         List<BoastCatPostListResponse> posts = boastCatPostServiceImpl.getRecentBoastCatPosts();
@@ -117,8 +140,13 @@ public class BoastCatPostController {
      * 실행되는 쿼리:
      * UPDATE boast_cat_post SET view = view + 1 WHERE id = ?
      */
+    @Operation(summary = "조회수 증가 (v2 원자적)",
+            description = "DB 원자적 쿼리로 조회수를 증가시킵니다. 인증 불필요.")
+    @SecurityRequirements
     @PostMapping("/{boastCatPostId}/view")
-    public ResponseEntity<ApiResponse<Void>> incrementViewCount(@PathVariable Long boastCatPostId) {
+    public ResponseEntity<ApiResponse<Void>> incrementViewCount(
+            @Parameter(description = "자랑글 ID", example = "1")
+            @PathVariable Long boastCatPostId) {
         boastCatPostServiceImpl.incrementViewCount(boastCatPostId);
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공", null));
     }
@@ -126,19 +154,17 @@ public class BoastCatPostController {
     /**
      * 조회수 증가 API - 더티 체킹 방식 (v1 - 동시성 이슈 있음)
      *
-     * ⚠️ 동시성 문제 (Lost Update):
-     * 이 API는 JPA 더티 체킹을 사용하여 조회수를 증가시킵니다.
-     * 동시 요청 시 일부 업데이트가 손실되는 Lost Update 문제가 있습니다.
-     *
-     * K6 동시성 테스트 결과:
-     * - 1000 VU 동시 요청 시 약 800~900 정도만 증가 (100~200 손실)
-     *
-     * 이 문제를 발견하여 v2 (원자적 쿼리 방식)으로 개선하였습니다.
-     *
      * @deprecated 동시성 이슈로 인해 POST /{boastCatPostId}/view 사용 권장
      */
+    @Deprecated
+    @Operation(summary = "조회수 증가 (v1 더티체킹)",
+            description = "JPA 더티 체킹 방식. 동시성 이슈(Lost Update)가 있으므로 v2 사용을 권장합니다.",
+            deprecated = true)
+    @SecurityRequirements
     @PostMapping("/v1/{boastCatPostId}/view")
-    public ResponseEntity<ApiResponse<Void>> incrementViewCountV1(@PathVariable Long boastCatPostId) {
+    public ResponseEntity<ApiResponse<Void>> incrementViewCountV1(
+            @Parameter(description = "자랑글 ID", example = "1")
+            @PathVariable Long boastCatPostId) {
         boastCatPostServiceImpl.incrementViewCountWithDirtyChecking(boastCatPostId);
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (더티 체킹 방식)", null));
     }
@@ -153,19 +179,15 @@ public class BoastCatPostController {
      * 1. 클라이언트 요청 → Redis INCR로 조회수 증가 (즉시 반환)
      * 2. 스케줄러가 1분마다 Redis의 증가분을 DB에 배치 반영
      *
-     * 조회수 처리 방식 비교:
-     * ┌─────────────────┬──────────────────────────────────────────────────┐
-     * │ 방식            │ 특징                                              │
-     * ├─────────────────┼──────────────────────────────────────────────────┤
-     * │ v1 더티체킹     │ ❌ 동시성 이슈 (Lost Update)                     │
-     * │ v2 원자적쿼리   │ ✅ 동시성 안전 ⚠️ 매 요청마다 DB UPDATE        │
-     * │ v3 Redis+INCR   │ ✅ 동시성 안전 ✅ DB 부하 대폭 감소             │
-     * └─────────────────┴──────────────────────────────────────────────────┘
-     *
      * Redis 장애 시: DB 직접 업데이트로 자동 fallback
      */
+    @Operation(summary = "조회수 증가 (v3 Redis)",
+            description = "Redis INCR 방식. DB 부하를 줄이고 동시성을 완벽 보장합니다. Redis 장애 시 DB fallback. 인증 불필요.")
+    @SecurityRequirements
     @PostMapping("/v3/{boastCatPostId}/view")
-    public ResponseEntity<ApiResponse<Long>> incrementViewCountV3(@PathVariable Long boastCatPostId) {
+    public ResponseEntity<ApiResponse<Long>> incrementViewCountV3(
+            @Parameter(description = "자랑글 ID", example = "1")
+            @PathVariable Long boastCatPostId) {
         Long newCount = viewCountService.incrementViewCount(PostType.BOAST, boastCatPostId);
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (Redis INCR 방식)", newCount));
     }

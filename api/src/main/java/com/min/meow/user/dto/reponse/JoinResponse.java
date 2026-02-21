@@ -25,7 +25,7 @@ public class JoinResponse {
 
     private LocalDateTime registeredAt;
 
-    public static JoinResponse convertToDto(User user){
+    public static JoinResponse from(User user){
 
         return JoinResponse.builder()
                 .userId(user.getId())

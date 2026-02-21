@@ -25,7 +25,7 @@ public class MyPostListResponse {
     /**
      * Page<MyPostDto>를 Response로 변환
      */
-    public static MyPostListResponse of(Page<MyPostDto> page) {
+    public static MyPostListResponse from(Page<MyPostDto> page) {
         return MyPostListResponse.builder()
                 .content(page.getContent())
                 .totalElements(page.getTotalElements())

@@ -8,6 +8,10 @@ import com.min.meow.user.dto.reponse.LoginResponse;
 import com.min.meow.user.dto.request.JoinRequest;
 import com.min.meow.user.dto.request.LoginRequest;
 import com.min.meow.user.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "사용자", description = "회원가입, 로그인, 탈퇴 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
@@ -26,6 +31,9 @@ public class UserController {
 
     private final UserService userService;
 
+    @Operation(summary = "회원가입",
+            description = "새 사용자를 등록합니다. 아이디 중복 시 409 응답. 인증 불필요.")
+    @SecurityRequirements
     @PostMapping("/join")
     public ResponseEntity<ApiResponse<JoinResponse>> join(@RequestBody @Valid JoinRequest joinRequest){
 
@@ -35,6 +43,9 @@ public class UserController {
                 .body(ApiResponse.created("회원가입 성공", joinResponse));
     }
 
+    @Operation(summary = "로그인",
+            description = "아이디/비밀번호로 로그인합니다. 성공 시 JWT 토큰을 반환합니다. 인증 불필요.")
+    @SecurityRequirements
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody @Valid LoginRequest loginRequest){
         LoginResponse loginResponse = userService.login(loginRequest);
@@ -46,11 +57,12 @@ public class UserController {
      * - 소프트 삭제 방식으로 데이터 무결성 유지
      * - 개인정보 비식별화 처리
      * - 탈퇴 후에도 기존 게시글은 "탈퇴한 사용자"로 표시됨
-     * @param user 현재 로그인한 사용자 정보
-     * @return 탈퇴 완료 메시지
      */
+    @Operation(summary = "회원 탈퇴",
+            description = "현재 로그인한 사용자의 계정을 탈퇴합니다. 소프트 삭제 방식으로 개인정보는 비식별화됩니다. 인증 필요.")
     @DeleteMapping("/withdraw")
-    public ResponseEntity<Void> withdraw(@AuthenticationPrincipal PrincipalUser user) {
+    public ResponseEntity<Void> withdraw(
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
         userService.withdraw(user.getLoginId());
         return ResponseEntity.noContent().build();
     }

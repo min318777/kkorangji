@@ -49,7 +49,7 @@ public class MyPageServiceImpl implements MyPageService {
         long commentCount = commentRepository.countByUser(user);
 
 
-        return MyPageSummaryResponse.of(user, boastCatPostCount, lostCatPostCount, commentCount);
+        return MyPageSummaryResponse.from(user, boastCatPostCount, lostCatPostCount, commentCount);
     }
 
     /**
@@ -74,7 +74,7 @@ public class MyPageServiceImpl implements MyPageService {
         }
 
         // 3. Response 생성
-        return MyPostListResponse.of(postPage);
+        return MyPostListResponse.from(postPage);
     }
 
     /**
@@ -93,15 +93,15 @@ public class MyPageServiceImpl implements MyPageService {
         Page<Comment> commentPage = commentRepository.findByUserOrderByCreatedAtDesc(user, pageable);
 
         // 3. DTO 변환
-        Page<MyCommentDto> commentDtoPage = commentPage.map(MyCommentDto::fromComment);
+        Page<MyCommentDto> commentDtoPage = commentPage.map(MyCommentDto::from);
 
         // 4. Response 생성
-        return MyCommentListResponse.of(commentDtoPage);
+        return MyCommentListResponse.from(commentDtoPage);
     }
 
     private Page<MyPostDto> getBoastPostsOnly(Long userId, Pageable pageable) {
         Page<BoastCatPost> boastPosts = boastCatPostRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
-        return boastPosts.map(MyPostDto::fromBoastCatPost);
+        return boastPosts.map(MyPostDto::from);
     }
 
     private Page<MyPostDto> getLostPostsOnly(Long userId, Pageable pageable) {
@@ -122,7 +122,7 @@ public class MyPageServiceImpl implements MyPageService {
         // 2. DTO로 변환
         List<MyPostDto> allPosts = new ArrayList<>();
         allPosts.addAll(boastPosts.stream()
-                .map(MyPostDto::fromBoastCatPost)
+                .map(MyPostDto::from)
                 .collect(Collectors.toList()));
         allPosts.addAll(lostPosts.stream()
                 .map(MyPostDto::fromLostCatPost)

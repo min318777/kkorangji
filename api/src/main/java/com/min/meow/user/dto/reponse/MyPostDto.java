@@ -31,7 +31,7 @@ public class MyPostDto {
     /**
      * BoastCatPost 엔티티를 DTO로 변환
      */
-    public static MyPostDto fromBoastCatPost(BoastCatPost post) {
+    public static MyPostDto from(BoastCatPost post) {
         return MyPostDto.builder()
                 .postId(post.getId())
                 .postType("BOAST")

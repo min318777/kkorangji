@@ -25,7 +25,7 @@ public class MyPageSummaryResponse {
     private long totalCommentCount;    // 전체 댓글 수
     private LocalDateTime registeredAt; // 가입일
     
-    public static MyPageSummaryResponse of(User user, long boastCount, long lostCount, long commentCount) {
+    public static MyPageSummaryResponse from(User user, long boastCount, long lostCount, long commentCount) {
         return MyPageSummaryResponse.builder()
                 .loginId(user.getLoginId())
                 .name(user.getName())

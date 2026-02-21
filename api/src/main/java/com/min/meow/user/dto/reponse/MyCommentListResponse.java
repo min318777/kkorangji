@@ -25,7 +25,7 @@ public class MyCommentListResponse {
     /**
      * Page<MyCommentDto>를 Response로 변환
      */
-    public static MyCommentListResponse of(Page<MyCommentDto> page) {
+    public static MyCommentListResponse from(Page<MyCommentDto> page) {
         return MyCommentListResponse.builder()
                 .content(page.getContent())
                 .totalElements(page.getTotalElements())

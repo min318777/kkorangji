@@ -21,11 +21,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @RequiredArgsConstructor
 @Service
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+
 
     public LoginResponse login(LoginRequest loginRequest){
         User user = userRepository.findByLoginId(loginRequest.getLoginId())
@@ -37,6 +39,8 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+
+    @Transactional
     public JoinResponse join(JoinRequest joinRequest){
 
         if (userRepository.existsByEmail(joinRequest.getEmail())) {
@@ -59,7 +63,7 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
 
-        return JoinResponse.convertToDto(user);
+        return JoinResponse.from(user);
     }
 
     /**

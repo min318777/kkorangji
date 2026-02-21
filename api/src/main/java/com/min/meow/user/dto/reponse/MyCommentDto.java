@@ -27,7 +27,7 @@ public class MyCommentDto {
     /**
      * Comment 엔티티를 DTO로 변환
      */
-    public static MyCommentDto fromComment(Comment comment) {
+    public static MyCommentDto from(Comment comment) {
         // 댓글이 어느 게시글에 달렸는지 확인
         boolean isBoastPost = comment.getBoastCatPost() != null;
 

@@ -1,5 +1,6 @@
 package com.min.meow.post.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -13,6 +14,7 @@ import java.util.List;
  * 2. Presigned URL로 S3에 이미지 직접 업로드
  * 3. 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 게시글 생성 요청
  */
+@Schema(description = "실종글 생성 요청")
 @Getter
 @Setter
 @Builder
@@ -20,54 +22,54 @@ import java.util.List;
 @AllArgsConstructor
 public class CreateLostCatPostRequest {
 
-    // 제목: 2~100자, 필수
+    @Schema(description = "게시글 제목 (2~100자)", example = "우리 고양이를 찾아주세요")
     @NotBlank(message = "제목을 입력해 주세요.")
     @Size(min = 2, max = 100, message = "제목은 2자 이상 100자 이하로 입력해주세요.")
     private String title;
 
-    // 본문: 2~2000자, 필수 (실종 신고는 상세 내용 필수)
+    @Schema(description = "게시글 본문 (2~2000자, 필수)", example = "어제 저녁 집 근처에서 실종되었습니다.")
     @NotBlank(message = "내용을 입력해 주세요.")
     @Size(min = 2, max = 2000, message = "내용은 2자 이상 2000자 이하로 입력해주세요.")
     private String content;
 
-    // 고양이 이름: 최대 20자
+    @Schema(description = "고양이 이름 (최대 20자)", example = "나비")
     @Size(max = 20, message = "고양이 이름은 20자 이하로 입력해주세요.")
     private String catName;
 
-    // 고양이 품종: 최대 30자
+    @Schema(description = "고양이 품종 (최대 30자)", example = "코리안숏헤어")
     @Size(max = 30, message = "품종은 30자 이하로 입력해주세요.")
     private String catType;
 
-    // 고양이 색상: 최대 20자
+    @Schema(description = "고양이 색상 (최대 20자)", example = "치즈색")
     @Size(max = 20, message = "색상은 20자 이하로 입력해주세요.")
     private String catColor;
 
-    // 고양이 나이: 0~30살
+    @Schema(description = "고양이 나이 (0~30살)", example = "3")
     @Min(value = 0, message = "나이는 0 이상이어야 합니다.")
     @Max(value = 30, message = "나이는 30 이하로 입력해주세요.")
     private Integer catAge;
 
-    // 고양이 몸무게: 0~30kg
+    @Schema(description = "고양이 몸무게 (0~30kg)", example = "4")
     @Min(value = 0, message = "몸무게는 0 이상이어야 합니다.")
     @Max(value = 30, message = "몸무게는 30kg 이하로 입력해주세요.")
     private Integer catWeight;
 
-    // 실종 장소: 최대 100자
+    @Schema(description = "실종 장소 (최대 100자)", example = "서울시 강남구 역삼동")
     @Size(max = 100, message = "실종 장소는 100자 이하로 입력해주세요.")
     private String lostLocation;
 
+    @Schema(description = "실종 장소 위도", example = "37.4979")
     private Double latitude;
+
+    @Schema(description = "실종 장소 경도", example = "127.0276")
     private Double longitude;
 
-    // 사례금: 0원 이상
+    @Schema(description = "사례금 (0원 이상)", example = "50000")
     @Min(value = 0, message = "사례금은 0원 이상이어야 합니다.")
     private Integer reward;
 
-    /**
-     * S3에 업로드된 이미지의 key 목록
-     * Presigned URL로 업로드 완료 후 받은 key를 전달
-     * 예: ["meow/uuid-1.jpg", "meow/uuid-2.png"]
-     */
+    @Schema(description = "S3 업로드 후 받은 이미지 key 목록 (최대 10장)",
+            example = "[\"meow/uuid-1.jpg\"]")
     @Size(max = 10, message = "이미지는 최대 10장까지 업로드 가능합니다.")
     private List<String> imageKeys;
 }

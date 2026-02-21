@@ -4,6 +4,9 @@ import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.user.dto.response.TokenResponse;
 import com.min.meow.user.service.ReissueService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,14 +20,20 @@ import org.springframework.web.bind.annotation.RestController;
  * 토큰 재발급 컨트롤러
  * 책임: HTTP 요청/응답 처리 (쿠키 추출, 헤더/쿠키 설정)
  */
+@Tag(name = "인증", description = "JWT 토큰 재발급 API")
 @RestController
 @RequiredArgsConstructor
 public class ReissueController {
 
     private final ReissueService reissueService;
 
+    @Operation(summary = "토큰 재발급",
+            description = "Refresh Token(쿠키)으로 새 Access Token을 발급합니다. "
+                    + "응답 헤더 Authorization에 새 Access Token, 쿠키에 새 Refresh Token이 설정됩니다.")
     @PostMapping("/api/reissue")
-    public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> reissue(
+            @Parameter(hidden = true) HttpServletRequest request,
+            @Parameter(hidden = true) HttpServletResponse response) {
 
         String refreshToken = extractRefreshToken(request);
 
