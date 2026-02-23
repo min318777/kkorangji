@@ -1,6 +1,7 @@
 package com.min.meow.post.dto.response;
 
 import com.querydsl.core.annotations.QueryProjection;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,19 +21,37 @@ import java.time.LocalDateTime;
  * - Entity -> DTO 변환 오버헤드 제거
  * - LazyInitializationException 방지 (연관 엔티티 접근 없음)
  */
+@Schema(description = "실종글 목록 조회 응답 (경량)")
 @Getter
 @Builder
 @NoArgsConstructor
 public class LostCatPostListResponse {
 
+    @Schema(description = "게시글 ID", example = "1")
     private Long id;
+
+    @Schema(description = "게시글 제목", example = "우리 고양이를 찾아주세요")
     private String title;
-    private String writer;          // 작성자 loginId
-    private String catName;         // 고양이 이름
-    private String lostLocation;    // 실종 위치
-    private int commentCount;       // 댓글 수
-    private int view;               // 조회수
-    private boolean isCompleted;    // 찾음 여부
+
+    @Schema(description = "작성자 로그인 ID", example = "cat_lover")
+    private String writer;
+
+    @Schema(description = "고양이 이름", example = "나비")
+    private String catName;
+
+    @Schema(description = "실종 장소", example = "서울시 강남구 역삼동")
+    private String lostLocation;
+
+    @Schema(description = "댓글 수", example = "5")
+    private int commentCount;
+
+    @Schema(description = "조회수", example = "150")
+    private int view;
+
+    @Schema(description = "찾음 여부", example = "false")
+    private boolean isCompleted;
+
+    @Schema(description = "작성일시", example = "2025-01-15T10:30:00")
     private LocalDateTime createdAt;
 
     /**
