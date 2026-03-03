@@ -36,5 +36,8 @@ claude.md
 hs_err_pid*
 replay_pid*
 
+# SQL 파일
+sql/
+
 # Windows 예약 파일명
 NUL

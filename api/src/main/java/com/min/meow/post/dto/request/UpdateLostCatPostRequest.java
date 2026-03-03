@@ -17,7 +17,6 @@ import java.util.List;
  */
 @Schema(description = "실종글 수정 요청")
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -82,4 +81,86 @@ public class UpdateLostCatPostRequest {
     @Schema(description = "삭제할 이미지의 CloudFront URL 목록",
             example = "[\"https://d1234.cloudfront.net/meow/uuid-delete.jpg\"]")
     private List<String> deleteImageUrls;
+
+    // 필드 간 관계 검증: 위도와 경도는 모두 있거나 모두 없어야 함
+    @AssertTrue(message = "위도와 경도는 모두 입력하거나, 모두 비워야 합니다.")
+    @Schema(hidden = true)
+    private boolean isCoordinatesValid() {
+        return (latitude == null) == (longitude == null);
+    }
+
+    // 필드 간 관계 검증: 유지할 이미지와 삭제할 이미지에 중복 URL이 없어야 함
+    @AssertTrue(message = "유지할 이미지와 삭제할 이미지에 중복된 URL이 있습니다.")
+    @Schema(hidden = true)
+    private boolean isImageUrlsNotOverlapping() {
+        if (keepImageUrls == null || deleteImageUrls == null) return true;
+        return keepImageUrls.stream().noneMatch(deleteImageUrls::contains);
+    }
+
+    // 제목: 앞뒤 공백 제거
+    public void setTitle(String title) {
+        this.title = title != null ? title.trim() : null;
+    }
+
+    // 본문: 줄바꿈/들여쓰기가 의도적일 수 있으므로 정규화 안 함
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    // 고양이 이름: 앞뒤 공백 제거 (검색 정확도 향상)
+    public void setCatName(String catName) {
+        this.catName = catName != null ? catName.trim() : null;
+    }
+
+    // 고양이 품종: 앞뒤 공백 제거
+    public void setCatType(String catType) {
+        this.catType = catType != null ? catType.trim() : null;
+    }
+
+    // 고양이 색상: 앞뒤 공백 제거
+    public void setCatColor(String catColor) {
+        this.catColor = catColor != null ? catColor.trim() : null;
+    }
+
+    // 실종 장소: 앞뒤 공백 제거
+    public void setLostLocation(String lostLocation) {
+        this.lostLocation = lostLocation != null ? lostLocation.trim() : null;
+    }
+
+    // 숫자/boolean/리스트: 정규화 불필요
+    public void setCatAge(Integer catAge) {
+        this.catAge = catAge;
+    }
+
+    public void setCatWeight(Integer catWeight) {
+        this.catWeight = catWeight;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public void setReward(Integer reward) {
+        this.reward = reward;
+    }
+
+    public void setCompleted(boolean completed) {
+        isCompleted = completed;
+    }
+
+    public void setNewImageKeys(List<String> newImageKeys) {
+        this.newImageKeys = newImageKeys;
+    }
+
+    public void setKeepImageUrls(List<String> keepImageUrls) {
+        this.keepImageUrls = keepImageUrls;
+    }
+
+    public void setDeleteImageUrls(List<String> deleteImageUrls) {
+        this.deleteImageUrls = deleteImageUrls;
+    }
 }

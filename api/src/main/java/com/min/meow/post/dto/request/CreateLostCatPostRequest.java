@@ -16,7 +16,6 @@ import java.util.List;
  */
 @Schema(description = "실종글 생성 요청")
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -72,4 +71,66 @@ public class CreateLostCatPostRequest {
             example = "[\"meow/uuid-1.jpg\"]")
     @Size(max = 10, message = "이미지는 최대 10장까지 업로드 가능합니다.")
     private List<String> imageKeys;
+
+    // 필드 간 관계 검증: 위도와 경도는 모두 있거나 모두 없어야 함
+    @AssertTrue(message = "위도와 경도는 모두 입력하거나, 모두 비워야 합니다.")
+    @Schema(hidden = true)
+    private boolean isCoordinatesValid() {
+        return (latitude == null) == (longitude == null);
+    }
+
+    // 제목: 앞뒤 공백 제거
+    public void setTitle(String title) {
+        this.title = title != null ? title.trim() : null;
+    }
+
+    // 본문: 줄바꿈/들여쓰기가 의도적일 수 있으므로 정규화 안 함
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    // 고양이 이름: 앞뒤 공백 제거 (검색 정확도 향상)
+    public void setCatName(String catName) {
+        this.catName = catName != null ? catName.trim() : null;
+    }
+
+    // 고양이 품종: 앞뒤 공백 제거
+    public void setCatType(String catType) {
+        this.catType = catType != null ? catType.trim() : null;
+    }
+
+    // 고양이 색상: 앞뒤 공백 제거
+    public void setCatColor(String catColor) {
+        this.catColor = catColor != null ? catColor.trim() : null;
+    }
+
+    // 실종 장소: 앞뒤 공백 제거
+    public void setLostLocation(String lostLocation) {
+        this.lostLocation = lostLocation != null ? lostLocation.trim() : null;
+    }
+
+    // 숫자/리스트: 정규화 불필요
+    public void setCatAge(Integer catAge) {
+        this.catAge = catAge;
+    }
+
+    public void setCatWeight(Integer catWeight) {
+        this.catWeight = catWeight;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public void setReward(Integer reward) {
+        this.reward = reward;
+    }
+
+    public void setImageKeys(List<String> imageKeys) {
+        this.imageKeys = imageKeys;
+    }
 }

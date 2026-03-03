@@ -2,16 +2,11 @@ package com.min.meow.user.dto.request;
 
 import com.min.meow.global.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
-import lombok.Setter;
 
 @Schema(description = "회원가입 요청")
 @Getter
-@Setter
 public class JoinRequest {
 
     // 아이디: 5~20자, 영문/숫자만 허용
@@ -51,4 +46,42 @@ public class JoinRequest {
 
     @Schema(description = "사용자 역할 (기본값: USER)", hidden = true)
     private Role role;
+
+    // 필드 간 관계 검증: 비밀번호와 비밀번호 확인이 일치하는지 확인
+    @AssertTrue(message = "비밀번호가 일치하지 않습니다.")
+    @Schema(hidden = true)
+    private boolean isPasswordMatching() {
+        if (password == null || passwordConfirm == null) return true;
+        return password.equals(passwordConfirm);
+    }
+
+    // 식별자: 앞뒤 공백 제거
+    public void setLoginId(String loginId) {
+        this.loginId = loginId != null ? loginId.trim() : null;
+    }
+
+    // 이메일: 앞뒤 공백 제거 + 소문자 변환 (이메일은 대소문자 구분 없음이 표준)
+    public void setEmail(String email) {
+        this.email = email != null ? email.trim().toLowerCase() : null;
+    }
+
+    // 이름: 앞뒤 공백 제거
+    public void setName(String name) {
+        this.name = name != null ? name.trim() : null;
+    }
+
+    // 비밀번호: 공백이 의도적일 수 있으므로 정규화 안 함
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    // 비밀번호 확인: 정규화 안 함
+    public void setPasswordConfirm(String passwordConfirm) {
+        this.passwordConfirm = passwordConfirm;
+    }
+
+    // 역할: 정규화 불필요
+    public void setRole(Role role) {
+        this.role = role;
+    }
 }

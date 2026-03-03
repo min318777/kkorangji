@@ -6,7 +6,6 @@ import lombok.*;
 
 @Schema(description = "게시글 검색 요청")
 @Getter
-@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -28,4 +27,27 @@ public class PostSearchRequest {
     private Long userId;
     //private int CategoryType;
     //private CategoryDto.SortStatus sortStatus;
+
+    // 검색어: 앞뒤 공백 제거 (검색 정확도 향상)
+    public void setTitle(String title) {
+        this.title = title != null ? title.trim() : null;
+    }
+
+    // 검색어: 앞뒤 공백 제거
+    public void setContents(String contents) {
+        this.contents = contents != null ? contents.trim() : null;
+    }
+
+    // 숫자: 정규화 불필요
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setView(int view) {
+        this.view = view;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 }

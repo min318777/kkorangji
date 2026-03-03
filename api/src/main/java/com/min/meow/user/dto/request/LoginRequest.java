@@ -4,11 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
-import lombok.Setter;
 
 @Schema(description = "로그인 요청")
 @Getter
-@Setter
 public class LoginRequest {
 
     // 로그인 시에는 @Pattern 불필요 (DB에 저장된 값과 비교만 하면 됨)
@@ -24,4 +22,19 @@ public class LoginRequest {
 
     @Schema(description = "로그인 상태 유지 여부", example = "false")
     private boolean rememberMe;
+
+    // 식별자: 앞뒤 공백 제거
+    public void setLoginId(String loginId) {
+        this.loginId = loginId != null ? loginId.trim() : null;
+    }
+
+    // 비밀번호: 공백이 의도적일 수 있으므로 정규화 안 함
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    // boolean: 정규화 불필요
+    public void setRememberMe(boolean rememberMe) {
+        this.rememberMe = rememberMe;
+    }
 }

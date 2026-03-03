@@ -17,7 +17,6 @@ import java.util.List;
  */
 @Schema(description = "자랑글 생성 요청")
 @Getter
-@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -42,4 +41,19 @@ public class CreateBoastCatPostRequest {
             example = "[\"meow/uuid-1.jpg\", \"meow/uuid-2.png\"]")
     @Size(max = 10, message = "이미지는 최대 10장까지 업로드 가능합니다.")
     private List<String> imageKeys;
+
+    // 제목: 앞뒤 공백 제거
+    public void setTitle(String title) {
+        this.title = title != null ? title.trim() : null;
+    }
+
+    // 본문: 줄바꿈/들여쓰기가 의도적일 수 있으므로 정규화 안 함
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    // 리스트: 정규화 불필요
+    public void setImageKeys(List<String> imageKeys) {
+        this.imageKeys = imageKeys;
+    }
 }
