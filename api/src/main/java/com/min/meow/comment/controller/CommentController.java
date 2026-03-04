@@ -141,7 +141,7 @@ public class CommentController {
             @PathVariable Long commentId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        UpdateCommentResponse updateCommentResponse = commentServiceImpl.updateComment(updateCommentRequest, commentId);
+        UpdateCommentResponse updateCommentResponse = commentServiceImpl.updateComment(updateCommentRequest, commentId, user.getUser().getId());
         return ResponseEntity.ok(ApiResponse.success("댓글 수정 성공", updateCommentResponse));
     }
 
@@ -153,7 +153,7 @@ public class CommentController {
             @PathVariable Long commentId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        commentServiceImpl.deleteComment(commentId);
+        commentServiceImpl.deleteComment(commentId, user.getUser().getId());
         return ResponseEntity.noContent().build();
     }
 }

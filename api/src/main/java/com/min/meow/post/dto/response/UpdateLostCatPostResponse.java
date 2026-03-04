@@ -1,13 +1,11 @@
 package com.min.meow.post.dto.response;
 
-import com.min.meow.comment.dto.CommentDto;
 import com.min.meow.post.entity.LostCatPost;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Schema(description = "실종글 수정 응답")
 @Builder
@@ -59,9 +57,6 @@ public class UpdateLostCatPostResponse {
     @Schema(description = "사례금 (원)", example = "100000")
     private Integer reward;
 
-    @Schema(description = "댓글 목록")
-    private List<CommentDto> commentDtoList;
-
     @Schema(description = "작성일시", example = "2025-01-15T10:30:00")
     private LocalDateTime createdAt;
 
@@ -85,7 +80,6 @@ public class UpdateLostCatPostResponse {
                 .reward(lostCatPost.getReward())
                 .latitude(lostCatPost.getLatitude())
                 .longitude(lostCatPost.getLongitude())
-                .commentDtoList(lostCatPost.getComments().stream().map(CommentDto::toDto).collect(Collectors.toList()))
                 .createdAt(lostCatPost.getCreatedAt())
                 .updatedAt(lostCatPost.getUpdatedAt())
                 .build();

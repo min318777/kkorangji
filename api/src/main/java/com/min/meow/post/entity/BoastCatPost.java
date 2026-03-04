@@ -7,15 +7,25 @@ import com.min.meow.user.entity.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.BatchSize;
-
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.Check;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "boast_cat_post", indexes = {
+    // 목록 조회: ORDER BY created_at DESC + 페이징 (가장 빈번한 쿼리)
+    @Index(name = "idx_boast_post_created_at", columnList = "created_at DESC"),
+    // 마이페이지: WHERE user_id = ? ORDER BY created_at DESC
+    @Index(name = "idx_boast_post_user_created_at", columnList = "user_id, created_at DESC")
+})
+@Check(constraints = "view >= 0 AND comment_count >= 0 AND like_count >= 0")
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -43,9 +53,11 @@ public class BoastCatPost extends BasePost {
 
     // 비정규화 필드: 조회 성능 최적화를 위해 카운트를 직접 저장
     @Builder.Default
+    @ColumnDefault("0")
     private int commentCount = 0;  // 댓글 수
 
     @Builder.Default
+    @ColumnDefault("0")
     private int likeCount = 0;     // 좋아요 수
 
     // 댓글 수 증가
@@ -84,7 +96,8 @@ public class BoastCatPost extends BasePost {
             this.imageUrls.addAll(newImageUrls);
         }
     }
+    // ID 기반 비교로 영속성 컨텍스트에 의존하지 않음
     public boolean isAuthor(User user) {
-        return this.user.equals(user);
+        return this.user.getId().equals(user.getId());
     }
 }

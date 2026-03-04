@@ -23,7 +23,6 @@ public class User{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // DB 레벨 제약만 적용 (검증은 Request DTO에서 처리)
     @Column(unique = true, nullable = false, length = 20)
     private String loginId;
 
@@ -37,10 +36,14 @@ public class User{
     @Column(nullable = false, length = 10)
     private String name;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    // CASCADE 제거: User는 소프트 삭제 정책이므로 실제 삭제가 발생하지 않음
+    // DB 레벨 FK RESTRICT가 마지막 방어선 역할 수행
+    @OneToMany(mappedBy = "user")
     private List<PostLike> postLike = new ArrayList<>();
 
+    // DB 레벨 제약: 역할은 반드시 존재해야 함 (ROLE_USER, ROLE_ADMIN)
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Role role;
 
     private LocalDateTime registeredAt;
@@ -93,9 +96,6 @@ public class User{
         this.password = null;
     }
 
-    /**
-     * 탈퇴한 사용자인지 확인
-     */
     public boolean isWithdrawn() {
         return this.isDelete;
     }

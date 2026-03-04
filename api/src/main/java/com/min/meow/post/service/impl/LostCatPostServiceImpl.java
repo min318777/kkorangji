@@ -37,6 +37,7 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class LostCatPostServiceImpl implements LostCatPostService {
 
     private final LostCatRepository lostCatRepository;
@@ -61,7 +62,6 @@ public class LostCatPostServiceImpl implements LostCatPostService {
      * LIMIT ? OFFSET ?
      */
     @Override
-    @Transactional(readOnly = true)
     public PageResponse<LostCatPostListResponse> getAllLostCatPosts(Pageable pageable){
         // Projection으로 DB에서 필요한 컬럼만 조회 (Entity 변환 불필요)
         Page<LostCatPostListResponse> posts = lostCatRepository.findAllWithProjection(pageable);
@@ -83,7 +83,6 @@ public class LostCatPostServiceImpl implements LostCatPostService {
      * - TTL: 10분
      */
     @Override
-    @Transactional(readOnly = true)
     @Cacheable(cacheNames = "post:lost:detail", key = "#lostCatPostId")
     public GetLostCatPostResponse getLostCatPost(Long lostCatPostId){
         LostCatPost lostCatPost = lostCatRepository.findByIdWithUser(lostCatPostId)
@@ -323,7 +322,6 @@ public class LostCatPostServiceImpl implements LostCatPostService {
      * - TTL: 5분
      */
     @Override
-    @Transactional(readOnly = true)
     @Cacheable(cacheNames = "post:lost:recent")
     public List<LostCatPostListResponse> getRecentLostCatPosts() {
         // DTO Projection으로 필요한 컬럼만 조회 (Entity 변환 없음)

@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @AllArgsConstructor
+@Transactional(readOnly = true)
 public class CommentServiceImpl implements CommentService {
 
     private final LostCatRepository lostCatRepository;
@@ -42,7 +43,6 @@ public class CommentServiceImpl implements CommentService {
 
     // 고양이 자랑 게시글 댓글 조회 (전체)
     @Override
-    @Transactional(readOnly = true)
     public List<GetCommentResponse> getBoastCatPostComment(Long boastCatPostId) {
         List<Comment> comments = commentRepository.findByBoastCatPostIdWithUser(boastCatPostId);
         return comments.stream()
@@ -52,7 +52,6 @@ public class CommentServiceImpl implements CommentService {
 
     // 고양이 자랑 게시글 댓글 조회 (페이지네이션)
     @Override
-    @Transactional(readOnly = true)
     public PageResponse<GetCommentResponse> getBoastCatPostComment(Long boastCatPostId, Pageable pageable) {
         Page<Comment> comments = commentRepository.findByBoastCatPostIdWithUser(boastCatPostId, pageable);
         return PageResponse.from(comments.map(GetCommentResponse::toResponse));
@@ -60,7 +59,6 @@ public class CommentServiceImpl implements CommentService {
 
     // 실종 고양이 게시글 댓글 조회 (전체)
     @Override
-    @Transactional(readOnly = true)
     public List<GetCommentResponse> getLostCatPostComment(Long lostCatPostId) {
         List<Comment> comments = commentRepository.findByLostCatPostIdWithUser(lostCatPostId);
         return comments.stream()
@@ -70,7 +68,6 @@ public class CommentServiceImpl implements CommentService {
 
     // 실종 고양이 게시글 댓글 조회 (페이지네이션)
     @Override
-    @Transactional(readOnly = true)
     public PageResponse<GetCommentResponse> getLostCatPostComment(Long lostCatPostId, Pageable pageable) {
         Page<Comment> comments = commentRepository.findByLostCatPostIdWithUser(lostCatPostId, pageable);
         return PageResponse.from(comments.map(GetCommentResponse::toResponse));
@@ -156,11 +153,16 @@ public class CommentServiceImpl implements CommentService {
     // 댓글 수정
     @Transactional
     @Override
-    public UpdateCommentResponse updateComment(UpdateCommentRequest updateCommentRequest, Long commentId){
+    public UpdateCommentResponse updateComment(UpdateCommentRequest updateCommentRequest, Long commentId, Long userId){
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        comment.updateContent(updateCommentRequest.getContent());  // update() → updateContent()로 변경
+        // 작성자 권한 검증
+        if (!comment.isAuthor(userId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
+        }
+
+        comment.updateContent(updateCommentRequest.getContent());
 
         return UpdateCommentResponse.toResponse(comment);
     }
@@ -168,9 +170,14 @@ public class CommentServiceImpl implements CommentService {
     // 댓글 삭제
     @Transactional
     @Override
-    public void deleteComment(Long commentId){
+    public void deleteComment(Long commentId, Long userId){
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+
+        // 작성자 권한 검증
+        if (!comment.isAuthor(userId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
+        }
 
         // 게시글의 댓글 수 감소
         if (comment.getBoastCatPost() != null) {

@@ -32,6 +32,7 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BoastCatPostServiceImpl implements BoastCatPostService {
     private final BoastCatPostRepository boastCatPostRepository;
     private final UserRepository userRepository;
@@ -48,7 +49,6 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
      * ORDER BY b.created_at DESC LIMIT ? OFFSET ?
      */
     @Override
-    @Transactional(readOnly = true)
     public PageResponse<BoastCatPostListResponse> getAllBoastCatPosts(Pageable pageable){
         // Projection으로 DB에서 필요한 컬럼만 조회 (Entity 변환 불필요)
         Page<BoastCatPostListResponse> posts = boastCatPostRepository.findAllWithProjection(pageable);
@@ -70,7 +70,6 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
      * - TTL: 10분
      */
     @Override
-    @Transactional(readOnly = true)
     @Cacheable(cacheNames = "post:boast:detail", key = "#boastCatPostId")
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
         BoastCatPost boastCatPost = boastCatPostRepository.findByIdWithUser(boastCatPostId)
@@ -285,7 +284,6 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
      * - TTL: 5분
      */
     @Override
-    @Transactional(readOnly = true)
     @Cacheable(cacheNames = "post:boast:recent")
     public List<BoastCatPostListResponse> getRecentBoastCatPosts() {
         // DTO Projection으로 필요한 컬럼만 조회 (Entity 변환 없음)

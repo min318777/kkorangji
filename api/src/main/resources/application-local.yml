@@ -11,6 +11,13 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: min3782
+    hikari:
+      maximum-pool-size: 10          # 로컬 환경: 기본값 유지
+      minimum-idle: 5                # 유휴 시 최소 커넥션
+      connection-timeout: 3000       # 3초 내 못 얻으면 실패
+      max-lifetime: 1800000          # 30분마다 커넥션 재생성
+      idle-timeout: 600000           # 10분 유휴 시 커넥션 정리
+      leak-detection-threshold: 2000 # 2초 이상 미반환 시 경고 로그
 
   jpa:
     hibernate:

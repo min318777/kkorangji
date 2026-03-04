@@ -8,6 +8,7 @@ import com.min.meow.post.search.domain.request.PostSearchRequest;
 import com.min.meow.post.search.service.PostSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PostSearchServiceImpl implements PostSearchService {
 
     private final BoastCatPostRepositoryImpl boastCatPostRepositoryImpl;

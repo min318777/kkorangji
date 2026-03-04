@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 
@@ -22,13 +23,19 @@ public abstract class BasePost {
     @Column(nullable = false, length = 100)
     protected String title;
 
-    @Column(length = 2000)
+    // DB 레벨 제약: 게시글 본문은 반드시 존재해야 함
+    @Column(nullable = false, length = 2000)
     protected String contents;
 
+    // FK 삭제 전략: 사용자 삭제 시 게시글이 존재하면 삭제 차단 (DB 마지막 방어선)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false,
+        foreignKey = @ForeignKey(name = "fk_post_user",
+            foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE RESTRICT"))
     protected User user;
 
+    // DB 레벨 제약: 조회수 기본값 0
+    @ColumnDefault("0")
     protected int view;
 
     protected LocalDateTime createdAt;

@@ -81,7 +81,7 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                         containsContents(contents))
                 .fetchOne();
 
-        return new PageImpl<>(results, pageable, total );
+        return new PageImpl<>(results, pageable, total);
     }
 
     // 제목 검색 조건

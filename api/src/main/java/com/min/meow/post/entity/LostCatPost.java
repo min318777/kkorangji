@@ -7,19 +7,28 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.Check;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "lost_cat_post", indexes = {
+    // 목록 조회: ORDER BY created_at DESC + 페이징
+    @Index(name = "idx_lost_post_created_at", columnList = "created_at DESC"),
+    // 마이페이지: WHERE user_id = ? ORDER BY created_at DESC
+    @Index(name = "idx_lost_post_user_created_at", columnList = "user_id, created_at DESC")
+})
+@Check(constraints = "view >= 0 AND comment_count >= 0 AND (cat_age IS NULL OR (cat_age >= 0 AND cat_age <= 30)) " +
+        "AND (cat_weight IS NULL OR (cat_weight >= 0 AND cat_weight <= 30)) AND (reward IS NULL OR reward >= 0)")
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 public class LostCatPost extends BasePost {
 
-    // DB 레벨 제약 (검증은 Request DTO에서 처리)
-    @Column(length = 20)
+    @Column(nullable = false, length = 20)
     private String catName;
 
     @Column(length = 30)
@@ -31,7 +40,7 @@ public class LostCatPost extends BasePost {
     private Integer catAge;
     private Integer catWeight;
 
-    @Column(length = 100)
+    @Column(nullable = false, length = 100)
     private String lostLocation;
 
     private Double latitude;
@@ -58,6 +67,7 @@ public class LostCatPost extends BasePost {
 
     // 비정규화 필드: 조회 성능 최적화를 위해 카운트를 직접 저장
     @Builder.Default
+    @ColumnDefault("0")
     private int commentCount = 0;  // 댓글 수
 
     // 댓글 수 증가
@@ -72,7 +82,7 @@ public class LostCatPost extends BasePost {
         }
     }
 
-    // 엔티티 업데이트 메서드 (순수 데이터 모델 유지)
+    // 엔티티 업데이트 메서드
     public void updatePost(String title, String contents, String catName, String catType,
                           String catColor, Integer catAge, Integer catWeight,
                           String lostLocation, Double latitude, Double longitude,
@@ -116,9 +126,9 @@ public class LostCatPost extends BasePost {
         }
     }
 
-    // 작성자 확인
+    // 작성자 확인 (ID 기반 비교로 영속성 컨텍스트에 의존하지 않음)
     public boolean isAuthor(User user) {
-        return this.user.equals(user);
+        return this.user.getId().equals(user.getId());
     }
 
     // 완료 상태 변경

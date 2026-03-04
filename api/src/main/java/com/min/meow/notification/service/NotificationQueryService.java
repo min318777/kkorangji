@@ -15,6 +15,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class NotificationQueryService {
 
     private final NotificationRepository notificationRepository;

@@ -6,7 +6,6 @@ import com.min.meow.user.oauth2.CustomOAuth2User;
 import com.min.meow.user.dto.reponse.GoogleResponse;
 import com.min.meow.user.dto.reponse.NaverResponse;
 import com.min.meow.user.dto.reponse.OAuth2Response;
-import com.min.meow.user.dto.UserDto;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -66,11 +65,6 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
                     .build();
             userRepository.save(user);
 
-            UserDto userDto = new UserDto();
-            userDto.setRole("ROLE_USER");
-            userDto.setName(oAuth2Response.getName());
-            userDto.setLoginId(loginId);
-
             return new CustomOAuth2User(user);
         }else{
 
@@ -78,11 +72,6 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
             existUser.get().setName(oAuth2Response.getName());
             existUser.get().setLastLoginAt(LocalDateTime.now());
             userRepository.save(existUser.get());
-
-            UserDto userDto = new UserDto();
-            userDto.setRole("ROLE_USER");
-            userDto.setName(oAuth2Response.getName());
-            userDto.setLoginId(existUser.get().getLoginId());
 
             return new CustomOAuth2User(existUser.get());
         }

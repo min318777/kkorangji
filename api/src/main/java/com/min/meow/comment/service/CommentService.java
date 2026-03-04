@@ -22,6 +22,6 @@ public interface CommentService {
     RegisterCommentResponse registerLostCatPostComment(RegisterCommentRequest registerCommentRequest, Long lostCatPostId, Long userId);
 
     // 공통 댓글 관리 메서드 (게시글 타입 무관)
-    UpdateCommentResponse updateComment(UpdateCommentRequest updateCommentRequest, Long commentId);
-    void deleteComment(Long commentId);
+    UpdateCommentResponse updateComment(UpdateCommentRequest updateCommentRequest, Long commentId, Long userId);
+    void deleteComment(Long commentId, Long userId);
 }
