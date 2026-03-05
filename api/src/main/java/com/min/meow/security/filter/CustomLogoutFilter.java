@@ -1,8 +1,9 @@
-package com.min.meow.user.filter;
+package com.min.meow.security.filter;
 
 import com.min.meow.global.Token;
-import com.min.meow.user.jwt.JwtUtil;
-import com.min.meow.user.service.RefreshTokenService;
+import com.min.meow.security.jwt.JwtUtil;
+import com.min.meow.security.service.RefreshTokenService;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -65,21 +66,17 @@ public class CustomLogoutFilter extends OncePerRequestFilter {
 
     private void handleRefreshToken(String refreshToken) {
         try {
-            Token category = jwtUtil.getTokenCategory(refreshToken);
-
-            // Refresh Token인지 확인
-            if (category == Token.REFRESH_TOKEN) {
-                // 토큰에서 userId 추출하여 Redis에서 삭제
-                Long userId = jwtUtil.getUserId(refreshToken);
-                refreshTokenService.delete(userId);
-                log.info("로그아웃 완료 - userId: {}", userId);
-            }
+            // decodeAndVerify로 1회 파싱: Refresh Token 타입 + 서명 + 만료 검증
+            Claims claims = jwtUtil.decodeAndVerify(refreshToken, Token.REFRESH_TOKEN);
+            Long userId = Long.valueOf(claims.getSubject());
+            refreshTokenService.delete(userId);
+            log.info("로그아웃 완료 - userId: {}", userId);
 
         } catch (ExpiredJwtException e) {
-            // 만료된 토큰이라도 userId 추출 시도
+            // 만료된 토큰이라도 userId 추출 시도 (Claims는 만료되어도 접근 가능)
             log.info("만료된 Refresh Token 로그아웃 처리");
             try {
-                Long userId = jwtUtil.getUserId(refreshToken);
+                Long userId = Long.valueOf(e.getClaims().getSubject());
                 refreshTokenService.delete(userId);
             } catch (Exception ex) {
                 log.warn("만료된 토큰에서 userId 추출 실패", ex);
@@ -96,6 +93,7 @@ public class CustomLogoutFilter extends OncePerRequestFilter {
         cookie.setPath("/");
         cookie.setHttpOnly(true);
         cookie.setMaxAge(0);
+        cookie.setAttribute("SameSite", "Lax"); // CSRF 공격 방어
         response.addCookie(cookie);
     }
 

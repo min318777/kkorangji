@@ -1,5 +1,6 @@
-package com.min.meow.user.service;
+package com.min.meow.security.service;
 
+import com.min.meow.security.jwt.JwtConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -10,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Refresh Token Redis 저장 서비스
  * 키: "refresh:{userId}" -> refreshToken 값 저장
- * TTL: 14일 후 자동 삭제
+ * TTL: JwtConfig.refreshTtlDays() 후 자동 삭제
  */
 @Slf4j
 @Service
@@ -18,9 +19,7 @@ import java.util.concurrent.TimeUnit;
 public class RefreshTokenService {
 
     private final RedisTemplate<String, String> redisTemplate;
-
-    // Refresh Token 만료 시간: 14일
-    private static final long REFRESH_TOKEN_EXPIRATION_DAYS = 14;
+    private final JwtConfig jwtConfig;
 
     private static final String KEY_PREFIX = "refresh:";
 
@@ -29,7 +28,7 @@ public class RefreshTokenService {
      */
     public void save(Long userId, String refreshToken) {
         String key = KEY_PREFIX + userId;
-        redisTemplate.opsForValue().set(key, refreshToken, REFRESH_TOKEN_EXPIRATION_DAYS, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set(key, refreshToken, jwtConfig.refreshTtlDays(), TimeUnit.DAYS);
         log.info("Refresh Token 저장 - userId: {}", userId);
     }
 

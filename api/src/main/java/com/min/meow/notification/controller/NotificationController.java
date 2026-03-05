@@ -4,7 +4,7 @@ import com.min.meow.notification.dto.request.NotificationRequest;
 import com.min.meow.notification.dto.response.NotificationResponse;
 import com.min.meow.notification.service.NotificationQueryService;
 import com.min.meow.notification.sse.SseEmitterManager;
-import com.min.meow.user.dto.CustomUserDetails;
+import com.min.meow.security.dto.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;

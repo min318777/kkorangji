@@ -1,8 +1,7 @@
-package com.min.meow.user.service;
+package com.min.meow.security.oauth2;
 
 
 import com.min.meow.global.Role;
-import com.min.meow.user.oauth2.CustomOAuth2User;
 import com.min.meow.user.dto.reponse.GoogleResponse;
 import com.min.meow.user.dto.reponse.NaverResponse;
 import com.min.meow.user.dto.reponse.OAuth2Response;

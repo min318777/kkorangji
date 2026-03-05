@@ -3,7 +3,7 @@ package com.min.meow.user.controller;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.user.dto.response.TokenResponse;
-import com.min.meow.user.service.ReissueService;
+import com.min.meow.security.service.ReissueService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

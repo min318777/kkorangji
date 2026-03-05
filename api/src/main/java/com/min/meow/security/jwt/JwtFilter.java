@@ -1,10 +1,12 @@
-package com.min.meow.user.jwt;
+package com.min.meow.security.jwt;
 
 
 import com.min.meow.global.Token;
-import com.min.meow.user.dto.CustomUserDetails;
+import com.min.meow.global.exception.CustomException;
+import com.min.meow.security.dto.CustomUserDetails;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -55,12 +57,18 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String accessToken = authorization.substring(7); // "Bearer " 제거
 
-        // 토큰 만료 여부 확인
+        // decodeAndVerify로 1회 파싱: 서명 + 만료 + issuer + audience + 타입(ACCESS) 검증
+        Claims claims;
         try {
-            jwtUtil.isExpired(accessToken);
+            claims = jwtUtil.decodeAndVerify(accessToken, Token.ACCESS_TOKEN);
         } catch (ExpiredJwtException e) {
             log.warn("만료된 토큰으로 접근 시도: {}", request.getRequestURI());
             sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED", "토큰이 만료되었습니다.");
+            return;
+        } catch (CustomException e) {
+            // 토큰 타입 불일치 (Refresh Token으로 API 접근 시도 등)
+            log.warn("Access 토큰이 아닌 토큰으로 접근 시도");
+            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "INVALID_ACCESS_TOKEN", "유효하지 않은 Access 토큰입니다.");
             return;
         } catch (JwtException e) {
             log.warn("유효하지 않은 토큰: {}", e.getMessage());
@@ -68,16 +76,8 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        // 토큰이 access인지 확인 (발급시 페이로드에 명시)
-        Token category = jwtUtil.getTokenCategory(accessToken);
-        if (!category.equals(Token.ACCESS_TOKEN)) {
-            log.warn("Access 토큰이 아닌 토큰으로 접근 시도");
-            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "INVALID_ACCESS_TOKEN", "유효하지 않은 Access 토큰입니다.");
-            return;
-        }
-
-        // 토큰에서 userId 추출 및 사용자 조회
-        Long userId = jwtUtil.getUserId(accessToken);
+        // Claims에서 userId 추출 및 사용자 조회
+        Long userId = Long.valueOf(claims.getSubject());
         Optional<User> userOptional = userRepository.findById(userId);
 
         if (userOptional.isEmpty()) {

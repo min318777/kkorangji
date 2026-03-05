@@ -3,10 +3,12 @@ package com.min.meow;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @EnableCaching
+@ConfigurationPropertiesScan
 @SpringBootApplication(scanBasePackages = {"com.min.meow"})
 @EnableJpaRepositories(basePackages = {
 		"com.min.meow.post.repository",

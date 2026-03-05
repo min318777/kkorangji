@@ -1,14 +1,14 @@
 package com.min.meow.config;
 
 
-import com.min.meow.user.filter.CustomLogoutFilter;
-import com.min.meow.user.jwt.JwtFilter;
-import com.min.meow.user.jwt.JwtUtil;
-import com.min.meow.user.filter.CustomLoginFilter;
-import com.min.meow.user.oauth2.CustomSuccessHandler;
+import com.min.meow.security.filter.CustomLogoutFilter;
+import com.min.meow.security.jwt.JwtFilter;
+import com.min.meow.security.jwt.JwtUtil;
+import com.min.meow.security.filter.CustomLoginFilter;
+import com.min.meow.security.oauth2.CustomSuccessHandler;
 import com.min.meow.user.repository.UserRepository;
-import com.min.meow.user.service.CustomOauth2UserService;
-import com.min.meow.user.service.RefreshTokenService;
+import com.min.meow.security.oauth2.CustomOauth2UserService;
+import com.min.meow.security.service.RefreshTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -62,7 +62,6 @@ public class SecurityConfig {
                         return corsConfiguration;
                     }
                 }));
-
         http
                 .csrf((auth) -> auth.disable());
         http

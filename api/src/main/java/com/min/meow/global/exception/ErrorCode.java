@@ -25,6 +25,7 @@ public enum ErrorCode {
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다."),
     INVALID_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 access 토큰입니다."),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 refresh 토큰입니다." ),
+    INVALID_TOKEN_TYPE(HttpStatus.UNAUTHORIZED, "토큰 타입이 일치하지 않습니다."),
 
     // Validation 예외
     FORBIDDEN_NOT_AUTHOR(HttpStatus.FORBIDDEN, "작성자 본인만 수정, 삭제가 가능합니다." ),

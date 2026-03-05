@@ -1,39 +1,26 @@
-package com.min.meow.user.oauth2;
+package com.min.meow.security.dto;
 
 import com.min.meow.global.PrincipalUser;
 import com.min.meow.user.entity.User;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 
 @RequiredArgsConstructor
-public class CustomOAuth2User implements OAuth2User, PrincipalUser {
+@Getter
+public class CustomUserDetails implements UserDetails, PrincipalUser {
 
-    //private final UserDto userDto;
     private final User user;
 
     @Override
-    public Map<String, Object> getAttributes() {
-        return null;
-    }
-
-    @Override
-    public String getLoginId(){
-        return user.getLoginId();
-    }
-
-    @Override
-    public User getUser() {
-        return user;
-    }
-
-    @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+
         Collection<GrantedAuthority> collection = new ArrayList<>();
+
         collection.add(new GrantedAuthority() {
             @Override
             public String getAuthority() {
@@ -45,7 +32,7 @@ public class CustomOAuth2User implements OAuth2User, PrincipalUser {
 
     @Override
     public String getPassword() {
-        return "";
+        return user.getPassword();
     }
 
     @Override
@@ -54,9 +41,33 @@ public class CustomOAuth2User implements OAuth2User, PrincipalUser {
     }
 
     @Override
-    public String getName() {
-        return user.getName();
+    public String getLoginId() {
+        return user.getLoginId();
     }
 
+    @Override
+    public User getUser() {
+        return user;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 
 }
