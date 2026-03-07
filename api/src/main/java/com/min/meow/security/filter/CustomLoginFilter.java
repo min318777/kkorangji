@@ -53,15 +53,15 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         String role = userDetails.getUser().getRole().name();
 
         // 토큰 생성 — TTL은 JwtConfig에서 중앙 관리
-        String accessToken = jwtUtil.createAccessToken(userId, role);
-        String refreshToken = jwtUtil.createRefreshToken(userId);
+        String accessToken = jwtUtil.createAccessToken(userId, role, userDetails.getUsername());
+        JwtUtil.RefreshTokenInfo refreshInfo = jwtUtil.createRefreshToken(userId);
 
-        // 리프레쉬토큰 Redis에 저장
-        refreshTokenService.save(userId, refreshToken);
+        // jti(JWT ID)만 Redis에 저장 (전체 JWT 대신 짧은 UUID로 메모리 절약)
+        refreshTokenService.save(userId, refreshInfo.jti());
 
-        // 응답 설정
+        // 응답 설정 (쿠키에는 전체 JWT 토큰 사용)
         response.setHeader("Authorization", "Bearer " + accessToken);
-        response.addCookie(createRefreshCookie(refreshToken));
+        response.addCookie(createRefreshCookie(refreshInfo.token()));
         response.setStatus(HttpStatus.OK.value());
 
         // 사용자 정보 응답
@@ -88,7 +88,7 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         int refreshTtlSeconds = jwtUtil.getConfig().refreshTtlDays() * 24 * 60 * 60;
         Cookie cookie = new Cookie("refresh", value);
         cookie.setMaxAge(refreshTtlSeconds);
-        //cookie.setSecure(true); -> https통신시 필요
+        //cookie.setSecure(true);
         cookie.setPath("/"); // 쿠키가 적용될 범위
         cookie.setHttpOnly(true); // XSS 공격 방어: 자바스크립트로 쿠키 접근 불가
         cookie.setAttribute("SameSite", "Lax"); // CSRF 공격 방어: 다른 사이트에서의 요청 시 쿠키 전송 제한

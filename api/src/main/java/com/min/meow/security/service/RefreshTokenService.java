@@ -10,8 +10,11 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Refresh Token Redis 저장 서비스
- * 키: "refresh:{userId}" -> refreshToken 값 저장
+ * 키: "refresh:{userId}" -> jti(JWT ID, UUID) 값 저장
  * TTL: JwtConfig.refreshTtlDays() 후 자동 삭제
+ *
+ * <p>전체 JWT 문자열 대신 짧은 jti UUID만 저장하여 Redis 메모리를 절약하고,
+ * 로그에서 토큰 추적 시 jti로 식별할 수 있도록 함.
  */
 @Slf4j
 @Service
@@ -24,16 +27,16 @@ public class RefreshTokenService {
     private static final String KEY_PREFIX = "refresh:";
 
     /**
-     * Refresh Token 저장
+     * jti(JWT ID) 저장
      */
-    public void save(Long userId, String refreshToken) {
+    public void save(Long userId, String jti) {
         String key = KEY_PREFIX + userId;
-        redisTemplate.opsForValue().set(key, refreshToken, jwtConfig.refreshTtlDays(), TimeUnit.DAYS);
-        log.info("Refresh Token 저장 - userId: {}", userId);
+        redisTemplate.opsForValue().set(key, jti, jwtConfig.refreshTtlDays(), TimeUnit.DAYS);
+        log.info("Refresh Token jti 저장 - userId: {}", userId);
     }
 
     /**
-     * Refresh Token 조회
+     * 저장된 jti 조회
      */
     public String findByUserId(Long userId) {
         String key = KEY_PREFIX + userId;
@@ -41,11 +44,11 @@ public class RefreshTokenService {
     }
 
     /**
-     * 저장된 토큰과 일치하는지 확인
+     * 저장된 jti와 일치하는지 확인
      */
-    public boolean validateToken(Long userId, String refreshToken) {
-        String savedToken = findByUserId(userId);
-        return refreshToken.equals(savedToken);
+    public boolean validateToken(Long userId, String jti) {
+        String savedJti = findByUserId(userId);
+        return jti.equals(savedJti);
     }
 
     /**

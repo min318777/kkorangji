@@ -37,12 +37,12 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         Long userId = user.getId();
 
         // Refresh Token 생성 — TTL은 JwtConfig에서 중앙 관리
-        String refreshToken = jwtUtil.createRefreshToken(userId);
+        JwtUtil.RefreshTokenInfo refreshInfo = jwtUtil.createRefreshToken(userId);
 
-        // Redis에 Refresh Token 저장
-        refreshTokenService.save(userId, refreshToken);
+        // jti(JWT ID)만 Redis에 저장 (전체 JWT 대신 짧은 UUID로 메모리 절약)
+        refreshTokenService.save(userId, refreshInfo.jti());
 
-        response.addCookie(createRefreshCookie(refreshToken));
+        response.addCookie(createRefreshCookie(refreshInfo.token()));
         response.sendRedirect("http://localhost:3000/");
     }
 

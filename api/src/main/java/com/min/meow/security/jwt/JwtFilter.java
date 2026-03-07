@@ -4,6 +4,7 @@ package com.min.meow.security.jwt;
 import com.min.meow.global.Token;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.security.dto.CustomUserDetails;
+import com.min.meow.security.dto.TokenPrincipalUser;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -45,7 +46,6 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        // Authorization 헤더에서 토큰 추출
         String authorization = request.getHeader("Authorization");
 
         // 토큰이 없으면 인증 없이 다음 필터로 진행
@@ -55,9 +55,7 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        String accessToken = authorization.substring(7); // "Bearer " 제거
-
-        // decodeAndVerify로 1회 파싱: 서명 + 만료 + issuer + audience + 타입(ACCESS) 검증
+        String accessToken = authorization.substring(7);
         Claims claims;
         try {
             claims = jwtUtil.decodeAndVerify(accessToken, Token.ACCESS_TOKEN);
@@ -76,24 +74,35 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Claims에서 userId 추출 및 사용자 조회
-        Long userId = Long.valueOf(claims.getSubject());
-        Optional<User> userOptional = userRepository.findById(userId);
+        // v1(DB 조회) vs v2(토큰 추출) 분기
+        // X-Auth-Version: v2 헤더가 있으면 DB 조회 없이 토큰 Claims만으로 인증
+        String authVersion = request.getHeader("X-Auth-Version");
+        Authentication authToken;
 
-        if (userOptional.isEmpty()) {
-            log.warn("토큰의 사용자를 찾을 수 없음 - userId: {}", userId);
-            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND", "사용자를 찾을 수 없습니다.");
-            return;
+        if ("v2".equals(authVersion)) {
+            // v2: Claims에서 직접 추출 — DB 조회 없음 (성능 최적화)
+            Long userId = Long.valueOf(claims.getSubject());
+            String role = claims.get("role", String.class);
+            String loginId = claims.get("loginId", String.class);
+
+            TokenPrincipalUser tokenPrincipal = new TokenPrincipalUser(userId, role, loginId);
+            authToken = new UsernamePasswordAuthenticationToken(
+                    tokenPrincipal, null, tokenPrincipal.getAuthorities());
+        } else {
+            // v1: DB에서 사용자 조회 (기존 방식)
+            Long userId = Long.valueOf(claims.getSubject());
+            Optional<User> userOptional = userRepository.findById(userId);
+
+            if (userOptional.isEmpty()) {
+                log.warn("토큰의 사용자를 찾을 수 없음 - userId: {}", userId);
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND", "사용자를 찾을 수 없습니다.");
+                return;
+            }
+
+            CustomUserDetails customUserDetails = new CustomUserDetails(userOptional.get());
+            authToken = new UsernamePasswordAuthenticationToken(
+                    customUserDetails, null, customUserDetails.getAuthorities());
         }
-
-        User user = userOptional.get();
-
-        // UserDetails에 회원 정보 객체 담기
-        CustomUserDetails customUserDetails = new CustomUserDetails(user);
-
-        // 스프링 시큐리티 인증 토큰 생성
-        Authentication authToken = new UsernamePasswordAuthenticationToken(
-                customUserDetails, null, customUserDetails.getAuthorities());
 
         // SecurityContext에 인증 정보 설정
         SecurityContextHolder.getContext().setAuthentication(authToken);

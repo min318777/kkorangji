@@ -47,11 +47,12 @@ public class ReissueService {
             throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
-        // 3. Claims에서 userId 추출
+        // 3. Claims에서 userId, jti 추출
         Long userId = Long.valueOf(claims.getSubject());
+        String jti = claims.getId();
 
-        // 4. Redis에 저장된 토큰과 일치하는지 확인
-        if (!refreshTokenService.validateToken(userId, refreshToken)) {
+        // 4. Redis에 저장된 jti와 일치하는지 확인
+        if (!refreshTokenService.validateToken(userId, jti)) {
             // Reuse Detection: 이미 사용된(또는 유효하지 않은) 토큰으로 재발급 시도 시
             // 보안을 위해 현재 저장된 유효한 토큰도 모두 삭제하여 강제 로그아웃 처리
             log.warn("이미 사용된 리프레쉬토큰으로 재발급 요청: {}", userId);
@@ -65,13 +66,13 @@ public class ReissueService {
         String role = user.getRole().name();
 
         // 6. 새로운 토큰 발급 (토큰 로테이션) — TTL은 JwtConfig에서 중앙 관리
-        String newAccessToken = jwtUtil.createAccessToken(userId, role);
-        String newRefreshToken = jwtUtil.createRefreshToken(userId);
+        String newAccessToken = jwtUtil.createAccessToken(userId, role, user.getLoginId());
+        JwtUtil.RefreshTokenInfo newRefreshInfo = jwtUtil.createRefreshToken(userId);
 
-        // 7. Redis에 새 Refresh Token 저장 (기존 토큰 덮어쓰기)
-        refreshTokenService.save(userId, newRefreshToken);
-        log.info("토큰 재발급 완료 - userId: {}", userId);
+        // 7. Redis에 새 jti 저장 (기존 jti 덮어쓰기)
+        refreshTokenService.save(userId, newRefreshInfo.jti());
+        log.info("토큰 재발급 완료 - userId: {}, jti: {}", userId, newRefreshInfo.jti());
 
-        return new TokenResponse(newAccessToken, newRefreshToken);
+        return new TokenResponse(newAccessToken, newRefreshInfo.token());
     }
 }

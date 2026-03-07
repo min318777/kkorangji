@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * JWT 토큰 생성 및 검증 유틸리티.
@@ -33,18 +34,19 @@ public class JwtUtil {
         this.secretKey = Keys.hmacShaKeyFor(config.secret().getBytes(StandardCharsets.UTF_8));
     }
 
-    // ============ 토큰 생성 ============
 
     /**
-     * Access Token 생성 (subject: userId, payload: role, token 타입)
+     * Access Token 생성 (subject: userId, payload: role, loginId, token 타입)
      * TTL은 JwtConfig에서 중앙 관리 — 호출자가 지정할 필요 없음.
+     * loginId를 포함하여 DB 조회 없이 사용자 식별이 가능하도록 함.
      */
-    public String createAccessToken(Long userId, String role) {
+    public String createAccessToken(Long userId, String role, String loginId) {
         return Jwts.builder()
                 .claims()
                 .subject(String.valueOf(userId))
                 .add("token", Token.ACCESS_TOKEN.name())
                 .add("role", role)
+                .add("loginId", loginId)
                 .and()
                 .issuer(config.issuer())
                 .audience().add(config.audience()).and()
@@ -55,14 +57,23 @@ public class JwtUtil {
     }
 
     /**
-     * Refresh Token 생성 (subject: userId, token 타입)
-     * TTL은 JwtConfig에서 중앙 관리.
+     * Refresh Token 생성 결과를 담는 record.
+     * token: 클라이언트에 전달할 JWT 문자열, jti: Redis에 저장할 짧은 UUID
      */
-    public String createRefreshToken(Long userId) {
-        return Jwts.builder()
+    public record RefreshTokenInfo(String token, String jti) {}
+
+    /**
+     * Refresh Token 생성 (subject: userId, token 타입, jti: UUID)
+     * TTL은 JwtConfig에서 중앙 관리.
+     * jti(JWT ID)를 포함하여 Redis에 전체 JWT 대신 짧은 UUID만 저장할 수 있도록 함.
+     */
+    public RefreshTokenInfo createRefreshToken(Long userId) {
+        String jti = UUID.randomUUID().toString();
+        String token = Jwts.builder()
                 .claims()
                 .subject(String.valueOf(userId))
                 .add("token", Token.REFRESH_TOKEN.name())
+                .id(jti)
                 .and()
                 .issuer(config.issuer())
                 .audience().add(config.audience()).and()
@@ -70,6 +81,7 @@ public class JwtUtil {
                 .expiration(new Date(System.currentTimeMillis() + config.refreshTtlMillis()))
                 .signWith(secretKey)
                 .compact();
+        return new RefreshTokenInfo(token, jti);
     }
 
     // ============ 토큰 검증 ============
