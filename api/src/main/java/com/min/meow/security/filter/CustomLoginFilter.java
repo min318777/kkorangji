@@ -49,8 +49,8 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         // 유저정보
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        Long userId = userDetails.getUser().getId();
-        String role = userDetails.getUser().getRole().name();
+        Long userId = userDetails.getUserId();
+        String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
         // 토큰 생성 — TTL은 JwtConfig에서 중앙 관리
         String accessToken = jwtUtil.createAccessToken(userId, role, userDetails.getUsername());

@@ -32,7 +32,7 @@ public interface LostCatPostService {
 
     UpdateLostCatPostResponse updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest, String loginId);
 
-    void deleteLostCatPost(Long lostCatPostId, String loginId, String password);
+    void deleteLostCatPost(Long lostCatPostId, String loginId);
 
     /**
      * 메인페이지용: 최근 실종글 20개 조회 (DTO Projection 적용)

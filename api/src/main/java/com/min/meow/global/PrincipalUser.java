@@ -1,8 +1,8 @@
 package com.min.meow.global;
 
-import com.min.meow.user.entity.User;
+import org.springframework.security.core.userdetails.UserDetails;
 
-public interface PrincipalUser extends org.springframework.security.core.userdetails.UserDetails{
+public interface PrincipalUser extends UserDetails {
     String getLoginId();
-    User getUser();
+    Long getUserId();
 }

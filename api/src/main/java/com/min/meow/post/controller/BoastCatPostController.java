@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -29,7 +30,7 @@ import java.util.List;
 
 @Tag(name = "자랑글", description = "고양이 자랑 게시글 CRUD API")
 @RestController
-@AllArgsConstructor
+@RequiredArgsConstructor
 @RequestMapping("/api/meow/boast-cat")
 public class BoastCatPostController {
     private final BoastCatPostServiceImpl boastCatPostServiceImpl;
@@ -73,7 +74,7 @@ public class BoastCatPostController {
     public ResponseEntity<ApiResponse<CreateBoastCatPostResponse>> createBoastCatPost(
             @RequestBody @Valid CreateBoastCatPostRequest createBoastCatPostRequest,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
-        CreateBoastCatPostResponse post = boastCatPostServiceImpl.createBoastCatPost(createBoastCatPostRequest, user.getUser().getLoginId());
+        CreateBoastCatPostResponse post = boastCatPostServiceImpl.createBoastCatPost(createBoastCatPostRequest, user.getLoginId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("글 생성 성공", post));
     }
@@ -94,7 +95,7 @@ public class BoastCatPostController {
             @PathVariable Long boastCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        String loginId = user.getUser().getLoginId();
+        String loginId = user.getLoginId();
         UpdateBoastCatPostResponse post = boastCatPostServiceImpl.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId, loginId);
         return ResponseEntity.ok(ApiResponse.success("글 수정 성공", post));
     }
@@ -107,9 +108,8 @@ public class BoastCatPostController {
             @PathVariable Long boastCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        String loginId = user.getUser().getLoginId();
-        String password = user.getUser().getPassword();
-        boastCatPostServiceImpl.deleteBoastCatPost(boastCatPostId, loginId, password);
+        String loginId = user.getLoginId();
+        boastCatPostServiceImpl.deleteBoastCatPost(boastCatPostId, loginId);
         return ResponseEntity.noContent().build();
     }
 

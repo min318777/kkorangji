@@ -1,7 +1,6 @@
 package com.min.meow.security.dto;
 
 import com.min.meow.global.PrincipalUser;
-import com.min.meow.user.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
@@ -13,8 +12,7 @@ import java.util.List;
  * <p>v2 인증 방식에서 사용되며, Access Token에 포함된 userId, role, loginId만으로
  * SecurityContext 인증 정보를 구성한다. DB 조회를 제거하여 인증 성능을 최적화.</p>
  *
- * <p>주의: {@link #getUser()}는 null을 반환한다.
- * 컨트롤러에서 User 엔티티가 필요한 경우 별도로 DB 조회가 필요하다.</p>
+ * <p>컨트롤러에서 User 엔티티가 필요한 경우 별도로 DB 조회가 필요하다.</p>
  */
 public class TokenPrincipalUser implements PrincipalUser {
 
@@ -33,15 +31,7 @@ public class TokenPrincipalUser implements PrincipalUser {
         return loginId;
     }
 
-    /**
-     * 토큰 기반 인증이므로 User 엔티티는 제공하지 않음.
-     * User 엔티티가 필요한 경우 서비스 레이어에서 별도 조회 필요.
-     */
     @Override
-    public User getUser() {
-        return null;
-    }
-
     public Long getUserId() {
         return userId;
     }

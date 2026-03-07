@@ -76,7 +76,7 @@ public class CommentController {
             @PathVariable Long boastCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        RegisterCommentResponse registerCommentResponse = commentServiceImpl.registerBoastCatPostComment(registerCommentRequest, boastCatPostId, user.getUser().getId());
+        RegisterCommentResponse registerCommentResponse = commentServiceImpl.registerBoastCatPostComment(registerCommentRequest, boastCatPostId, user.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("댓글 작성 성공", registerCommentResponse));
     }
@@ -125,7 +125,7 @@ public class CommentController {
             @PathVariable Long lostCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        RegisterCommentResponse registerCommentResponse = commentServiceImpl.registerLostCatPostComment(registerCommentRequest, lostCatPostId, user.getUser().getId());
+        RegisterCommentResponse registerCommentResponse = commentServiceImpl.registerLostCatPostComment(registerCommentRequest, lostCatPostId, user.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("댓글 작성 성공", registerCommentResponse));
     }
@@ -141,7 +141,7 @@ public class CommentController {
             @PathVariable Long commentId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        UpdateCommentResponse updateCommentResponse = commentServiceImpl.updateComment(updateCommentRequest, commentId, user.getUser().getId());
+        UpdateCommentResponse updateCommentResponse = commentServiceImpl.updateComment(updateCommentRequest, commentId, user.getUserId());
         return ResponseEntity.ok(ApiResponse.success("댓글 수정 성공", updateCommentResponse));
     }
 
@@ -153,7 +153,7 @@ public class CommentController {
             @PathVariable Long commentId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        commentServiceImpl.deleteComment(commentId, user.getUser().getId());
+        commentServiceImpl.deleteComment(commentId, user.getUserId());
         return ResponseEntity.noContent().build();
     }
 }

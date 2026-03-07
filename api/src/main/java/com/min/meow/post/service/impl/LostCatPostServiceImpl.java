@@ -254,7 +254,7 @@ public class LostCatPostServiceImpl implements LostCatPostService {
             @CacheEvict(cacheNames = "post:lost:recent", allEntries = true),
             @CacheEvict(cacheNames = "post:lost:detail", key = "#lostCatPostId")
     })
-    public void deleteLostCatPost(Long lostCatPostId, String loginId, String password) {
+    public void deleteLostCatPost(Long lostCatPostId, String loginId) {
 
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));

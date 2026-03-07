@@ -57,7 +57,7 @@ public class PostLikeController {
             @PathVariable Long boastCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        String loginId = user.getUser().getLoginId();
+        String loginId = user.getLoginId();
         boolean likeOrCancel = postLikeService.toggleLike(boastCatPostId, loginId);
         String message;
         if(likeOrCancel){
@@ -78,7 +78,7 @@ public class PostLikeController {
             @PathVariable Long boastCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
-        Long userId = user.getUser().getId();
+        Long userId = user.getUserId();
         boolean liked = likeCountService.toggleLike(PostType.BOAST, boastCatPostId, userId);
         Long likeCount = likeCountService.getLikeCount(PostType.BOAST, boastCatPostId);
 
@@ -107,7 +107,7 @@ public class PostLikeController {
             @PathVariable Long boastCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
-        Long userId = user.getUser().getId();
+        Long userId = user.getUserId();
         boolean liked = likeCountService.isLiked(PostType.BOAST, boastCatPostId, userId);
         return ResponseEntity.ok(ApiResponse.success("좋아요 여부 조회 성공", liked));
     }

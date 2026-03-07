@@ -224,7 +224,7 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
             @CacheEvict(cacheNames = "post:boast:recent", allEntries = true),
             @CacheEvict(cacheNames = "post:boast:detail", key = "#boastCatPostId")
     })
-    public void deleteBoastCatPost(Long boastCatPostId, String loginId, String password){
+    public void deleteBoastCatPost(Long boastCatPostId, String loginId){
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)

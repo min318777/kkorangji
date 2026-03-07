@@ -26,7 +26,7 @@ public interface BoastCatPostService {
 
     UpdateBoastCatPostResponse updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest,Long boastCatPostId, String loginId);
 
-    void deleteBoastCatPost(Long boastCatPostId, String loginId, String password);
+    void deleteBoastCatPost(Long boastCatPostId, String loginId);
 
     /**
      * 메인페이지용: 최근 자랑글 20개 조회 (DTO Projection 적용)

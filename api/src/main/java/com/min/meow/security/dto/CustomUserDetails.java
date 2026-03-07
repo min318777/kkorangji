@@ -18,9 +18,7 @@ public class CustomUserDetails implements UserDetails, PrincipalUser {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-
         Collection<GrantedAuthority> collection = new ArrayList<>();
-
         collection.add(new GrantedAuthority() {
             @Override
             public String getAuthority() {
@@ -46,9 +44,7 @@ public class CustomUserDetails implements UserDetails, PrincipalUser {
     }
 
     @Override
-    public User getUser() {
-        return user;
-    }
+    public Long getUserId() { return user.getId(); }
 
     @Override
     public boolean isAccountNonExpired() {

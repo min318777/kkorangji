@@ -72,7 +72,7 @@ public class LostCatPostController {
             @RequestBody @Valid CreateLostCatPostRequest createLostCatPostRequest,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        CreateLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.createLostCatPost(createLostCatPostRequest, user.getUser().getLoginId());
+        CreateLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.createLostCatPost(createLostCatPostRequest, user.getLoginId());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("글 생성 성공", lostCatPostDto));
@@ -89,7 +89,7 @@ public class LostCatPostController {
             @PathVariable Long lostCatPostId,
             @RequestBody @Valid UpdateLostCatPostRequest updateLostCatPostRequest,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
-        String loginId = user.getUser().getLoginId();
+        String loginId = user.getLoginId();
         UpdateLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.updateLostCatPost(lostCatPostId, updateLostCatPostRequest, loginId);
         return ResponseEntity.ok(ApiResponse.success("글 수정 성공", lostCatPostDto));
     }
@@ -102,9 +102,8 @@ public class LostCatPostController {
             @PathVariable Long lostCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        String loginId = user.getUser().getLoginId();
-        String password = user.getUser().getPassword();
-        lostCatPostServiceImpl.deleteLostCatPost(lostCatPostId, loginId, password);
+        String loginId = user.getLoginId();
+        lostCatPostServiceImpl.deleteLostCatPost(lostCatPostId, loginId);
         return ResponseEntity.noContent().build();
     }
 

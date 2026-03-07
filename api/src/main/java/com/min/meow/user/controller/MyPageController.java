@@ -71,7 +71,7 @@ public class MyPageController {
             @Parameter(description = "페이지 크기", example = "10")
             @RequestParam(defaultValue = "10") int size) {
 
-        Long userId = user.getUser().getId();
+        Long userId = user.getUserId();
         Pageable pageable = PageRequest.of(page, size);
         MyCommentListResponse response = myPageService.getMyComments(userId, pageable);
 

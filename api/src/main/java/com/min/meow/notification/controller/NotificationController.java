@@ -4,7 +4,7 @@ import com.min.meow.notification.dto.request.NotificationRequest;
 import com.min.meow.notification.dto.response.NotificationResponse;
 import com.min.meow.notification.service.NotificationQueryService;
 import com.min.meow.notification.sse.SseEmitterManager;
-import com.min.meow.security.dto.CustomUserDetails;
+import com.min.meow.global.PrincipalUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -56,9 +56,9 @@ public class NotificationController {
     public ResponseEntity<NotificationResponse> readSingleNotification(
             @Parameter(description = "알림 ID", example = "1")
             @PathVariable Long notificationId,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
-        String userLoginId = customUserDetails.getUser().getLoginId();
+        String userLoginId = user.getLoginId();
         log.info("단일 알림 읽음 요청 - NotificationId: {}, User: {}", notificationId, userLoginId);
         NotificationResponse response = notificationQueryService
                 .readSingleNotification(notificationId, userLoginId);
@@ -71,8 +71,8 @@ public class NotificationController {
     @PatchMapping("/read")
     public ResponseEntity<Map<String, Object>> readMultipleNotifications(
             @Valid @RequestBody NotificationRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails customUserDetails) {
-        String userLoginId = customUserDetails.getUser().getLoginId();
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
+        String userLoginId = user.getLoginId();
         log.info("여러 개 알림 읽음 요청 - Count: {}, User: {}",
                 request.getNotificationIds().size(), userLoginId);
         int readCount = notificationQueryService
@@ -91,9 +91,9 @@ public class NotificationController {
             description = "현재 사용자의 읽지 않은 모든 알림을 일괄 읽음 처리합니다. 인증 필요.")
     @PatchMapping("/read-all")
     public ResponseEntity<Map<String, Object>> readAllNotifications(
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
-        String userLoginId = customUserDetails.getUser().getLoginId();
+        String userLoginId = user.getLoginId();
         log.info("전체 알림 읽음 요청 - User: {}", userLoginId);
 
         int readCount = notificationQueryService.readAllNotifications(userLoginId);
@@ -110,8 +110,8 @@ public class NotificationController {
             description = "실시간 알림 수신을 위한 SSE 연결을 생성합니다. text/event-stream 형식으로 응답합니다. 인증 필요.")
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails customUserDetails) {
-        String userLoginId = customUserDetails.getUser().getLoginId();
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
+        String userLoginId = user.getLoginId();
         log.info("구독 요청 - User: {}", userLoginId);
 
         // SSE 연결 생성 및 저장
