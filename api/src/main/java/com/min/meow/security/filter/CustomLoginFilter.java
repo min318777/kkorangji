@@ -16,9 +16,13 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
@@ -50,10 +54,26 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
         Long userId = userDetails.getUserId();
-        String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
-        // 토큰 생성 — TTL은 JwtConfig에서 중앙 관리
-        String accessToken = jwtUtil.createAccessToken(userId, role, userDetails.getUsername());
+        // authorities에서 Role과 Permission을 분리
+        // ROLE_ 접두사가 있으면 Role, 없으면 Permission
+        Set<String> allAuthorities = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toSet());
+
+        // 첫 번째 Role을 대표 role로 사용 (JWT의 role 필드)
+        String role = allAuthorities.stream()
+                .filter(a -> a.startsWith("ROLE_"))
+                .findFirst()
+                .orElse("ROLE_USER");
+
+        // Permission 목록 추출
+        List<String> permissions = allAuthorities.stream()
+                .filter(a -> !a.startsWith("ROLE_"))
+                .collect(Collectors.toList());
+
+        // 토큰 생성 — TTL은 JwtConfig에서 중앙 관리, permissions 포함
+        String accessToken = jwtUtil.createAccessToken(userId, role, userDetails.getUsername(), permissions);
         JwtUtil.RefreshTokenInfo refreshInfo = jwtUtil.createRefreshToken(userId);
 
         // jti(JWT ID)만 Redis에 저장 (전체 JWT 대신 짧은 UUID로 메모리 절약)
@@ -76,7 +96,6 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
-        // 보안: 아이디 미존재/비밀번호 불일치를 구분하지 않음 (계정 존재 여부 노출 방지)
         String message = "아이디 또는 비밀번호가 일치하지 않습니다.";
 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

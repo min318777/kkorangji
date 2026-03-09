@@ -1,6 +1,5 @@
 package com.min.meow.user.dto.request;
 
-import com.min.meow.global.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
@@ -44,9 +43,6 @@ public class JoinRequest {
     @Pattern(regexp = "^[가-힣a-zA-Z]+$", message = "이름은 한글과 영문만 사용 가능합니다.")
     private String name;
 
-    @Schema(description = "사용자 역할 (기본값: USER)", hidden = true)
-    private Role role;
-
     // 필드 간 관계 검증: 비밀번호와 비밀번호 확인이 일치하는지 확인
     @AssertTrue(message = "비밀번호가 일치하지 않습니다.")
     @Schema(hidden = true)
@@ -78,10 +74,5 @@ public class JoinRequest {
     // 비밀번호 확인: 정규화 안 함
     public void setPasswordConfirm(String passwordConfirm) {
         this.passwordConfirm = passwordConfirm;
-    }
-
-    // 역할: 정규화 불필요
-    public void setRole(Role role) {
-        this.role = role;
     }
 }

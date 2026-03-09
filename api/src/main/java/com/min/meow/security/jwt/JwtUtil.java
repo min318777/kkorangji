@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -20,7 +21,7 @@ import java.util.UUID;
  * <ul>
  *   <li>{@link JwtConfig}로 TTL·issuer·audience를 중앙 관리 (하드코딩 제거)</li>
  *   <li>{@link #decodeAndVerify}로 1회 파싱 + 서명·만료·타입·issuer·audience 검증</li>
- *   <li>Access Token에 role 유지 (DB 조회 없이 권한 확인 가능)</li>
+ *   <li>Access Token에 role, permissions 유지 (DB 조회 없이 권한 확인 가능)</li>
  * </ul>
  */
 @Component
@@ -36,17 +37,19 @@ public class JwtUtil {
 
 
     /**
-     * Access Token 생성 (subject: userId, payload: role, loginId, token 타입)
+     * Access Token 생성 (subject: userId, payload: role, loginId, permissions, token 타입)
      * TTL은 JwtConfig에서 중앙 관리 — 호출자가 지정할 필요 없음.
      * loginId를 포함하여 DB 조회 없이 사용자 식별이 가능하도록 함.
+     * permissions를 포함하여 DB 조회 없이 권한 확인이 가능하도록 함.
      */
-    public String createAccessToken(Long userId, String role, String loginId) {
+    public String createAccessToken(Long userId, String role, String loginId, List<String> permissions) {
         return Jwts.builder()
                 .claims()
                 .subject(String.valueOf(userId))
                 .add("token", Token.ACCESS_TOKEN.name())
                 .add("role", role)
                 .add("loginId", loginId)
+                .add("permissions", permissions)
                 .and()
                 .issuer(config.issuer())
                 .audience().add(config.audience()).and()

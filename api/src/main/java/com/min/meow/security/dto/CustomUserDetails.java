@@ -5,10 +5,12 @@ import com.min.meow.user.entity.User;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Getter
@@ -18,14 +20,19 @@ public class CustomUserDetails implements UserDetails, PrincipalUser {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        Collection<GrantedAuthority> collection = new ArrayList<>();
-        collection.add(new GrantedAuthority() {
-            @Override
-            public String getAuthority() {
-                return user.getRole().name();
-            }
-        });
-        return collection;
+        List<GrantedAuthority> authorities = new ArrayList<>();
+
+        // Role 추가 (hasRole("ADMIN") 호환)
+        for (String roleName : user.getRoleNames()) {
+            authorities.add(new SimpleGrantedAuthority(roleName));
+        }
+
+        // Permission 추가 (hasAuthority("post:write") 사용)
+        for (String code : user.getAllPermissionCodes()) {
+            authorities.add(new SimpleGrantedAuthority(code));
+        }
+
+        return authorities;
     }
 
     @Override

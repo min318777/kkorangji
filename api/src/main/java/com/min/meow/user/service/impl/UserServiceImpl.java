@@ -1,15 +1,18 @@
 package com.min.meow.user.service.impl;
 
-import com.min.meow.global.Role;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.user.dto.reponse.JoinResponse;
 import com.min.meow.user.dto.reponse.LoginResponse;
 import com.min.meow.user.dto.request.JoinRequest;
 import com.min.meow.user.dto.request.LoginRequest;
+import com.min.meow.user.entity.Role;
 import com.min.meow.user.entity.User;
+import com.min.meow.user.entity.UserRole;
 import com.min.meow.user.repository.RefreshTokenRepository;
+import com.min.meow.user.repository.RoleRepository;
 import com.min.meow.user.repository.UserRepository;
+import com.min.meow.user.repository.UserRoleRepository;
 import com.min.meow.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +30,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final RoleRepository roleRepository;
+    private final UserRoleRepository userRoleRepository;
 
 
     public LoginResponse login(LoginRequest loginRequest){
@@ -57,11 +62,19 @@ public class UserServiceImpl implements UserService {
                 .password(encodedPassword)
                 .name(joinRequest.getName())
                 .email(joinRequest.getEmail())
-                .role(joinRequest.getRole() != null ? joinRequest.getRole() : Role.ROLE_USER)
                 .isDelete(false)
                 .build();
 
         userRepository.save(user);
+
+        // 기본 역할(ROLE_USER) 부여
+        Role userRole = roleRepository.findByName("ROLE_USER")
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ROLE));
+        UserRole newUserRole = new UserRole(user, userRole);
+        userRoleRepository.save(newUserRole);
+
+        // userRoles 리스트에 추가하여 JoinResponse에서 역할 정보 반환 가능하도록 함
+        user.getUserRoles().add(newUserRole);
 
         return JoinResponse.from(user);
     }

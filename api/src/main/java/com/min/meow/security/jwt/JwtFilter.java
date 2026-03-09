@@ -24,6 +24,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -85,7 +86,11 @@ public class JwtFilter extends OncePerRequestFilter {
             String role = claims.get("role", String.class);
             String loginId = claims.get("loginId", String.class);
 
-            TokenPrincipalUser tokenPrincipal = new TokenPrincipalUser(userId, role, loginId);
+            // permissions 추출 (RBAC 권한 목록)
+            @SuppressWarnings("unchecked")
+            List<String> permissions = claims.get("permissions", List.class);
+
+            TokenPrincipalUser tokenPrincipal = new TokenPrincipalUser(userId, role, loginId, permissions);
             authToken = new UsernamePasswordAuthenticationToken(
                     tokenPrincipal, null, tokenPrincipal.getAuthorities());
         } else {

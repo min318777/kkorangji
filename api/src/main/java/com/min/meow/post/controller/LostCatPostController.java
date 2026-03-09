@@ -23,6 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -67,6 +68,7 @@ public class LostCatPostController {
      */
     @Operation(summary = "실종글 생성",
             description = "새 실종글을 작성합니다. 이미지는 Presigned URL로 S3에 먼저 업로드 후 key를 전달합니다. 인증 필요.")
+    @PreAuthorize("hasAuthority('post:write')")
     @PostMapping
     public ResponseEntity<ApiResponse<CreateLostCatPostResponse>> createLostCatPost(
             @RequestBody @Valid CreateLostCatPostRequest createLostCatPostRequest,
@@ -83,6 +85,7 @@ public class LostCatPostController {
      */
     @Operation(summary = "실종글 수정",
             description = "실종글을 수정합니다. 본인 게시글만 수정 가능합니다. 인증 필요.")
+    @PreAuthorize("hasAuthority('post:write')")
     @PutMapping("/{lostCatPostId}")
     public ResponseEntity<ApiResponse<UpdateLostCatPostResponse>> updateLostCatPost(
             @Parameter(description = "실종글 ID", example = "1")
@@ -96,6 +99,7 @@ public class LostCatPostController {
 
     @Operation(summary = "실종글 삭제",
             description = "실종글을 삭제합니다. 본인 게시글만 삭제 가능합니다. 인증 필요.")
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{lostCatPostId}")
     public ResponseEntity<Void> deleteLostCatPost(
             @Parameter(description = "실종글 ID", example = "1")

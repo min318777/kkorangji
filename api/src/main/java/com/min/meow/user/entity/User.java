@@ -1,15 +1,17 @@
 package com.min.meow.user.entity;
 
-import com.min.meow.global.Role;
 import com.min.meow.postlike.entity.PostLike;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Entity
 @Getter
@@ -41,10 +43,11 @@ public class User{
     @OneToMany(mappedBy = "user")
     private List<PostLike> postLike = new ArrayList<>();
 
-    // DB 레벨 제약: 역할은 반드시 존재해야 함 (ROLE_USER, ROLE_ADMIN)
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role;
+    // RBAC: User → UserRole → Role → RolePermission → Permission
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+    @BatchSize(size = 10)
+    @Builder.Default
+    private List<UserRole> userRoles = new ArrayList<>();
 
     private LocalDateTime registeredAt;
     private LocalDateTime lastLoginAt;
@@ -103,5 +106,60 @@ public class User{
     // 마지막 로그인 시간 업데이트
     public void updateLastLogin() {
         this.lastLoginAt = LocalDateTime.now();
+    }
+
+    // ===== RBAC 편의 메서드 =====
+
+    /**
+     * 사용자가 가진 모든 역할 이름 반환
+     * 예: {"ROLE_USER", "ROLE_ADMIN"}
+     */
+    public Set<String> getRoleNames() {
+        return userRoles.stream()
+                .map(ur -> ur.getRole().getName())
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * 사용자가 가진 모든 권한 코드 반환 (모든 역할의 권한 합집합)
+     * 예: {"post:read", "post:write", "comment:write"}
+     */
+    public Set<String> getAllPermissionCodes() {
+        return userRoles.stream()
+                .flatMap(ur -> ur.getRole().getPermissionCodes().stream())
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * 특정 권한을 가지고 있는지 확인
+     * Python: has_permission(user, permission_code)
+     */
+    public boolean hasPermission(String code) {
+        return userRoles.stream()
+                .anyMatch(ur -> ur.getRole().hasPermission(code));
+    }
+
+    /**
+     * 주어진 권한 중 하나라도 가지고 있는지 확인 (OR 조건)
+     * Python: has_any_permission(user, permission_codes)
+     *
+     * 사용 예: user.hasAnyPermission(List.of("post:write", "post:delete"))
+     * → 둘 중 하나만 있어도 true
+     */
+    public boolean hasAnyPermission(List<String> codes) {
+        Set<String> userPerms = getAllPermissionCodes();
+        return codes.stream().anyMatch(userPerms::contains);
+    }
+
+    /**
+     * 주어진 권한을 모두 가지고 있는지 확인 (AND 조건)
+     * Python: has_all_permissions(user, permission_codes)
+     *
+     * 사용 예: user.hasAllPermissions(List.of("post:write", "post:delete"))
+     * → 둘 다 있어야 true
+     */
+    public boolean hasAllPermissions(List<String> codes) {
+        Set<String> userPerms = getAllPermissionCodes();
+        return userPerms.containsAll(codes);
     }
 }

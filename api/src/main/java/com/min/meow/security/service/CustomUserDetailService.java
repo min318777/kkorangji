@@ -32,11 +32,9 @@ public class CustomUserDetailService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
-
         User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
-        // - 소프트 삭제된 사용자는 시스템에 존재하지만 로그인할 수 없음
         if (user.isWithdrawn()) {
             log.warn("탈퇴한 사용자 로그인 시도 - userId: {}", user.getId());
             throw new CustomException(ErrorCode.WITHDRAWN_USER);

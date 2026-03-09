@@ -23,6 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -70,6 +71,7 @@ public class BoastCatPostController {
      */
     @Operation(summary = "자랑글 생성",
             description = "새 자랑글을 작성합니다. 이미지는 Presigned URL로 S3에 먼저 업로드 후 key를 전달합니다. 인증 필요.")
+    @PreAuthorize("hasAuthority('post:write')")
     @PostMapping
     public ResponseEntity<ApiResponse<CreateBoastCatPostResponse>> createBoastCatPost(
             @RequestBody @Valid CreateBoastCatPostRequest createBoastCatPostRequest,
@@ -88,6 +90,7 @@ public class BoastCatPostController {
      */
     @Operation(summary = "자랑글 수정",
             description = "자랑글을 수정합니다. 본인 게시글만 수정 가능합니다. 인증 필요.")
+    @PreAuthorize("hasAuthority('post:write')")
     @PutMapping("/{boastCatPostId}")
     public ResponseEntity<ApiResponse<UpdateBoastCatPostResponse>> updateBoastCatPost(
             @RequestBody @Valid UpdateBoastCatPostRequest updateBoastCatPostRequest,
@@ -102,6 +105,7 @@ public class BoastCatPostController {
 
     @Operation(summary = "자랑글 삭제",
             description = "자랑글을 삭제합니다. 본인 게시글만 삭제 가능합니다. 인증 필요.")
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{boastCatPostId}")
     public ResponseEntity<Void> deleteBoastCatPost(
             @Parameter(description = "자랑글 ID", example = "1")

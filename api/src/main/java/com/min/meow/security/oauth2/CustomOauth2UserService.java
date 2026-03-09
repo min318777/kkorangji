@@ -1,12 +1,17 @@
 package com.min.meow.security.oauth2;
 
 
-import com.min.meow.global.Role;
+import com.min.meow.global.exception.CustomException;
+import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.user.dto.reponse.GoogleResponse;
 import com.min.meow.user.dto.reponse.NaverResponse;
 import com.min.meow.user.dto.reponse.OAuth2Response;
+import com.min.meow.user.entity.Role;
 import com.min.meow.user.entity.User;
+import com.min.meow.user.entity.UserRole;
+import com.min.meow.user.repository.RoleRepository;
 import com.min.meow.user.repository.UserRepository;
+import com.min.meow.user.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -22,6 +27,8 @@ import java.util.Optional;
 public class CustomOauth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final UserRoleRepository userRoleRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -47,7 +54,6 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
         User emailConflictUser = userRepository.findByEmail(existEmail);
         if (emailConflictUser != null && !emailConflictUser.getLoginId().equals(loginId)) {
             throw new OAuth2AuthenticationException("이미 동일한 이메일로 가입된 계정이 존재합니다.");
-            //throw new CustomException(ErrorCode.ALREADY_EXISTING_EMAIL);
         }
 
         Optional<User> existUser = userRepository.findByLoginId(loginId);
@@ -58,11 +64,17 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
                     .email(oAuth2Response.getEmail())
                     .password(null)
                     .name(oAuth2Response.getName())
-                    .role(Role.ROLE_USER)
                     .isDelete(false)
                     .lastLoginAt(LocalDateTime.now())
                     .build();
             userRepository.save(user);
+
+            // 기본 역할(ROLE_USER) 부여
+            Role userRole = roleRepository.findByName("ROLE_USER")
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ROLE));
+            UserRole newUserRole = new UserRole(user, userRole);
+            userRoleRepository.save(newUserRole);
+            user.getUserRoles().add(newUserRole);
 
             return new CustomOAuth2User(user);
         }else{

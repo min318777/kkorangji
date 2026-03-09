@@ -14,6 +14,7 @@ import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.post.service.BoastCatPostService;
+import com.min.meow.global.SecurityUtil;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -197,6 +198,7 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
+        // 수정은 본인만 허용 (관리자도 타인 글 수정 불가)
         if (!boastCatPost.isAuthor(writer)) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
@@ -213,7 +215,6 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
 
     /**
      * 글 삭제
-     *
      * 캐시 무효화:
      * - post:boast:recent (삭제된 글이 메인페이지 최근글 목록에서 제거되어야 함)
      * - post:boast:detail (해당 게시글 상세 캐시 무효화)
@@ -229,8 +230,9 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-        // 작성자 검증
-        if (!boastCatPost.isAuthor(writer)) {
+        // 본인이 아니고 관리자 권한(post:delete)도 없으면 → 403
+        if (!boastCatPost.isAuthor(writer)
+                && !SecurityUtil.hasAuthority("post:delete")) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
         boastCatPostRepository.deleteById(boastCatPostId);
@@ -238,7 +240,6 @@ public class BoastCatPostServiceImpl implements BoastCatPostService {
 
     /**
      * 이미지 업데이트 처리 (Presigned URL 방식)
-     *
      * @param request 수정 요청 DTO
      * @return 최종 이미지 URL 목록 (CloudFront URL)
      */

@@ -12,6 +12,7 @@ import com.min.meow.notification.event.CommentEvent;
 import com.min.meow.comment.entity.Comment;
 import com.min.meow.comment.repository.CommentRepository;
 import com.min.meow.comment.service.CommentService;
+import com.min.meow.global.SecurityUtil;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
@@ -157,7 +158,7 @@ public class CommentServiceImpl implements CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        // 작성자 권한 검증
+        // 수정은 본인만 허용 (관리자도 타인 댓글 수정 불가)
         if (!comment.isAuthor(userId)) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
@@ -174,8 +175,9 @@ public class CommentServiceImpl implements CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        // 작성자 권한 검증
-        if (!comment.isAuthor(userId)) {
+        // 본인이 아니고 관리자 권한(comment:delete)도 없으면 → 403
+        if (!comment.isAuthor(userId)
+                && !SecurityUtil.hasAuthority("comment:delete")) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
 

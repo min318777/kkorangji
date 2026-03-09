@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -69,6 +70,7 @@ public class CommentController {
 
     @Operation(summary = "자랑글 댓글 작성",
             description = "자랑글에 댓글을 작성합니다. 인증 필요.")
+    @PreAuthorize("hasAuthority('comment:write')")
     @PostMapping("/api/meow/boast-cat/comments/{boastCatPostId}")
     public ResponseEntity<ApiResponse<RegisterCommentResponse>> registerBoastCatPostComment(
             @RequestBody @Valid RegisterCommentRequest registerCommentRequest,
@@ -118,6 +120,7 @@ public class CommentController {
 
     @Operation(summary = "실종글 댓글 작성",
             description = "실종글에 댓글을 작성합니다. 인증 필요.")
+    @PreAuthorize("hasAuthority('comment:write')")
     @PostMapping("/api/meow/lost-cat/comments/{lostCatPostId}")
     public ResponseEntity<ApiResponse<RegisterCommentResponse>> registerLostCatPostComment(
             @RequestBody @Valid RegisterCommentRequest registerCommentRequest,
@@ -134,6 +137,7 @@ public class CommentController {
 
     @Operation(summary = "댓글 수정",
             description = "댓글을 수정합니다. 게시글 타입에 관계없이 댓글 ID로 수정합니다. 인증 필요.")
+    @PreAuthorize("hasAuthority('comment:write')")
     @PutMapping("/api/meow/comments/{commentId}")
     public ResponseEntity<ApiResponse<UpdateCommentResponse>> updateComment(
             @RequestBody @Valid UpdateCommentRequest updateCommentRequest,
@@ -147,6 +151,7 @@ public class CommentController {
 
     @Operation(summary = "댓글 삭제",
             description = "댓글을 삭제합니다. 게시글 타입에 관계없이 댓글 ID로 삭제합니다. 인증 필요.")
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/api/meow/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(
             @Parameter(description = "댓글 ID", example = "1")

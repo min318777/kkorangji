@@ -19,6 +19,9 @@ public enum ErrorCode {
     ALREADY_WITHDRAWN_USER(HttpStatus.BAD_REQUEST, "이미 탈퇴한 회원입니다."),
     WITHDRAWN_USER(HttpStatus.FORBIDDEN, "탈퇴한 회원은 이용할 수 없습니다."),
 
+    // 역할/권한 예외
+    NOT_FOUND_ROLE(HttpStatus.INTERNAL_SERVER_ERROR, "역할 정보를 찾을 수 없습니다."),
+
 
     // jwt 예외
     TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "토큰이 존재하지 않습니다."),

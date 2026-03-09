@@ -4,16 +4,17 @@ import com.min.meow.global.PrincipalUser;
 import com.min.meow.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 @RequiredArgsConstructor
 public class CustomOAuth2User implements OAuth2User, PrincipalUser {
 
-    //private final UserDto userDto;
     private final User user;
 
     @Override
@@ -33,14 +34,19 @@ public class CustomOAuth2User implements OAuth2User, PrincipalUser {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        Collection<GrantedAuthority> collection = new ArrayList<>();
-        collection.add(new GrantedAuthority() {
-            @Override
-            public String getAuthority() {
-                return user.getRole().name();
-            }
-        });
-        return collection;
+        List<GrantedAuthority> authorities = new ArrayList<>();
+
+        // Role 추가 (hasRole("ADMIN") 호환)
+        for (String roleName : user.getRoleNames()) {
+            authorities.add(new SimpleGrantedAuthority(roleName));
+        }
+
+        // Permission 추가 (hasAuthority("post:write") 사용)
+        for (String code : user.getAllPermissionCodes()) {
+            authorities.add(new SimpleGrantedAuthority(code));
+        }
+
+        return authorities;
     }
 
     @Override
