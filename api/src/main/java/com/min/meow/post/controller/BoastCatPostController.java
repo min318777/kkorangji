@@ -11,7 +11,7 @@ import com.min.meow.post.dto.response.CreateBoastCatPostResponse;
 import com.min.meow.post.dto.response.GetBoastCatPostResponse;
 import com.min.meow.post.dto.response.UpdateBoastCatPostResponse;
 import com.min.meow.post.service.ViewCountService;
-import com.min.meow.post.service.impl.BoastCatPostServiceImpl;
+import com.min.meow.post.service.BoastCatPostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -34,7 +34,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/meow/boast-cat")
 public class BoastCatPostController {
-    private final BoastCatPostServiceImpl boastCatPostServiceImpl;
+    private final BoastCatPostService boastCatPostService;
     private final ViewCountService viewCountService;
 
     @Operation(summary = "자랑글 목록 조회", description = "페이징된 자랑글 목록을 조회합니다. 인증 불필요.")
@@ -47,7 +47,7 @@ public class BoastCatPostController {
             @RequestParam (defaultValue = "10") int size ){
 
         Pageable pageable = PageRequest.of(page, size);
-        PageResponse<BoastCatPostListResponse> posts = boastCatPostServiceImpl.getAllBoastCatPosts(pageable);
+        PageResponse<BoastCatPostListResponse> posts = boastCatPostService.getAllBoastCatPosts(pageable);
         return ResponseEntity.ok(ApiResponse.success("모든 글 조회 성공", posts));
     }
 
@@ -58,7 +58,7 @@ public class BoastCatPostController {
     public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastPostId(
             @Parameter(description = "자랑글 ID", example = "1")
             @PathVariable Long boastCatPostId){
-        GetBoastCatPostResponse getBoastCatPostResponse = boastCatPostServiceImpl.getBoastCatPost(boastCatPostId);
+        GetBoastCatPostResponse getBoastCatPostResponse = boastCatPostService.getBoastCatPost(boastCatPostId);
         return ResponseEntity.ok(ApiResponse.success("글 조회 성공", getBoastCatPostResponse));
     }
 
@@ -76,7 +76,7 @@ public class BoastCatPostController {
     public ResponseEntity<ApiResponse<CreateBoastCatPostResponse>> createBoastCatPost(
             @RequestBody @Valid CreateBoastCatPostRequest createBoastCatPostRequest,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
-        CreateBoastCatPostResponse post = boastCatPostServiceImpl.createBoastCatPost(createBoastCatPostRequest, user.getLoginId());
+        CreateBoastCatPostResponse post = boastCatPostService.createBoastCatPost(createBoastCatPostRequest, user.getLoginId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("글 생성 성공", post));
     }
@@ -99,7 +99,7 @@ public class BoastCatPostController {
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
         String loginId = user.getLoginId();
-        UpdateBoastCatPostResponse post = boastCatPostServiceImpl.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId, loginId);
+        UpdateBoastCatPostResponse post = boastCatPostService.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId, loginId);
         return ResponseEntity.ok(ApiResponse.success("글 수정 성공", post));
     }
 
@@ -113,7 +113,7 @@ public class BoastCatPostController {
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
         String loginId = user.getLoginId();
-        boastCatPostServiceImpl.deleteBoastCatPost(boastCatPostId, loginId);
+        boastCatPostService.deleteBoastCatPost(boastCatPostId, loginId);
         return ResponseEntity.noContent().build();
     }
 
@@ -131,7 +131,7 @@ public class BoastCatPostController {
     @SecurityRequirements
     @GetMapping("/recent")
     public ResponseEntity<ApiResponse<List<BoastCatPostListResponse>>> getRecentBoastCatPosts() {
-        List<BoastCatPostListResponse> posts = boastCatPostServiceImpl.getRecentBoastCatPosts();
+        List<BoastCatPostListResponse> posts = boastCatPostService.getRecentBoastCatPosts();
         return ResponseEntity.ok(ApiResponse.success("최근 자랑글 20개 조회 성공", posts));
     }
 
@@ -151,7 +151,7 @@ public class BoastCatPostController {
     public ResponseEntity<ApiResponse<Void>> incrementViewCount(
             @Parameter(description = "자랑글 ID", example = "1")
             @PathVariable Long boastCatPostId) {
-        boastCatPostServiceImpl.incrementViewCount(boastCatPostId);
+        boastCatPostService.incrementViewCount(boastCatPostId);
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공", null));
     }
 
@@ -169,7 +169,7 @@ public class BoastCatPostController {
     public ResponseEntity<ApiResponse<Void>> incrementViewCountV1(
             @Parameter(description = "자랑글 ID", example = "1")
             @PathVariable Long boastCatPostId) {
-        boastCatPostServiceImpl.incrementViewCountWithDirtyChecking(boastCatPostId);
+        boastCatPostService.incrementViewCountWithDirtyChecking(boastCatPostId);
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (더티 체킹 방식)", null));
     }
 

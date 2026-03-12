@@ -24,8 +24,8 @@ public class JoinResponse {
     @Schema(description = "이메일", example = "cat_lover@example.com")
     private String email;
 
-    @Schema(description = "이름", example = "홍길동")
-    private String name;
+    @Schema(description = "닉네임", example = "홍길동")
+    private String nickname;
 
     @Schema(description = "사용자 역할 목록", example = "[\"ROLE_USER\"]")
     private List<String> roles;
@@ -38,7 +38,7 @@ public class JoinResponse {
         return JoinResponse.builder()
                 .userId(user.getId())
                 .loginId(user.getLoginId())
-                .name(user.getName())
+                .nickname(user.getNickname())
                 .email(user.getEmail())
                 .registeredAt(user.getRegisteredAt())
                 .roles(List.copyOf(user.getRoleNames()))

@@ -4,6 +4,7 @@ import com.min.meow.global.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -19,6 +20,18 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = e.getErrorCode();
         log.error("CustomException 발생: {}", e.getMessage());
         return createErrorResponse(errorCode.getStatus(), errorCode.getMessage());
+    }
+
+    /**
+     * @PreAuthorize 권한 거부 예외 처리.
+     * AuthorizationDeniedException은 Spring Security 6.x에서 AccessDeniedException을 대체한다.
+     * GlobalExceptionHandler에 핸들러가 없으면 Exception.class에 잡혀 500이 반환되므로
+     * 명시적으로 403 Forbidden을 반환하도록 처리한다.
+     */
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ApiResponse<?>> handleAuthorizationDeniedException(AuthorizationDeniedException e) {
+        log.warn("권한 없는 접근 시도: {}", e.getMessage());
+        return createErrorResponse(HttpStatus.FORBIDDEN, "접근 권한이 없습니다.");
     }
 
     // Validation 예외 처리

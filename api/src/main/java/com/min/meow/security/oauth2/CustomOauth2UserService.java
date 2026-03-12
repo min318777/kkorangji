@@ -63,7 +63,7 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
                     .loginId(loginId)
                     .email(oAuth2Response.getEmail())
                     .password(null)
-                    .name(oAuth2Response.getName())
+                    .nickname(oAuth2Response.getName())
                     .isDelete(false)
                     .lastLoginAt(LocalDateTime.now())
                     .build();
@@ -80,7 +80,7 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
         }else{
 
             existUser.get().setEmail(oAuth2Response.getEmail());
-            existUser.get().setName(oAuth2Response.getName());
+            existUser.get().setNickname(oAuth2Response.getName());
             existUser.get().setLastLoginAt(LocalDateTime.now());
             userRepository.save(existUser.get());
 

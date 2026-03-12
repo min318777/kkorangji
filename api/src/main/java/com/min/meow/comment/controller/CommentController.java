@@ -9,7 +9,7 @@ import com.min.meow.comment.dto.request.UpdateCommentRequest;
 import com.min.meow.comment.dto.response.GetCommentResponse;
 import com.min.meow.comment.dto.response.RegisterCommentResponse;
 import com.min.meow.comment.dto.response.UpdateCommentResponse;
-import com.min.meow.comment.service.impl.CommentServiceImpl;
+import com.min.meow.comment.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -31,7 +31,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CommentController {
 
-    private final CommentServiceImpl commentServiceImpl;
+    private final CommentService commentService;
 
     // ==================== 자랑글 댓글 API ====================
 
@@ -48,7 +48,7 @@ public class CommentController {
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        PageResponse<GetCommentResponse> comments = commentServiceImpl.getBoastCatPostComment(boastCatPostId, pageable);
+        PageResponse<GetCommentResponse> comments = commentService.getBoastCatPostComment(boastCatPostId, pageable);
 
         return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
     }
@@ -64,7 +64,7 @@ public class CommentController {
             @PathVariable Long boastCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
-        List<GetCommentResponse> comments = commentServiceImpl.getBoastCatPostComment(boastCatPostId);
+        List<GetCommentResponse> comments = commentService.getBoastCatPostComment(boastCatPostId);
         return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
     }
 
@@ -78,7 +78,7 @@ public class CommentController {
             @PathVariable Long boastCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        RegisterCommentResponse registerCommentResponse = commentServiceImpl.registerBoastCatPostComment(registerCommentRequest, boastCatPostId, user.getUserId());
+        RegisterCommentResponse registerCommentResponse = commentService.registerBoastCatPostComment(registerCommentRequest, boastCatPostId, user.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("댓글 작성 성공", registerCommentResponse));
     }
@@ -98,7 +98,7 @@ public class CommentController {
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        PageResponse<GetCommentResponse> comments = commentServiceImpl.getLostCatPostComment(lostCatPostId, pageable);
+        PageResponse<GetCommentResponse> comments = commentService.getLostCatPostComment(lostCatPostId, pageable);
 
         return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
     }
@@ -114,7 +114,7 @@ public class CommentController {
             @PathVariable Long lostCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
-        List<GetCommentResponse> comments = commentServiceImpl.getLostCatPostComment(lostCatPostId);
+        List<GetCommentResponse> comments = commentService.getLostCatPostComment(lostCatPostId);
         return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
     }
 
@@ -128,7 +128,7 @@ public class CommentController {
             @PathVariable Long lostCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        RegisterCommentResponse registerCommentResponse = commentServiceImpl.registerLostCatPostComment(registerCommentRequest, lostCatPostId, user.getUserId());
+        RegisterCommentResponse registerCommentResponse = commentService.registerLostCatPostComment(registerCommentRequest, lostCatPostId, user.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("댓글 작성 성공", registerCommentResponse));
     }
@@ -145,7 +145,7 @@ public class CommentController {
             @PathVariable Long commentId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        UpdateCommentResponse updateCommentResponse = commentServiceImpl.updateComment(updateCommentRequest, commentId, user.getUserId());
+        UpdateCommentResponse updateCommentResponse = commentService.updateComment(updateCommentRequest, commentId, user.getUserId());
         return ResponseEntity.ok(ApiResponse.success("댓글 수정 성공", updateCommentResponse));
     }
 
@@ -158,7 +158,7 @@ public class CommentController {
             @PathVariable Long commentId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        commentServiceImpl.deleteComment(commentId, user.getUserId());
+        commentService.deleteComment(commentId, user.getUserId());
         return ResponseEntity.noContent().build();
     }
 }

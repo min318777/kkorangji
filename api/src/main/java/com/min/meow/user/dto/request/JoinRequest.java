@@ -36,12 +36,12 @@ public class JoinRequest {
     @Email(message = "올바르지 않은 이메일 형식입니다.")
     private String email;
 
-    // 이름: 1~10자, 한글/영문만 허용
-    @Schema(description = "사용자 이름 (1~10자, 한글/영문)", example = "김냥이")
-    @NotBlank(message = "이름을 입력해 주세요.")
-    @Size(min = 1, max = 10, message = "이름은 1자 이상 10자 이하로 입력해 주세요.")
-    @Pattern(regexp = "^[가-힣a-zA-Z]+$", message = "이름은 한글과 영문만 사용 가능합니다.")
-    private String name;
+    // 닉네임: 1~10자, 한글/영문만 허용
+    @Schema(description = "닉네임 (1~10자, 한글/영문)", example = "김냥이")
+    @NotBlank(message = "닉네임을 입력해 주세요.")
+    @Size(min = 1, max = 10, message = "닉네임은 1자 이상 10자 이하로 입력해 주세요.")
+    @Pattern(regexp = "^[가-힣a-zA-Z]+$", message = "닉네임은 한글과 영문만 사용 가능합니다.")
+    private String nickname;
 
     // 필드 간 관계 검증: 비밀번호와 비밀번호 확인이 일치하는지 확인
     @AssertTrue(message = "비밀번호가 일치하지 않습니다.")
@@ -61,9 +61,9 @@ public class JoinRequest {
         this.email = email != null ? email.trim().toLowerCase() : null;
     }
 
-    // 이름: 앞뒤 공백 제거
-    public void setName(String name) {
-        this.name = name != null ? name.trim() : null;
+    // 닉네임: 앞뒤 공백 제거
+    public void setNickname(String nickname) {
+        this.nickname = nickname != null ? nickname.trim() : null;
     }
 
     // 비밀번호: 공백이 의도적일 수 있으므로 정규화 안 함

@@ -21,8 +21,8 @@ public class MyPageSummaryResponse {
     @Schema(description = "로그인 ID", example = "cat_lover")
     private String loginId;
 
-    @Schema(description = "이름", example = "홍길동")
-    private String name;
+    @Schema(description = "닉네임", example = "홍길동")
+    private String nickname;
 
     @Schema(description = "이메일", example = "cat_lover@example.com")
     private String email;
@@ -45,7 +45,7 @@ public class MyPageSummaryResponse {
     public static MyPageSummaryResponse from(User user, long boastCount, long lostCount, long commentCount) {
         return MyPageSummaryResponse.builder()
                 .loginId(user.getLoginId())
-                .name(user.getName())
+                .nickname(user.getNickname())
                 .email(user.getEmail())
                 .totalPostCount(boastCount + lostCount)
                 .boastCatPostCount(boastCount)

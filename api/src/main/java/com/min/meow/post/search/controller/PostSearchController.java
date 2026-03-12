@@ -3,7 +3,7 @@ package com.min.meow.post.search.controller;
 import com.min.meow.global.ApiResponse;
 import com.min.meow.post.search.domain.PostDto;
 import com.min.meow.post.search.domain.request.PostSearchRequest;
-import com.min.meow.post.search.service.impl.PostSearchServiceImpl;
+import com.min.meow.post.search.service.PostSearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/meow")
 public class PostSearchController {
 
-    private final PostSearchServiceImpl postSearchServiceImpl;
+    private final PostSearchService postSearchService;
 
     @Operation(summary = "게시글 검색",
             description = "제목, 내용, 작성자 등의 조건으로 게시글을 검색합니다. 인증 불필요.")
@@ -34,7 +34,7 @@ public class PostSearchController {
             @RequestParam (defaultValue = "10") int size,
             @RequestBody PostSearchRequest postSearchRequest){
         Pageable pageable = PageRequest.of(page, size);
-        Page<PostDto> posts = postSearchServiceImpl.search(postSearchRequest, pageable);
+        Page<PostDto> posts = postSearchService.search(postSearchRequest, pageable);
         return ResponseEntity.ok(ApiResponse.success("검색 성공", posts));
     }
 }

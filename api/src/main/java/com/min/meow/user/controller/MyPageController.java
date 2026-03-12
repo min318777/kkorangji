@@ -6,7 +6,9 @@ import com.min.meow.global.ApiResponse;
 import com.min.meow.user.dto.reponse.MyCommentListResponse;
 import com.min.meow.user.dto.reponse.MyPageSummaryResponse;
 import com.min.meow.user.dto.reponse.MyPostListResponse;
+import com.min.meow.user.dto.request.UpdateProfileRequest;
 import com.min.meow.user.service.MyPageService;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,6 +38,21 @@ public class MyPageController {
 
         return ResponseEntity.ok(
                 ApiResponse.success( "마이페이지 조회 성공", response)
+        );
+    }
+
+    @Operation(summary = "프로필 수정",
+            description = "닉네임을 수정합니다. 인증 필요.")
+    @PatchMapping
+    public ResponseEntity<ApiResponse<MyPageSummaryResponse>> updateProfile(
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user,
+            @Valid @RequestBody UpdateProfileRequest request) {
+
+        String loginId = user.getLoginId();
+        MyPageSummaryResponse response = myPageService.updateProfile(loginId, request);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("프로필이 수정되었습니다.", response)
         );
     }
 

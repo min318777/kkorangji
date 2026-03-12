@@ -36,7 +36,7 @@ public class User{
     private String email;
 
     @Column(nullable = false, length = 10)
-    private String name;
+    private String nickname;
 
     // CASCADE 제거: User는 소프트 삭제 정책이므로 실제 삭제가 발생하지 않음
     // DB 레벨 FK RESTRICT가 마지막 방어선 역할 수행
@@ -82,7 +82,7 @@ public class User{
      * 비식별화 항목:
      * - loginId: "deleted_" + UUID (유니크 제약조건 유지)
      * - email: UUID + "@deleted.meow.com" (유니크 제약조건 유지)
-     * - name: "탈퇴한 사용자"
+     * - nickname: "탈퇴한 사용자"
      * - password: null
      */
     public void withdraw() {
@@ -95,12 +95,17 @@ public class User{
         String anonymousId = UUID.randomUUID().toString().substring(0, 8);
         this.loginId = "deleted_" + anonymousId;
         this.email = anonymousId + "@deleted.meow.com";
-        this.name = "탈퇴한 사용자";
+        this.nickname = "탈퇴한 사용자";
         this.password = null;
     }
 
     public boolean isWithdrawn() {
         return this.isDelete;
+    }
+
+    // 닉네임 수정 — setter 대신 도메인 메서드로 상태 변경
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
     }
 
     // 마지막 로그인 시간 업데이트

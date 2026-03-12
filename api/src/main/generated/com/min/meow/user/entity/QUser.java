@@ -34,7 +34,7 @@ public class QUser extends EntityPathBase<User> {
 
     public final StringPath loginId = createString("loginId");
 
-    public final StringPath name = createString("name");
+    public final StringPath nickname = createString("nickname");
 
     public final StringPath password = createString("password");
 
@@ -42,7 +42,7 @@ public class QUser extends EntityPathBase<User> {
 
     public final DateTimePath<java.time.LocalDateTime> registeredAt = createDateTime("registeredAt", java.time.LocalDateTime.class);
 
-    public final EnumPath<com.min.meow.global.Role> role = createEnum("role", com.min.meow.global.Role.class);
+    public final ListPath<UserRole, QUserRole> userRoles = this.<UserRole, QUserRole>createList("userRoles", UserRole.class, QUserRole.class, PathInits.DIRECT2);
 
     public QUser(String variable) {
         super(User.class, forVariable(variable));

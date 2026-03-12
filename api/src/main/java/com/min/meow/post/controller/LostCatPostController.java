@@ -12,7 +12,7 @@ import com.min.meow.post.dto.response.GetLostCatPostResponse;
 import com.min.meow.post.dto.response.LostCatPostListResponse;
 import com.min.meow.post.dto.response.UpdateLostCatPostResponse;
 import com.min.meow.post.service.ViewCountService;
-import com.min.meow.post.service.impl.LostCatPostServiceImpl;
+import com.min.meow.post.service.LostCatPostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -35,7 +35,7 @@ import java.util.List;
 @RequestMapping("/api/meow/lost-cat")
 public class LostCatPostController {
 
-    private final LostCatPostServiceImpl lostCatPostServiceImpl;
+    private final LostCatPostService lostCatPostService;
     private final ViewCountService viewCountService;
 
     @Operation(summary = "실종글 목록 조회", description = "페이징된 실종글 목록을 조회합니다. 인증 불필요.")
@@ -48,7 +48,7 @@ public class LostCatPostController {
             @RequestParam (defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        PageResponse<LostCatPostListResponse> pageResponse = lostCatPostServiceImpl.getAllLostCatPosts(pageable);
+        PageResponse<LostCatPostListResponse> pageResponse = lostCatPostService.getAllLostCatPosts(pageable);
         return ResponseEntity.ok(ApiResponse.success("모든 글 조회 성공", pageResponse));
     }
 
@@ -59,7 +59,7 @@ public class LostCatPostController {
             @Parameter(description = "실종글 ID", example = "1")
             @PathVariable Long lostCatPostId){
 
-        GetLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.getLostCatPost(lostCatPostId);
+        GetLostCatPostResponse lostCatPostDto = lostCatPostService.getLostCatPost(lostCatPostId);
         return ResponseEntity.ok(ApiResponse.success("글 조회 성공", lostCatPostDto));
     }
 
@@ -74,7 +74,7 @@ public class LostCatPostController {
             @RequestBody @Valid CreateLostCatPostRequest createLostCatPostRequest,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        CreateLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.createLostCatPost(createLostCatPostRequest, user.getLoginId());
+        CreateLostCatPostResponse lostCatPostDto = lostCatPostService.createLostCatPost(createLostCatPostRequest, user.getLoginId());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("글 생성 성공", lostCatPostDto));
@@ -93,7 +93,7 @@ public class LostCatPostController {
             @RequestBody @Valid UpdateLostCatPostRequest updateLostCatPostRequest,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
         String loginId = user.getLoginId();
-        UpdateLostCatPostResponse lostCatPostDto = lostCatPostServiceImpl.updateLostCatPost(lostCatPostId, updateLostCatPostRequest, loginId);
+        UpdateLostCatPostResponse lostCatPostDto = lostCatPostService.updateLostCatPost(lostCatPostId, updateLostCatPostRequest, loginId);
         return ResponseEntity.ok(ApiResponse.success("글 수정 성공", lostCatPostDto));
     }
 
@@ -107,7 +107,7 @@ public class LostCatPostController {
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
         String loginId = user.getLoginId();
-        lostCatPostServiceImpl.deleteLostCatPost(lostCatPostId, loginId);
+        lostCatPostService.deleteLostCatPost(lostCatPostId, loginId);
         return ResponseEntity.noContent().build();
     }
 
@@ -116,7 +116,7 @@ public class LostCatPostController {
     @SecurityRequirements
     @GetMapping("/recent")
     public ResponseEntity<ApiResponse<List<LostCatPostListResponse>>> getRecentLostCatPosts() {
-        List<LostCatPostListResponse> posts = lostCatPostServiceImpl.getRecentLostCatPosts();
+        List<LostCatPostListResponse> posts = lostCatPostService.getRecentLostCatPosts();
         return ResponseEntity.ok(ApiResponse.success("최근 실종글 20개 조회 성공", posts));
     }
 
@@ -127,7 +127,7 @@ public class LostCatPostController {
     public ResponseEntity<ApiResponse<Void>> incrementViewCount(
             @Parameter(description = "실종글 ID", example = "1")
             @PathVariable Long lostCatPostId) {
-        lostCatPostServiceImpl.incrementViewCount(lostCatPostId);
+        lostCatPostService.incrementViewCount(lostCatPostId);
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공", null));
     }
 
@@ -143,7 +143,7 @@ public class LostCatPostController {
     public ResponseEntity<ApiResponse<Void>> incrementViewCountV1(
             @Parameter(description = "실종글 ID", example = "1")
             @PathVariable Long lostCatPostId) {
-        lostCatPostServiceImpl.incrementViewCountWithDirtyChecking(lostCatPostId);
+        lostCatPostService.incrementViewCountWithDirtyChecking(lostCatPostId);
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (더티 체킹 방식)", null));
     }
 
