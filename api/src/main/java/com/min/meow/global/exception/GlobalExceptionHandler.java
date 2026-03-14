@@ -10,15 +10,17 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 
+import java.util.List;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 커스텀 예외 처리
+    // 커스텀 예외 처리 (의도된 비즈니스 예외 → warn)
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ApiResponse<?>> handleCustomException(CustomException e) {
         ErrorCode errorCode = e.getErrorCode();
-        log.error("CustomException 발생: {}", e.getMessage());
+        log.warn("비즈니스 예외 발생 [{}]: {}", errorCode.name(), e.getMessage());
         return createErrorResponse(errorCode.getStatus(), errorCode.getMessage());
     }
 
@@ -34,12 +36,17 @@ public class GlobalExceptionHandler {
         return createErrorResponse(HttpStatus.FORBIDDEN, "접근 권한이 없습니다.");
     }
 
-    // Validation 예외 처리
+    // Validation 예외 처리 (클라이언트 입력 오류 → 실패한 모든 필드 목록 반환)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<?>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        String errorMessage = e.getBindingResult().getFieldErrors().get(0).getDefaultMessage();
-        log.error("Validation error 발생: {}", errorMessage);
-        return createErrorResponse(HttpStatus.BAD_REQUEST, errorMessage);
+        // 실패한 모든 필드를 FieldErrorDetail 리스트로 변환
+        List<FieldErrorDetail> fieldErrors = e.getBindingResult().getFieldErrors().stream()
+                .map(fe -> new FieldErrorDetail(fe.getField(), fe.getDefaultMessage()))
+                .toList();
+        log.warn("입력값 검증 실패 - 필드 수: {}, 에러: {}", fieldErrors.size(), fieldErrors);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.fail(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다", fieldErrors));
     }
 
     /**

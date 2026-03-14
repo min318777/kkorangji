@@ -1,9 +1,12 @@
 package com.min.meow.config;
 
+import com.min.meow.global.exception.CustomException;
+import com.min.meow.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
@@ -161,8 +164,11 @@ public class S3Service {
                     .build();
             s3Client.deleteObject(deleteRequest);
             log.info("S3 파일 삭제 완료 - key: {}", key);
-        } catch (Exception e) {
+        } catch (SdkException e) {
+            // 예외를 삼키지 않고 래핑해서 전파 (FastAPI의 raise DatabaseException() from e 패턴)
+            // 원인(cause) 체인을 보존하여 디버깅 시 근본 원인 추적 가능
             log.error("S3 파일 삭제 실패 - key: {}", key, e);
+            throw new CustomException(ErrorCode.S3_DELETE_FAILED, e);
         }
     }
 

@@ -89,7 +89,6 @@ public class CommentService {
         commentRepository.save(comment);
 
         // 게시글 작성자가 탈퇴하지 않은 경우에만 알림 발송
-        // - 탈퇴한 사용자에게는 알림을 보내지 않음
         // - 자기 자신의 게시글에 댓글을 달 경우도 알림 발송하지 않음
         if (!boastCatPost.getUser().isWithdrawn() && !user.getLoginId().equals(boastCatPost.getUser().getLoginId())) {
             CommentEvent event = new CommentEvent(
@@ -148,7 +147,7 @@ public class CommentService {
     @Transactional
     public UpdateCommentResponse updateComment(UpdateCommentRequest updateCommentRequest, Long commentId, Long userId){
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT));
 
         // 수정은 본인만 허용 (관리자도 타인 댓글 수정 불가)
         if (!comment.isAuthor(userId)) {
@@ -164,7 +163,7 @@ public class CommentService {
     @Transactional
     public void deleteComment(Long commentId, Long userId){
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT));
 
         // 본인이 아니고 관리자 권한(comment:delete)도 없으면 → 403
         if (!comment.isAuthor(userId)

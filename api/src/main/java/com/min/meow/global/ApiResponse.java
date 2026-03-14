@@ -64,4 +64,16 @@ public class ApiResponse<T> {
                 .data(null)
                 .build();
     }
+
+    /**
+     * 실패 응답 (data 포함 - 검증 에러 목록 등에 활용)
+     */
+    public static <T> ApiResponse<T> fail(HttpStatus status, String message, T data) {
+        return ApiResponse.<T>builder()
+                .status(status.value())
+                .success(false)
+                .message(message)
+                .data(data)
+                .build();
+    }
 }

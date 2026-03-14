@@ -9,6 +9,7 @@ public enum ErrorCode {
     
     // 게시글 예외
     NOT_FOUND_POST(HttpStatus.NOT_FOUND, "존재하지 않은 게시글입니다."),
+    NOT_FOUND_COMMENT(HttpStatus.NOT_FOUND, "존재하지 않는 댓글입니다."),
     
     // 회원 예외
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."),
@@ -30,8 +31,15 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 refresh 토큰입니다." ),
     INVALID_TOKEN_TYPE(HttpStatus.UNAUTHORIZED, "토큰 타입이 일치하지 않습니다."),
 
+    // 알림 예외
+    NOT_FOUND_NOTIFICATION(HttpStatus.NOT_FOUND, "존재하지 않는 알림입니다."),
+    FORBIDDEN_NOTIFICATION_ACCESS(HttpStatus.FORBIDDEN, "해당 알림에 접근할 권한이 없습니다."),
+
     // Validation 예외
     FORBIDDEN_NOT_AUTHOR(HttpStatus.FORBIDDEN, "작성자 본인만 수정, 삭제가 가능합니다." ),
+
+    // 외부 서비스 예외
+    S3_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 삭제에 실패했습니다."),
 
     ;
 
