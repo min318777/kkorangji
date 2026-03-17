@@ -144,7 +144,11 @@ public class BoastCatPostService {
      * - post:boast:recent (새 글이 메인페이지 최근글 목록에 반영되어야 함)
      */
     @Transactional
-    @CacheEvict(cacheNames = "post:boast:recent", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "post:boast:recent", allEntries = true),
+            // 자랑글 작성 시 마이페이지 통계(자랑글 수) 캐시 무효화
+            @CacheEvict(cacheNames = "user:stats", key = "#loginId")
+    })
     public CreateBoastCatPostResponse createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest, String loginId){
 
         User writer = userRepository.findByLoginId(loginId)
@@ -165,6 +169,7 @@ public class BoastCatPostService {
                 .build();
         boastCatPostRepository.save(boastCatPost);
 
+        log.info("게시글 작성 완료 - loginId: {}, postId: {}", loginId, boastCatPost.getId());
         return CreateBoastCatPostResponse.from(boastCatPost);
     }
 
@@ -216,7 +221,9 @@ public class BoastCatPostService {
     @Transactional
     @Caching(evict = {
             @CacheEvict(cacheNames = "post:boast:recent", allEntries = true),
-            @CacheEvict(cacheNames = "post:boast:detail", key = "#boastCatPostId")
+            @CacheEvict(cacheNames = "post:boast:detail", key = "#boastCatPostId"),
+            // 자랑글 삭제 시 마이페이지 통계(자랑글 수) 캐시 무효화
+            @CacheEvict(cacheNames = "user:stats", key = "#loginId")
     })
     public void deleteBoastCatPost(Long boastCatPostId, String loginId){
         User writer = userRepository.findByLoginId(loginId)
@@ -229,6 +236,7 @@ public class BoastCatPostService {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
         boastCatPostRepository.deleteById(boastCatPostId);
+        log.info("게시글 삭제 완료 - loginId: {}, postId: {}", loginId, boastCatPostId);
     }
 
     /**

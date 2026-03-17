@@ -105,6 +105,18 @@ public class RedisConfig {
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
 
+        // 마이페이지 통계 캐시 설정 (TTL 10분)
+        // 자랑글 수, 실종글 수, 댓글 수 — 실시간성 낮음
+        // 무효화 트리거: 게시글/댓글 작성·삭제 시
+        RedisCacheConfiguration userStatsConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+                .disableCachingNullValues()
+                .entryTtl(Duration.ofMinutes(10))
+                .serializeKeysWith(RedisSerializationContext
+                        .SerializationPair
+                        .fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
+
         return RedisCacheManager.RedisCacheManagerBuilder
                 .fromConnectionFactory(redisConnectionFactory)
                 .cacheDefaults(defaultConfiguration)
@@ -114,6 +126,8 @@ public class RedisConfig {
                 // 게시글 상세 캐시 (TTL 10분)
                 .withCacheConfiguration("post:boast:detail", postDetailConfiguration)
                 .withCacheConfiguration("post:lost:detail", postDetailConfiguration)
+                // 마이페이지 통계 캐시 (TTL 10분)
+                .withCacheConfiguration("user:stats", userStatsConfiguration)
                 .build();
     }
 

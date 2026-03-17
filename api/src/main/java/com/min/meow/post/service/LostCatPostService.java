@@ -158,7 +158,11 @@ public class LostCatPostService {
      * - post:lost:recent (새 글이 메인페이지 최근글 목록에 반영되어야 함)
      */
     @Transactional
-    @CacheEvict(cacheNames = "post:lost:recent", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "post:lost:recent", allEntries = true),
+            // 실종글 작성 시 마이페이지 통계(실종글 수) 캐시 무효화
+            @CacheEvict(cacheNames = "user:stats", key = "#loginId")
+    })
     public CreateLostCatPostResponse createLostCatPost(CreateLostCatPostRequest createLostCatPostRequest, String loginId){
         User writer = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
@@ -247,7 +251,9 @@ public class LostCatPostService {
     @Transactional
     @Caching(evict = {
             @CacheEvict(cacheNames = "post:lost:recent", allEntries = true),
-            @CacheEvict(cacheNames = "post:lost:detail", key = "#lostCatPostId")
+            @CacheEvict(cacheNames = "post:lost:detail", key = "#lostCatPostId"),
+            // 실종글 삭제 시 마이페이지 통계(실종글 수) 캐시 무효화
+            @CacheEvict(cacheNames = "user:stats", key = "#loginId")
     })
     public void deleteLostCatPost(Long lostCatPostId, String loginId) {
 

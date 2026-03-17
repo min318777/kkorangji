@@ -19,6 +19,7 @@ import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import com.min.meow.global.PageResponse;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,7 +72,8 @@ public class CommentService {
 
     // 고양이 자랑 게시글 댓글 작성
     @Transactional
-    public RegisterCommentResponse registerBoastCatPostComment(RegisterCommentRequest registerCommentRequest, Long boastCatPostId, Long userId){
+    @CacheEvict(cacheNames = "user:stats", key = "#loginId")
+    public RegisterCommentResponse registerBoastCatPostComment(RegisterCommentRequest registerCommentRequest, Long boastCatPostId, Long userId, String loginId){
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
         User user = userRepository.findById(userId)
@@ -107,7 +109,8 @@ public class CommentService {
 
     // 실종 고양이 게시글 댓글 작성
     @Transactional
-    public RegisterCommentResponse registerLostCatPostComment(RegisterCommentRequest registerCommentRequest, Long lostCatPostId, Long userId){
+    @CacheEvict(cacheNames = "user:stats", key = "#loginId")
+    public RegisterCommentResponse registerLostCatPostComment(RegisterCommentRequest registerCommentRequest, Long lostCatPostId, Long userId, String loginId){
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
         User user = userRepository.findById(userId)
@@ -160,8 +163,10 @@ public class CommentService {
     }
 
     // 댓글 삭제
+    // loginId: 댓글 삭제 시 마이페이지 통계(댓글 수) 캐시 무효화에 사용
     @Transactional
-    public void deleteComment(Long commentId, Long userId){
+    @CacheEvict(cacheNames = "user:stats", key = "#loginId")
+    public void deleteComment(Long commentId, Long userId, String loginId){
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT));
 

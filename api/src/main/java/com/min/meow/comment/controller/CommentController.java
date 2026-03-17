@@ -78,7 +78,8 @@ public class CommentController {
             @PathVariable Long boastCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        RegisterCommentResponse registerCommentResponse = commentService.registerBoastCatPostComment(registerCommentRequest, boastCatPostId, user.getUserId());
+        // loginId는 마이페이지 통계 캐시 무효화에 사용
+        RegisterCommentResponse registerCommentResponse = commentService.registerBoastCatPostComment(registerCommentRequest, boastCatPostId, user.getUserId(), user.getLoginId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("댓글 작성 성공", registerCommentResponse));
     }
@@ -128,7 +129,8 @@ public class CommentController {
             @PathVariable Long lostCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        RegisterCommentResponse registerCommentResponse = commentService.registerLostCatPostComment(registerCommentRequest, lostCatPostId, user.getUserId());
+        // loginId는 마이페이지 통계 캐시 무효화에 사용
+        RegisterCommentResponse registerCommentResponse = commentService.registerLostCatPostComment(registerCommentRequest, lostCatPostId, user.getUserId(), user.getLoginId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("댓글 작성 성공", registerCommentResponse));
     }
@@ -158,7 +160,8 @@ public class CommentController {
             @PathVariable Long commentId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        commentService.deleteComment(commentId, user.getUserId());
+        // loginId는 마이페이지 통계 캐시 무효화에 사용
+        commentService.deleteComment(commentId, user.getUserId(), user.getLoginId());
         return ResponseEntity.noContent().build();
     }
 }

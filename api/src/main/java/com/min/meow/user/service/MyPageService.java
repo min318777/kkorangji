@@ -14,6 +14,8 @@ import com.min.meow.user.dto.request.UpdateProfileRequest;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -43,12 +45,36 @@ public class MyPageService {
         User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));
 
-        long boastCatPostCount = userRepository.countBoastCatPostsByUserId(user.getId());
-        long lostCatPostCount = userRepository.countLostCatPostsByUserId(user.getId());
+        // 캐싱된 통계 메서드 호출 (캐시 히트 시 COUNT 쿼리 3개 생략)
+        long[] stats = getMyPageStats(loginId, user.getId());
+
+        return MyPageSummaryResponse.from(user, stats[0], stats[1], stats[2]);
+    }
+
+    /**
+     * 마이페이지 통계 조회 (캐싱 적용)
+     *
+     * 캐시 설정:
+     * - 캐시명: user:stats
+     * - 키: loginId (예: user:stats::user123)
+     * - TTL: 10분
+     *
+     * 무효화 트리거:
+     * - 자랑글 작성/삭제 → BoastCatPostService
+     * - 실종글 작성/삭제 → LostCatPostService
+     * - 댓글 작성/삭제   → CommentService
+     *
+     * @return [자랑글 수, 실종글 수, 댓글 수]
+     */
+    @Cacheable(cacheNames = "user:stats", key = "#loginId")
+    public long[] getMyPageStats(String loginId, Long userId) {
+        // 캐시 미스 시에만 COUNT 쿼리 3개 실행
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));
+        long boastCatPostCount = userRepository.countBoastCatPostsByUserId(userId);
+        long lostCatPostCount = userRepository.countLostCatPostsByUserId(userId);
         long commentCount = commentRepository.countByUser(user);
-
-
-        return MyPageSummaryResponse.from(user, boastCatPostCount, lostCatPostCount, commentCount);
+        return new long[]{boastCatPostCount, lostCatPostCount, commentCount};
     }
 
     /**
@@ -108,12 +134,10 @@ public class MyPageService {
         // 도메인 메서드로 닉네임 변경 (setter 대신)
         user.updateNickname(request.getNickname());
 
-        // 통계 정보도 함께 반환하여 마이페이지 전체 갱신 가능하도록
-        long boastCount = userRepository.countBoastCatPostsByUserId(user.getId());
-        long lostCount = userRepository.countLostCatPostsByUserId(user.getId());
-        long commentCount = commentRepository.countByUser(user);
+        // 캐싱된 통계 메서드 재사용 (통계는 닉네임 변경과 무관하므로 캐시 유지)
+        long[] stats = getMyPageStats(loginId, user.getId());
 
-        return MyPageSummaryResponse.from(user, boastCount, lostCount, commentCount);
+        return MyPageSummaryResponse.from(user, stats[0], stats[1], stats[2]);
     }
 
     private Page<MyPostDto> getBoastPostsOnly(Long userId, Pageable pageable) {
