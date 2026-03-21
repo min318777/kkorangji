@@ -6,6 +6,7 @@ import com.min.meow.user.dto.response.TokenResponse;
 import com.min.meow.security.service.ReissueService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +30,9 @@ public class ReissueController {
 
     @Operation(summary = "토큰 재발급",
             description = "Refresh Token(쿠키)으로 새 Access Token을 발급합니다. "
-                    + "응답 헤더 Authorization에 새 Access Token, 쿠키에 새 Refresh Token이 설정됩니다.")
+                    + "응답 헤더 Authorization에 새 Access Token, 쿠키에 새 Refresh Token이 설정됩니다. "
+                    + "인증 불필요 (Refresh Token은 쿠키로 자동 전송됩니다).")
+    @SecurityRequirements  // JWT Bearer 인증 불필요 - 쿠키 기반 Refresh Token 사용
     @PostMapping("/api/reissue")
     public ResponseEntity<?> reissue(
             @Parameter(hidden = true) HttpServletRequest request,
