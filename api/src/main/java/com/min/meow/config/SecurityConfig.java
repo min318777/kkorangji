@@ -1,6 +1,7 @@
 package com.min.meow.config;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.min.meow.security.filter.CustomLogoutFilter;
 import com.min.meow.security.jwt.JwtFilter;
 import com.min.meow.security.jwt.JwtUtil;
@@ -43,6 +44,7 @@ public class SecurityConfig {
 
     private final CustomOauth2UserService customOauth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
@@ -116,7 +118,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated());
         // JwtFilter는 LoginFilter 뒤에 등록하여, 로그인 성공 후 JWT 인증 처리
         http.
-                addFilterAfter(new JwtFilter(jwtUtil, userRepository), UsernamePasswordAuthenticationFilter.class);
+                addFilterAfter(new JwtFilter(jwtUtil, userRepository, objectMapper), UsernamePasswordAuthenticationFilter.class);
         http.
                 addFilterAt(customLoginFilter, UsernamePasswordAuthenticationFilter.class);
         http.

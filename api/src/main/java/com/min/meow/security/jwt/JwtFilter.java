@@ -1,6 +1,8 @@
 package com.min.meow.security.jwt;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.min.meow.global.ApiResponse;
 import com.min.meow.global.Token;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.security.dto.CustomUserDetails;
@@ -16,6 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -43,6 +46,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -118,16 +122,17 @@ public class JwtFilter extends OncePerRequestFilter {
 
     /**
      * 에러 응답을 직접 작성하여 반환
-     * 필터에서는 예외를 throw하면 안 되므로 response에 직접 에러를 작성
+     * - 필터에서는 예외를 throw하면 안 되므로 response에 직접 에러를 작성
+     * - ApiResponse.fail()을 사용하여 전체 API와 동일한 {status, success, message, data} 포맷 반환
      */
     private void sendErrorResponse(HttpServletResponse response, int status, String errorCode, String message) throws IOException {
         response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        String jsonResponse = String.format(
-                "{\"error\": \"%s\", \"message\": \"%s\", \"status\": %d}",
-                errorCode, message, status
-        );
+
+        // 전체 API와 동일한 포맷으로 응답 (errorCode는 로깅용이므로 메시지에만 반영)
+        ApiResponse<Void> apiResponse = ApiResponse.fail(HttpStatus.valueOf(status), message);
+        String jsonResponse = objectMapper.writeValueAsString(apiResponse);
 
         response.getWriter().write(jsonResponse);
     }
