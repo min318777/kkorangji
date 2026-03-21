@@ -75,6 +75,7 @@ public class UserService {
         // userRoles 리스트에 추가하여 JoinResponse에서 역할 정보 반환 가능하도록 함
         user.getUserRoles().add(newUserRole);
 
+        log.info("회원가입 완료 - userId: {}, loginId: {}", user.getId(), user.getLoginId());
         return JoinResponse.from(user);
     }
 

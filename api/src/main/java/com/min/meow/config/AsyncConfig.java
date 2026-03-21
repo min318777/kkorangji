@@ -66,10 +66,8 @@ public class AsyncConfig implements AsyncConfigurer {
         // 스레드 풀 초기화
         executor.initialize();
 
-        log.info("알림 비동기 처리 ThreadPoolTaskExecutor 초기화 완료");
-        log.info("   - Core Pool Size: {}", executor.getCorePoolSize());
-        log.info("   - Max Pool Size: {}", executor.getMaxPoolSize());
-        log.info("   - Queue Capacity: 100");
+        log.debug("알림 비동기 처리 ThreadPoolTaskExecutor 초기화 완료 - core: {}, max: {}, queue: 100",
+                executor.getCorePoolSize(), executor.getMaxPoolSize());
 
         return executor;
     }
@@ -90,7 +88,7 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setAwaitTerminationSeconds(30);
         executor.initialize();
 
-        log.info("본 비동기 ThreadPoolTaskExecutor 초기화 완료");
+        log.debug("기본 비동기 ThreadPoolTaskExecutor 초기화 완료");
 
         return executor;
     }
@@ -112,17 +110,13 @@ public class AsyncConfig implements AsyncConfigurer {
      */
     private static class AsyncExceptionHandler implements AsyncUncaughtExceptionHandler {
 
+        private static final org.slf4j.Logger log =
+                org.slf4j.LoggerFactory.getLogger(AsyncExceptionHandler.class);
+
         @Override
         public void handleUncaughtException(Throwable ex, Method method, Object... params) {
-            log.error("비동기 메서드 예외 발생!");
-            log.error("메서드: {}.{}", method.getDeclaringClass().getSimpleName(), method.getName());
-            log.error("예외 타입: {}", ex.getClass().getSimpleName());
-            log.error("예외 메시지: {}", ex.getMessage());
-            log.error("파라미터: ");
-            for (int i = 0; i < params.length; i++) {
-                log.error("     [{}]: {}", i, params[i]);
-            }
-            log.error("   - 스택 트레이스:", ex);
+            log.error("비동기 메서드 예외 발생 - {}.{}()",
+                    method.getDeclaringClass().getSimpleName(), method.getName(), ex);
         }
     }
 }

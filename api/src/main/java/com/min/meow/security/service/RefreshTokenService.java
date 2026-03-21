@@ -32,7 +32,7 @@ public class RefreshTokenService {
     public void save(Long userId, String jti) {
         String key = KEY_PREFIX + userId;
         redisTemplate.opsForValue().set(key, jti, jwtConfig.refreshTtlDays(), TimeUnit.DAYS);
-        log.info("Refresh Token jti 저장 - userId: {}", userId);
+        log.debug("Refresh Token jti 저장 - userId: {}", userId);
     }
 
     /**
@@ -57,6 +57,6 @@ public class RefreshTokenService {
     public void delete(Long userId) {
         String key = KEY_PREFIX + userId;
         redisTemplate.delete(key);
-        log.info("Refresh Token 삭제 - userId: {}", userId);
+        log.debug("Refresh Token 삭제 - userId: {}", userId);
     }
 }

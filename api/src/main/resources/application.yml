@@ -94,6 +94,15 @@ cloud:
       access-key: ${AWS_ACCESS_KEY_ID:}
       secret-key: ${AWS_SECRET_ACCESS_KEY:}
 
+logging:
+  level:
+    root: INFO
+    com.min.meow: DEBUG          # 내 코드는 DEBUG까지 출력 (로컬 기본값)
+    org.hibernate.SQL: OFF       # p6spy가 SQL 출력하므로 중복 방지
+    org.springframework.security: INFO
+    io.lettuce: WARN             # Redis 클라이언트 노이즈 억제
+    org.apache.kafka: WARN       # Kafka 라이브러리 노이즈 억제
+
 # Actuator 및 Prometheus 설정
 management:
   endpoints:

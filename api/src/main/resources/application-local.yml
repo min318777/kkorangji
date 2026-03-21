@@ -12,11 +12,12 @@ spring:
     username: root
     password: min3782
     hikari:
-      maximum-pool-size: 10          # 로컬 환경: 기본값 유지
-      minimum-idle: 5                # 유휴 시 최소 커넥션
-      connection-timeout: 3000       # 3초 내 못 얻으면 실패
-      max-lifetime: 1800000          # 30분마다 커넥션 재생성
+      maximum-pool-size: 20          # 최대 DB Connection 수 (pool_size + max_overflow)
+      minimum-idle: 5                # 유휴 시 최소 커넥션 (pool_size)
+      connection-timeout: 30000      # 30초 내 못 얻으면 실패 (pool_timeout=30)
+      max-lifetime: 1800000          # 30분마다 커넥션 재생성 (pool_recycle=1800)
       idle-timeout: 600000           # 10분 유휴 시 커넥션 정리
+      keepalive-time: 60000          # 60초마다 SELECT 1로 연결 확인 (pool_pre_ping=True)
       leak-detection-threshold: 2000 # 2초 이상 미반환 시 경고 로그
 
   jpa:
@@ -60,8 +61,8 @@ spring:
         registration:
           google:
             client-name: Google
-            client-id: 647042100012-18jjd3m439a5nb8il0gfd5qq7d7gq6tt.apps.googleusercontent.com
-            client-secret: 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
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
             redirect-uri: "http://localhost:8080/login/oauth2/code/google"
             authorization-grant-type: authorization_code
             scope:
