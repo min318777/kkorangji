@@ -37,7 +37,7 @@ public class NotificationConsumer {
             containerFactory = "commentEventKafkaListenerContainerFactory"
     )
     public void listenCommentEvent(CommentEvent event) {
-        log.info("[Kafka] 댓글 이벤트 수신 - commentId: {}, postId: {}, receiver: {}",
+        log.debug("Kafka 댓글 이벤트 수신 - commentId: {}, postId: {}, receiver: {}",
                 event.commentId(), event.postId(), event.receiverLoginId());
 
         // 1. 알림 엔티티 생성 및 저장
@@ -51,12 +51,12 @@ public class NotificationConsumer {
                 .build();
 
         Notification saved = notificationRepository.save(notification);
-        log.info("[DB] 알림 저장 완료 - ID: {}, Type: COMMENT, Receiver: {}",
+        log.debug("DB 알림 저장 완료 - ID: {}, Type: COMMENT, Receiver: {}",
                 saved.getId(), saved.getReceiverLoginId());
 
         // 2. SSE 실시간 전송
         sseEmitterManager.sendToUser(saved.getReceiverLoginId(), saved);
-        log.info("[SSE] 실시간 알림 전송 완료 - Receiver: {}", saved.getReceiverLoginId());
+        log.debug("SSE 실시간 알림 전송 완료 - Receiver: {}", saved.getReceiverLoginId());
     }
 
     /**
@@ -69,7 +69,7 @@ public class NotificationConsumer {
             containerFactory = "likeEventKafkaListenerContainerFactory"
     )
     public void listenLikeEvent(LikeEvent event) {
-        log.info("[Kafka] 좋아요 이벤트 수신 - likeId: {}, postId: {}, receiver: {}",
+        log.debug("Kafka 좋아요 이벤트 수신 - likeId: {}, postId: {}, receiver: {}",
                 event.likeId(), event.postId(), event.receiverLoginId());
 
         // 1. 알림 엔티티 생성 및 저장
@@ -83,11 +83,11 @@ public class NotificationConsumer {
                 .build();
 
         Notification saved = notificationRepository.save(notification);
-        log.info("[DB] 알림 저장 완료 - ID: {}, Type: LIKE, Receiver: {}",
+        log.debug("DB 알림 저장 완료 - ID: {}, Type: LIKE, Receiver: {}",
                 saved.getId(), saved.getReceiverLoginId());
 
         // 2. SSE 실시간 전송
         sseEmitterManager.sendToUser(saved.getReceiverLoginId(), saved);
-        log.info("[SSE] 실시간 알림 전송 완료 - Receiver: {}", saved.getReceiverLoginId());
+        log.debug("SSE 실시간 알림 전송 완료 - Receiver: {}", saved.getReceiverLoginId());
     }
 }

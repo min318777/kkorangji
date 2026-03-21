@@ -50,11 +50,11 @@ public class NotificationService {
 
         // 2. DB에 저장
         Notification saved = notificationRepository.save(notification);
-        log.info("💾 알림 저장 완료: ID={}, 타입={}, 받는사람={}",
+        log.debug("알림 저장 완료: ID={}, 타입={}, 받는사람={}",
                 saved.getId(), saved.getType(), saved.getReceiverLoginId());
 
         // 3. Spring Event 발행 (API 모듈의 Listener가 수신)
         eventPublisher.publishEvent(new NotificationSavedEvent(this, saved));
-        log.info("📢 알림 저장 이벤트 발행: {}", saved.getId());
+        log.debug("알림 이벤트 발행: {}", saved.getId());
     }
 }

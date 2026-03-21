@@ -1,5 +1,7 @@
 package com.min.meow.notification.service;
 
+import com.min.meow.global.exception.CustomException;
+import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.notification.entity.Notification;
 import com.min.meow.notification.repository.NotificationRepository;
 import com.min.meow.notification.dto.response.NotificationResponse;
@@ -32,32 +34,38 @@ public class NotificationQueryService {
 
     /**
      * 단일 알림을 읽음 처리
-     * - 권한 검증: 요청한 사용자가 알림의 수신자인지 확인
+     * - 1단계: 알림 존재 여부 확인 (없으면 404)
+     * - 2단계: 본인 알림인지 권한 검증 (아니면 403)
      * - JPA dirty checking을 통해 자동으로 DB 업데이트
      * @param notificationId 읽음 처리할 알림 ID
      * @param userLoginId 요청한 사용자의 로그인 ID
      * @return 읽음 처리된 알림 정보
-     * @throws IllegalArgumentException 알림을 찾을 수 없거나 권한이 없는 경우
+     * @throws CustomException NOT_FOUND_NOTIFICATION (404) - 알림이 존재하지 않는 경우
+     * @throws CustomException FORBIDDEN_NOTIFICATION_ACCESS (403) - 접근 권한이 없는 경우
      */
     @Transactional
     public NotificationResponse readSingleNotification(Long notificationId, String userLoginId) {
-        log.info("단일 알림 읽음 처리 - NotificationId: {}, User: {}", notificationId, userLoginId);
+        log.debug("단일 알림 읽음 처리 - NotificationId: {}, User: {}", notificationId, userLoginId);
 
-        // 알림 조회 및 권한 검증 (본인의 알림인지 확인)
-        Notification notification = notificationRepository
-                .findByIdAndReceiverLoginId(notificationId, userLoginId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "알림을 찾을 수 없거나 접근 권한이 없습니다. ID: " + notificationId));
+        // 1단계: 알림 존재 여부 확인 (에러 메시지에 ID 미포함 - 내부 정보 노출 방지)
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_NOTIFICATION));
+
+        // 2단계: 본인의 알림인지 권한 검증
+        if (!notification.getReceiverLoginId().equals(userLoginId)) {
+            log.warn("알림 접근 권한 없음 - User: {}", userLoginId);
+            throw new CustomException(ErrorCode.FORBIDDEN_NOTIFICATION_ACCESS);
+        }
 
         // 이미 읽은 알림인 경우 로그만 남기고 그대로 반환
         if (notification.isRead()) {
-            log.info("이미 읽은 알림입니다 - NotificationId: {}", notificationId);
+            log.debug("이미 읽은 알림입니다 - NotificationId: {}", notificationId);
             return NotificationResponse.from(notification);
         }
 
         // 읽음 처리 (JPA dirty checking으로 자동 업데이트)
         notification.markAsRead();
-        log.info("알림 읽음 처리 완료 - NotificationId: {}", notificationId);
+        log.debug("알림 읽음 처리 완료 - NotificationId: {}", notificationId);
 
         return NotificationResponse.from(notification);
     }
@@ -72,7 +80,7 @@ public class NotificationQueryService {
      */
     @Transactional
     public int readMultipleNotifications(List<Long> notificationIds, String userLoginId) {
-        log.info("여러 개 알림 읽음 처리 - Count: {}, User: {}", notificationIds.size(), userLoginId);
+        log.debug("여러 개 알림 읽음 처리 - Count: {}, User: {}", notificationIds.size(), userLoginId);
 
         // 사용자의 알림만 조회 (권한 검증 포함)
         List<Notification> notifications = notificationRepository
@@ -92,7 +100,7 @@ public class NotificationQueryService {
             }
         }
 
-        log.info("알림 읽음 처리 완료 - 처리된 알림 수: {}/{}", readCount, notifications.size());
+        log.debug("알림 읽음 처리 완료 - 처리된 알림 수: {}/{}", readCount, notifications.size());
         return readCount;
     }
 
@@ -104,14 +112,14 @@ public class NotificationQueryService {
      */
     @Transactional
     public int readAllNotifications(String userLoginId) {
-        log.info("전체 알림 읽음 처리 - User: {}", userLoginId);
+        log.debug("전체 알림 읽음 처리 - User: {}", userLoginId);
 
         // 사용자의 읽지 않은 모든 알림 조회
         List<Notification> unreadNotifications = notificationRepository
                 .findAllByReceiverLoginIdAndIsReadFalse(userLoginId);
 
         if (unreadNotifications.isEmpty()) {
-            log.info("읽지 않은 알림이 없습니다 - User: {}", userLoginId);
+            log.debug("읽지 않은 알림이 없습니다 - User: {}", userLoginId);
             return 0;
         }
 
@@ -121,7 +129,7 @@ public class NotificationQueryService {
         }
 
         int readCount = unreadNotifications.size();
-        log.info("전체 알림 읽음 처리 완료 - 처리된 알림 수: {}", readCount);
+        log.debug("전체 알림 읽음 처리 완료 - 처리된 알림 수: {}", readCount);
         return readCount;
     }
 }

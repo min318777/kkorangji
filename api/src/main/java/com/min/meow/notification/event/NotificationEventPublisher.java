@@ -39,7 +39,7 @@ public class NotificationEventPublisher {
      * @param event 댓글 이벤트 (댓글 ID, 게시글 ID, 작성자, 수신자 정보)
      */
     public void publishCommentEvent(CommentEvent event) {
-        log.info("댓글 알림 이벤트 발행 - commentId: {}, postId: {}, receiver: {}",
+        log.debug("댓글 알림 이벤트 발행 - commentId: {}, postId: {}, receiver: {}",
                 event.commentId(), event.postId(), event.receiverLoginId());
 
         // Spring Event 발행 - 동기적으로 발행하지만, 리스너가 @Async로 비동기 처리
@@ -55,7 +55,7 @@ public class NotificationEventPublisher {
      * @param event 좋아요 이벤트 (좋아요 ID, 게시글 ID, 수신자 정보)
      */
     public void publishLikeEvent(LikeEvent event) {
-        log.info("좋아요 알림 이벤트 발행 - likeId: {}, postId: {}, receiver: {}",
+        log.debug("좋아요 알림 이벤트 발행 - likeId: {}, postId: {}, receiver: {}",
                 event.likeId(), event.postId(), event.receiverLoginId());
 
         // Spring Event 발행 - 동기적으로 발행하지만, 리스너가 @Async로 비동기 처리

@@ -1,5 +1,6 @@
 package com.min.meow.notification.controller;
 
+import com.min.meow.global.ApiResponse;
 import com.min.meow.notification.dto.request.NotificationRequest;
 import com.min.meow.notification.dto.response.NotificationResponse;
 import com.min.meow.notification.service.NotificationQueryService;
@@ -21,9 +22,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Tag(name = "알림", description = "알림 조회·읽음 처리 및 SSE 구독 API")
 @Slf4j
 @RestController
@@ -38,7 +36,7 @@ public class NotificationController {
             description = "페이징된 알림 목록을 조회합니다. 인증 불필요.")
     @SecurityRequirements
     @GetMapping
-    public ResponseEntity<Page<NotificationResponse>> getAllNotifications(
+    public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getAllNotifications(
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기", example = "5")
@@ -47,63 +45,56 @@ public class NotificationController {
         Pageable pageable = PageRequest.of(page, size);
         Page<NotificationResponse> notifications = notificationQueryService.getAllNotifications(pageable);
 
-        return ResponseEntity.ok(notifications);
+        return ResponseEntity.ok(ApiResponse.success("알림 목록 조회 성공", notifications));
     }
 
     @Operation(summary = "단일 알림 읽음 처리",
             description = "특정 알림을 읽음 상태로 변경합니다. 본인 알림만 처리 가능합니다. 인증 필요.")
     @PatchMapping("/{notificationId}/read")
-    public ResponseEntity<NotificationResponse> readSingleNotification(
+    public ResponseEntity<ApiResponse<NotificationResponse>> readSingleNotification(
             @Parameter(description = "알림 ID", example = "1")
             @PathVariable Long notificationId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
         String userLoginId = user.getLoginId();
-        log.info("단일 알림 읽음 요청 - NotificationId: {}, User: {}", notificationId, userLoginId);
-        NotificationResponse response = notificationQueryService
+        log.debug("단일 알림 읽음 요청 - NotificationId: {}, User: {}", notificationId, userLoginId);
+        NotificationResponse notificationResponse = notificationQueryService
                 .readSingleNotification(notificationId, userLoginId);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success("알림 읽음 처리 완료", notificationResponse));
     }
 
     @Operation(summary = "다건 알림 읽음 처리",
             description = "여러 알림을 일괄 읽음 처리합니다. 존재하지 않거나 권한 없는 알림은 자동 필터링됩니다. 인증 필요.")
     @PatchMapping("/read")
-    public ResponseEntity<Map<String, Object>> readMultipleNotifications(
+    public ResponseEntity<ApiResponse<ReadCountResponse>> readMultipleNotifications(
             @Valid @RequestBody NotificationRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
+
         String userLoginId = user.getLoginId();
-        log.info("여러 개 알림 읽음 요청 - Count: {}, User: {}",
+        log.debug("여러 개 알림 읽음 요청 - Count: {}, User: {}",
                 request.getNotificationIds().size(), userLoginId);
         int readCount = notificationQueryService
                 .readMultipleNotifications(request.getNotificationIds(), userLoginId);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("message", readCount + "개의 알림을 읽음 처리했습니다.");
-        response.put("readCount", readCount);
-        response.put("requestedCount", request.getNotificationIds().size());
-
-        return ResponseEntity.ok(response);
+        ReadCountResponse data = new ReadCountResponse(readCount, request.getNotificationIds().size());
+        return ResponseEntity.ok(ApiResponse.success(
+                readCount + "개의 알림을 읽음 처리했습니다.", data));
     }
 
     @Operation(summary = "전체 알림 읽음 처리",
             description = "현재 사용자의 읽지 않은 모든 알림을 일괄 읽음 처리합니다. 인증 필요.")
     @PatchMapping("/read-all")
-    public ResponseEntity<Map<String, Object>> readAllNotifications(
+    public ResponseEntity<ApiResponse<ReadCountResponse>> readAllNotifications(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
         String userLoginId = user.getLoginId();
-        log.info("전체 알림 읽음 요청 - User: {}", userLoginId);
+        log.debug("전체 알림 읽음 요청 - User: {}", userLoginId);
 
         int readCount = notificationQueryService.readAllNotifications(userLoginId);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("message", "모든 알림을 읽음 처리했습니다.");
-        response.put("readCount", readCount);
-
-        return ResponseEntity.ok(response);
+        ReadCountResponse data = new ReadCountResponse(readCount, readCount);
+        return ResponseEntity.ok(ApiResponse.success("모든 알림을 읽음 처리했습니다.", data));
     }
 
     @Operation(summary = "SSE 구독",
@@ -111,8 +102,9 @@ public class NotificationController {
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
+
         String userLoginId = user.getLoginId();
-        log.info("구독 요청 - User: {}", userLoginId);
+        log.debug("SSE 구독 요청 - User: {}", userLoginId);
 
         // SSE 연결 생성 및 저장
         SseEmitter emitter = sseEmitterManager.createEmitter(userLoginId);
@@ -122,8 +114,7 @@ public class NotificationController {
             emitter.send(SseEmitter.event()
                     .name("connect")
                     .data("SSE 연결 성공!"));
-
-            log.info("연결 성공 - User: {}", userLoginId);
+            log.debug("SSE 연결 성공 - User: {}", userLoginId);
         } catch (Exception e) {
             log.error("초기 메시지 전송 실패 - User: {}", userLoginId, e);
             throw new RuntimeException("SSE 연결 실패");
@@ -136,8 +127,15 @@ public class NotificationController {
             description = "현재 SSE로 연결된 사용자 수를 조회합니다. 디버깅 용도. 인증 불필요.")
     @SecurityRequirements
     @GetMapping("/status")
-    public ResponseEntity<String> getStatus() {
+    public ResponseEntity<ApiResponse<String>> getStatus() {
         int count = sseEmitterManager.getConnectedUserCount();
-        return ResponseEntity.ok("현재 연결된 사용자: " + count + "명");
+        String statusMessage = "현재 연결된 사용자: " + count + "명";
+        return ResponseEntity.ok(ApiResponse.success("연결 상태 조회 성공", statusMessage));
     }
+
+    /**
+     * 읽음 처리 결과 응답 DTO
+     * - 처리된 알림 수와 요청한 알림 수를 함께 반환
+     */
+    public record ReadCountResponse(int readCount, int requestedCount) {}
 }

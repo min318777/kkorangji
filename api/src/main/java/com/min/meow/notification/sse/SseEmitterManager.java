@@ -54,9 +54,9 @@ public class SseEmitterManager {
         //    put()은 이전 값을 반환하므로 로깅에 활용
         SseEmitter oldEmitter = emitters.put(userLoginId, emitter);
         if (oldEmitter != null) {
-            log.info("기존 SSE 연결 교체: {} (기존 연결은 자연스럽게 정리됨)", userLoginId);
+            log.debug("기존 SSE 연결 교체: {} (기존 연결은 자연스럽게 정리됨)", userLoginId);
         }
-        log.info("SSE 연결 생성: {} (현재 {}명 접속)", userLoginId, emitters.size());
+        log.debug("SSE 연결 생성: {} (현재 {}명 접속)", userLoginId, emitters.size());
 
         // 3. 연결 완료 시 Map에서 제거 (현재 emitter일 때만!)
         //    중요: 새 연결이 생성된 후 기존 연결이 완료되면 새 연결을 제거하면 안 됨
@@ -64,7 +64,7 @@ public class SseEmitterManager {
             // remove(key, value): 현재 Map에 저장된 값이 이 emitter일 때만 제거
             boolean removed = emitters.remove(userLoginId, emitter);
             if (removed) {
-                log.info("SSE 연결 완료: {}", userLoginId);
+                log.debug("SSE 연결 완료: {}", userLoginId);
             }
         });
 
@@ -102,7 +102,7 @@ public class SseEmitterManager {
             emitter.send(SseEmitter.event()
                     .name("notification")  // 이벤트 이름
                     .data(data));          // 전송할 데이터
-            log.info("알림 전송 성공: {}", userId);
+            log.debug("알림 전송 성공: {}", userId);
         } catch (IOException e) {
             emitters.remove(userId);
             emitter.completeWithError(e);

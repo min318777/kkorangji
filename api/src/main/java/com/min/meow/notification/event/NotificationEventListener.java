@@ -53,7 +53,7 @@ public class NotificationEventListener {
     @EventListener
     @Transactional
     public void handleCommentEvent(CommentEvent event) {
-        log.info("댓글 이벤트 수신 - commentId: {}, postId: {}, receiver: {}",
+        log.debug("댓글 이벤트 수신 - commentId: {}, postId: {}, receiver: {}",
                 event.commentId(), event.postId(), event.receiverLoginId());
         try {
             // 1. 알림 엔티티 생성
@@ -68,7 +68,7 @@ public class NotificationEventListener {
 
             // 2. DB에 저장
             Notification saved = notificationRepository.save(notification);
-            log.info("DB 알림 저장 완료 - ID: {}, Type: COMMENT, Receiver: {}",
+            log.debug("DB 알림 저장 완료 - ID: {}, Type: COMMENT, Receiver: {}",
                     saved.getId(), saved.getReceiverLoginId());
 
             // 3. SSE 실시간 전송 (사용자가 접속 중인 경우에만)
@@ -95,7 +95,7 @@ public class NotificationEventListener {
     @EventListener
     @Transactional
     public void handleLikeEvent(LikeEvent event) {
-        log.info("[Spring Event] 좋아요 이벤트 수신 - likeId: {}, postId: {}, receiver: {}",
+        log.debug("좋아요 이벤트 수신 - likeId: {}, postId: {}, receiver: {}",
                 event.likeId(), event.postId(), event.receiverLoginId());
 
         try {
@@ -111,7 +111,7 @@ public class NotificationEventListener {
 
             // 2. DB에 저장
             Notification saved = notificationRepository.save(notification);
-            log.info("[DB] 알림 저장 완료 - ID: {}, Type: LIKE, Receiver: {}",
+            log.debug("DB 알림 저장 완료 - ID: {}, Type: LIKE, Receiver: {}",
                     saved.getId(), saved.getReceiverLoginId());
 
             // 3. SSE 실시간 전송 (사용자가 접속 중인 경우에만)
@@ -136,7 +136,7 @@ public class NotificationEventListener {
         // 사용자 연결 상태 확인 후 전송
         if (sseEmitterManager.isConnected(receiverLoginId)) {
             sseEmitterManager.sendToUser(receiverLoginId, notification);
-            log.info("[SSE] 실시간 알림 전송 완료 - Receiver: {}", receiverLoginId);
+            log.debug("SSE 실시간 알림 전송 완료 - Receiver: {}", receiverLoginId);
         } else {
             log.debug("[SSE] 사용자 미접속 - Receiver: {} (DB 저장 완료, 나중에 조회 가능)",
                     receiverLoginId);
