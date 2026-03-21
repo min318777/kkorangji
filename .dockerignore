@@ -1,6 +1,45 @@
+# ===== 빌드 산출물 =====
 .gradle
 **/build
 out
+
+# ===== IDE =====
 .idea
 *.iml
+.vscode
+
+# ===== Git =====
 .git
+.gitignore
+
+# ===== 환경변수 (보안 - 가장 중요!) =====
+.env
+.env.*
+*.env
+
+# ===== 문서 =====
+*.md
+
+# ===== 테스트 코드 (이미지에 불필요) =====
+**/src/test
+
+# ===== 성능 테스트 =====
+k6
+load-tests
+
+# ===== 모니터링 설정 (Grafana/Prometheus) =====
+monitoring
+
+# ===== Docker 관련 =====
+docker-compose*.yml
+
+# ===== DB 스크립트 =====
+sql
+
+# ===== 로그 =====
+*.log
+logs
+
+# ===== 기타 =====
+.gitattributes
+.claude
