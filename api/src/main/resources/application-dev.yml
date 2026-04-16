@@ -16,6 +16,14 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: min3782
+    hikari:
+      maximum-pool-size: 13          # 최대 DB Connection 수 (6코어 × 2 + SSD 1 = 13)
+      minimum-idle: 5                # 유휴 시 최소 커넥션
+      connection-timeout: 30000      # 30초 내 못 얻으면 실패
+      max-lifetime: 1800000          # 30분마다 커넥션 재생성
+      idle-timeout: 600000           # 10분 유휴 시 커넥션 정리
+      keepalive-time: 60000          # 60초마다 SELECT 1로 연결 확인
+      leak-detection-threshold: 2000 # 2초 이상 미반환 시 경고 로그
 
   jpa:
     hibernate:
@@ -40,19 +48,6 @@ spring:
       password: ""
       repositories:
         enabled: false
-
-  # Kafka - localhost:9092로 접근
-  kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "com.min.kafka.dto"
-        spring.json.value.default.type: com.min.kafka.dto.NotificationDto
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
   security:
     oauth2:

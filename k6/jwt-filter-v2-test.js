@@ -1,9 +1,9 @@
 import http from "k6/http";
-import { sleep, check } from "k6";
+import { check } from "k6";
 
 export let options = {
     stages: [
-                    { duration: '10m', target: 6000 }
+                    { duration: '10m', target: 1000 }
             ],
 };
 
@@ -22,18 +22,18 @@ export function setup() {
     check(loginRes, {
         "로그인 성공": (r) => r.status === 200,
     });
-
     const body = JSON.parse(loginRes.body);
     console.log(`로그인 성공 - userId: ${body.userId}, role: ${body.role}`);
 
     return { token: body.accessToken };
 }
 
-// JwtFilter에서 DB 조회 없이 JWT Claims(userId, role, loginId)만으로 인증
+// JwtFilter에서 DB 조회 없이 JWT Claims(userId, role, permissions)만으로 인증
 // X-Auth-Version: v2 헤더 → v2(토큰 추출) 경로로 동작
-// DB 쿼리 없는 경량 엔드포인트로 순수 JwtFilter 성능만 측정
+// GET /api/users/mypage: 인증 필요 + user:stats 캐시 히트 시 비즈니스 쿼리 최소화
+// → 필터의 DB 조회 비용이 지배적으로 드러나 v1/v2 차이 측정에 최적
 export default function (data) {
-    let res = http.get("http://localhost:8080/api/auth/test", {
+    let res = http.get("http://localhost:8080/api/users/mypage", {
         headers: {
             Authorization: "Bearer " + data.token,
             "X-Auth-Version": "v2",
@@ -44,5 +44,4 @@ export default function (data) {
         "status is 200": (r) => r.status === 200,
     });
 
-    sleep(1);
 }

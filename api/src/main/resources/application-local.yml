@@ -7,12 +7,12 @@ spring:
     name: meow
 
   datasource:
-    url: jdbc:mysql://mysql:3306/meow
+    url: jdbc:mysql://localhost:3307/meow
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: min3782
     hikari:
-      maximum-pool-size: 20          # 최대 DB Connection 수 (pool_size + max_overflow)
+      maximum-pool-size: 13          # 최대 DB Connection 수 (6코어 × 2 + SSD 1 = 13)
       minimum-idle: 5                # 유휴 시 최소 커넥션 (pool_size)
       connection-timeout: 30000      # 30초 내 못 얻으면 실패 (pool_timeout=30)
       max-lifetime: 1800000          # 30분마다 커넥션 재생성 (pool_recycle=1800)
@@ -37,23 +37,11 @@ spring:
 
   data:
     redis:
-      host: redis
+      host: localhost
       port: 6379
       password: ""
       repositories:
         enabled: false
-
-  kafka:
-    bootstrap-servers: kafka:9092
-    consumer:
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "com.min.kafka.dto"
-        spring.json.value.default.type: com.min.kafka.dto.NotificationDto
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
   security:
     oauth2:
