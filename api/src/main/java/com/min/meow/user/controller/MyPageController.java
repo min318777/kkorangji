@@ -33,8 +33,8 @@ public class MyPageController {
     public ResponseEntity<ApiResponse<MyPageSummaryResponse>> getMyPageSummary(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
-        String loginId = user.getLoginId();
-        MyPageSummaryResponse response = myPageService.getMyPageSummary(loginId);
+        Long userId = user.getUserId();
+        MyPageSummaryResponse response = myPageService.getMyPageSummary(userId);
 
         return ResponseEntity.ok(
                 ApiResponse.success( "마이페이지 조회 성공", response)
@@ -48,8 +48,8 @@ public class MyPageController {
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user,
             @Valid @RequestBody UpdateProfileRequest request) {
 
-        String loginId = user.getLoginId();
-        MyPageSummaryResponse response = myPageService.updateProfile(loginId, request);
+        Long userId = user.getUserId();
+        MyPageSummaryResponse response = myPageService.updateProfile(userId, request);
 
         return ResponseEntity.ok(
                 ApiResponse.success("프로필이 수정되었습니다.", response)
@@ -65,13 +65,13 @@ public class MyPageController {
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기", example = "10")
             @RequestParam(defaultValue = "10") int size,
-            @Parameter(description = "게시글 타입 필터", example = "ALL",
-                    schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"ALL", "BOAST", "LOST"}))
-            @RequestParam(defaultValue = "ALL") PostType type) {
+            @Parameter(description = "게시글 타입 필터", example = "BOAST",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"BOAST", "LOST"}))
+            @RequestParam PostType type) {
 
-        String loginId = user.getLoginId();
+        Long userId = user.getUserId();
         Pageable pageable = PageRequest.of(page, size);
-        MyPostListResponse response = myPageService.getMyPosts(loginId, pageable, type);
+        MyPostListResponse response = myPageService.getMyPosts(userId, pageable, type);
 
         return ResponseEntity.ok(
                 ApiResponse.success( "내가 쓴 글 조회 성공", response)

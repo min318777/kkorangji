@@ -25,7 +25,7 @@ public class RefreshToken {
     private Long id;
     private String loginId;
     private Long userId;
-    @Column(length = 1000)
+    @Column(length = 512)
     private String refreshToken;
     private LocalDateTime expiration;
 

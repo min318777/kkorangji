@@ -23,11 +23,6 @@ public class CustomOAuth2User implements OAuth2User, PrincipalUser {
     }
 
     @Override
-    public String getLoginId(){
-        return user.getLoginId();
-    }
-
-    @Override
     public Long getUserId() {
         return user.getId();
     }

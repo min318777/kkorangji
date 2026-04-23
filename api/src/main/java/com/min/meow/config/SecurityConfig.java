@@ -3,10 +3,11 @@ package com.min.meow.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.min.meow.security.filter.CustomLogoutFilter;
-import com.min.meow.security.jwt.JwtFilter;
-import com.min.meow.security.jwt.JwtUtil;
+import com.min.meow.security.jwt.JwtAuthenticationFilter;
+import com.min.meow.security.jwt.JwtProvider;
 import com.min.meow.security.filter.CustomLoginFilter;
 import com.min.meow.security.oauth2.CustomSuccessHandler;
+import com.min.meow.security.service.PermissionCacheService;
 import com.min.meow.user.repository.UserRepository;
 import com.min.meow.security.oauth2.CustomOauth2UserService;
 import com.min.meow.security.service.RefreshTokenService;
@@ -37,10 +38,11 @@ import java.util.Collections;
 public class SecurityConfig {
 
     private final AuthenticationConfiguration authenticationConfiguration;
-    private final JwtUtil jwtUtil;
+    private final JwtProvider jwtProvider;
 
     private final UserRepository userRepository;
     private final RefreshTokenService refreshTokenService;
+    private final PermissionCacheService permissionCacheService;
 
     private final CustomOauth2UserService customOauth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
@@ -49,8 +51,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 
-        CustomLoginFilter customLoginFilter = new CustomLoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshTokenService);
-        customLoginFilter.setFilterProcessesUrl("/login");
+        CustomLoginFilter customLoginFilter = new CustomLoginFilter(authenticationManager(authenticationConfiguration), jwtProvider, refreshTokenService, permissionCacheService);
+        customLoginFilter.setFilterProcessesUrl("/api/users/login");
         http
                 .cors((cors) -> cors.configurationSource(new CorsConfigurationSource() {
                     @Override
@@ -77,7 +79,7 @@ public class SecurityConfig {
                 authorizeHttpRequests((auth) -> auth
                         // 인증 없이 접근 가능한 엔드포인트
                         .requestMatchers(
-                                "/login",
+                                "/api/users/login",
                                 "/api/users/join",
                                 "/api/reissue",
                                 "/api/logout",
@@ -107,22 +109,20 @@ public class SecurityConfig {
                                 "/api/meow/lost-cat/*/view",
                                 "/api/meow/lost-cat/v1/*/view",
                                 "/api/meow/lost-cat/v3/*/view").permitAll()
-                        // 알림 목록 조회만 인증 없이 가능 (GET 요청만)
+                        // 연결 상태 조회는 인증 불필요 (디버깅 용도)
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.GET,
-                                "/api/notice",
                                 "/api/notice/status").permitAll()
                         // 관리자 권한 필요
                         .requestMatchers("/admin").hasRole("ADMIN")
                         // 나머지 모든 요청은 인증 필요 (알림 구독, 읽음 처리 등)
                         .anyRequest().authenticated());
-        // JwtFilter는 LoginFilter 뒤에 등록하여, 로그인 성공 후 JWT 인증 처리
         http.
-                addFilterAfter(new JwtFilter(jwtUtil, userRepository, objectMapper), UsernamePasswordAuthenticationFilter.class);
+                addFilterBefore(new JwtAuthenticationFilter(jwtProvider, userRepository, objectMapper, permissionCacheService), UsernamePasswordAuthenticationFilter.class);
         http.
                 addFilterAt(customLoginFilter, UsernamePasswordAuthenticationFilter.class);
         http.
-                addFilterBefore(new CustomLogoutFilter(refreshTokenService, jwtUtil), LogoutFilter.class);
+                addFilterBefore(new CustomLogoutFilter(refreshTokenService, jwtProvider), LogoutFilter.class);
         http.
                 sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));

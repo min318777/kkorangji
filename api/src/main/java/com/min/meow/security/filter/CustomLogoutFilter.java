@@ -1,7 +1,7 @@
 package com.min.meow.security.filter;
 
 import com.min.meow.global.Token;
-import com.min.meow.security.jwt.JwtUtil;
+import com.min.meow.security.jwt.JwtProvider;
 import com.min.meow.security.service.RefreshTokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -24,7 +24,7 @@ public class CustomLogoutFilter extends OncePerRequestFilter {
     private static final String REFRESH_COOKIE_NAME = "refresh";
 
     private final RefreshTokenService refreshTokenService;
-    private final JwtUtil jwtUtil;
+    private final JwtProvider jwtProvider;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain ) throws ServletException, IOException {
@@ -65,7 +65,7 @@ public class CustomLogoutFilter extends OncePerRequestFilter {
     private void handleRefreshToken(String refreshToken) {
         try {
             // decodeAndVerify로 1회 파싱: Refresh Token 타입 + 서명 + 만료 검증
-            Claims claims = jwtUtil.decodeAndVerify(refreshToken, Token.REFRESH_TOKEN);
+            Claims claims = jwtProvider.decodeAndVerify(refreshToken, Token.REFRESH_TOKEN);
             Long userId = Long.valueOf(claims.getSubject());
             refreshTokenService.delete(userId);
             log.info("로그아웃 완료 - userId: {}", userId);

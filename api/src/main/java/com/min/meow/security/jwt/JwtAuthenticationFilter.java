@@ -6,7 +6,7 @@ import com.min.meow.global.ApiResponse;
 import com.min.meow.global.Token;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.security.dto.CustomUserDetails;
-import com.min.meow.security.dto.TokenPrincipalUser;
+import com.min.meow.security.service.PermissionCacheService;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -25,6 +25,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import org.slf4j.MDC;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -42,11 +44,12 @@ import java.util.Optional;
  */
 @Slf4j
 @RequiredArgsConstructor
-public class JwtFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtUtil jwtUtil;
+    private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final PermissionCacheService permissionCacheService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -63,7 +66,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String accessToken = authorization.substring(7);
         Claims claims;
         try {
-            claims = jwtUtil.decodeAndVerify(accessToken, Token.ACCESS_TOKEN);
+            claims = jwtProvider.decodeAndVerify(accessToken, Token.ACCESS_TOKEN);
         } catch (ExpiredJwtException e) {
             log.warn("만료된 토큰으로 접근 시도: {}", request.getRequestURI());
             sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED", "토큰이 만료되었습니다.");
@@ -79,26 +82,52 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        // v1(DB 조회) vs v2(토큰 추출) 분기
-        // X-Auth-Version: v2 헤더가 있으면 DB 조회 없이 토큰 Claims만으로 인증
+        // v1(DB 조회) vs v2(토큰 추출) vs v3(Redis 캐시) 분기
+        // X-Auth-Version 헤더로 방식 선택
         String authVersion = request.getHeader("X-Auth-Version");
-        Authentication authToken;
+        CustomUserDetails principal;
 
-        if ("v2".equals(authVersion)) {
+        if ("v3".equals(authVersion)) {
+            // v3: Redis에서 permissions 조회 — 캐시 히트 시 DB 조회 없음
+            // 캐시 미스 or Redis 장애 시 DB fallback 후 재캐싱
+            Long userId = Long.valueOf(claims.getSubject());
+            String role = claims.get("role", String.class);
+
+            List<String> permissions = permissionCacheService.getPermissions(userId);
+
+            if (permissions == null) {
+                // 캐시 미스 or Redis 장애 → DB에서 최신 권한 조회
+                log.debug("v3 권한 캐시 미스 → DB fallback - userId: {}", userId);
+                Optional<User> userOptional = userRepository.findById(userId);
+
+                if (userOptional.isEmpty()) {
+                    log.warn("토큰의 사용자를 찾을 수 없음 - userId: {}", userId);
+                    sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "USER_NOT_FOUND", "사용자를 찾을 수 없습니다.");
+                    return;
+                }
+
+                User user = userOptional.get();
+
+                permissions = List.copyOf(user.getAllPermissionCodes());
+
+                // DB에서 조회한 최신 권한을 Redis에 재캐싱
+                permissionCacheService.cachePermissions(userId, permissions);
+            }
+
+            principal = new CustomUserDetails(userId, role, permissions);
+
+        } else if ("v2".equals(authVersion)) {
             // v2: Claims에서 직접 추출 — DB 조회 없음 (성능 최적화)
             Long userId = Long.valueOf(claims.getSubject());
             String role = claims.get("role", String.class);
-            String loginId = claims.get("loginId", String.class);
 
             // permissions 추출 (RBAC 권한 목록)
             @SuppressWarnings("unchecked")
             List<String> permissions = claims.get("permissions", List.class);
 
-            TokenPrincipalUser tokenPrincipal = new TokenPrincipalUser(userId, role, loginId, permissions);
-            authToken = new UsernamePasswordAuthenticationToken(
-                    tokenPrincipal, null, tokenPrincipal.getAuthorities());
+            principal = new CustomUserDetails(userId, role, permissions);
         } else {
-            // v1: DB에서 사용자 조회 (기존 방식)
+            // v1: DB에서 사용자 조회 후 상태 검증
             Long userId = Long.valueOf(claims.getSubject());
             Optional<User> userOptional = userRepository.findById(userId);
 
@@ -108,13 +137,19 @@ public class JwtFilter extends OncePerRequestFilter {
                 return;
             }
 
-            CustomUserDetails customUserDetails = new CustomUserDetails(userOptional.get());
-            authToken = new UsernamePasswordAuthenticationToken(
-                    customUserDetails, null, customUserDetails.getAuthorities());
+            User user = userOptional.get();
+
+            // User 엔티티에서 최신 role/permissions 추출
+            principal = CustomUserDetails.from(user);
         }
 
         // SecurityContext에 인증 정보 설정
+        Authentication authToken = new UsernamePasswordAuthenticationToken(
+                principal, null, principal.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authToken);
+
+        // MDC에 로그인 사용자 ID 추가 (MdcFilter의 requestId와 함께 사용)
+        MDC.put("userId", String.valueOf(principal.getUserId()));
 
         // 다음 필터로 진행
         filterChain.doFilter(request, response);

@@ -3,7 +3,8 @@ package com.min.meow.security.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.min.meow.security.dto.CustomUserDetails;
 import com.min.meow.user.dto.request.LoginRequest;
-import com.min.meow.security.jwt.JwtUtil;
+import com.min.meow.security.jwt.JwtProvider;
+import com.min.meow.security.service.PermissionCacheService;
 import com.min.meow.security.service.RefreshTokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -28,8 +30,9 @@ import java.util.stream.Collectors;
 public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final AuthenticationManager authenticationManager;
-    private final JwtUtil jwtUtil;
+    private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
+    private final PermissionCacheService permissionCacheService;
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
@@ -73,11 +76,15 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
                 .collect(Collectors.toList());
 
         // 토큰 생성 — TTL은 JwtConfig에서 중앙 관리, permissions 포함
-        String accessToken = jwtUtil.createAccessToken(userId, role, userDetails.getUsername(), permissions);
-        JwtUtil.RefreshTokenInfo refreshInfo = jwtUtil.createRefreshToken(userId);
+        String accessToken = jwtProvider.createAccessToken(userId, role, permissions);
+        JwtProvider.RefreshTokenInfo refreshInfo = jwtProvider.createRefreshToken(userId);
 
         // jti(JWT ID)만 Redis에 저장 (전체 JWT 대신 짧은 UUID로 메모리 절약)
         refreshTokenService.save(userId, refreshInfo.jti());
+
+        // v3 권한 캐싱 — 로그인 시 점에서 permissions를 Redis에 저장
+        // 이후 요청에서 DB 조회 없이 Redis에서 권한 확인 가능
+        permissionCacheService.cachePermissions(userId, permissions);
 
         // 응답 설정 (쿠키에는 전체 JWT 토큰 사용)
         response.setHeader("Authorization", "Bearer " + accessToken);
@@ -96,15 +103,19 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
-        String message = "아이디 또는 비밀번호가 일치하지 않습니다.";
+        // 탈퇴한 사용자와 일반 인증 실패를 구분하여 메시지 반환
+        String message = (failed.getCause() instanceof DisabledException || failed instanceof DisabledException)
+                ? "탈퇴한 사용자입니다."
+                : "아이디 또는 비밀번호가 일치하지 않습니다.";
 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
         response.getWriter().write("{\"success\":false,\"message\":\"" + message + "\"}");
     }
 
     private Cookie createRefreshCookie(String value) {
-        int refreshTtlSeconds = jwtUtil.getConfig().refreshTtlDays() * 24 * 60 * 60;
+        int refreshTtlSeconds = jwtProvider.getConfig().refreshTtlDays() * 24 * 60 * 60;
         Cookie cookie = new Cookie("refresh", value);
         cookie.setMaxAge(refreshTtlSeconds);
         //cookie.setSecure(true);

@@ -5,7 +5,7 @@ import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.user.dto.response.TokenResponse;
 import com.min.meow.user.entity.User;
-import com.min.meow.security.jwt.JwtUtil;
+import com.min.meow.security.jwt.JwtProvider;
 import com.min.meow.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -21,9 +21,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReissueService {
 
-    private final JwtUtil jwtUtil;
+    private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
+    private final PermissionCacheService permissionCacheService;
 
     /**
      * 토큰 재발급
@@ -39,7 +40,7 @@ public class ReissueService {
 
         Claims claims;
         try {
-            claims = jwtUtil.decodeAndVerify(refreshToken, Token.REFRESH_TOKEN);
+            claims = jwtProvider.decodeAndVerify(refreshToken, Token.REFRESH_TOKEN);
         } catch (ExpiredJwtException e) {
             throw new CustomException(ErrorCode.TOKEN_EXPIRED);
         } catch (CustomException e) {
@@ -66,6 +67,12 @@ public class ReissueService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 
+        // 탈퇴한 유저는 재발급 불가 — Refresh Token도 삭제하여 강제 로그아웃
+        if (user.isWithdrawn()) {
+            refreshTokenService.delete(userId);
+            throw new CustomException(ErrorCode.WITHDRAWN_USER);
+        }
+
         // 첫 번째 Role을 대표 role로 사용
         String role = user.getRoleNames().stream()
                 .findFirst()
@@ -75,11 +82,16 @@ public class ReissueService {
         List<String> permissions = List.copyOf(user.getAllPermissionCodes());
 
         // 6. 새로운 토큰 발급 (토큰 로테이션) — TTL은 JwtConfig에서 중앙 관리
-        String newAccessToken = jwtUtil.createAccessToken(userId, role, user.getLoginId(), permissions);
-        JwtUtil.RefreshTokenInfo newRefreshInfo = jwtUtil.createRefreshToken(userId);
+        String newAccessToken = jwtProvider.createAccessToken(userId, role, permissions);
+        JwtProvider.RefreshTokenInfo newRefreshInfo = jwtProvider.createRefreshToken(userId);
 
         // 7. Redis에 새 jti 저장 (기존 jti 덮어쓰기)
         refreshTokenService.save(userId, newRefreshInfo.jti());
+
+        // 8. v3 권한 캐시 재캐싱 — 재발급 시점에 DB에서 최신 권한을 이미 조회했으므로
+        // 그대로 Redis에 업데이트 (권한 변경 후 토큰 재발급 시 자연스럽게 동기화)
+        permissionCacheService.cachePermissions(userId, permissions);
+
         log.info("토큰 재발급 완료 - userId: {}, jti: {}", userId, newRefreshInfo.jti());
 
         return new TokenResponse(newAccessToken, newRefreshInfo.token());

@@ -25,30 +25,29 @@ import java.util.UUID;
  * </ul>
  */
 @Component
-public class JwtUtil {
+public class JwtProvider {
 
     private final SecretKey secretKey;
     private final JwtConfig config;
 
-    public JwtUtil(JwtConfig config) {
+    public JwtProvider(JwtConfig config) {
         this.config = config;
         this.secretKey = Keys.hmacShaKeyFor(config.secret().getBytes(StandardCharsets.UTF_8));
     }
 
 
     /**
-     * Access Token 생성 (subject: userId, payload: role, loginId, permissions, token 타입)
+     * Access Token 생성 (subject: userId, payload: role, permissions, token 타입)
      * TTL은 JwtConfig에서 중앙 관리 — 호출자가 지정할 필요 없음.
-     * loginId를 포함하여 DB 조회 없이 사용자 식별이 가능하도록 함.
+     * userId(PK)를 subject로 사용하여 불변 식별자로 사용자를 식별함.
      * permissions를 포함하여 DB 조회 없이 권한 확인이 가능하도록 함.
      */
-    public String createAccessToken(Long userId, String role, String loginId, List<String> permissions) {
+    public String createAccessToken(Long userId, String role, List<String> permissions) {
         return Jwts.builder()
                 .claims()
                 .subject(String.valueOf(userId))
                 .add("token", Token.ACCESS_TOKEN.name())
                 .add("role", role)
-                .add("loginId", loginId)
                 .add("permissions", permissions)
                 .and()
                 .issuer(config.issuer())
@@ -126,8 +125,6 @@ public class JwtUtil {
 
         return claims;
     }
-
-    // ============ 설정 접근 ============
 
     /**
      * JwtConfig를 외부에서 참조할 수 있도록 제공.

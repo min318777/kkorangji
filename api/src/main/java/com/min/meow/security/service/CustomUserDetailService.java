@@ -1,12 +1,11 @@
 package com.min.meow.security.service;
 
-import com.min.meow.global.exception.CustomException;
-import com.min.meow.global.exception.ErrorCode;
 import com.min.meow.security.dto.CustomUserDetails;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -32,13 +31,15 @@ public class CustomUserDetailService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
+        // UsernameNotFoundException을 던져야 Spring Security가 InternalAuthenticationServiceException으로 래핑하지 않음
         User user = userRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + loginId));
 
         if (user.isWithdrawn()) {
             log.warn("탈퇴한 사용자 로그인 시도 - userId: {}", user.getId());
-            throw new CustomException(ErrorCode.WITHDRAWN_USER);
+            // DisabledException: Spring Security 표준 예외, unsuccessfulAuthentication에서 처리됨
+            throw new DisabledException("탈퇴한 사용자입니다.");
         }
-        return new CustomUserDetails(user);
+        return CustomUserDetails.from(user);
     }
 }

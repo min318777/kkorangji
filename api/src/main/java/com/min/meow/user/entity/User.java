@@ -103,7 +103,6 @@ public class User{
         return this.isDelete;
     }
 
-    // 닉네임 수정 — setter 대신 도메인 메서드로 상태 변경
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }

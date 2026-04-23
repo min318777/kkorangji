@@ -43,10 +43,10 @@ public class UserController {
                 .body(ApiResponse.created("회원가입 성공", joinResponse));
     }
 
-    @Operation(summary = "로그인",
-            description = "아이디/비밀번호로 로그인합니다. 성공 시 JWT 토큰을 반환합니다. 인증 불필요.")
+    @Operation(summary = "로그인 (서비스 직접 호출)",
+            description = "아이디/비밀번호로 로그인합니다. 실제 인증은 POST /api/users/login (CustomLoginFilter)이 처리합니다. 인증 불필요.")
     @SecurityRequirements
-    @PostMapping("/login")
+    @PostMapping("/login/form")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody @Valid LoginRequest loginRequest){
         LoginResponse loginResponse = userService.login(loginRequest);
         return ResponseEntity.ok(ApiResponse.success("로그인 성공", loginResponse));
@@ -63,7 +63,7 @@ public class UserController {
     @DeleteMapping("/withdraw")
     public ResponseEntity<Void> withdraw(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
-        userService.withdraw(user.getLoginId());
+        userService.withdraw(user.getUserId());
         return ResponseEntity.noContent().build();
     }
 

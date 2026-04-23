@@ -37,6 +37,7 @@ public enum ErrorCode {
 
     // Validation 예외
     FORBIDDEN_NOT_AUTHOR(HttpStatus.FORBIDDEN, "작성자 본인만 수정, 삭제가 가능합니다." ),
+    INVALID_POST_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 게시글 타입입니다. BOAST 또는 LOST만 허용됩니다."),
 
     // 외부 서비스 예외
     S3_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 삭제에 실패했습니다."),

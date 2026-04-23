@@ -9,6 +9,7 @@ import com.min.meow.user.dto.request.LoginRequest;
 import com.min.meow.user.entity.Role;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.entity.UserRole;
+import com.min.meow.security.service.PermissionCacheService;
 import com.min.meow.user.repository.RefreshTokenRepository;
 import com.min.meow.user.repository.RoleRepository;
 import com.min.meow.user.repository.UserRepository;
@@ -31,6 +32,7 @@ public class UserService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
+    private final PermissionCacheService permissionCacheService;
 
 
     public LoginResponse login(LoginRequest loginRequest){
@@ -89,12 +91,12 @@ public class UserService {
      * - 게시글, 댓글 등 기존 데이터의 외래키 참조 무결성 유지
      * - 탈퇴 후에도 게시글은 "탈퇴한 사용자"로 표시되어 조회 가능
      * - 개인정보는 비식별화되어 개인정보보호법 준수
-     * @param loginId 탈퇴할 사용자의 로그인 ID
+     * @param userId 탈퇴할 사용자의 ID (PK)
      */
     @Transactional
-    public void withdraw(String loginId) {
+    public void withdraw(Long userId) {
         // 1. 사용자 조회
-        User user = userRepository.findByLoginId(loginId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 
         // 2. 이미 탈퇴한 사용자인지 확인
@@ -103,8 +105,12 @@ public class UserService {
         }
 
         // 3. 리프레시 토큰 삭제 - 모든 디바이스에서 로그아웃 처리
-        refreshTokenRepository.deleteByLoginId(loginId);
-        log.info("회원 탈퇴 처리 - loginId: {}, 리프레시 토큰 삭제 완료", loginId);
+        refreshTokenRepository.deleteByLoginId(user.getLoginId());
+
+        // v3 권한 캐시 무효화 — 탈퇴 후 다음 요청에서 캐시 미스 → DB 확인 → 탈퇴 확인 → 차단
+        permissionCacheService.evictPermissions(userId);
+
+        log.info("회원 탈퇴 처리 - userId: {}, 리프레시 토큰 및 권한 캐시 삭제 완료", userId);
 
         // 4. 개인정보 비식별화 및 소프트 삭제 처리
         user.withdraw();
