@@ -27,8 +27,9 @@ public class NotificationQueryService {
      * @param pageable 페이징 정보
      * @return 최신 순으로 정렬된 알림 목록
      */
-    public Page<NotificationResponse> getAllNotifications(Pageable pageable) {
-        return notificationRepository.findAllByOrderByCreatedAtDesc(pageable)
+    public Page<NotificationResponse> getAllNotifications(Long userId, Pageable pageable) {
+        // 본인 알림만 조회
+        return notificationRepository.findAllByReceiverUserIdOrderByCreatedAtDesc(userId, pageable)
                 .map(NotificationResponse::from);
     }
 
@@ -36,24 +37,21 @@ public class NotificationQueryService {
      * 단일 알림을 읽음 처리
      * - 1단계: 알림 존재 여부 확인 (없으면 404)
      * - 2단계: 본인 알림인지 권한 검증 (아니면 403)
-     * - JPA dirty checking을 통해 자동으로 DB 업데이트
      * @param notificationId 읽음 처리할 알림 ID
-     * @param userLoginId 요청한 사용자의 로그인 ID
+     * @param userId 요청한 사용자의 ID (PK)
      * @return 읽음 처리된 알림 정보
-     * @throws CustomException NOT_FOUND_NOTIFICATION (404) - 알림이 존재하지 않는 경우
-     * @throws CustomException FORBIDDEN_NOTIFICATION_ACCESS (403) - 접근 권한이 없는 경우
      */
     @Transactional
-    public NotificationResponse readSingleNotification(Long notificationId, String userLoginId) {
-        log.debug("단일 알림 읽음 처리 - NotificationId: {}, User: {}", notificationId, userLoginId);
+    public NotificationResponse readSingleNotification(Long notificationId, Long userId) {
+        log.debug("단일 알림 읽음 처리 - NotificationId: {}, UserId: {}", notificationId, userId);
 
-        // 1단계: 알림 존재 여부 확인 (에러 메시지에 ID 미포함 - 내부 정보 노출 방지)
+        // 1단계: 알림 존재 여부 확인
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_NOTIFICATION));
 
         // 2단계: 본인의 알림인지 권한 검증
-        if (!notification.getReceiverLoginId().equals(userLoginId)) {
-            log.warn("알림 접근 권한 없음 - User: {}", userLoginId);
+        if (!notification.getReceiverUserId().equals(userId)) {
+            log.warn("알림 접근 권한 없음 - UserId: {}", userId);
             throw new CustomException(ErrorCode.FORBIDDEN_NOTIFICATION_ACCESS);
         }
 
@@ -72,22 +70,20 @@ public class NotificationQueryService {
 
     /**
      * 여러 개의 알림을 읽음 처리
-     * - 권한 검증: 요청한 사용자의 알림만 조회 및 업데이트
-     * - 존재하지 않는 ID나 권한 없는 알림은 무시됨
      * @param notificationIds 읽음 처리할 알림 ID 목록
-     * @param userLoginId 요청한 사용자의 로그인 ID
+     * @param userId 요청한 사용자의 ID (PK)
      * @return 읽음 처리된 알림 개수
      */
     @Transactional
-    public int readMultipleNotifications(List<Long> notificationIds, String userLoginId) {
-        log.debug("여러 개 알림 읽음 처리 - Count: {}, User: {}", notificationIds.size(), userLoginId);
+    public int readMultipleNotifications(List<Long> notificationIds, Long userId) {
+        log.debug("여러 개 알림 읽음 처리 - Count: {}, UserId: {}", notificationIds.size(), userId);
 
         // 사용자의 알림만 조회 (권한 검증 포함)
         List<Notification> notifications = notificationRepository
-                .findAllByIdInAndReceiverLoginId(notificationIds, userLoginId);
+                .findAllByIdInAndReceiverUserId(notificationIds, userId);
 
         if (notifications.isEmpty()) {
-            log.warn("읽음 처리할 알림이 없습니다 - User: {}", userLoginId);
+            log.warn("읽음 처리할 알림이 없습니다 - UserId: {}", userId);
             return 0;
         }
 
@@ -106,20 +102,19 @@ public class NotificationQueryService {
 
     /**
      * 특정 사용자의 모든 읽지 않은 알림을 읽음 처리
-     * - 해당 사용자의 모든 미읽음 알림을 일괄 처리
-     * @param userLoginId 요청한 사용자의 로그인 ID
+     * @param userId 요청한 사용자의 ID (PK)
      * @return 읽음 처리된 알림 개수
      */
     @Transactional
-    public int readAllNotifications(String userLoginId) {
-        log.debug("전체 알림 읽음 처리 - User: {}", userLoginId);
+    public int readAllNotifications(Long userId) {
+        log.debug("전체 알림 읽음 처리 - UserId: {}", userId);
 
         // 사용자의 읽지 않은 모든 알림 조회
         List<Notification> unreadNotifications = notificationRepository
-                .findAllByReceiverLoginIdAndIsReadFalse(userLoginId);
+                .findAllByReceiverUserIdAndIsReadFalse(userId);
 
         if (unreadNotifications.isEmpty()) {
-            log.debug("읽지 않은 알림이 없습니다 - User: {}", userLoginId);
+            log.debug("읽지 않은 알림이 없습니다 - UserId: {}", userId);
             return 0;
         }
 

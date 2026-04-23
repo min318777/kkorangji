@@ -25,8 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class SseEmitterManager {
 
-    // 사용자 로그인ID를 Key로, SSE 연결을 Value로 저장
-    private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
+    // 사용자 userId(PK)를 Key로, SSE 연결을 Value로 저장
+    private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
 
     // 타임아웃: 30분 (밀리초)
     private static final Long TIMEOUT = 30 * 60 * 1000L;
@@ -38,49 +38,43 @@ public class SseEmitterManager {
      * - 기존 연결에 complete() 호출 시 Servlet Async Dispatch가 발생하여
      *   Security Filter Chain이 재실행되고, 새 스레드에 SecurityContext가 없어서
      *   AuthorizationDeniedException이 발생하는 문제가 있었음.
-     * - 해결: complete() 호출 없이 Map에서 덮어쓰기. 기존 연결은 아래 방식으로 자연스럽게 정리됨:
-     *   1) 클라이언트가 새 연결을 열면서 브라우저가 기존 연결을 종료
-     *   2) 타임아웃 발생 시 onTimeout 콜백에서 정리
-     *   3) 네트워크 에러 시 onError 콜백에서 정리
+     * - 해결: complete() 호출 없이 Map에서 덮어쓰기.
      *
-     * @param userLoginId 사용자 로그인 ID
+     * @param userId 사용자 ID (PK)
      * @return 생성된 SseEmitter
      */
-    public SseEmitter createEmitter(String userLoginId) {
+    public SseEmitter createEmitter(Long userId) {
         // 1. 새로운 SSE 연결 생성 (타임아웃 30분)
         SseEmitter emitter = new SseEmitter(TIMEOUT);
 
         // 2. Map에 저장 (기존 연결이 있으면 덮어쓰기 - complete() 호출 안 함!)
-        //    put()은 이전 값을 반환하므로 로깅에 활용
-        SseEmitter oldEmitter = emitters.put(userLoginId, emitter);
+        SseEmitter oldEmitter = emitters.put(userId, emitter);
         if (oldEmitter != null) {
-            log.debug("기존 SSE 연결 교체: {} (기존 연결은 자연스럽게 정리됨)", userLoginId);
+            log.debug("기존 SSE 연결 교체: userId={} (기존 연결은 자연스럽게 정리됨)", userId);
         }
-        log.debug("SSE 연결 생성: {} (현재 {}명 접속)", userLoginId, emitters.size());
+        log.debug("SSE 연결 생성: userId={} (현재 {}명 접속)", userId, emitters.size());
 
         // 3. 연결 완료 시 Map에서 제거 (현재 emitter일 때만!)
-        //    중요: 새 연결이 생성된 후 기존 연결이 완료되면 새 연결을 제거하면 안 됨
         emitter.onCompletion(() -> {
-            // remove(key, value): 현재 Map에 저장된 값이 이 emitter일 때만 제거
-            boolean removed = emitters.remove(userLoginId, emitter);
+            boolean removed = emitters.remove(userId, emitter);
             if (removed) {
-                log.debug("SSE 연결 완료: {}", userLoginId);
+                log.debug("SSE 연결 완료: userId={}", userId);
             }
         });
 
         // 4. 타임아웃 시 Map에서 제거 (현재 emitter일 때만)
         emitter.onTimeout(() -> {
-            boolean removed = emitters.remove(userLoginId, emitter);
+            boolean removed = emitters.remove(userId, emitter);
             if (removed) {
-                log.debug("SSE 타임아웃: {} - 클라이언트 재연결 필요", userLoginId);
+                log.debug("SSE 타임아웃: userId={} - 클라이언트 재연결 필요", userId);
             }
         });
 
         // 5. 에러 발생 시 Map에서 제거 (현재 emitter일 때만)
         emitter.onError(e -> {
-            boolean removed = emitters.remove(userLoginId, emitter);
+            boolean removed = emitters.remove(userId, emitter);
             if (removed) {
-                log.error("SSE 에러: {}", userLoginId, e);
+                log.error("SSE 에러: userId={}", userId, e);
             }
         });
 
@@ -89,33 +83,33 @@ public class SseEmitterManager {
 
     /**
      * 특정 사용자에게 알림 전송
-     * @param userId 받을 사람 로그인 ID
+     * @param userId 받을 사람 사용자 ID (PK)
      * @param data 전송할 데이터
      */
-    public void sendToUser(String userId, Object data) {
+    public void sendToUser(Long userId, Object data) {
         SseEmitter emitter = emitters.get(userId);
         if (emitter == null) {
-            log.warn("SSE 연결이 없는 사용자: {} (사용자가 오프라인 상태)", userId);
+            log.warn("SSE 연결이 없는 사용자: userId={} (사용자가 오프라인 상태)", userId);
             return;
         }
         try {
             emitter.send(SseEmitter.event()
                     .name("notification")  // 이벤트 이름
                     .data(data));          // 전송할 데이터
-            log.debug("알림 전송 성공: {}", userId);
+            log.debug("알림 전송 성공: userId={}", userId);
         } catch (IOException e) {
             emitters.remove(userId);
             emitter.completeWithError(e);
-            log.error("알림 전송 실패: {}", userId, e);
+            log.error("알림 전송 실패: userId={}", userId, e);
         }
     }
 
     /**
      * 사용자가 연결되어 있는지 확인
-     * @param userId 확인할 사용자 로그인 ID
+     * @param userId 확인할 사용자 ID (PK)
      * @return 연결 여부
      */
-    public boolean isConnected(String userId) {
+    public boolean isConnected(Long userId) {
         return emitters.containsKey(userId);
     }
 

@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "notification", indexes = {
-    // 미읽음 알림 조회: WHERE receiver_login_id = ? AND is_read = false
-    @Index(name = "idx_notification_receiver_read", columnList = "receiver_login_id, is_read"),
+    // 미읽음 알림 조회: WHERE receiver_user_id = ? AND is_read = false
+    @Index(name = "idx_notification_receiver_read", columnList = "receiver_user_id, is_read"),
     // 전체 알림 목록: ORDER BY created_at DESC
     @Index(name = "idx_notification_created_at", columnList = "created_at DESC")
 })
@@ -43,9 +43,9 @@ public class Notification {
     @Column(nullable = false, length = 500)
     private String message;
 
-    // DB 레벨 제약: 수신자는 반드시 존재해야 함
-    @Column(nullable = false, length = 50)
-    private String receiverLoginId;
+    // DB 레벨 제약: 수신자 userId(PK)는 반드시 존재해야 함
+    @Column(nullable = false)
+    private Long receiverUserId;
 
     private boolean isRead;
     private LocalDateTime createdAt;

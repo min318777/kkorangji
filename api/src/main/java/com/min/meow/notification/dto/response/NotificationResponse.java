@@ -35,8 +35,8 @@ public class NotificationResponse {
     @Schema(description = "알림 메시지", example = "cat_lover님이 댓글을 달았습니다.")
     private String message;
 
-    @Schema(description = "알림 수신자 로그인 ID", example = "post_author")
-    private String receiverLoginId;
+    @Schema(description = "알림 수신자 사용자 ID", example = "1")
+    private Long receiverUserId;
 
     @Schema(description = "읽음 여부", example = "false")
     private boolean isRead;
@@ -51,7 +51,7 @@ public class NotificationResponse {
                 .postId(notification.getPostId())
                 .type(notification.getType())
                 .message(notification.getMessage())
-                .receiverLoginId(notification.getReceiverLoginId())
+                .receiverUserId(notification.getReceiverUserId())
                 .isRead(notification.isRead())
                 .createdAt(notification.getCreatedAt())
                 .build();

@@ -66,8 +66,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
-    // kafka
-    implementation 'org.springframework.kafka:spring-kafka'
+
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 

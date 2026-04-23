@@ -1,14 +1,17 @@
 package com.min.meow.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskDecorator;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.concurrent.Executor;
 
 /**
@@ -63,12 +66,36 @@ public class AsyncConfig implements AsyncConfigurer {
         // 종료 시 최대 대기 시간 (초)
         executor.setAwaitTerminationSeconds(30);
 
+        // MDC TaskDecorator 등록: 부모 스레드의 MDC 컨텍스트를 자식 스레드에 전파
+        // @Async로 실행되는 비동기 메서드에서도 requestId가 로그에 출력되도록 보장
+        executor.setTaskDecorator(new MdcTaskDecorator());
+
         // 스레드 풀 초기화
         executor.initialize();
 
         log.debug("알림 비동기 처리 ThreadPoolTaskExecutor 초기화 완료 - core: {}, max: {}, queue: 100",
                 executor.getCorePoolSize(), executor.getMaxPoolSize());
 
+        return executor;
+    }
+
+    /**
+     * 좋아요 DB 기록 전용 비동기 Executor
+     * Redis 토글 후 DB 비동기 기록에 사용됩니다.
+     * - CallerRunsPolicy: 큐 포화 시 호출 스레드에서 직접 실행 (요청 손실 방지)
+     */
+    @Bean(name = "likeExecutor")
+    public Executor likeExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(10);
+        executor.setMaxPoolSize(30);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("like-async-");
+        executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(30);
+        executor.setTaskDecorator(new MdcTaskDecorator());
+        executor.initialize();
         return executor;
     }
 
@@ -102,6 +129,44 @@ public class AsyncConfig implements AsyncConfigurer {
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return new AsyncExceptionHandler();
+    }
+
+    /**
+     * MDC 컨텍스트를 비동기 스레드로 전파하는 TaskDecorator
+     *
+     * 왜 필요한가?
+     * - @Async 메서드는 새 스레드(ThreadPool)에서 실행됨
+     * - 새 스레드는 부모 스레드의 MDC 컨텍스트(requestId 등)를 자동으로 상속하지 않음
+     * - TaskDecorator로 부모 MDC를 복사하면 비동기 로그에도 동일한 requestId 출력 가능
+     *
+     * 동작 흐름:
+     * HTTP 요청 스레드(MDC: requestId=abc) → @Async 실행
+     * → TaskDecorator: 부모 MDC 복사 → 자식 스레드에 setContextMap
+     * → NotificationEventListener 로그에 [abc] 출력
+     * → 작업 완료 후 MDC.clear()
+     */
+    private static class MdcTaskDecorator implements TaskDecorator {
+
+        @Override
+        public Runnable decorate(Runnable runnable) {
+            // 부모 스레드(HTTP 요청 스레드)의 MDC 컨텍스트 맵을 캡처
+            // MDC.getCopyOfContextMap()은 null을 반환할 수 있으므로 null 체크 필요
+            Map<String, String> parentMdcContext = MDC.getCopyOfContextMap();
+
+            return () -> {
+                try {
+                    // 자식 스레드(비동기 스레드)에 부모 MDC 컨텍스트 적용
+                    if (parentMdcContext != null) {
+                        MDC.setContextMap(parentMdcContext);
+                    }
+                    // 실제 비동기 작업 실행 (e.g., 알림 저장, SSE 전송)
+                    runnable.run();
+                } finally {
+                    // 스레드 풀에서 스레드가 재사용되므로 반드시 MDC 초기화
+                    MDC.clear();
+                }
+            };
+        }
     }
 
     /**

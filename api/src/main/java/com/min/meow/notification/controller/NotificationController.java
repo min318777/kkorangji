@@ -33,17 +33,18 @@ public class NotificationController {
     private final SseEmitterManager sseEmitterManager;
 
     @Operation(summary = "알림 목록 조회",
-            description = "페이징된 알림 목록을 조회합니다. 인증 불필요.")
-    @SecurityRequirements
+            description = "로그인한 사용자의 알림 목록을 페이징 조회합니다. 인증 필요.")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getAllNotifications(
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기", example = "5")
-            @RequestParam(defaultValue = "5") int size) {
+            @RequestParam(defaultValue = "5") int size,
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
+        Long userId = user.getUserId();
         Pageable pageable = PageRequest.of(page, size);
-        Page<NotificationResponse> notifications = notificationQueryService.getAllNotifications(pageable);
+        Page<NotificationResponse> notifications = notificationQueryService.getAllNotifications(userId, pageable);
 
         return ResponseEntity.ok(ApiResponse.success("알림 목록 조회 성공", notifications));
     }
@@ -56,10 +57,10 @@ public class NotificationController {
             @PathVariable Long notificationId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
-        String userLoginId = user.getLoginId();
-        log.debug("단일 알림 읽음 요청 - NotificationId: {}, User: {}", notificationId, userLoginId);
+        Long userId = user.getUserId();
+        log.debug("단일 알림 읽음 요청 - NotificationId: {}, UserId: {}", notificationId, userId);
         NotificationResponse notificationResponse = notificationQueryService
-                .readSingleNotification(notificationId, userLoginId);
+                .readSingleNotification(notificationId, userId);
 
         return ResponseEntity.ok(ApiResponse.success("알림 읽음 처리 완료", notificationResponse));
     }
@@ -71,11 +72,11 @@ public class NotificationController {
             @Valid @RequestBody NotificationRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
-        String userLoginId = user.getLoginId();
-        log.debug("여러 개 알림 읽음 요청 - Count: {}, User: {}",
-                request.getNotificationIds().size(), userLoginId);
+        Long userId = user.getUserId();
+        log.debug("여러 개 알림 읽음 요청 - Count: {}, UserId: {}",
+                request.getNotificationIds().size(), userId);
         int readCount = notificationQueryService
-                .readMultipleNotifications(request.getNotificationIds(), userLoginId);
+                .readMultipleNotifications(request.getNotificationIds(), userId);
 
         ReadCountResponse data = new ReadCountResponse(readCount, request.getNotificationIds().size());
         return ResponseEntity.ok(ApiResponse.success(
@@ -88,10 +89,10 @@ public class NotificationController {
     public ResponseEntity<ApiResponse<ReadCountResponse>> readAllNotifications(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
-        String userLoginId = user.getLoginId();
-        log.debug("전체 알림 읽음 요청 - User: {}", userLoginId);
+        Long userId = user.getUserId();
+        log.debug("전체 알림 읽음 요청 - UserId: {}", userId);
 
-        int readCount = notificationQueryService.readAllNotifications(userLoginId);
+        int readCount = notificationQueryService.readAllNotifications(userId);
 
         ReadCountResponse data = new ReadCountResponse(readCount, readCount);
         return ResponseEntity.ok(ApiResponse.success("모든 알림을 읽음 처리했습니다.", data));
@@ -103,20 +104,20 @@ public class NotificationController {
     public SseEmitter subscribe(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
-        String userLoginId = user.getLoginId();
-        log.debug("SSE 구독 요청 - User: {}", userLoginId);
+        Long userId = user.getUserId();
+        log.debug("SSE 구독 요청 - UserId: {}", userId);
 
         // SSE 연결 생성 및 저장
-        SseEmitter emitter = sseEmitterManager.createEmitter(userLoginId);
+        SseEmitter emitter = sseEmitterManager.createEmitter(userId);
 
         // 연결 성공 메시지 전송
         try {
             emitter.send(SseEmitter.event()
                     .name("connect")
                     .data("SSE 연결 성공!"));
-            log.debug("SSE 연결 성공 - User: {}", userLoginId);
+            log.debug("SSE 연결 성공 - UserId: {}", userId);
         } catch (Exception e) {
-            log.error("초기 메시지 전송 실패 - User: {}", userLoginId, e);
+            log.error("초기 메시지 전송 실패 - UserId: {}", userId, e);
             throw new RuntimeException("SSE 연결 실패");
         }
 
@@ -135,7 +136,6 @@ public class NotificationController {
 
     /**
      * 읽음 처리 결과 응답 DTO
-     * - 처리된 알림 수와 요청한 알림 수를 함께 반환
      */
     public record ReadCountResponse(int readCount, int requestedCount) {}
 }
