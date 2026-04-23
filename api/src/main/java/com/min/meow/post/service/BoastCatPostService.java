@@ -12,15 +12,18 @@ import com.min.meow.post.dto.request.UpdateBoastCatPostRequest;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.global.exception.CustomException;
 import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.global.PostType;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.global.SecurityUtil;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -37,6 +40,7 @@ public class BoastCatPostService {
     private final BoastCatPostRepository boastCatPostRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
+    private final ViewCountService viewCountService;
 
     /**
      * 모든 글 조회 (Projection 적용으로 성능 최적화)
@@ -68,12 +72,26 @@ public class BoastCatPostService {
      * - 키: 게시글 ID (예: post:boast:detail::123)
      * - TTL: 10분
      */
-    @Cacheable(cacheNames = "post:boast:detail", key = "#boastCatPostId")
+    // 조회수 = DB view + Redis delta (v3 방식, 항상 정확한 실시간 값)
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
         BoastCatPost boastCatPost = boastCatPostRepository.findByIdWithUser(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        return GetBoastCatPostResponse.toResponse(boastCatPost);
+        long redisDelta = viewCountService.getViewCount(PostType.BOAST, boastCatPostId);
+
+        return GetBoastCatPostResponse.builder()
+                .id(boastCatPost.getId())
+                .writer(boastCatPost.getUser().getLoginId())
+                .userId(boastCatPost.getUser().getId())
+                .title(boastCatPost.getTitle())
+                .contents(boastCatPost.getContents())
+                .view((int)(boastCatPost.getView() + redisDelta))
+                .imageUrls(new ArrayList<>(boastCatPost.getImageUrls()))
+                .likeCount(boastCatPost.getLikeCount())
+                .commentCount(boastCatPost.getCommentCount())
+                .createdAt(boastCatPost.getCreatedAt())
+                .updatedAt(boastCatPost.getUpdatedAt())
+                .build();
     }
 
     /**
@@ -147,11 +165,11 @@ public class BoastCatPostService {
     @Caching(evict = {
             @CacheEvict(cacheNames = "post:boast:recent", allEntries = true),
             // 자랑글 작성 시 마이페이지 통계(자랑글 수) 캐시 무효화
-            @CacheEvict(cacheNames = "user:stats", key = "#loginId")
+            @CacheEvict(cacheNames = "user:stats", key = "#userId")
     })
-    public CreateBoastCatPostResponse createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest, String loginId){
+    public CreateBoastCatPostResponse createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest, Long userId){
 
-        User writer = userRepository.findByLoginId(loginId)
+        User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
         // S3 key를 CloudFront URL로 변환
@@ -160,16 +178,20 @@ public class BoastCatPostService {
             imageUrls = s3Service.toCloudFrontUrls(createBoastCatPostRequest.getImageKeys());
         }
 
+        // 첫 번째 이미지를 썸네일로 저장 (목록 조회 시 JOIN 없이 사용)
+        String thumbnailUrl = imageUrls.isEmpty() ? null : imageUrls.get(0);
+
         // 엔티티 생성
         BoastCatPost boastCatPost = BoastCatPost.builder()
                 .title(createBoastCatPostRequest.getTitle())
                 .contents(createBoastCatPostRequest.getContent())
                 .imageUrls(imageUrls)
+                .thumbnailUrl(thumbnailUrl)
                 .user(writer)
                 .build();
         boastCatPostRepository.save(boastCatPost);
 
-        log.info("게시글 작성 완료 - loginId: {}, postId: {}", loginId, boastCatPost.getId());
+        log.info("게시글 작성 완료 - userId: {}, postId: {}", userId, boastCatPost.getId());
         return CreateBoastCatPostResponse.from(boastCatPost);
     }
 
@@ -186,13 +208,10 @@ public class BoastCatPostService {
      * - post:boast:detail (해당 게시글 상세 캐시 무효화)
      */
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(cacheNames = "post:boast:recent", allEntries = true),
-            @CacheEvict(cacheNames = "post:boast:detail", key = "#boastCatPostId")
-    })
-    public UpdateBoastCatPostResponse updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId, String loginId){
+    @CacheEvict(cacheNames = "post:boast:recent", allEntries = true)
+    public UpdateBoastCatPostResponse updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId, Long userId){
 
-        User writer = userRepository.findByLoginId(loginId)
+        User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
@@ -221,12 +240,10 @@ public class BoastCatPostService {
     @Transactional
     @Caching(evict = {
             @CacheEvict(cacheNames = "post:boast:recent", allEntries = true),
-            @CacheEvict(cacheNames = "post:boast:detail", key = "#boastCatPostId"),
-            // 자랑글 삭제 시 마이페이지 통계(자랑글 수) 캐시 무효화
-            @CacheEvict(cacheNames = "user:stats", key = "#loginId")
+            @CacheEvict(cacheNames = "user:stats", key = "#userId")
     })
-    public void deleteBoastCatPost(Long boastCatPostId, String loginId){
-        User writer = userRepository.findByLoginId(loginId)
+    public void deleteBoastCatPost(Long boastCatPostId, Long userId){
+        User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
@@ -235,8 +252,14 @@ public class BoastCatPostService {
                 && !SecurityUtil.hasAuthority("post:delete")) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
+        // S3 이미지 삭제 (DB 삭제 전에 URL 추출)
+        List<String> keys = boastCatPost.getImageUrls().stream()
+                .map(s3Service::extractKeyFromUrl)
+                .filter(key -> key != null && !key.isEmpty())
+                .toList();
         boastCatPostRepository.deleteById(boastCatPostId);
-        log.info("게시글 삭제 완료 - loginId: {}, postId: {}", loginId, boastCatPostId);
+        s3Service.deleteFiles(keys);
+        log.info("게시글 삭제 완료 - userId: {}, postId: {}", userId, boastCatPostId);
     }
 
     /**

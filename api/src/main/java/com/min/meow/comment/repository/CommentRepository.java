@@ -41,7 +41,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long > {
     Page<Comment> findByUserOrderByCreatedAtDesc(@Param("user") User user, Pageable pageable);
 
     // 사용자가 작성한 댓글의 총 개수 조회
-    long countByUser(User user);
+    long countByUserId(Long userId);
 
 
 }

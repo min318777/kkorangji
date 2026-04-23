@@ -2,7 +2,6 @@ package com.min.meow.post.repository;
 
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.QBoastCatPostListResponse;
-import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.QBoastCatPost;
 import com.min.meow.user.entity.QUser;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -48,11 +47,12 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                 .select(new QBoastCatPostListResponse(
                         boastCatPost.id,
                         boastCatPost.title,
-                        boastCatPost.user.loginId,  // User에서 loginId만 조회
+                        boastCatPost.user.loginId,
                         boastCatPost.likeCount,
                         boastCatPost.commentCount,
                         boastCatPost.view,
-                        boastCatPost.createdAt
+                        boastCatPost.createdAt,
+                        boastCatPost.thumbnailUrl
                 ))
                 .from(boastCatPost)
                 .leftJoin(boastCatPost.user, user)  // FETCH가 아닌 일반 JOIN
@@ -61,37 +61,70 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                 .fetch();
     }
 
+    /**
+     * 게시글 검색 (Projection 적용)
+     * - selectFrom(Entity 전체) → select(필요한 7개 컬럼만)으로 변경
+     * - contents(TEXT), imageUrls, comments 등 불필요한 컬럼 제거
+     * - leftJoin으로 User.loginId만 조회
+     */
     @Override
-    public Page<BoastCatPost> search(String title, String contents, Pageable pageable) {
-        List<BoastCatPost> results = queryFactory
-                .selectFrom(boastCatPost)
+    public Page<BoastCatPostListResponse> search(String title, String contents, Long userId, Pageable pageable) {
+        List<BoastCatPostListResponse> results = queryFactory
+                .select(new QBoastCatPostListResponse(
+                        boastCatPost.id,
+                        boastCatPost.title,
+                        boastCatPost.user.loginId,
+                        boastCatPost.likeCount,
+                        boastCatPost.commentCount,
+                        boastCatPost.view,
+                        boastCatPost.createdAt,
+                        boastCatPost.thumbnailUrl
+                ))
+                .from(boastCatPost)
+                .leftJoin(boastCatPost.user, user)
                 .where(
-                        containsTitle(title),
-                        containsContents(contents))
+                        likeTitle(title),
+                        likeContents(contents),
+                        eqUserId(userId))
+                .orderBy(boastCatPost.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .orderBy(boastCatPost.createdAt.desc())
                 .fetch();
 
-        long total = queryFactory
+        Long total = queryFactory
                 .select(boastCatPost.count())
                 .from(boastCatPost)
                 .where(
-                        containsTitle(title),
-                        containsContents(contents))
+                        likeTitle(title),
+                        likeContents(contents),
+                        eqUserId(userId))
                 .fetchOne();
 
-        return new PageImpl<>(results, pageable, total);
+        return new PageImpl<>(results, pageable, total != null ? total : 0L);
     }
 
-    // 제목 검색 조건
-    private BooleanExpression containsTitle(String title) {
-        return title != null && !title.isEmpty() ? boastCatPost.title.contains(title) : null;
+    /**
+     * 제목 LIKE 검색 조건
+     * LIKE '%keyword%' 방식으로 부분 문자열 검색
+     */
+    private BooleanExpression likeTitle(String title) {
+        if (title == null || title.isEmpty()) return null;
+        return boastCatPost.title.containsIgnoreCase(title);
     }
 
-    // 내용 검색 조건
-    private BooleanExpression containsContents(String contents) {
-        return contents != null && !contents.isEmpty() ? boastCatPost.contents.contains(contents) : null;
+    /**
+     * 내용 LIKE 검색 조건
+     * LIKE '%keyword%' 방식으로 부분 문자열 검색
+     */
+    private BooleanExpression likeContents(String contents) {
+        if (contents == null || contents.isEmpty()) return null;
+        return boastCatPost.contents.containsIgnoreCase(contents);
+    }
+
+    // userId 일치 조건 (null이면 전체 검색)
+    private BooleanExpression eqUserId(Long userId) {
+        if (userId == null) return null;
+        return boastCatPost.user.id.eq(userId);
     }
 
     /**
@@ -121,7 +154,8 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                         boastCatPost.likeCount,
                         boastCatPost.commentCount,
                         boastCatPost.view,
-                        boastCatPost.createdAt
+                        boastCatPost.createdAt,
+                        boastCatPost.thumbnailUrl
                 ))
                 .from(boastCatPost)
                 .leftJoin(boastCatPost.user, user)

@@ -28,6 +28,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "실종글", description = "실종 고양이 신고 게시글 CRUD API")
 @RestController
@@ -74,7 +75,7 @@ public class LostCatPostController {
             @RequestBody @Valid CreateLostCatPostRequest createLostCatPostRequest,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        CreateLostCatPostResponse lostCatPostDto = lostCatPostService.createLostCatPost(createLostCatPostRequest, user.getLoginId());
+        CreateLostCatPostResponse lostCatPostDto = lostCatPostService.createLostCatPost(createLostCatPostRequest, user.getUserId());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("글 생성 성공", lostCatPostDto));
@@ -92,8 +93,8 @@ public class LostCatPostController {
             @PathVariable Long lostCatPostId,
             @RequestBody @Valid UpdateLostCatPostRequest updateLostCatPostRequest,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
-        String loginId = user.getLoginId();
-        UpdateLostCatPostResponse lostCatPostDto = lostCatPostService.updateLostCatPost(lostCatPostId, updateLostCatPostRequest, loginId);
+        Long userId = user.getUserId();
+        UpdateLostCatPostResponse lostCatPostDto = lostCatPostService.updateLostCatPost(lostCatPostId, updateLostCatPostRequest, userId);
         return ResponseEntity.ok(ApiResponse.success("글 수정 성공", lostCatPostDto));
     }
 
@@ -106,8 +107,8 @@ public class LostCatPostController {
             @PathVariable Long lostCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        String loginId = user.getLoginId();
-        lostCatPostService.deleteLostCatPost(lostCatPostId, loginId);
+        Long userId = user.getUserId();
+        lostCatPostService.deleteLostCatPost(lostCatPostId, userId);
         return ResponseEntity.noContent().build();
     }
 
@@ -156,5 +157,19 @@ public class LostCatPostController {
             @PathVariable Long lostCatPostId) {
         Long newCount = viewCountService.incrementViewCount(PostType.LOST, lostCatPostId);
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (Redis INCR 방식)", newCount));
+    }
+
+    @Operation(summary = "실종 상태 변경",
+            description = "찾는 중 ↔ 귀가 완료 상태를 변경합니다. 본인 게시글만 변경 가능. 인증 필요.")
+    @PreAuthorize("isAuthenticated()")
+    @PatchMapping("/{lostCatPostId}/status")
+    public ResponseEntity<ApiResponse<Void>> updateCompletedStatus(
+            @Parameter(description = "실종글 ID", example = "1")
+            @PathVariable Long lostCatPostId,
+            @RequestBody Map<String, Boolean> body,
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
+        boolean isCompleted = Boolean.TRUE.equals(body.get("isCompleted"));
+        lostCatPostService.updateCompletedStatus(lostCatPostId, isCompleted, user.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("상태 변경 성공", null));
     }
 }

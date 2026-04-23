@@ -76,7 +76,7 @@ public class BoastCatPostController {
     public ResponseEntity<ApiResponse<CreateBoastCatPostResponse>> createBoastCatPost(
             @RequestBody @Valid CreateBoastCatPostRequest createBoastCatPostRequest,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
-        CreateBoastCatPostResponse post = boastCatPostService.createBoastCatPost(createBoastCatPostRequest, user.getLoginId());
+        CreateBoastCatPostResponse post = boastCatPostService.createBoastCatPost(createBoastCatPostRequest, user.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("글 생성 성공", post));
     }
@@ -98,8 +98,8 @@ public class BoastCatPostController {
             @PathVariable Long boastCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        String loginId = user.getLoginId();
-        UpdateBoastCatPostResponse post = boastCatPostService.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId, loginId);
+        Long userId = user.getUserId();
+        UpdateBoastCatPostResponse post = boastCatPostService.updateBoastCatPost(updateBoastCatPostRequest, boastCatPostId, userId);
         return ResponseEntity.ok(ApiResponse.success("글 수정 성공", post));
     }
 
@@ -112,8 +112,8 @@ public class BoastCatPostController {
             @PathVariable Long boastCatPostId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        String loginId = user.getLoginId();
-        boastCatPostService.deleteBoastCatPost(boastCatPostId, loginId);
+        Long userId = user.getUserId();
+        boastCatPostService.deleteBoastCatPost(boastCatPostId, userId);
         return ResponseEntity.noContent().build();
     }
 

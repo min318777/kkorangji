@@ -49,20 +49,20 @@ public class LostCatPostListResponse {
     private int view;
 
     @Schema(description = "찾음 여부", example = "false")
-    private boolean isCompleted;
+    private boolean completed;
 
     @Schema(description = "작성일시", example = "2025-01-15T10:30:00")
     private LocalDateTime createdAt;
 
-    /**
-     * QueryDSL Projection용 생성자
-     * @QueryProjection 어노테이션으로 Q클래스 자동 생성
-     */
+    @Schema(description = "목록 썸네일 URL (첫 번째 이미지, 없으면 null)", example = "https://cdn.example.com/img.jpg")
+    private String thumbnailUrl;
+
     @QueryProjection
     public LostCatPostListResponse(Long id, String title, String writer,
                                     String catName, String lostLocation,
                                     int commentCount, int view,
-                                    boolean isCompleted, LocalDateTime createdAt) {
+                                    boolean completed, LocalDateTime createdAt,
+                                    String thumbnailUrl) {
         this.id = id;
         this.title = title;
         this.writer = writer;
@@ -70,7 +70,8 @@ public class LostCatPostListResponse {
         this.lostLocation = lostLocation;
         this.commentCount = commentCount;
         this.view = view;
-        this.isCompleted = isCompleted;
+        this.completed = completed;
         this.createdAt = createdAt;
+        this.thumbnailUrl = thumbnailUrl;
     }
 }

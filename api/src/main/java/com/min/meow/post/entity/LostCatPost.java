@@ -28,6 +28,10 @@ import java.util.List;
 @Getter
 public class LostCatPost extends BasePost {
 
+    // 목록 썸네일 URL (첫 번째 이미지, 없으면 null) — JOIN 없이 SELECT 가능
+    @Column(length = 500)
+    private String thumbnailUrl;
+
     @Column(nullable = false, length = 20)
     private String catName;
 
@@ -134,5 +138,10 @@ public class LostCatPost extends BasePost {
     // 완료 상태 변경
     public void markAsCompleted() {
         this.isCompleted = true;
+    }
+
+    // 완료 상태 토글 (찾는 중 ↔ 귀가 완료)
+    public void setCompletedStatus(boolean completed) {
+        this.isCompleted = completed;
     }
 }

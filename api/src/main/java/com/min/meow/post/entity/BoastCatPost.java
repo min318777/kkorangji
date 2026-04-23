@@ -5,6 +5,7 @@ import com.min.meow.comment.entity.Comment;
 import com.min.meow.postlike.entity.PostLike;
 import com.min.meow.user.entity.User;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
@@ -20,7 +21,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "boast_cat_post", indexes = {
-    // 목록 조회: ORDER BY created_at DESC + 페이징 (가장 빈번한 쿼리)
+    // 목록 조회: ORDER BY created_at DESC + 페이징 (가장 빈번한 쿼리) , 커버링인덱스도 고려했지만 빈번하게 변하는 조회수, 댓글수, 좋아요수를 고려하여 단일인덱스적용
     @Index(name = "idx_boast_post_created_at", columnList = "created_at DESC"),
     // 마이페이지: WHERE user_id = ? ORDER BY created_at DESC
     @Index(name = "idx_boast_post_user_created_at", columnList = "user_id, created_at DESC")
@@ -40,6 +41,10 @@ public class BoastCatPost extends BasePost {
      * - 목록 조회 시 N+1 문제 방지 (IN절로 배치 처리)
      * - 상세 조회 시에도 별도 쿼리 1개로 처리
      */
+    // 목록 썸네일 URL (첫 번째 이미지, 없으면 null) — JOIN 없이 SELECT 가능
+    @Column(length = 500)
+    private String thumbnailUrl;
+
     @BatchSize(size = 100)
     @ElementCollection
     private List<String> imageUrls = new ArrayList<>();

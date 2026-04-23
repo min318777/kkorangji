@@ -58,13 +58,14 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .select(new QLostCatPostListResponse(
                         lostCatPost.id,
                         lostCatPost.title,
-                        lostCatPost.user.loginId,       // User에서 loginId만 조회
+                        lostCatPost.user.loginId,
                         lostCatPost.catName,
                         lostCatPost.lostLocation,
                         lostCatPost.commentCount,
                         lostCatPost.view,
                         lostCatPost.isCompleted,
-                        lostCatPost.createdAt
+                        lostCatPost.createdAt,
+                        lostCatPost.thumbnailUrl
                 ))
                 .from(lostCatPost)
                 .leftJoin(lostCatPost.user, user)       // FETCH가 아닌 일반 JOIN
@@ -109,13 +110,14 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .select(new QLostCatPostListResponse(
                         lostCatPost.id,
                         lostCatPost.title,
-                        lostCatPost.user.loginId,       // User에서 loginId만 조회
+                        lostCatPost.user.loginId,
                         lostCatPost.catName,
                         lostCatPost.lostLocation,
                         lostCatPost.commentCount,
                         lostCatPost.view,
                         lostCatPost.isCompleted,
-                        lostCatPost.createdAt
+                        lostCatPost.createdAt,
+                        lostCatPost.thumbnailUrl
                 ))
                 .from(lostCatPost)
                 .leftJoin(lostCatPost.user, user)       // FETCH가 아닌 일반 JOIN

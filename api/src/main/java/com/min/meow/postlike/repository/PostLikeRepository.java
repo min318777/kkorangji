@@ -4,6 +4,7 @@ package com.min.meow.postlike.repository;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.postlike.entity.PostLike;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -14,10 +15,8 @@ import java.util.Set;
 @Repository
 public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
 
-    @Query("SELECT pl FROM PostLike pl WHERE pl.boastCatPost.id = :boastCatPostId AND pl.user.loginId = :loginId")
-    Optional<PostLike> findByBoastCatPostIdAndLoginId(@Param("boastCatPostId") Long boastCatPostId, @Param("loginId") String loginId);
-
-    //Optional<PostLike> findByBoastCatPostIdAndLoginId(Long boastCatPostId, String loginId);
+    @Query("SELECT pl FROM PostLike pl WHERE pl.boastCatPost.id = :boastCatPostId AND pl.user.id = :userId")
+    Optional<PostLike> findByBoastCatPostIdAndUserId(@Param("boastCatPostId") Long boastCatPostId, @Param("userId") Long userId);
 
     Integer countByBoastCatPost(BoastCatPost boastCatPost);
 
@@ -34,6 +33,15 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
      */
     @Query("SELECT pl.user.id FROM PostLike pl WHERE pl.boastCatPost.id = :boastCatPostId")
     Set<Long> findUserIdsByBoastCatPostId(@Param("boastCatPostId") Long boastCatPostId);
+
+    /**
+     * 좋아요 삭제 (userId + postId 기반)
+     *
+     * 좋아요 취소 시 사용됩니다.
+     */
+    @Modifying
+    @Query("DELETE FROM PostLike pl WHERE pl.boastCatPost.id = :postId AND pl.user.id = :userId")
+    void deleteByBoastCatPostIdAndUserId(@Param("postId") Long postId, @Param("userId") Long userId);
 
     /**
      * 특정 사용자의 특정 게시글 좋아요 여부 확인 (userId 기반)

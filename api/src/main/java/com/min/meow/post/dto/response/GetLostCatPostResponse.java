@@ -73,6 +73,9 @@ public class GetLostCatPostResponse {
     @Schema(description = "조회수", example = "150")
     private int view;
 
+    @Schema(description = "귀가 완료 여부", example = "false")
+    private boolean completed;
+
     @Schema(description = "작성일시", example = "2025-01-15T10:30:00")
     private LocalDateTime createdAt;
 
@@ -99,6 +102,7 @@ public class GetLostCatPostResponse {
                 .longitude(lostCatPost.getLongitude())
                 .commentCount(lostCatPost.getCommentCount())
                 .view(lostCatPost.getView())
+                .completed(lostCatPost.isCompleted())
                 .createdAt(lostCatPost.getCreatedAt())
                 .updatedAt(lostCatPost.getUpdatedAt())
                 .build();

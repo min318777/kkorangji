@@ -46,10 +46,14 @@ public class BoastCatPostListResponse {
     @Schema(description = "작성일시", example = "2025-01-15T10:30:00")
     private LocalDateTime createdAt;
 
+    @Schema(description = "목록 썸네일 URL (첫 번째 이미지, 없으면 null)", example = "https://cdn.example.com/img.jpg")
+    private String thumbnailUrl;
+
     @QueryProjection
     public BoastCatPostListResponse(Long id, String title, String writer,
                                      int likeCount, int commentCount,
-                                     int view, LocalDateTime createdAt) {
+                                     int view, LocalDateTime createdAt,
+                                     String thumbnailUrl) {
         this.id = id;
         this.title = title;
         this.writer = writer;
@@ -57,5 +61,6 @@ public class BoastCatPostListResponse {
         this.commentCount = commentCount;
         this.view = view;
         this.createdAt = createdAt;
+        this.thumbnailUrl = thumbnailUrl;
     }
 }

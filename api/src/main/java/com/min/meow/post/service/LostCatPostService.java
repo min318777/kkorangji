@@ -11,6 +11,7 @@ import com.min.meow.post.dto.response.UpdateLostCatPostResponse;
 import com.min.meow.post.dto.request.CreateLostCatPostRequest;
 import com.min.meow.post.dto.request.UpdateLostCatPostRequest;
 import com.min.meow.post.entity.LostCatPost;
+import com.min.meow.global.PostType;
 import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.global.SecurityUtil;
 import com.min.meow.user.entity.User;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 실종 고양이 게시글 서비스
@@ -35,6 +37,7 @@ import java.util.List;
  * - 서버는 key를 CloudFront URL로 변환하여 저장
  * - 서버 트래픽 비용 절감 및 보안 강화
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -43,6 +46,7 @@ public class LostCatPostService {
     private final LostCatRepository lostCatRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
+    private final ViewCountService viewCountService;
 
     /**
      * 모든 실종 고양이 게시글 목록 조회 (Projection 적용으로 성능 최적화)
@@ -81,12 +85,35 @@ public class LostCatPostService {
      * - 키: 게시글 ID (예: post:lost:detail::123)
      * - TTL: 10분
      */
-    @Cacheable(cacheNames = "post:lost:detail", key = "#lostCatPostId")
+    // 조회수 = DB view + Redis delta (v3 방식, 항상 정확한 실시간 값)
     public GetLostCatPostResponse getLostCatPost(Long lostCatPostId){
         LostCatPost lostCatPost = lostCatRepository.findByIdWithUser(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        return GetLostCatPostResponse.toResponse(lostCatPost);
+        long redisDelta = viewCountService.getViewCount(PostType.LOST, lostCatPostId);
+
+        return GetLostCatPostResponse.builder()
+                .id(lostCatPost.getId())
+                .title(lostCatPost.getTitle())
+                .content(lostCatPost.getContents())
+                .writer(lostCatPost.getUser().getLoginId())
+                .userId(lostCatPost.getUser().getId())
+                .catName(lostCatPost.getCatName())
+                .catType(lostCatPost.getCatType())
+                .catColor(lostCatPost.getCatColor())
+                .catAge(lostCatPost.getCatAge())
+                .catWeight(lostCatPost.getCatWeight())
+                .imageUrls(new ArrayList<>(lostCatPost.getImageUrls()))
+                .lostLocation(lostCatPost.getLostLocation())
+                .reward(lostCatPost.getReward())
+                .latitude(lostCatPost.getLatitude())
+                .longitude(lostCatPost.getLongitude())
+                .commentCount(lostCatPost.getCommentCount())
+                .view((int)(lostCatPost.getView() + redisDelta))
+                .completed(lostCatPost.isCompleted())
+                .createdAt(lostCatPost.getCreatedAt())
+                .updatedAt(lostCatPost.getUpdatedAt())
+                .build();
     }
 
 
@@ -161,10 +188,10 @@ public class LostCatPostService {
     @Caching(evict = {
             @CacheEvict(cacheNames = "post:lost:recent", allEntries = true),
             // 실종글 작성 시 마이페이지 통계(실종글 수) 캐시 무효화
-            @CacheEvict(cacheNames = "user:stats", key = "#loginId")
+            @CacheEvict(cacheNames = "user:stats", key = "#userId")
     })
-    public CreateLostCatPostResponse createLostCatPost(CreateLostCatPostRequest createLostCatPostRequest, String loginId){
-        User writer = userRepository.findByLoginId(loginId)
+    public CreateLostCatPostResponse createLostCatPost(CreateLostCatPostRequest createLostCatPostRequest, Long userId){
+        User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
         // S3 key를 CloudFront URL로 변환
@@ -172,6 +199,9 @@ public class LostCatPostService {
         if (createLostCatPostRequest.getImageKeys() != null && !createLostCatPostRequest.getImageKeys().isEmpty()) {
             imageUrls = s3Service.toCloudFrontUrls(createLostCatPostRequest.getImageKeys());
         }
+
+        // 첫 번째 이미지를 썸네일로 저장 (목록 조회 시 JOIN 없이 사용)
+        String thumbnailUrl = imageUrls.isEmpty() ? null : imageUrls.get(0);
 
         // 엔티티 생성
         LostCatPost lostCatPost = LostCatPost.builder()
@@ -188,6 +218,7 @@ public class LostCatPostService {
                 .catWeight(createLostCatPostRequest.getCatWeight())
                 .catColor(createLostCatPostRequest.getCatColor())
                 .imageUrls(imageUrls)
+                .thumbnailUrl(thumbnailUrl)
                 .reward(createLostCatPostRequest.getReward())
                 .build();
         lostCatRepository.save(lostCatPost);
@@ -208,12 +239,9 @@ public class LostCatPostService {
      * - post:lost:detail (해당 게시글 상세 캐시 무효화)
      */
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(cacheNames = "post:lost:recent", allEntries = true),
-            @CacheEvict(cacheNames = "post:lost:detail", key = "#lostCatPostId")
-    })
-    public UpdateLostCatPostResponse updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest, String loginId){
-        User writer = userRepository.findByLoginId(loginId)
+    @CacheEvict(cacheNames = "post:lost:recent", allEntries = true)
+    public UpdateLostCatPostResponse updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest, Long userId){
+        User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
@@ -251,13 +279,11 @@ public class LostCatPostService {
     @Transactional
     @Caching(evict = {
             @CacheEvict(cacheNames = "post:lost:recent", allEntries = true),
-            @CacheEvict(cacheNames = "post:lost:detail", key = "#lostCatPostId"),
-            // 실종글 삭제 시 마이페이지 통계(실종글 수) 캐시 무효화
-            @CacheEvict(cacheNames = "user:stats", key = "#loginId")
+            @CacheEvict(cacheNames = "user:stats", key = "#userId")
     })
-    public void deleteLostCatPost(Long lostCatPostId, String loginId) {
+    public void deleteLostCatPost(Long lostCatPostId, Long userId) {
 
-        User writer = userRepository.findByLoginId(loginId)
+        User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
@@ -268,7 +294,32 @@ public class LostCatPostService {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
 
+        // S3 이미지 삭제 (DB 삭제 전에 URL 추출)
+        List<String> keys = lostCatPost.getImageUrls().stream()
+                .map(s3Service::extractKeyFromUrl)
+                .filter(key -> key != null && !key.isEmpty())
+                .toList();
         lostCatRepository.deleteById(lostCatPostId);
+        s3Service.deleteFiles(keys);
+        log.info("게시글 삭제 완료 - userId: {}, postId: {}", userId, lostCatPostId);
+    }
+
+    /**
+     * 실종 상태 변경 (찾는 중 ↔ 귀가 완료)
+     * 본인 게시글만 변경 가능. 목록 캐시 무효화.
+     */
+    @Transactional
+    @CacheEvict(cacheNames = "post:lost:recent", allEntries = true)
+    public void updateCompletedStatus(Long lostCatPostId, boolean isCompleted, Long userId) {
+        User writer = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
+        LostCatPost post = lostCatRepository.findById(lostCatPostId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+        if (!post.isAuthor(writer)) {
+            throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
+        }
+        post.setCompletedStatus(isCompleted);
+        lostCatRepository.save(post); // dirty checking 대신 명시적 save로 확실히 반영
     }
 
     /**

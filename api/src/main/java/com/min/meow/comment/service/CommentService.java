@@ -72,14 +72,13 @@ public class CommentService {
 
     // 고양이 자랑 게시글 댓글 작성
     @Transactional
-    @CacheEvict(cacheNames = "user:stats", key = "#loginId")
-    public RegisterCommentResponse registerBoastCatPostComment(RegisterCommentRequest registerCommentRequest, Long boastCatPostId, Long userId, String loginId){
+    @CacheEvict(cacheNames = "user:stats", key = "#userId")
+    public RegisterCommentResponse registerBoastCatPostComment(RegisterCommentRequest registerCommentRequest, Long boastCatPostId, Long userId){
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 
-        // 엔티티 직접 생성 (toEntity 메서드 제거됨)
         Comment comment = Comment.builder()
                 .contents(registerCommentRequest.getContent())
                 .user(user)
@@ -87,20 +86,20 @@ public class CommentService {
                 .boastCatPost(boastCatPost)
                 .build();
         boastCatPost.getComments().add(comment);
-        boastCatPost.incrementCommentCount();  // 댓글 수 증가
+        boastCatPost.incrementCommentCount();
         commentRepository.save(comment);
 
         // 게시글 작성자가 탈퇴하지 않은 경우에만 알림 발송
         // - 자기 자신의 게시글에 댓글을 달 경우도 알림 발송하지 않음
-        if (!boastCatPost.getUser().isWithdrawn() && !user.getLoginId().equals(boastCatPost.getUser().getLoginId())) {
+        if (!boastCatPost.getUser().isWithdrawn() && !user.getId().equals(boastCatPost.getUser().getId())) {
             CommentEvent event = new CommentEvent(
                     comment.getId(),
                     boastCatPostId,
                     user.getLoginId(),
-                    boastCatPost.getUser().getLoginId()
+                    boastCatPost.getUser().getId()
             );
             notificationEventPublisher.publishCommentEvent(event);
-            log.debug("댓글 알림 발송 - postId: {}, receiver: {}", boastCatPostId, boastCatPost.getUser().getLoginId());
+            log.debug("댓글 알림 발송 - postId: {}, receiverUserId: {}", boastCatPostId, boastCatPost.getUser().getId());
         } else {
             log.debug("댓글 알림 미발송 - 게시글 작성자 탈퇴 또는 본인 댓글");
         }
@@ -109,8 +108,8 @@ public class CommentService {
 
     // 실종 고양이 게시글 댓글 작성
     @Transactional
-    @CacheEvict(cacheNames = "user:stats", key = "#loginId")
-    public RegisterCommentResponse registerLostCatPostComment(RegisterCommentRequest registerCommentRequest, Long lostCatPostId, Long userId, String loginId){
+    @CacheEvict(cacheNames = "user:stats", key = "#userId")
+    public RegisterCommentResponse registerLostCatPostComment(RegisterCommentRequest registerCommentRequest, Long lostCatPostId, Long userId){
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
         User user = userRepository.findById(userId)
@@ -131,15 +130,15 @@ public class CommentService {
         // 게시글 작성자가 탈퇴하지 않은 경우에만 알림 발송
         // - 탈퇴한 사용자에게는 알림을 보내지 않음
         // - 자기 자신의 게시글에 댓글을 달 경우도 알림 발송하지 않음
-        if (!lostCatPost.getUser().isWithdrawn() && !user.getLoginId().equals(lostCatPost.getUser().getLoginId())) {
+        if (!lostCatPost.getUser().isWithdrawn() && !user.getId().equals(lostCatPost.getUser().getId())) {
             CommentEvent event = new CommentEvent(
                     comment.getId(),
                     lostCatPostId,
                     user.getLoginId(),
-                    lostCatPost.getUser().getLoginId()
+                    lostCatPost.getUser().getId()
             );
             notificationEventPublisher.publishCommentEvent(event);
-            log.debug("댓글 알림 발송 - postId: {}, receiver: {}", lostCatPostId, lostCatPost.getUser().getLoginId());
+            log.debug("댓글 알림 발송 - postId: {}, receiverUserId: {}", lostCatPostId, lostCatPost.getUser().getId());
         } else {
             log.debug("댓글 알림 미발송 - 게시글 작성자 탈퇴 또는 본인 댓글");
         }
@@ -163,10 +162,9 @@ public class CommentService {
     }
 
     // 댓글 삭제
-    // loginId: 댓글 삭제 시 마이페이지 통계(댓글 수) 캐시 무효화에 사용
     @Transactional
-    @CacheEvict(cacheNames = "user:stats", key = "#loginId")
-    public void deleteComment(Long commentId, Long userId, String loginId){
+    @CacheEvict(cacheNames = "user:stats", key = "#userId")
+    public void deleteComment(Long commentId, Long userId){
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT));
 
