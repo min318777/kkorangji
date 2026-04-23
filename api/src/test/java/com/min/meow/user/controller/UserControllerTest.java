@@ -461,7 +461,7 @@ class UserControllerTest extends IntegrationTestBase {
         void test_성공_회원_탈퇴() {
             // given — User 생성
             savedUser = createAndSaveUser(userRepository, "withdraw1", "withdraw@test.com", "탈퇴냥이");
-            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER", savedUser.getLoginId());
+            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER");
 
             // when
             ResponseEntity<Void> response = restTemplate.exchange(

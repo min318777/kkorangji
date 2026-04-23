@@ -1,30 +1,13 @@
-/**
- * 조회수 테스트 - v3 Redis INCR 방식
- * Redis 원자적 증가 + 배치 동기화
- */
-import http from 'k6/http';
-import { check, sleep } from 'k6';
-import { Counter } from 'k6/metrics';
+import http from "k6/http";
+import { sleep } from "k6";
 
-const successfulRequests = new Counter('successful_requests');
-
-export const options = {
-  stages: [
-    { duration: '1m', target: 1000 },
-  ],
+export let options = {
+    stages: [
+                { duration: '20m', target: 20000 }
+        ],
 };
 
-const POST_ID = 147516;
-const BASE_URL = 'http://localhost:8080';
-const VIEW_COUNT_API = `${BASE_URL}/api/meow/boast-cat/v3/${POST_ID}/view`;
-
-export default function() {
-  const response = http.post(VIEW_COUNT_API, null, { timeout: '30s' });
-  const success = check(response, { '200 OK': (r) => r.status === 200 });
-  if (success) successfulRequests.add(1);
-  sleep(0.1);
-}
-
-export function teardown() {
-  console.log('✅ v3 Redis INCR 테스트 완료');
+export default function () {
+    http.post("http://localhost:8080/api/meow/boast-cat/v3/147516/view");
+    sleep(1);
 }

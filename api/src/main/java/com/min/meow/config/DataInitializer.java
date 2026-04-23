@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Profile("local")  // 로컬 환경에서만 실행
+@Profile({"local", "test"})  // 로컬 및 테스트 환경에서 실행
 public class DataInitializer implements ApplicationRunner {
 
     private final RoleRepository roleRepository;

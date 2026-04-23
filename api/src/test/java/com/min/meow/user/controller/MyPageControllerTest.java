@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <ul>
  *   <li>@SpringBootTest(RANDOM_PORT): 실제 서블릿 컨테이너 + 전체 필터 체인 검증</li>
  *   <li>H2 인메모리 DB: application-test.yml으로 실제 JPA 쿼리 검증</li>
- *   <li>실제 JWT 토큰: JwtUtil로 서명된 토큰 생성 → Bearer 헤더 → JwtFilter 통과</li>
+ *   <li>실제 JWT 토큰: JwtProvider로 서명된 토큰 생성 → Bearer 헤더 → JwtAuthenticationFilter 통과</li>
  *   <li>X-Auth-Version: v2 → DB 조회 없이 JWT Claims로 인증 (테스트 격리 보장)</li>
  *   <li>@AfterEach: 저장한 데이터 직접 삭제 → 테스트 간 격리</li>
  * </ul>
@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 슬라이스 테스트             통합 테스트
  * MockMvc               → TestRestTemplate (실제 HTTP + 전체 필터 체인)
  * MockitoBean(Service)  → 실제 Service + 실제 Repository + H2
- * SecurityContext 직접 주입 → JWT 토큰 생성 → JwtFilter 처리
+ * SecurityContext 직접 주입 → JWT 토큰 생성 → JwtAuthenticationFilter 처리
  * DB 없음               → H2 인메모리 DB
  * </pre>
  *
@@ -71,7 +71,7 @@ class MyPageControllerTest extends IntegrationTestBase {
             savedUser = createAndSaveUser(userRepository, "testuser", "testuser@test.com", "테스트냥이");
 
             // given — JWT 토큰 생성 (X-Auth-Version: v2로 DB 조회 없이 인증)
-            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER", savedUser.getLoginId());
+            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER");
 
             // when — 실제 HTTP GET 요청
             ResponseEntity<Map> response = restTemplate.exchange(
@@ -120,7 +120,7 @@ class MyPageControllerTest extends IntegrationTestBase {
         void test_성공_게시글_댓글_통계_포함_조회() {
             // given — 신규 User 저장 (게시글/댓글 없음)
             savedUser = createAndSaveUser(userRepository, "newstatuser", "newstatuser@test.com", "신규사용자");
-            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER", savedUser.getLoginId());
+            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER");
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
@@ -164,7 +164,7 @@ class MyPageControllerTest extends IntegrationTestBase {
             // given — User 저장
             savedUser = createAndSaveUser(userRepository, "patchuser", "patchuser@test.com", "기존닉네임");
 
-            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER", savedUser.getLoginId());
+            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER");
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             Map<String, String> requestBody = Map.of("nickname", "홍길동");
@@ -213,7 +213,7 @@ class MyPageControllerTest extends IntegrationTestBase {
             // given
             savedUser = createAndSaveUser(userRepository, "blankuser", "blankuser@test.com", "기존닉네임");
 
-            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER", savedUser.getLoginId());
+            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER");
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             // 빈 문자열 — @NotBlank 위반
@@ -237,7 +237,7 @@ class MyPageControllerTest extends IntegrationTestBase {
             // given
             savedUser = createAndSaveUser(userRepository, "patternuser", "patternuser@test.com", "기존닉네임");
 
-            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER", savedUser.getLoginId());
+            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER");
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             // 숫자 포함 — @Pattern(^[가-힣a-zA-Z]+$) 위반
@@ -277,7 +277,7 @@ class MyPageControllerTest extends IntegrationTestBase {
         void test_성공_내가_쓴_글_목록_조회() {
             // given
             savedUser = createAndSaveUser(userRepository, "postuser", "postuser@test.com", "게시글러");
-            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER", savedUser.getLoginId());
+            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER");
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
@@ -323,7 +323,7 @@ class MyPageControllerTest extends IntegrationTestBase {
         void test_성공_내가_쓴_댓글_목록_조회() {
             // given
             savedUser = createAndSaveUser(userRepository, "commentowner", "commentowner@test.com", "댓글주인");
-            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER", savedUser.getLoginId());
+            HttpHeaders headers = createAuthHeader(savedUser.getId(), "ROLE_USER");
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
@@ -352,9 +352,9 @@ class MyPageControllerTest extends IntegrationTestBase {
         @DisplayName("실패: JWT에 DB에 없는 loginId가 담겨있으면 4xx 에러를 반환한다")
         void test_실패_다른_사용자_loginId_조회_불가() {
             // given — DB에 저장하지 않은 사용자의 loginId로 토큰 생성
-            // v2 인증: JwtFilter는 통과하지만 MyPageService.getMyPageSummary에서
+            // v2 인증: JwtAuthenticationFilter는 통과하지만 MyPageService.getMyPageSummary에서
             // userRepository.findByLoginId("nonexistent_user") → empty → UNREGISTERED_USER 예외
-            HttpHeaders headers = createAuthHeader(99999L, "ROLE_USER", "nonexistent_user");
+            HttpHeaders headers = createAuthHeader(99999L, "ROLE_USER");
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(

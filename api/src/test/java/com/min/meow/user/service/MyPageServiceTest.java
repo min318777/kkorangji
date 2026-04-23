@@ -101,13 +101,13 @@ class MyPageServiceTest {
         void test_성공_마이페이지_요약_조회() {
             // given — User Mock 설정
             User user = createTestUser(1L, "testuser");
-            given(userRepository.findByLoginId("testuser")).willReturn(Optional.of(user));
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(userRepository.countBoastCatPostsByUserId(any())).willReturn(10L);
             given(userRepository.countLostCatPostsByUserId(any())).willReturn(5L);
             given(commentRepository.countByUser(user)).willReturn(30L);
 
             // when
-            MyPageSummaryResponse response = myPageService.getMyPageSummary("testuser");
+            MyPageSummaryResponse response = myPageService.getMyPageSummary(1L);
 
             // then — totalPostCount = boastCount + lostCount = 10 + 5 = 15
             assertThat(response.getLoginId()).isEqualTo("testuser");
@@ -118,13 +118,13 @@ class MyPageServiceTest {
         }
 
         @Test
-        @DisplayName("실패: 존재하지 않는 loginId로 조회하면 CustomException(UNREGISTERED_USER)을 던진다")
+        @DisplayName("실패: 존재하지 않는 userId로 조회하면 CustomException(UNREGISTERED_USER)을 던진다")
         void test_실패_존재하지_않는_사용자() {
             // given — 사용자 없음
-            given(userRepository.findByLoginId("unknown")).willReturn(Optional.empty());
+            given(userRepository.findById(999L)).willReturn(Optional.empty());
 
             // when & then — UNREGISTERED_USER 에러 발생
-            assertThatThrownBy(() -> myPageService.getMyPageSummary("unknown"))
+            assertThatThrownBy(() -> myPageService.getMyPageSummary(999L))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.UNREGISTERED_USER);
@@ -135,13 +135,13 @@ class MyPageServiceTest {
         void test_성공_게시글_없는_신규_사용자() {
             // given — 모든 카운트 0
             User user = createTestUser(2L, "newuser");
-            given(userRepository.findByLoginId("newuser")).willReturn(Optional.of(user));
+            given(userRepository.findById(2L)).willReturn(Optional.of(user));
             given(userRepository.countBoastCatPostsByUserId(any())).willReturn(0L);
             given(userRepository.countLostCatPostsByUserId(any())).willReturn(0L);
             given(commentRepository.countByUser(user)).willReturn(0L);
 
             // when
-            MyPageSummaryResponse response = myPageService.getMyPageSummary("newuser");
+            MyPageSummaryResponse response = myPageService.getMyPageSummary(2L);
 
             // then
             assertThat(response.getTotalPostCount()).isEqualTo(0L);
@@ -163,7 +163,7 @@ class MyPageServiceTest {
         void test_성공_닉네임_수정() {
             // given
             User user = spy(createTestUser(1L, "testuser")); // spy로 메서드 호출 검증
-            given(userRepository.findByLoginId("testuser")).willReturn(Optional.of(user));
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(userRepository.countBoastCatPostsByUserId(any())).willReturn(0L);
             given(userRepository.countLostCatPostsByUserId(any())).willReturn(0L);
             given(commentRepository.countByUser(user)).willReturn(0L);
@@ -172,7 +172,7 @@ class MyPageServiceTest {
             request.setNickname("새닉네임");
 
             // when
-            myPageService.updateProfile("testuser", request);
+            myPageService.updateProfile(1L, request);
 
             // then — updateNickname 도메인 메서드가 정확히 1회 호출되었는지 검증
             verify(user, times(1)).updateNickname("새닉네임");
@@ -182,14 +182,14 @@ class MyPageServiceTest {
         @DisplayName("실패: 존재하지 않는 사용자 수정 시 CustomException(NOT_FOUND_USER)을 던진다")
         void test_실패_존재하지_않는_사용자_수정() {
             // given
-            given(userRepository.findByLoginId("ghost")).willReturn(Optional.empty());
+            given(userRepository.findById(999L)).willReturn(Optional.empty());
 
             UpdateProfileRequest request = new UpdateProfileRequest();
             request.setNickname("닉네임");
 
             // when & then — NOT_FOUND_USER: getMyPageSummary는 UNREGISTERED_USER이지만
             // updateProfile은 NOT_FOUND_USER로 다른 에러코드 사용
-            assertThatThrownBy(() -> myPageService.updateProfile("ghost", request))
+            assertThatThrownBy(() -> myPageService.updateProfile(999L, request))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NOT_FOUND_USER);
@@ -200,7 +200,7 @@ class MyPageServiceTest {
         void test_성공_수정_후_응답에_새_닉네임_반영() {
             // given
             User user = createTestUser(1L, "testuser");
-            given(userRepository.findByLoginId("testuser")).willReturn(Optional.of(user));
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(userRepository.countBoastCatPostsByUserId(any())).willReturn(0L);
             given(userRepository.countLostCatPostsByUserId(any())).willReturn(0L);
             given(commentRepository.countByUser(user)).willReturn(0L);
@@ -209,7 +209,7 @@ class MyPageServiceTest {
             request.setNickname("새닉네임");
 
             // when — user.updateNickname() 실제 호출로 닉네임 변경
-            MyPageSummaryResponse response = myPageService.updateProfile("testuser", request);
+            MyPageSummaryResponse response = myPageService.updateProfile(1L, request);
 
             // then — 변경된 닉네임이 응답에 반영
             assertThat(response.getNickname()).isEqualTo("새닉네임");
@@ -228,7 +228,7 @@ class MyPageServiceTest {
         void test_성공_전체_게시글_조회() {
             // given
             User user = createTestUser(1L, "testuser");
-            given(userRepository.findByLoginId("testuser")).willReturn(Optional.of(user));
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
 
             // BoastCatPost Mock — getAllPosts에서 createdAt으로 정렬하므로 null이 아닌 값 필요
             java.time.LocalDateTime now = java.time.LocalDateTime.now();
@@ -275,7 +275,7 @@ class MyPageServiceTest {
             Pageable pageable = PageRequest.of(0, 10);
 
             // when
-            MyPostListResponse response = myPageService.getMyPosts("testuser", pageable, PostType.ALL);
+            MyPostListResponse response = myPageService.getMyPosts(1L, pageable, PostType.ALL);
 
             // then — 자랑글 2 + 실종글 1 = 총 3개
             assertThat(response.getTotalElements()).isEqualTo(3L);
@@ -290,7 +290,7 @@ class MyPageServiceTest {
         void test_성공_자랑글만_조회() {
             // given
             User user = createTestUser(1L, "testuser");
-            given(userRepository.findByLoginId("testuser")).willReturn(Optional.of(user));
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
 
             Page<BoastCatPost> boastPage = new PageImpl<>(Collections.emptyList());
             Pageable pageable = PageRequest.of(0, 10);
@@ -298,7 +298,7 @@ class MyPageServiceTest {
                     .willReturn(boastPage);
 
             // when
-            myPageService.getMyPosts("testuser", pageable, PostType.BOAST);
+            myPageService.getMyPosts(1L, pageable, PostType.BOAST);
 
             // then — boast만 조회, lost는 호출되지 않아야 함
             verify(boastCatPostRepository).findByUserIdOrderByCreatedAtDesc(any(), eq(pageable));
@@ -310,7 +310,7 @@ class MyPageServiceTest {
         void test_성공_실종글만_조회() {
             // given
             User user = createTestUser(1L, "testuser");
-            given(userRepository.findByLoginId("testuser")).willReturn(Optional.of(user));
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
 
             Page<LostCatPost> lostPage = new PageImpl<>(Collections.emptyList());
             Pageable pageable = PageRequest.of(0, 10);
@@ -318,7 +318,7 @@ class MyPageServiceTest {
                     .willReturn(lostPage);
 
             // when
-            myPageService.getMyPosts("testuser", pageable, PostType.LOST);
+            myPageService.getMyPosts(1L, pageable, PostType.LOST);
 
             // then — lost만 조회, boast는 호출되지 않아야 함
             verify(lostCatRepository).findByUserIdOrderByCreatedAtDesc(any(), eq(pageable));

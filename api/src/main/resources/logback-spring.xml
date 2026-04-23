@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- 콘솔 로그 패턴 -->
+    <!-- %X{requestId:-NO_MDC}: MDC에 requestId가 없으면 "NO_MDC" 출력 -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="[%d{HH:mm:ss.SSS}] [%X{requestId:-NO_MDC}] [%X{userId:-ANONYMOUS}] [%thread] %-5level %logger{36} - %msg%n"/>
+
+    <!-- 파일 로그 패턴 (날짜 포함) -->
+    <property name="FILE_LOG_PATTERN"
+              value="[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%X{requestId:-NO_MDC}] [%X{userId:-ANONYMOUS}] [%thread] %-5level %logger{36} - %msg%n"/>
+
+    <!-- 로그 파일 저장 경로 -->
+    <property name="LOG_DIR" value="logs"/>
+
+    <!-- ======================== -->
+    <!--     콘솔 Appender         -->
+    <!-- ======================== -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ======================== -->
+    <!--   파일 롤링 Appender       -->
+    <!--   (dev 프로파일 전용)       -->
+    <!-- ======================== -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/meow-api.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 날짜별 롤링: 매일 새 파일 생성 -->
+            <fileNamePattern>${LOG_DIR}/meow-api.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 최대 30일치 보관 -->
+            <maxHistory>30</maxHistory>
+            <!-- 전체 최대 용량 3GB -->
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ======================== -->
+    <!--     프로파일별 설정         -->
+    <!-- ======================== -->
+
+    <!-- local 프로파일: 콘솔만 출력, INFO 레벨 -->
+    <springProfile name="local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <!-- 애플리케이션 패키지는 DEBUG 레벨로 상세 출력 -->
+        <logger name="com.min.meow" level="DEBUG" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+        <!-- SQL 로그: p6spy가 처리하므로 JPA 중복 출력 방지 -->
+        <logger name="org.hibernate.SQL" level="OFF"/>
+        <logger name="org.hibernate.orm.jdbc.bind" level="OFF"/>
+    </springProfile>
+
+    <!-- dev 프로파일: 콘솔 + 파일 출력, DEBUG 레벨 -->
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+        <!-- 애플리케이션 패키지는 DEBUG 레벨 -->
+        <logger name="com.min.meow" level="DEBUG" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </logger>
+    </springProfile>
+
+    <!-- prod 프로파일: 파일만 출력, WARN 레벨 (노이즈 최소화) -->
+    <springProfile name="prod">
+        <root level="WARN">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+        <!-- 애플리케이션 패키지는 INFO 레벨 -->
+        <logger name="com.min.meow" level="INFO" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </logger>
+    </springProfile>
+
+</configuration>

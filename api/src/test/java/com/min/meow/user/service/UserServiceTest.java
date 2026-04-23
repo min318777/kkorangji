@@ -271,26 +271,27 @@ class UserServiceTest {
             // given — 정상 사용자 (탈퇴 안 된 상태)
             User user = spy(createTestUser("withdraw1", "withdraw@example.com", "탈퇴냥이"));
             given(user.isWithdrawn()).willReturn(false);
-            given(userRepository.findByLoginId("withdraw1")).willReturn(Optional.of(user));
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(userRepository.save(any(User.class))).willReturn(user);
 
             // when
-            userService.withdraw("withdraw1");
+            userService.withdraw(1L);
 
             // then — 리프레시 토큰 삭제 + 소프트 삭제 처리 확인
+            // deleteByLoginId는 user 엔티티에서 loginId를 가져와 호출됨
             verify(refreshTokenRepository, times(1)).deleteByLoginId("withdraw1");
             verify(user, times(1)).withdraw();
             verify(userRepository, times(1)).save(user);
         }
 
         @Test
-        @DisplayName("실패: 존재하지 않는 loginId로 탈퇴 요청하면 CustomException(NOT_FOUND_USER)을 던진다")
+        @DisplayName("실패: 존재하지 않는 userId로 탈퇴 요청하면 CustomException(NOT_FOUND_USER)을 던진다")
         void test_실패_존재하지_않는_사용자_탈퇴() {
             // given — DB에 없는 User
-            given(userRepository.findByLoginId("ghost")).willReturn(Optional.empty());
+            given(userRepository.findById(999L)).willReturn(Optional.empty());
 
             // when & then — NOT_FOUND_USER 예외 발생
-            assertThatThrownBy(() -> userService.withdraw("ghost"))
+            assertThatThrownBy(() -> userService.withdraw(999L))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NOT_FOUND_USER);
@@ -306,10 +307,10 @@ class UserServiceTest {
             // given — 이미 탈퇴한 User
             User user = spy(createTestUser("already1", "already@example.com", "탈퇴된냥이"));
             given(user.isWithdrawn()).willReturn(true);  // 이미 탈퇴 상태
-            given(userRepository.findByLoginId("already1")).willReturn(Optional.of(user));
+            given(userRepository.findById(2L)).willReturn(Optional.of(user));
 
             // when & then — ALREADY_WITHDRAWN_USER 예외 발생
-            assertThatThrownBy(() -> userService.withdraw("already1"))
+            assertThatThrownBy(() -> userService.withdraw(2L))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.ALREADY_WITHDRAWN_USER);

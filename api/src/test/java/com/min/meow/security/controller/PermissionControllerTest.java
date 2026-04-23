@@ -42,8 +42,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <h3>JWT 권한 포함 방법</h3>
  * createAuthHeader()는 권한 목록을 받지 않으므로, 권한이 필요한 테스트에서는
  * createAuthHeaderWithPermissions()를 사용한다.
- * JwtUtil.createAccessToken()의 permissions 파라미터에 권한 코드를 담아
- * JwtFilter → TokenPrincipalUser.getAuthorities()로 @PreAuthorize가 확인한다.
+ * JwtProvider.createAccessToken()의 permissions 파라미터에 권한 코드를 담아
+ * JwtAuthenticationFilter → CustomUserDetails.getAuthorities()로 @PreAuthorize가 확인한다.
  */
 @DisplayName("RBAC 권한 체크 통합 테스트")
 class PermissionControllerTest extends IntegrationTestBase {
@@ -77,14 +77,13 @@ class PermissionControllerTest extends IntegrationTestBase {
      *
      * @param userId    사용자 PK
      * @param role      역할 (예: "ROLE_USER", "ROLE_ADMIN")
-     * @param loginId   로그인 ID
      * @param perms     권한 코드 목록 (예: ["comment:write", "post:write"])
      * @return Authorization: Bearer {token} + X-Auth-Version: v2 헤더
      */
-    private HttpHeaders createAuthHeaderWithPermissions(Long userId, String role, String loginId, List<String> perms) {
+    private HttpHeaders createAuthHeaderWithPermissions(Long userId, String role, List<String> perms) {
         // JWT Access Token에 permissions 클레임을 포함하여 생성
-        // JwtFilter → TokenPrincipalUser → getAuthorities()에서 권한으로 등록됨
-        String token = jwtUtil.createAccessToken(userId, role, loginId, perms);
+        // JwtAuthenticationFilter → CustomUserDetails → getAuthorities()에서 권한으로 등록됨
+        String token = jwtProvider.createAccessToken(userId, role, perms);
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
         // v2: DB 조회 없이 JWT Claims만으로 인증 (성능 + 테스트 독립성)
@@ -180,7 +179,7 @@ class PermissionControllerTest extends IntegrationTestBase {
             // 핵심: @PreAuthorize("hasAuthority('comment:write')") 통과를 위해
             //       JWT claims의 permissions 필드에 "comment:write"를 반드시 포함해야 함
             HttpHeaders headers = createAuthHeaderWithPermissions(
-                    savedUser.getId(), "ROLE_USER", savedUser.getLoginId(),
+                    savedUser.getId(), "ROLE_USER",
                     List.of("comment:write", "post:read")
             );
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -217,10 +216,10 @@ class PermissionControllerTest extends IntegrationTestBase {
 
             // given — JWT에 comment:write 미포함
             // 핵심: permissions에 "comment:write"가 없으면
-            //       TokenPrincipalUser.getAuthorities()에 해당 권한이 없고
+            //       CustomUserDetails.getAuthorities()에 해당 권한이 없고
             //       @PreAuthorize("hasAuthority('comment:write')")에서 거부됨
             HttpHeaders headers = createAuthHeaderWithPermissions(
-                    savedUser.getId(), "ROLE_USER", savedUser.getLoginId(),
+                    savedUser.getId(), "ROLE_USER",
                     List.of("post:read")   // comment:write 없음
             );
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -288,7 +287,7 @@ class PermissionControllerTest extends IntegrationTestBase {
             );
 
             HttpHeaders headers = createAuthHeaderWithPermissions(
-                    savedUser.getId(), "ROLE_USER", savedUser.getLoginId(),
+                    savedUser.getId(), "ROLE_USER",
                     List.of("comment:write")
             );
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -316,7 +315,7 @@ class PermissionControllerTest extends IntegrationTestBase {
             );
 
             HttpHeaders headers = createAuthHeaderWithPermissions(
-                    savedUser.getId(), "ROLE_USER", savedUser.getLoginId(),
+                    savedUser.getId(), "ROLE_USER",
                     List.of("post:read")   // comment:write 없음
             );
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -363,7 +362,7 @@ class PermissionControllerTest extends IntegrationTestBase {
             );
 
             HttpHeaders headers = createAuthHeaderWithPermissions(
-                    savedUser.getId(), "ROLE_USER", savedUser.getLoginId(),
+                    savedUser.getId(), "ROLE_USER",
                     List.of("comment:write")
             );
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -391,7 +390,7 @@ class PermissionControllerTest extends IntegrationTestBase {
             );
 
             HttpHeaders headers = createAuthHeaderWithPermissions(
-                    savedUser.getId(), "ROLE_USER", savedUser.getLoginId(),
+                    savedUser.getId(), "ROLE_USER",
                     List.of("post:read")   // comment:write 없음
             );
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -449,7 +448,7 @@ class PermissionControllerTest extends IntegrationTestBase {
             );
 
             HttpHeaders headers = createAuthHeaderWithPermissions(
-                    adminUser.getId(), "ROLE_ADMIN", adminUser.getLoginId(), adminPerms
+                    adminUser.getId(), "ROLE_ADMIN", adminPerms
             );
             headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String, String> requestBody = Map.of("content", "관리자 댓글");
@@ -476,7 +475,7 @@ class PermissionControllerTest extends IntegrationTestBase {
             );
 
             HttpHeaders headers = createAuthHeaderWithPermissions(
-                    normalUser.getId(), "ROLE_USER_MIN", normalUser.getLoginId(),
+                    normalUser.getId(), "ROLE_USER_MIN",
                     List.of("post:read")
             );
             headers.setContentType(MediaType.APPLICATION_JSON);
