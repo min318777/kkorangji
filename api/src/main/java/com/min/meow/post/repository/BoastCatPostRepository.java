@@ -5,10 +5,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import jakarta.persistence.LockModeType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -55,6 +58,22 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
     @Query("UPDATE BoastCatPost b SET b.view = b.view + 1 WHERE b.id = :id")
     int incrementViewCount(@Param("id") Long id);
 
+    // 비관적 락 조회수 증가 (v4) — SELECT FOR UPDATE 후 더티 체킹
+    // SELECT ... FOR UPDATE → 행 X-Lock → 다른 트랜잭션 차단 → 순차 처리
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM BoastCatPost b WHERE b.id = :id")
+    Optional<BoastCatPost> findByIdWithPessimisticLock(@Param("id") Long id);
+
+    // 댓글 수 증가 — Post 전체 조회 없이 UPDATE만 실행
+    @Modifying
+    @Query("UPDATE BoastCatPost b SET b.commentCount = b.commentCount + 1 WHERE b.id = :id")
+    void incrementCommentCount(@Param("id") Long id);
+
+    // 댓글 수 감소 — 0 미만으로 내려가지 않도록 보호
+    @Modifying
+    @Query("UPDATE BoastCatPost b SET b.commentCount = CASE WHEN b.commentCount > 0 THEN b.commentCount - 1 ELSE 0 END WHERE b.id = :id")
+    void decrementCommentCount(@Param("id") Long id);
+
     /**
      * 조회수 델타값 일괄 증가 (Redis → DB 동기화용)
      *
@@ -73,16 +92,10 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
     int incrementViewCountByDelta(@Param("id") Long id, @Param("delta") int delta);
 
     /**
-     * 좋아요 수 델타값 일괄 증가/감소 (Redis → DB 동기화용)
+     * 좋아요 수 증가/감소 — 좋아요 등록/취소 시 즉시 DB에 직접 반영
      *
-     * Redis에 누적된 좋아요 변경분을 DB에 한 번에 반영합니다.
-     * 스케줄러에 의해 주기적으로 호출됩니다.
-     *
-     * 실행되는 쿼리:
-     * UPDATE boast_cat_post SET like_count = like_count + :delta WHERE id = :id
-     *
-     * 음수 delta도 처리 가능 (좋아요 취소 시)
-     * 단, likeCount가 음수가 되지 않도록 별도 검증 필요
+     * delta: 양수(좋아요 등록 +1), 음수(좋아요 취소 -1)
+     * likeCount가 음수가 되지 않도록 CASE 문으로 최솟값 0 보장
      *
      * @param id 게시글 ID
      * @param delta 증가/감소시킬 좋아요 수 (음수 가능)

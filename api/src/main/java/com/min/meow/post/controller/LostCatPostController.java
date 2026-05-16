@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -112,6 +113,22 @@ public class LostCatPostController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "내 주변 실종글 조회",
+            description = "현재 위치(위도/경도) 기준으로 반경 내 실종글을 조회합니다. 위치 없는 글은 제외됩니다. 인증 불필요.")
+    @SecurityRequirements
+    @GetMapping("/nearby")
+    public ResponseEntity<ApiResponse<PageResponse<LostCatPostListResponse>>> getNearbyLostCatPosts(
+            @Parameter(description = "현재 위치 위도", example = "37.5665") @RequestParam double lat,
+            @Parameter(description = "현재 위치 경도", example = "126.9780") @RequestParam double lng,
+            @Parameter(description = "검색 반경 (km, 기본값 5)", example = "5") @RequestParam(defaultValue = "5") double radius,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10") @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<LostCatPostListResponse> pageResponse = lostCatPostService.getNearbyLostCatPosts(lat, lng, radius, pageable);
+        return ResponseEntity.ok(ApiResponse.success("내 주변 실종글 조회 성공", pageResponse));
+    }
+
     @Operation(summary = "최근 실종글 20개 조회",
             description = "최신 실종글 20개를 Projection으로 조회합니다. 인증 불필요.")
     @SecurityRequirements
@@ -154,9 +171,25 @@ public class LostCatPostController {
     @PostMapping("/v3/{lostCatPostId}/view")
     public ResponseEntity<ApiResponse<Long>> incrementViewCountV3(
             @Parameter(description = "실종글 ID", example = "1")
-            @PathVariable Long lostCatPostId) {
-        Long newCount = viewCountService.incrementViewCount(PostType.LOST, lostCatPostId);
+            @PathVariable Long lostCatPostId,
+            HttpServletRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
+
+        String identifier = (user != null)
+                ? "user:" + user.getUserId()
+                : "ip:" + getClientIp(request);
+
+        Long newCount = viewCountService.incrementViewCount(PostType.LOST, lostCatPostId, identifier);
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (Redis INCR 방식)", newCount));
+    }
+
+    // X-Forwarded-For 헤더 우선, 없으면 RemoteAddr
+    private String getClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     @Operation(summary = "실종 상태 변경",
