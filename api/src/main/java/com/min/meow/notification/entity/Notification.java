@@ -1,7 +1,7 @@
 package com.min.meow.notification.entity;
 
 
-import com.min.meow.global.NotificationType;
+import com.min.meow.common.NotificationType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,8 +18,8 @@ import java.time.LocalDateTime;
     @Index(name = "idx_notification_created_at", columnList = "created_at DESC")
 })
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
+@AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 @Builder
 public class Notification {
 

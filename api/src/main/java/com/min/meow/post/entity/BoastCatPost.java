@@ -1,6 +1,6 @@
 package com.min.meow.post.entity;
 
-import com.min.meow.global.BasePost;
+import com.min.meow.common.BasePost;
 import com.min.meow.comment.entity.Comment;
 import com.min.meow.postlike.entity.PostLike;
 import com.min.meow.user.entity.User;
@@ -28,10 +28,8 @@ import java.util.List;
 })
 @Check(constraints = "view >= 0 AND comment_count >= 0 AND like_count >= 0")
 @SuperBuilder
-@AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @Getter
-@Setter
 public class BoastCatPost extends BasePost {
 
     /**
@@ -49,6 +47,7 @@ public class BoastCatPost extends BasePost {
     @ElementCollection
     private List<String> imageUrls = new ArrayList<>();
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "boastCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostLike> postLikeList = new ArrayList<>();
 

@@ -1,7 +1,7 @@
 package com.min.meow.post.entity;
 
 import com.min.meow.comment.entity.Comment;
-import com.min.meow.global.BasePost;
+import com.min.meow.common.BasePost;
 import com.min.meow.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,7 +9,8 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Check;
-
+// 위치 기반 조회용 JTS Point 타입 (Hibernate Spatial과 함께 동작)
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,8 +24,7 @@ import java.util.List;
 @Check(constraints = "view >= 0 AND comment_count >= 0 AND (cat_age IS NULL OR (cat_age >= 0 AND cat_age <= 30)) " +
         "AND (cat_weight IS NULL OR (cat_weight >= 0 AND cat_weight <= 30)) AND (reward IS NULL OR reward >= 0)")
 @SuperBuilder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @Getter
 public class LostCatPost extends BasePost {
 
@@ -43,12 +43,17 @@ public class LostCatPost extends BasePost {
 
     private Integer catAge;
     private Integer catWeight;
+    
+    @Column(length = 10)
+    private String catGender;
+    private LocalDate lostDate;
 
     @Column(nullable = false, length = 100)
     private String lostLocation;
 
     private Double latitude;
     private Double longitude;
+
     private Integer reward;
     private boolean isCompleted;
 
@@ -89,6 +94,7 @@ public class LostCatPost extends BasePost {
     // 엔티티 업데이트 메서드
     public void updatePost(String title, String contents, String catName, String catType,
                           String catColor, Integer catAge, Integer catWeight,
+                          String catGender, LocalDate lostDate,
                           String lostLocation, Double latitude, Double longitude,
                           Integer reward, List<String> newImageUrls) {
         if (title != null) {
@@ -111,6 +117,12 @@ public class LostCatPost extends BasePost {
         }
         if (catWeight != null) {
             this.catWeight = catWeight;
+        }
+        if (catGender != null) {
+            this.catGender = catGender;
+        }
+        if (lostDate != null) {
+            this.lostDate = lostDate;
         }
         if (lostLocation != null) {
             this.lostLocation = lostLocation;

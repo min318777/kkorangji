@@ -15,10 +15,9 @@ import java.util.stream.Collectors;
 
 @Entity
 @Getter
-@Setter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
+@AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class User{
 
     @Id
@@ -62,11 +61,6 @@ public class User{
         this.registeredAt = LocalDateTime.now();
     }
 
-    @PreUpdate
-    public void preUpdate(){
-        this.lastLoginAt = LocalDateTime.now();
-    }
-
     // 회원 탈퇴 (논리적 삭제)
     public void delete() {
         this.isDelete = true;
@@ -105,6 +99,13 @@ public class User{
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    // OAuth2 재로그인 시 프로필 동기화
+    public void updateOAuth2Info(String email, String nickname) {
+        this.email = email;
+        this.nickname = nickname;
+        this.lastLoginAt = LocalDateTime.now();
     }
 
     // 마지막 로그인 시간 업데이트

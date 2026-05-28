@@ -13,28 +13,38 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "comment", indexes = {
-    // 게시글별 댓글 조회: WHERE boast_cat_post_id = ? ORDER BY created_at DESC
+    // 게시글별 원댓글 조회: WHERE boast_cat_post_id = ? ORDER BY created_at DESC
     @Index(name = "idx_comment_boast_post_created_at", columnList = "boast_cat_post_id, created_at DESC"),
-    // 게시글별 댓글 조회: WHERE lost_cat_post_id = ? ORDER BY created_at DESC
+    // 게시글별 원댓글 조회: WHERE lost_cat_post_id = ? ORDER BY created_at DESC
     @Index(name = "idx_comment_lost_post_created_at", columnList = "lost_cat_post_id, created_at DESC"),
     // 마이페이지 내 댓글: WHERE user_id = ? ORDER BY created_at DESC
-    @Index(name = "idx_comment_user_created_at", columnList = "user_id, created_at DESC")
+    @Index(name = "idx_comment_user_created_at", columnList = "user_id, created_at DESC"),
+    // 대댓글 조회: WHERE parent_comment_id = ? ORDER BY created_at ASC
+    @Index(name = "idx_comment_parent_created_at", columnList = "parent_comment_id, created_at ASC")
 })
 @Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
+@AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)
 public class Comment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // DB 레벨 제약 (검증은 Request DTO에서 처리)
     @Column(nullable = false, length = 500)
     private String contents;
 
-    private boolean isRead;
+    // 소프트 삭제: 대댓글이 있는 원댓글 삭제 시 "삭제된 댓글입니다"로 표시
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+
+    // 자기 참조: null = 원댓글, 값 있으면 대댓글
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id",
+        foreignKey = @ForeignKey(name = "fk_comment_parent"))
+    private Comment parentComment;
 
     // FK 삭제 전략: 사용자 삭제 시 댓글이 존재하면 삭제 차단
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -76,15 +86,16 @@ public class Comment {
         return this.user.getId().equals(userId);
     }
 
-    // 댓글 내용 수정
     public void updateContent(String content) {
         if (content != null) {
             this.contents = content;
         }
     }
 
-    // 읽음 상태로 변경
-    public void markAsRead() {
-        this.isRead = true;
+    // 소프트 삭제 처리
+    public void softDelete() {
+        this.isDeleted = true;
+        this.contents = "삭제된 댓글입니다.";
     }
+
 }
