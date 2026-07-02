@@ -1,13 +1,13 @@
 package com.min.meow.post.controller;
 
-import com.min.meow.global.PostType;
-import com.min.meow.global.PrincipalUser;
-import com.min.meow.global.PageResponse;
-import com.min.meow.global.ApiResponse;
+import com.min.meow.common.PostType;
+import com.min.meow.common.PrincipalUser;
+import com.min.meow.common.PageResponse;
+import com.min.meow.common.ApiResponse;
 import com.min.meow.post.dto.request.CreateBoastCatPostRequest;
 import com.min.meow.post.dto.request.UpdateBoastCatPostRequest;
-import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.CreateBoastCatPostResponse;
+import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.GetBoastCatPostResponse;
 import com.min.meow.post.dto.response.UpdateBoastCatPostResponse;
 import com.min.meow.post.service.ViewCountService;
@@ -18,7 +18,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +27,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @Tag(name = "자랑글", description = "고양이 자랑 게시글 CRUD API")
 @RestController
@@ -37,6 +35,8 @@ import java.util.List;
 public class BoastCatPostController {
     private final BoastCatPostService boastCatPostService;
     private final ViewCountService viewCountService;
+
+    // ========== CRUD ==========
 
     @Operation(summary = "자랑글 목록 조회", description = "페이징된 자랑글 목록을 조회합니다. 인증 불필요.")
     @SecurityRequirements
@@ -51,7 +51,6 @@ public class BoastCatPostController {
         PageResponse<BoastCatPostListResponse> posts = boastCatPostService.getAllBoastCatPosts(pageable);
         return ResponseEntity.ok(ApiResponse.success("모든 글 조회 성공", posts));
     }
-
 
     @Operation(summary = "자랑글 상세 조회", description = "게시글 ID로 상세 정보를 조회합니다. 인증 불필요.")
     @SecurityRequirements
@@ -118,117 +117,10 @@ public class BoastCatPostController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * 최근 자랑글 20개 조회 (DTO Projection 적용)
-     *
-     * 성능 최적화:
-     * - QueryDSL Projection으로 필요한 컬럼만 SELECT
-     * - contents, imageUrls 등 불필요한 데이터 제외
-     * - Entity 변환 오버헤드 제거
-     * - BoastCatPostListResponse를 재사용하여 코드 중복 제거
-     */
-    @Operation(summary = "최근 자랑글 20개 조회",
-            description = "최신 자랑글 20개를 Projection으로 조회합니다. 인증 불필요.")
-    @SecurityRequirements
-    @GetMapping("/recent")
-    public ResponseEntity<ApiResponse<List<BoastCatPostListResponse>>> getRecentBoastCatPosts() {
-        List<BoastCatPostListResponse> posts = boastCatPostService.getRecentBoastCatPosts();
-        return ResponseEntity.ok(ApiResponse.success("최근 자랑글 20개 조회 성공", posts));
-    }
-
-    /**
-     * 조회수 증가 API - 원자적 쿼리 방식 (v2 - 개선된 버전)
-     *
-     * DB 레벨에서 view = view + 1을 수행하여 동시성 문제를 해결합니다.
-     * K6 동시성 테스트 후 더티 체킹 방식에서 개선된 버전입니다.
-     *
-     * 실행되는 쿼리:
-     * UPDATE boast_cat_post SET view = view + 1 WHERE id = ?
-     */
-    /**
-     * 인기 게시물 TOP 10 조회 (좋아요 수 기준, Redis 캐시 30초 TTL)
-     *
-     * Cache Stampede 테스트 대상 API
-     * 캐시 만료 시점에 동시 요청이 집중되면 DB 접근이 폭증하는 현상을 확인할 수 있음
-     */
-    /**
-     * 인기 게시물 v1 — 기본 @Cacheable (Stampede 방지 없음)
-     * TTL 30초 만료 시 동시 요청 → 여러 스레드가 동시에 DB 조회
-     * 서버 로그: "[v1 Cache MISS]"
-     */
-    @Operation(summary = "인기 게시물 TOP 10 (v1 - 무방지)",
-            description = "기본 @Cacheable. TTL 30초. Stampede 방지 없음. 비교 기준선.")
-    @SecurityRequirements
-    @GetMapping("/popular")
-    public ResponseEntity<ApiResponse<List<BoastCatPostListResponse>>> getPopularBoastCatPosts() {
-        List<BoastCatPostListResponse> posts = boastCatPostService.getPopularBoastCatPosts();
-        return ResponseEntity.ok(ApiResponse.success("인기 게시물 조회 성공 (v1)", posts));
-    }
-
-    /**
-     * 인기 게시물 v2 — Redis 분산 락 (Stampede 방지)
-     * MISS 시 첫 스레드만 DB 조회, 나머지는 캐시 채워질 때까지 대기
-     * 서버 로그: "[v2 락 획득-DB 조회]" 또는 "[v2 락 대기]"
-     */
-    @Operation(summary = "인기 게시물 TOP 10 (v2 - 분산 락)",
-            description = "Redis SETNX 분산 락. MISS 시 첫 스레드만 DB 조회, 나머지 대기.")
-    @SecurityRequirements
-    @GetMapping("/popular/v2")
-    public ResponseEntity<ApiResponse<List<BoastCatPostListResponse>>> getPopularBoastCatPostsV2() {
-        List<BoastCatPostListResponse> posts = boastCatPostService.getPopularBoastCatPostsV2();
-        return ResponseEntity.ok(ApiResponse.success("인기 게시물 조회 성공 (v2)", posts));
-    }
-
-    /**
-     * 인기 게시물 v3 — Cache Warming (Stampede 방지)
-     * 스케줄러가 25초마다 캐시를 미리 갱신 → TTL 만료 자체를 방지
-     * 서버 로그: 정상 운영 시 "[v3 Cache MISS]" 출력되지 않음
-     */
-    @Operation(summary = "인기 게시물 TOP 10 (v3 - Cache Warming)",
-            description = "스케줄러가 25초마다 미리 갱신. MISS 자체 발생 안 함.")
-    @SecurityRequirements
-    @GetMapping("/popular/v3")
-    public ResponseEntity<ApiResponse<List<BoastCatPostListResponse>>> getPopularBoastCatPostsV3() {
-        List<BoastCatPostListResponse> posts = boastCatPostService.getPopularBoastCatPostsV3();
-        return ResponseEntity.ok(ApiResponse.success("인기 게시물 조회 성공 (v3)", posts));
-    }
-
-    @Operation(summary = "조회수 증가 (v2 원자적)",
-            description = "DB 원자적 쿼리로 조회수를 증가시킵니다. 인증 불필요.")
-    @SecurityRequirements
-    @PostMapping("/{boastCatPostId}/view")
-    public ResponseEntity<ApiResponse<Void>> incrementViewCount(
-            @Parameter(description = "자랑글 ID", example = "1")
-            @PathVariable Long boastCatPostId) {
-        boastCatPostService.incrementViewCount(boastCatPostId);
-        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공", null));
-    }
-
-    /**
-     * 조회수 증가 API - 비관적 락 방식 (v4)
-     *
-     * SELECT FOR UPDATE로 행을 잠근 뒤 더티 체킹으로 조회수를 증가시킵니다.
-     * v1(더티 체킹)과 달리 락으로 순서를 강제하여 Lost Update를 방지합니다.
-     *
-     * 비교 대상:
-     * - v1(더티 체킹): 락 없음 → Lost Update 발생
-     * - v2(원자적): DB가 알아서 처리 → 락 유지 시간 최소
-     * - v4(비관적 락): SELECT ~ 커밋까지 락 유지 → 정합성 보장, 처리량 낮음
-     */
-    @Operation(summary = "조회수 증가 (v4 비관적 락)",
-            description = "SELECT FOR UPDATE + 더티 체킹 방식. 정합성 보장, 대용량 트래픽 시 처리량 낮음. 인증 불필요.")
-    @SecurityRequirements
-    @PostMapping("/v4/{boastCatPostId}/view")
-    public ResponseEntity<ApiResponse<Void>> incrementViewCountV4(
-            @Parameter(description = "자랑글 ID", example = "1")
-            @PathVariable Long boastCatPostId) {
-        boastCatPostService.incrementViewCountWithPessimisticLock(boastCatPostId);
-        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (비관적 락 방식)", null));
-    }
+    // ========== 조회수 ==========
 
     /**
      * 조회수 증가 API - 더티 체킹 방식 (v1 - 동시성 이슈 있음)
-     *
      * @deprecated 동시성 이슈로 인해 POST /{boastCatPostId}/view 사용 권장
      */
     @Deprecated
@@ -245,15 +137,30 @@ public class BoastCatPostController {
     }
 
     /**
+     * 조회수 증가 API - 원자적 쿼리 방식 (v2 - 개선된 버전)
+     * DB 레벨에서 view = view + 1을 수행하여 동시성 문제를 해결합니다.
+     * K6 동시성 테스트 후 더티 체킹 방식에서 개선된 버전입니다.
+     * 실행되는 쿼리:
+     * UPDATE boast_cat_post SET view = view + 1 WHERE id = ?
+     */
+    @Operation(summary = "조회수 증가 (v2 원자적)",
+            description = "DB 원자적 쿼리로 조회수를 증가시킵니다. 인증 불필요.")
+    @SecurityRequirements
+    @PostMapping("/{boastCatPostId}/view")
+    public ResponseEntity<ApiResponse<Void>> incrementViewCount(
+            @Parameter(description = "자랑글 ID", example = "1")
+            @PathVariable Long boastCatPostId) {
+        boastCatPostService.incrementViewCount(boastCatPostId);
+        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공", null));
+    }
+
+    /**
      * 조회수 증가 API - Redis INCR 방식 (v3 - 최적화 버전)
-     *
      * Redis의 INCR 명령어를 사용하여 조회수를 원자적으로 증가시킵니다.
      * DB 부하를 대폭 줄이고, 동시성 문제를 완벽하게 해결합니다.
-     *
      * 동작 방식:
      * 1. 클라이언트 요청 → Redis INCR로 조회수 증가 (즉시 반환)
      * 2. 스케줄러가 1분마다 Redis의 증가분을 DB에 배치 반영
-     *
      * Redis 장애 시: DB 직접 업데이트로 자동 fallback
      */
     @Operation(summary = "조회수 증가 (v3 Redis)",
@@ -272,6 +179,58 @@ public class BoastCatPostController {
 
         Long newCount = viewCountService.incrementViewCount(PostType.BOAST, boastCatPostId, identifier);
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (Redis INCR 방식)", newCount));
+    }
+
+    /**
+     * 조회수 증가 API - 비관적 락 방식 (v4)
+     * SELECT FOR UPDATE로 행을 잠근 뒤 더티 체킹으로 조회수를 증가시킵니다.
+     * v1(더티 체킹)과 달리 락으로 순서를 강제하여 Lost Update를 방지합니다.
+     * 비교 대상:
+     * - v1(더티 체킹): 락 없음 → Lost Update 발생
+     * - v2(원자적): DB가 알아서 처리 → 락 유지 시간 최소
+     * - v4(비관적 락): SELECT ~ 커밋까지 락 유지 → 정합성 보장, 처리량 낮음
+     */
+    @Operation(summary = "조회수 증가 (v4 비관적 락)",
+            description = "SELECT FOR UPDATE + 더티 체킹 방식. 정합성 보장, 대용량 트래픽 시 처리량 낮음. 인증 불필요.")
+    @SecurityRequirements
+    @PostMapping("/v4/{boastCatPostId}/view")
+    public ResponseEntity<ApiResponse<Void>> incrementViewCountV4(
+            @Parameter(description = "자랑글 ID", example = "1")
+            @PathVariable Long boastCatPostId) {
+        boastCatPostService.incrementViewCountWithPessimisticLock(boastCatPostId);
+        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (비관적 락 방식)", null));
+    }
+
+    // ========== 상세조회 Stampede 방지 비교 ==========
+
+    /**
+     * 상세조회 v2 — Lettuce SETNX 분산 락 (Stampede 방지)
+     * 동시에 캐시 MISS 발생 시 첫 스레드만 DB 조회, 나머지는 캐시 채워질 때까지 대기
+     * 서버 로그: "[v2 락 획득-DB 조회]" 또는 "[v2 락 대기]"
+     */
+    @Operation(summary = "자랑글 상세 조회 (v2 - 분산 락)",
+            description = "Redis SETNX 분산 락. Cache MISS 시 첫 스레드만 DB 조회, 나머지 대기.")
+    @SecurityRequirements
+    @GetMapping("/v2/{boastCatPostId}")
+    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastPostV2(
+            @Parameter(description = "자랑글 ID", example = "1")
+            @PathVariable Long boastCatPostId) {
+        return ResponseEntity.ok(ApiResponse.success("글 조회 성공 (v2)", boastCatPostService.getBoastCatPostV2(boastCatPostId)));
+    }
+
+    /**
+     * 상세조회 v3 — Cache Warming (Stampede 방지)
+     * DetailCacheWarmingScheduler가 25초마다 TOP 24 상세 캐시를 선제 갱신
+     * TTL 만료 전 항상 캐시가 채워져 있음 → MISS 자체 방지
+     */
+    @Operation(summary = "자랑글 상세 조회 (v3 - Cache Warming)",
+            description = "스케줄러가 25초마다 TOP 24 캐시 선제 갱신. MISS 자체 발생 안 함.")
+    @SecurityRequirements
+    @GetMapping("/v3/{boastCatPostId}")
+    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastPostV3(
+            @Parameter(description = "자랑글 ID", example = "1")
+            @PathVariable Long boastCatPostId) {
+        return ResponseEntity.ok(ApiResponse.success("글 조회 성공 (v3)", boastCatPostService.getBoastCatPostV3(boastCatPostId)));
     }
 
     // X-Forwarded-For 헤더 우선, 없으면 RemoteAddr

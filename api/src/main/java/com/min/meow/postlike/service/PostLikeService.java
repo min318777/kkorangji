@@ -4,6 +4,7 @@ import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.notification.event.LikeEvent;
 import com.min.meow.notification.event.NotificationEventPublisher;
+import com.min.meow.notification.event.PopularScoreEvent;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.postlike.entity.PostLike;
@@ -49,6 +50,9 @@ public class PostLikeService {
                         new LikeEvent(like.getId(), postId, post.getUser().getId()));
             }
 
+            // 인기글 Sorted Set 점수 +3 (AFTER_COMMIT 비동기 처리)
+            notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(postId, 3));
+
             // JPQL UPDATE는 1차 캐시를 우회하므로 계산으로 반환
             return post.getLikeCount() + 1L;
 
@@ -70,6 +74,9 @@ public class PostLikeService {
 
         postLikeRepository.deleteByBoastCatPostIdAndUserId(postId, userId);
         boastCatPostRepository.incrementLikeCountByDelta(postId, -1);
+
+        // 인기글 Sorted Set 점수 -3 (AFTER_COMMIT 비동기 처리)
+        notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(postId, -3));
 
         // JPQL UPDATE는 1차 캐시를 우회하므로 계산으로 반환, 최소 0 보장
         return Math.max(0L, post.getLikeCount() - 1);

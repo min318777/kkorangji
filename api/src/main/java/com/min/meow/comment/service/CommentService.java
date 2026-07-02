@@ -1,6 +1,7 @@
 package com.min.meow.comment.service;
 
 import com.min.meow.notification.event.NotificationEventPublisher;
+import com.min.meow.notification.event.PopularScoreEvent;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.comment.dto.request.RegisterCommentRequest;
@@ -99,6 +100,10 @@ public class CommentService {
             notificationEventPublisher.publishCommentEvent(new CommentEvent(
                     comment.getId(), boastCatPostId, user.getLoginId(), boastCatPost.getUser().getId()));
         }
+
+        // 인기글 Sorted Set 점수 +2 (AFTER_COMMIT 비동기 처리)
+        notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(boastCatPostId, 2));
+
         return RegisterCommentResponse.toResponse(comment);
     }
 
@@ -192,10 +197,13 @@ public class CommentService {
         }
     }
 
-    // 게시글 댓글 수 감소
+    // 게시글 댓글 수 감소 + 인기글 점수 -2 (자랑글만)
     private void decrementPostCommentCount(Comment comment) {
         if (comment.getBoastCatPost() != null) {
             boastCatPostRepository.decrementCommentCount(comment.getBoastCatPost().getId());
+            // 인기글 Sorted Set 점수 -2 (AFTER_COMMIT 비동기 처리)
+            notificationEventPublisher.publishPopularScoreEvent(
+                    new PopularScoreEvent(comment.getBoastCatPost().getId(), -2));
         }
         if (comment.getLostCatPost() != null) {
             lostCatRepository.decrementCommentCount(comment.getLostCatPost().getId());

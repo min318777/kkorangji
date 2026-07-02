@@ -2,6 +2,7 @@ package com.min.meow.notification.event;
 
 import com.min.meow.notification.event.CommentEvent;
 import com.min.meow.notification.event.LikeEvent;
+import com.min.meow.notification.event.PopularScoreEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -48,5 +49,13 @@ public class NotificationEventPublisher {
         eventPublisher.publishEvent(event);
 
         log.debug("좋아요 알림 이벤트 발행 완료");
+    }
+
+    /**
+     * 인기글 점수 변경 이벤트 발행
+     * 좋아요(±3), 댓글(±2) 변경 시 호출 → PopularRankingService가 Sorted Set ZINCRBY
+     */
+    public void publishPopularScoreEvent(PopularScoreEvent event) {
+        eventPublisher.publishEvent(event);
     }
 }

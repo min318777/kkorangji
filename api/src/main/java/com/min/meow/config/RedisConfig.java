@@ -4,6 +4,9 @@ package com.min.meow.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -66,39 +69,15 @@ public class RedisConfig {
                 cacheMapper.getPolymorphicTypeValidator(),
                 ObjectMapper.DefaultTyping.NON_FINAL
         );
-        //코드를 보니 ObjectMapper에 타입 정보 보존 설정이 없어서 발생하는 문제예요!
-        // 문제 원인
-        //타입 정보 손실: GenericJackson2JsonRedisSerializer가 복잡한 제네릭 타입(RestPage<PostDto>)을 Redis에 저장할 때 타입 정보를 잃어버림
-        //역직렬화 실패: 캐시에서 가져올 때 LinkedHashMap으로 변환되지만 RestPage<PostDto>로 캐스팅할 수 없음
-        // 해결 원리
-        //activateDefaultTyping() 설정으로 JSON에 타입 정보를 함께 저장해서 정확한 타입으로 복원할 수 있게 됩니다.
+        // ObjectMapper에 타입 정보 보존 설정이 없으면 발생하는 문제:
+        // - 타입 정보 손실: GenericJackson2JsonRedisSerializer가 복잡한 제네릭 타입(예: Page<XxxResponse>)을 Redis에 저장할 때 타입 정보를 잃어버림
+        // - 역직렬화 실패: 캐시에서 꺼낼 때 LinkedHashMap으로 변환되어 원래 제네릭 타입으로 캐스팅 불가
+        // 해결: activateDefaultTyping()으로 JSON에 타입 정보를 함께 저장 → 정확한 타입으로 복원
 
         // 기본 캐시 설정 (defaultTtl 사용)
         RedisCacheConfiguration defaultConfiguration = RedisCacheConfiguration.defaultCacheConfig()
                 .disableCachingNullValues()
                 .entryTtl(Duration.ofSeconds(defaultTtl))
-                .serializeKeysWith(RedisSerializationContext
-                        .SerializationPair
-                        .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
-
-        // 최근글 목록 캐시 설정 (TTL 5분)
-        // 메인페이지 최근글 목록용, 글 작성/수정/삭제 시 즉시 무효화됨
-        RedisCacheConfiguration recentPostsConfiguration = RedisCacheConfiguration.defaultCacheConfig()
-                .disableCachingNullValues()
-                .entryTtl(Duration.ofMinutes(5))  // TTL 5분
-                .serializeKeysWith(RedisSerializationContext
-                        .SerializationPair
-                        .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
-
-        // 게시글 상세 캐시 설정 (TTL 10분)
-        // 개별 게시글 상세 조회용, 수정/삭제 시 해당 게시글만 무효화됨
-        RedisCacheConfiguration postDetailConfiguration = RedisCacheConfiguration.defaultCacheConfig()
-                .disableCachingNullValues()
-                .entryTtl(Duration.ofMinutes(10))  // TTL 10분
                 .serializeKeysWith(RedisSerializationContext
                         .SerializationPair
                         .fromSerializer(new StringRedisSerializer()))
@@ -117,33 +96,68 @@ public class RedisConfig {
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
 
+        // 인기글 캐시 설정 (TTL 30초) — 스탬피드 방지 테스트 주기에 맞춤
+        RedisCacheConfiguration popularPostsConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+                .disableCachingNullValues()
+                .entryTtl(Duration.ofSeconds(30))
+                .serializeKeysWith(RedisSerializationContext
+                        .SerializationPair
+                        .fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
+
+        // 상세조회 캐시 설정 (TTL 10분) — 스탬피드 방지 비교 (v1/v2/v3)
+        RedisCacheConfiguration postDetailConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+                .disableCachingNullValues()
+                .entryTtl(Duration.ofMinutes(10))
+                .serializeKeysWith(RedisSerializationContext
+                        .SerializationPair
+                        .fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
+
         return RedisCacheManager.RedisCacheManagerBuilder
                 .fromConnectionFactory(redisConnectionFactory)
                 .cacheDefaults(defaultConfiguration)
-                // 최근글 목록 캐시 (TTL 5분)
-                .withCacheConfiguration("post:boast:recent", recentPostsConfiguration)
-                .withCacheConfiguration("post:lost:recent", recentPostsConfiguration)
-                // 게시글 상세 캐시 (TTL 10분)
-                .withCacheConfiguration("post:boast:detail", postDetailConfiguration)
-                .withCacheConfiguration("post:lost:detail", postDetailConfiguration)
                 // 마이페이지 통계 캐시 (TTL 10분)
                 .withCacheConfiguration("user:stats", userStatsConfiguration)
+                // 인기글 캐시 — v1(무방지), v2(분산 락), v3(Cache Warming) 각 30초 TTL
+                .withCacheConfiguration("post:boast:popular", popularPostsConfiguration)
+                .withCacheConfiguration("post:boast:popular:v2", popularPostsConfiguration)
+                .withCacheConfiguration("post:boast:popular:warmed", popularPostsConfiguration)
+                // 상세조회 캐시 — v1/v2/v3 공용 (TTL 10분)
+                .withCacheConfiguration("post:boast:detail", postDetailConfiguration)
                 .build();
     }
 
 
     /**
      * 조회수 캐싱 및 기타 Redis 작업을 위한 RedisTemplate
-     *
      * 용도:
      * - 조회수 증가 (INCR 명령어로 원자적 증가)
      * - 중복 조회 방지 (SETNX로 클라이언트별 debounce)
      * - 배치 플러시를 위한 조회수 집계
-     *
      * Serializer 설정:
      * - Key: StringRedisSerializer (읽기 쉬운 문자열 키)
      * - Value: StringRedisSerializer (숫자를 문자열로 저장, INCR 호환)
      */
+    /**
+     * Redisson 클라이언트 (분산 락용)
+     * redisson-spring-boot-starter가 빈 문자열 password를 AUTH로 보내는 문제 방지
+     * password가 없으면 setPassword 호출 생략
+     */
+    @Bean(destroyMethod = "shutdown")
+    public RedissonClient redissonClient() {
+        Config config = new Config();
+        String address = "redis://" + redisHost + ":" + redisPort;
+        var serverConfig = config.useSingleServer().setAddress(address);
+        // 비밀번호가 있을 때만 AUTH 설정 (빈 문자열이면 AUTH 생략)
+        if (redisPassword != null && !redisPassword.isBlank()) {
+            serverConfig.setPassword(redisPassword);
+        }
+        return Redisson.create(config);
+    }
+
     @Bean
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();

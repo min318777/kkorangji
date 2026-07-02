@@ -2,7 +2,7 @@ package com.min.meow.post.service;
 
 
 import com.min.meow.config.S3Service;
-import com.min.meow.global.PageResponse;
+import com.min.meow.common.PageResponse;
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.GetBoastCatPostResponse;
 import com.min.meow.post.dto.response.CreateBoastCatPostResponse;
@@ -10,25 +10,26 @@ import com.min.meow.post.dto.response.UpdateBoastCatPostResponse;
 import com.min.meow.post.dto.request.CreateBoastCatPostRequest;
 import com.min.meow.post.dto.request.UpdateBoastCatPostRequest;
 import com.min.meow.post.entity.BoastCatPost;
-import com.min.meow.global.exception.CustomException;
-import com.min.meow.global.exception.ErrorCode;
-import com.min.meow.global.PostType;
+import com.min.meow.common.exception.CustomException;
+import com.min.meow.common.exception.ErrorCode;
+import com.min.meow.common.PostType;
 import com.min.meow.post.repository.BoastCatPostRepository;
-import com.min.meow.global.SecurityUtil;
+import com.min.meow.common.SecurityUtil;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,16 +42,16 @@ public class BoastCatPostService {
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final ViewCountService viewCountService;
+    private final CacheManager cacheManager;
+    private final RedisTemplate<String, String> redisTemplate;
+
+    // ========== 조회 ==========
 
     /**
      * 모든 글 조회 (Projection 적용으로 성능 최적화)
      * 성능 개선 내역:
      * - Before: Entity 전체 조회 + DTO 변환 → contents, imageUrls, comments 모두 조회
      * - After: Projection으로 필요한 7개 컬럼만 SELECT (id, title, writer, likeCount, commentCount, view, createdAt)
-     * 실행되는 쿼리:
-     * SELECT b.id, b.title, u.login_id, b.like_count, b.comment_count, b.view, b.created_at
-     * FROM boast_cat_post b LEFT JOIN user u ON b.user_id = u.id
-     * ORDER BY b.created_at DESC LIMIT ? OFFSET ?
      */
     public PageResponse<BoastCatPostListResponse> getAllBoastCatPosts(Pageable pageable){
         // Projection으로 DB에서 필요한 컬럼만 조회 (Entity 변환 불필요)
@@ -60,113 +61,99 @@ public class BoastCatPostService {
     }
 
     /**
-     * 글 상세 조회 (N+1 최적화 적용 + 캐싱)
-     * findByIdWithUser()로 User를 Fetch Join하여 N+1 문제 해결
-     * - User: Fetch Join (N:1 관계 → 카테시안 곱 없음)
-     * - imageUrls: @BatchSize(100) 적용 (1:N 관계)
-     * - comments: @BatchSize(100) 적용 (1:N 관계)
-     * 조회수 증가는 별도 API로 분리됨
-     *
-     * 캐시 설정:
-     * - 캐시명: post:boast:detail
-     * - 키: 게시글 ID (예: post:boast:detail::123)
-     * - TTL: 10분
+     * v1: 기본 @Cacheable — Stampede 방지 없음 (비교 기준선)
+     * TTL 만료 시 동시 요청 → 여러 스레드가 동시에 DB 조회
      */
-    // 조회수 = DB view + Redis delta (v3 방식, 항상 정확한 실시간 값)
+    @Cacheable(cacheNames = "post:boast:detail", key = "#boastCatPostId")
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
-        BoastCatPost boastCatPost = boastCatPostRepository.findByIdWithUser(boastCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-
-        long redisDelta = viewCountService.getViewCount(PostType.BOAST, boastCatPostId);
-
-        return GetBoastCatPostResponse.builder()
-                .id(boastCatPost.getId())
-                .writer(boastCatPost.getUser().getLoginId())
-                .userId(boastCatPost.getUser().getId())
-                .title(boastCatPost.getTitle())
-                .contents(boastCatPost.getContents())
-                .view((int)(boastCatPost.getView() + redisDelta))
-                .imageUrls(new ArrayList<>(boastCatPost.getImageUrls()))
-                .likeCount(boastCatPost.getLikeCount())
-                .commentCount(boastCatPost.getCommentCount())
-                .createdAt(boastCatPost.getCreatedAt())
-                .updatedAt(boastCatPost.getUpdatedAt())
-                .build();
+        log.info("[v1 Cache MISS] DB 조회 - postId: {}, thread: {}", boastCatPostId, Thread.currentThread().getName());
+        return fetchDetail(boastCatPostId);
     }
 
     /**
-     * 조회수 증가 - 원자적 쿼리 방식 (v2 - 개선된 버전)
-     *
-     * DB 레벨에서 view = view + 1을 수행하여 Race Condition을 방지합니다.
-     * 여러 스레드가 동시에 호출해도 정확한 조회수가 보장됩니다.
-     *
-     * 실행되는 쿼리:
-     * UPDATE boast_cat_post SET view = view + 1 WHERE id = ?
-     *
-     * 이 쿼리는 DB 레벨에서 원자적으로 실행되므로:
-     * - Read-Modify-Write 패턴이 아님
-     * - 동시 요청 시에도 모든 증가가 정확히 반영됨
-     *
-     * K6 동시성 테스트 결과:
-     * - 더티 체킹 방식: 1000 VU 동시 요청 → 약 800~900 증가 (Lost Update)
-     * - 원자적 쿼리: 1000 VU 동시 요청 → 정확히 1000 증가 ✅
+     * v2: Lettuce SETNX 분산 락 — Stampede 방지
+     * MISS 시 첫 스레드만 DB 조회, 나머지는 캐시 채워질 때까지 100ms 간격 대기 (최대 3초)
      */
-    @Transactional
-    public void incrementViewCount(Long boastCatPostId) {
-        int updatedCount = boastCatPostRepository.incrementViewCount(boastCatPostId);
-        if (updatedCount == 0) {
-            throw new CustomException(ErrorCode.NOT_FOUND_POST);
+    public GetBoastCatPostResponse getBoastCatPostV2(Long id) {
+        String lockKey = "lock:post:boast:detail:" + id;
+        Cache cache = cacheManager.getCache("post:boast:detail");
+
+        Cache.ValueWrapper cached = cache.get(id);
+        if (cached != null) return (GetBoastCatPostResponse) cached.get();
+
+        Boolean locked = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", Duration.ofSeconds(3));
+
+        if (Boolean.TRUE.equals(locked)) {
+            try {
+                // 락 획득 후 double-check (다른 스레드가 이미 채웠을 수 있음)
+                Cache.ValueWrapper recheck = cache.get(id);
+                if (recheck != null) return (GetBoastCatPostResponse) recheck.get();
+
+                log.info("[v2 락 획득-DB 조회] postId: {}, thread: {}", id, Thread.currentThread().getName());
+                GetBoastCatPostResponse result = fetchDetail(id);
+                cache.put(id, result);
+                return result;
+            } finally {
+                redisTemplate.delete(lockKey);
+            }
+        } else {
+            log.info("[v2 락 대기] postId: {}, thread: {}", id, Thread.currentThread().getName());
+            for (int i = 0; i < 30; i++) {
+                try { Thread.sleep(100); } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+                Cache.ValueWrapper retry = cache.get(id);
+                if (retry != null) return (GetBoastCatPostResponse) retry.get();
+            }
+            log.warn("[v2 타임아웃] 안전망 DB 조회 - postId: {}", id);
+            return fetchDetail(id);
         }
     }
 
     /**
-     * 조회수 증가 - 더티 체킹 방식 (v1 - 동시성 이슈 있음)
-     *
-     * ⚠️ 동시성 문제 (Lost Update):
-     * 이 방식은 아래와 같은 Read-Modify-Write 패턴으로 동작합니다:
-     * 1. SELECT * FROM boast_cat_post WHERE id = ? (조회)
-     * 2. Java에서 view++ 연산 수행
-     * 3. UPDATE boast_cat_post SET view = 101 WHERE id = ? (절대값으로 UPDATE)
-     *
-     * 문제 시나리오 (현재 view = 100, 동시 2개 요청):
-     * - Thread A: view 읽기 (100) → view++ → 101로 UPDATE
-     * - Thread B: view 읽기 (100) → view++ → 101로 UPDATE (동시에!)
-     * - 결과: 2번 증가 요청 → 실제 1만 증가 (Lost Update)
-     *
-     * K6 동시성 테스트로 이 문제를 발견하여
-     * incrementViewCount() 원자적 쿼리 방식으로 개선하였습니다.
-     *
-     * @deprecated 동시성 이슈로 인해 incrementViewCount() 사용 권장
+     * v3: Cache Warming — DetailCacheWarmingScheduler가 25초마다 선제 갱신
+     * 정상 운영 시 "[v3 Cache MISS]"가 출력되지 않음
+     * (같은 post:boast:detail 캐시를 사용 — 워밍 후엔 v1과 동일한 캐시 HIT)
      */
-    @Deprecated
-    @Transactional
-    public void incrementViewCountWithDirtyChecking(Long boastCatPostId) {
-        BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-
-        // 더티 체킹으로 조회수 증가 (동시성 이슈 발생 가능)
-        boastCatPost.incrementView();
-        // 트랜잭션 종료 시 JPA가 변경 감지하여 UPDATE 쿼리 실행
+    @Cacheable(cacheNames = "post:boast:detail", key = "#id")
+    public GetBoastCatPostResponse getBoastCatPostV3(Long id) {
+        log.warn("[v3 Cache MISS] 워밍 실패 또는 서버 시작 직후 - postId: {}, thread: {}", id, Thread.currentThread().getName());
+        return fetchDetail(id);
     }
+
+    /** DB에서 상세 데이터 조회 (캐시 어노테이션 없음 — 내부 호출 및 워밍 스케줄러용) */
+    public GetBoastCatPostResponse fetchDetail(Long id) {
+        BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+        long redisDelta = viewCountService.getViewCount(PostType.BOAST, id);
+        return GetBoastCatPostResponse.builder()
+                .id(post.getId())
+                .writer(post.getUser().getLoginId())
+                .userId(post.getUser().getId())
+                .title(post.getTitle())
+                .contents(post.getContents())
+                .view((int)(post.getView() + redisDelta))
+                .imageUrls(new ArrayList<>(post.getImageUrls()))
+                .likeCount(post.getLikeCount())
+                .commentCount(post.getCommentCount())
+                .createdAt(post.getCreatedAt())
+                .updatedAt(post.getUpdatedAt())
+                .build();
+    }
+
+    // ========== CRUD ==========
 
     /**
      * 글 작성 (Presigned URL 기반 이미지 업로드)
-     *
      * 이미지 업로드 플로우:
      * 1. 클라이언트가 /api/images/presigned-urls 로 Presigned URL 요청
      * 2. 클라이언트가 Presigned URL로 S3에 이미지 직접 업로드
      * 3. 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 이 API 호출
      * 4. 서버는 key를 CloudFront URL로 변환하여 DB 저장
-     *
-     * 캐시 무효화:
-     * - post:boast:recent (새 글이 메인페이지 최근글 목록에 반영되어야 함)
      */
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(cacheNames = "post:boast:recent", allEntries = true),
-            // 자랑글 작성 시 마이페이지 통계(자랑글 수) 캐시 무효화
-            @CacheEvict(cacheNames = "user:stats", key = "#userId")
-    })
+    @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public CreateBoastCatPostResponse createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest, Long userId){
 
         User writer = userRepository.findById(userId)
@@ -197,18 +184,12 @@ public class BoastCatPostService {
 
     /**
      * 글 수정 (Presigned URL 기반 이미지 업로드)
-     *
      * 이미지 처리:
      * - 새 이미지: newImageKeys의 S3 key를 CloudFront URL로 변환
      * - 유지할 이미지: keepImageUrls 그대로 사용
      * - 삭제할 이미지: deleteImageUrls의 URL에서 S3 key 추출 후 삭제
-     *
-     * 캐시 무효화:
-     * - post:boast:recent (수정된 내용이 메인페이지 최근글 목록에 반영되어야 함)
-     * - post:boast:detail (해당 게시글 상세 캐시 무효화)
      */
     @Transactional
-    @CacheEvict(cacheNames = "post:boast:recent", allEntries = true)
     public UpdateBoastCatPostResponse updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId, Long userId){
 
         User writer = userRepository.findById(userId)
@@ -233,15 +214,9 @@ public class BoastCatPostService {
 
     /**
      * 글 삭제
-     * 캐시 무효화:
-     * - post:boast:recent (삭제된 글이 메인페이지 최근글 목록에서 제거되어야 함)
-     * - post:boast:detail (해당 게시글 상세 캐시 무효화)
      */
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(cacheNames = "post:boast:recent", allEntries = true),
-            @CacheEvict(cacheNames = "user:stats", key = "#userId")
-    })
+    @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public void deleteBoastCatPost(Long boastCatPostId, Long userId){
         User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
@@ -293,24 +268,70 @@ public class BoastCatPostService {
         return finalImageUrls;
     }
 
+    // ========== 조회수 ==========
 
     /**
-     * 최근 게시물 20개 조회 (DTO Projection + 캐싱 적용)
-     *
-     * 성능 최적화:
-     * - QueryDSL Projection으로 DB에서 필요한 컬럼만 SELECT
-     * - Entity 변환 오버헤드 제거 (직접 DTO로 매핑)
-     * - contents, imageUrls 등 불필요한 데이터 조회 제거
-     * - BoastCatPostListResponse를 재사용하여 코드 중복 제거
-     *
-     * 캐시 설정:
-     * - 캐시명: post:boast:recent
-     * - 키: 없음 (단일 목록이므로 캐시명 자체가 키)
-     * - TTL: 5분
+     * 조회수 증가 - 더티 체킹 방식 (v1 - 동시성 이슈 있음)
+     * 동시성 문제 (Lost Update):
+     * 이 방식은 아래와 같은 Read-Modify-Write 패턴으로 동작합니다:
+     * 1. SELECT * FROM boast_cat_post WHERE id = ? (조회)
+     * 2. Java에서 view++ 연산 수행
+     * 3. UPDATE boast_cat_post SET view = 101 WHERE id = ? (절대값으로 UPDATE)
+     * 문제 시나리오 (현재 view = 100, 동시 2개 요청):
+     * - Thread A: view 읽기 (100) → view++ → 101로 UPDATE
+     * - Thread B: view 읽기 (100) → view++ → 101로 UPDATE (동시에!)
+     * - 결과: 2번 증가 요청 → 실제 1만 증가 (Lost Update)
      */
-    @Cacheable(cacheNames = "post:boast:recent")
-    public List<BoastCatPostListResponse> getRecentBoastCatPosts() {
-        // DTO Projection으로 필요한 컬럼만 조회 (Entity 변환 없음)
-        return boastCatPostRepository.findTop20RecentWithProjection();
+    @Deprecated
+    @Transactional
+    public void incrementViewCountWithDirtyChecking(Long boastCatPostId) {
+        BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+
+        // 더티 체킹으로 조회수 증가 (동시성 이슈 발생 가능)
+        boastCatPost.incrementView();
+        // 트랜잭션 종료 시 JPA가 변경 감지하여 UPDATE 쿼리 실행
     }
+
+    /**
+     * 조회수 증가 - 원자적 쿼리 방식 (v2 - 개선된 버전)
+     * DB 레벨에서 view = view + 1을 수행하여 Race Condition을 방지합니다.
+     * 여러 스레드가 동시에 호출해도 정확한 조회수가 보장됩니다.
+     * 실행되는 쿼리:
+     * UPDATE boast_cat_post SET view = view + 1 WHERE id = ?
+     * 이 쿼리는 DB 레벨에서 원자적으로 실행되므로:
+     * - Read-Modify-Write 패턴이 아님
+     * - 동시 요청 시에도 모든 증가가 정확히 반영됨
+     */
+    @Transactional
+    public void incrementViewCount(Long boastCatPostId) {
+        int updatedCount = boastCatPostRepository.incrementViewCount(boastCatPostId);
+        if (updatedCount == 0) {
+            throw new CustomException(ErrorCode.NOT_FOUND_POST);
+        }
+    }
+
+    /**
+     * 조회수 증가 - 비관적 락 방식 (v4)
+     * 실행 순서:
+     * 1. SELECT ... FOR UPDATE → 행 X-Lock 획득 (다른 트랜잭션 접근 차단)
+     * 2. Java에서 view + 1 (더티 체킹)
+     * 3. 트랜잭션 종료 → UPDATE SET view = ? → 락 해제
+     * v1(더티 체킹)과 다른 점:
+     * - v1은 락 없이 SELECT → 동시 요청이 같은 값을 읽어 Lost Update 발생
+     * - v4는 SELECT FOR UPDATE → 순서 강제, 항상 최신값 읽음 → 정합성 보장
+     * 단점: 락 유지 시간 = SELECT ~ 커밋 (v2 원자적 UPDATE보다 훨씬 길다)
+     * → 대용량 트래픽 시 락 대기 폭증 → v2, v3보다 처리량 낮음
+     */
+    @Transactional
+    public void incrementViewCountWithPessimisticLock(Long boastCatPostId) {
+        // SELECT FOR UPDATE → 행 잠금 (다른 트랜잭션은 이 커밋 전까지 대기)
+        BoastCatPost post = boastCatPostRepository.findByIdWithPessimisticLock(boastCatPostId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+
+        // 잠금 상태에서 안전하게 최신값 +1
+        post.incrementView();
+        // 트랜잭션 종료 → UPDATE SET view = {최신값+1} → 락 해제
+    }
+
 }
