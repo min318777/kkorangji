@@ -83,9 +83,9 @@ jobs:
           script: |
             cd /home/ubuntu/meow
             export IMAGE_TAG=${{ github.sha }}
-            docker compose -f docker-compose.prod.yml pull
+            IMAGE_TAG=$IMAGE_TAG docker compose -f docker-compose.prod.yml pull
             IMAGE_TAG=$IMAGE_TAG docker compose -f docker-compose.prod.yml up -d
-            docker image prune -f  # 오래된 이미지 정리
+            docker image prune -f
 
       - name: 헬스체크
         run: |
