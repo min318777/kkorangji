@@ -9,8 +9,8 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3307/meow
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: min3782
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 15          # prod와 동일 환경 (t3.small 기준)
       minimum-idle: 5                # 평상시 유지 커넥션
