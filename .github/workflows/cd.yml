@@ -2,7 +2,13 @@ name: CD
 
 on:
   push:
-    branches: [main]  # main 머지 시에만 실행
+    branches: [main]
+    paths:
+      - 'api/src/**'
+      - 'api/build.gradle'
+      - 'api/Dockerfile'
+      - 'docker-compose.prod.yml'
+      - 'nginx/**'
 
 env:
   REGISTRY: ghcr.io
