@@ -1,6 +1,6 @@
 package com.min.meow.security.filter;
 
-import com.min.meow.global.Token;
+import com.min.meow.common.TokenType;
 import com.min.meow.security.jwt.JwtProvider;
 import com.min.meow.security.service.RefreshTokenService;
 import io.jsonwebtoken.Claims;
@@ -65,7 +65,7 @@ public class CustomLogoutFilter extends OncePerRequestFilter {
     private void handleRefreshToken(String refreshToken) {
         try {
             // decodeAndVerify로 1회 파싱: Refresh Token 타입 + 서명 + 만료 검증
-            Claims claims = jwtProvider.decodeAndVerify(refreshToken, Token.REFRESH_TOKEN);
+            Claims claims = jwtProvider.decodeAndVerify(refreshToken, TokenType.REFRESH_TOKEN);
             Long userId = Long.valueOf(claims.getSubject());
             refreshTokenService.delete(userId);
             log.info("로그아웃 완료 - userId: {}", userId);

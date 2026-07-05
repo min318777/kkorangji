@@ -1,6 +1,6 @@
 package com.min.meow.security.dto;
 
-import com.min.meow.global.PrincipalUser;
+import com.min.meow.common.PrincipalUser;
 import com.min.meow.user.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

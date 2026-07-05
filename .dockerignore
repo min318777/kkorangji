@@ -19,6 +19,9 @@ out
 
 # ===== 문서 =====
 *.md
+*-optimization.md
+fix.md
+*fix.md
 
 # ===== 테스트 코드 (이미지에 불필요) =====
 **/src/test
@@ -43,3 +46,20 @@ logs
 # ===== 기타 =====
 .gitattributes
 .claude
+CLAUDE.md
+README.md
+
+# ===== OS 파일 =====
+.DS_Store
+Thumbs.db
+__MACOSX/
+
+# ===== JVM 덤프 =====
+*.hprof
+hs_err_pid*
+replay_pid*
+
+# ===== 임시 파일 =====
+*.tmp
+*.swp
+*~

@@ -2,7 +2,7 @@ import http from "k6/http";
 import { sleep, check } from "k6";
 
 /**
- * 자랑글 상세조회 Cache Stampede 비교 — v2 (분산 락)
+ * 인기글 상세조회 Cache Stampede 비교 — v2 (분산 락)
  *
  * 동일 postId에 트래픽 집중 → 캐시 MISS 시 첫 스레드만 DB 조회, 나머지 대기
  * 관측 포인트:
@@ -30,8 +30,8 @@ const BASE_URL = "http://localhost:8080";
 const POST_ID = 1;
 
 export default function () {
-    // v2: 분산 락 (MISS 시 첫 스레드만 DB 조회)
-    const res = http.get(`${BASE_URL}/api/meow/boast-cat/v2/${POST_ID}`);
+    // v2: 인기글 상세 분산 락 (MISS 시 첫 스레드만 DB 조회)
+    const res = http.get(`${BASE_URL}/api/meow/boast-cat/popular/detail/v2/${POST_ID}`);
     check(res, { "200 OK": (r) => r.status === 200 });
     sleep(1);
 }

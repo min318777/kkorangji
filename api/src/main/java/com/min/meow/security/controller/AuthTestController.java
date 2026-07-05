@@ -1,7 +1,7 @@
 package com.min.meow.security.controller;
 
-import com.min.meow.global.ApiResponse;
-import com.min.meow.global.PrincipalUser;
+import com.min.meow.common.ApiResponse;
+import com.min.meow.common.PrincipalUser;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;

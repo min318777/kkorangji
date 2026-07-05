@@ -2,7 +2,7 @@ import http from "k6/http";
 import { sleep, check } from "k6";
 
 /**
- * 자랑글 상세조회 Cache Stampede 비교 — v3 (Cache Warming)
+ * 인기글 상세조회 Cache Stampede 비교 — v3 (Cache Warming)
  *
  * DetailCacheWarmingScheduler가 25초마다 TOP 24 상세 캐시를 선제 갱신
  * → TTL 만료 전 항상 캐시가 채워져 있음 → MISS 자체 발생하지 않음
@@ -31,8 +31,8 @@ const BASE_URL = "http://localhost:8080";
 const POST_ID = 1;
 
 export default function () {
-    // v3: Cache Warming (스케줄러가 선제 갱신)
-    const res = http.get(`${BASE_URL}/api/meow/boast-cat/v3/${POST_ID}`);
+    // v3: 인기글 상세 Cache Warming (스케줄러가 선제 갱신)
+    const res = http.get(`${BASE_URL}/api/meow/boast-cat/popular/detail/v3/${POST_ID}`);
     check(res, { "200 OK": (r) => r.status === 200 });
     sleep(1);
 }

@@ -46,4 +46,9 @@ WORKDIR /app
 # 빌드 스테이지에서 생성된 JAR만 복사
 COPY --from=builder /app/api/build/libs/api-0.0.1-SNAPSHOT.jar app.jar
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# 비루트 사용자 생성 (보안: 컨테이너 침입 시 피해 범위 제한)
+RUN adduser --disabled-password --gecos "" appuser
+USER appuser
+
+# t3.small 기준: 힙 최소 512MB, 최대 1GB (나머지 1GB는 OS/JVM 오버헤드)
+ENTRYPOINT ["java", "-Xms512m", "-Xmx1g", "-jar", "app.jar"]

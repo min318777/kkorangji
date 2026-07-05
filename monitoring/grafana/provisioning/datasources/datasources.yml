@@ -7,6 +7,7 @@ datasources:
   # Prometheus 데이터소스
   - name: Prometheus
     type: prometheus
+    uid: PBFA97CFB590B2093
     access: proxy
     url: http://prometheus:9090
     isDefault: true

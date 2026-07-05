@@ -1,7 +1,7 @@
 package com.min.meow.config;
 
-import com.min.meow.global.exception.CustomException;
-import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.common.exception.CustomException;
+import com.min.meow.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,20 +17,19 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
  * S3 서비스
- *
  * Presigned URL 기반 이미지 업로드 아키텍처:
  * 1. 클라이언트가 서버에 Presigned URL 요청
  * 2. 서버가 S3 Presigned URL 생성하여 반환
  * 3. 클라이언트가 Presigned URL로 S3에 직접 업로드 (서버 트래픽 없음!)
  * 4. 업로드 완료 후 클라이언트가 S3 key를 서버에 전달
  * 5. 서버가 key를 CloudFront URL로 변환하여 DB 저장
- *
  * 장점:
  * - 서버 트래픽 비용 절감 (이미지가 서버를 거치지 않음)
  * - 서버 메모리 부담 감소
@@ -59,7 +58,6 @@ public class S3Service {
 
     /**
      * 업로드용 Presigned URL 생성
-     *
      * @param contentType 업로드할 파일의 Content-Type (예: image/jpeg)
      * @return Presigned URL 정보 (url, key)
      */
@@ -90,7 +88,6 @@ public class S3Service {
 
     /**
      * 여러 개의 Presigned URL 생성
-     *
      * @param contentTypes Content-Type 목록
      * @return Presigned URL 정보 목록
      */
@@ -102,7 +99,6 @@ public class S3Service {
 
     /**
      * S3 key를 CloudFront URL로 변환
-     *
      * @param key S3 object key (예: meow/uuid-xxx.jpg)
      * @return CloudFront URL (예: https://d1234.cloudfront.net/meow/uuid-xxx.jpg)
      */
@@ -119,7 +115,6 @@ public class S3Service {
 
     /**
      * 여러 S3 key를 CloudFront URL 목록으로 변환
-     *
      * @param keys S3 key 목록
      * @return CloudFront URL 목록
      */
@@ -134,7 +129,6 @@ public class S3Service {
 
     /**
      * S3 파일 존재 여부 확인
-     *
      * @param key S3 object key
      * @return 존재 여부
      */
@@ -153,7 +147,6 @@ public class S3Service {
 
     /**
      * S3 파일 삭제
-     *
      * @param key S3 object key
      */
     public void deleteFile(String key) {
@@ -173,20 +166,34 @@ public class S3Service {
     }
 
     /**
-     * 여러 S3 파일 삭제
-     *
-     * @param keys S3 key 목록
+     * 여러 S3 파일 삭제 — 일부 실패해도 나머지 계속 진행
+     * 첫 번째 실패 시 중단되던 문제 수정: 모든 파일 삭제 시도 후 실패 목록을 한 번에 예외로 전파
      */
     public void deleteFiles(List<String> keys) {
         if (keys == null || keys.isEmpty()) {
             return;
         }
-        keys.forEach(this::deleteFile);
+
+        List<String> failedKeys = new ArrayList<>();
+        for (String key : keys) {
+            try {
+                deleteFile(key);
+            } catch (CustomException e) {
+                // 실패해도 나머지 파일 삭제 계속 진행
+                failedKeys.add(key);
+                log.warn("S3 파일 삭제 실패, 계속 진행 - key: {}", key);
+            }
+        }
+
+        if (!failedKeys.isEmpty()) {
+            log.error("S3 파일 일부 삭제 실패 - 실패 수: {}, keys: {}", failedKeys.size(), failedKeys);
+            throw new CustomException(ErrorCode.S3_DELETE_FAILED,
+                    "삭제 실패한 파일 수: " + failedKeys.size());
+        }
     }
 
     /**
      * CloudFront URL에서 S3 key 추출
-     *
      * @param cloudFrontUrl CloudFront URL
      * @return S3 key
      */

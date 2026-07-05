@@ -1,7 +1,8 @@
 package com.min.meow.user.controller;
 
-import com.min.meow.global.exception.CustomException;
-import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.common.ApiResponse;
+import com.min.meow.common.exception.CustomException;
+import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.user.dto.response.TokenResponse;
 import com.min.meow.security.service.ReissueService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,7 +34,7 @@ public class ReissueController {
                     + "응답 헤더 Authorization에 새 Access Token, 쿠키에 새 Refresh Token이 설정됩니다. "
                     + "인증 불필요 (Refresh Token은 쿠키로 자동 전송됩니다).")
     @SecurityRequirements  // JWT Bearer 인증 불필요 - 쿠키 기반 Refresh Token 사용
-    @PostMapping("/api/reissue")
+    @PostMapping("/api/auth/token/refresh")
     public ResponseEntity<?> reissue(
             @Parameter(hidden = true) HttpServletRequest request,
             @Parameter(hidden = true) HttpServletResponse response) {
@@ -50,7 +51,7 @@ public class ReissueController {
         response.setHeader("Authorization", "Bearer " + tokenResponse.getAccessToken());
         response.addCookie(createCookie("refresh", tokenResponse.getRefreshToken()));
 
-        return new ResponseEntity<>(HttpStatus.OK);
+        return ResponseEntity.ok(ApiResponse.success("토큰 재발급 성공", null));
     }
 
     private String extractRefreshToken(HttpServletRequest request) {

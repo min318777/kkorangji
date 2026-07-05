@@ -1,9 +1,9 @@
 import http from "k6/http";
-import { check } from "k6";
+import { check, sleep } from "k6";
 
 export let options = {
     stages: [
-                    { duration: '10m', target: 1000 }
+                    { duration: '5m', target: 300 }
             ],
 };
 
@@ -11,7 +11,7 @@ export let options = {
 // 로그인 시 CustomLoginFilter에서 Redis에 permissions 캐싱 → 이후 요청은 캐시 히트
 export function setup() {
     const loginRes = http.post(
-        "http://localhost:8080/login",
+        "http://localhost:8080/api/users/login",
         JSON.stringify({
             loginId: "min3187",
             password: "1111",
@@ -34,7 +34,7 @@ export function setup() {
 // GET /api/users/mypage: 인증 필요 + user:stats 캐시 히트 시 비즈니스 쿼리 최소화
 // → 필터의 Redis 조회 비용이 지배적으로 드러나 v1/v2/v3 차이 측정에 최적
 export default function (data) {
-    let res = http.get("http://localhost:8080/api/users/mypage", {
+    let res = http.get("http://localhost:8080/api/users/me", {
         headers: {
             Authorization: "Bearer " + data.token,
             "X-Auth-Version": "v3",
@@ -44,5 +44,5 @@ export default function (data) {
     check(res, {
         "status is 200": (r) => r.status === 200,
     });
-
+    sleep(1);
 }

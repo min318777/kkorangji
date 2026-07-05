@@ -13,8 +13,8 @@ public class QBoastCatPostListResponse extends ConstructorExpression<BoastCatPos
 
     private static final long serialVersionUID = 2088567317L;
 
-    public QBoastCatPostListResponse(com.querydsl.core.types.Expression<Long> id, com.querydsl.core.types.Expression<String> title, com.querydsl.core.types.Expression<String> writer, com.querydsl.core.types.Expression<Integer> likeCount, com.querydsl.core.types.Expression<Integer> commentCount, com.querydsl.core.types.Expression<Integer> view, com.querydsl.core.types.Expression<java.time.LocalDateTime> createdAt) {
-        super(BoastCatPostListResponse.class, new Class<?>[]{long.class, String.class, String.class, int.class, int.class, int.class, java.time.LocalDateTime.class}, id, title, writer, likeCount, commentCount, view, createdAt);
+    public QBoastCatPostListResponse(com.querydsl.core.types.Expression<Long> id, com.querydsl.core.types.Expression<String> title, com.querydsl.core.types.Expression<Integer> likeCount, com.querydsl.core.types.Expression<Integer> commentCount, com.querydsl.core.types.Expression<Integer> view, com.querydsl.core.types.Expression<java.time.LocalDateTime> createdAt, com.querydsl.core.types.Expression<String> thumbnailUrl) {
+        super(BoastCatPostListResponse.class, new Class<?>[]{long.class, String.class, int.class, int.class, int.class, java.time.LocalDateTime.class, String.class}, id, title, likeCount, commentCount, view, createdAt, thumbnailUrl);
     }
 
 }

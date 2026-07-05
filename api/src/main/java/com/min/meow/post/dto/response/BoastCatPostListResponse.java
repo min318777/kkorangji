@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
  * - 목록 페이지에서 필요한 필드만 포함
  * - contents, imageUrls, comments 등 불필요한 데이터 제외
  * - QueryDSL Projection으로 DB에서 필요한 컬럼만 SELECT
- *
  * 성능 개선 효과:
  * - 네트워크 트래픽 감소 (불필요한 데이터 전송 제거)
  * - DB 조회 최적화 (필요한 컬럼만 SELECT)
@@ -31,9 +30,6 @@ public class BoastCatPostListResponse {
     @Schema(description = "게시글 제목", example = "우리 고양이 자랑합니다")
     private String title;
 
-    @Schema(description = "작성자 로그인 ID", example = "cat_lover")
-    private String writer;
-
     @Schema(description = "좋아요 수", example = "42")
     private int likeCount;
 
@@ -50,13 +46,9 @@ public class BoastCatPostListResponse {
     private String thumbnailUrl;
 
     @QueryProjection
-    public BoastCatPostListResponse(Long id, String title, String writer,
-                                     int likeCount, int commentCount,
-                                     int view, LocalDateTime createdAt,
-                                     String thumbnailUrl) {
+    public BoastCatPostListResponse(Long id, String title, int likeCount, int commentCount, int view, LocalDateTime createdAt, String thumbnailUrl) {
         this.id = id;
         this.title = title;
-        this.writer = writer;
         this.likeCount = likeCount;
         this.commentCount = commentCount;
         this.view = view;

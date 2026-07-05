@@ -4,56 +4,35 @@ import com.min.meow.post.dto.response.LostCatPostListResponse;
 import com.min.meow.post.dto.response.QLostCatPostListResponse;
 import com.min.meow.post.entity.QLostCatPost;
 import com.min.meow.user.entity.QUser;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
-/**
- * 실종 고양이 게시글 커스텀 리포지토리 구현체
- *
- * QueryDSL을 사용하여 DTO Projection으로 성능 최적화
- * - Entity 대신 DTO를 직접 조회하여 LazyInitializationException 방지
- * - 필요한 컬럼만 SELECT하여 네트워크 트래픽 감소
- */
 @RequiredArgsConstructor
 @Repository
 public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
-    // Q클래스 인스턴스 (QueryDSL 타입 안전 쿼리용)
+    @PersistenceContext
+    private EntityManager entityManager;
+
     private final QLostCatPost lostCatPost = QLostCatPost.lostCatPost;
     private final QUser user = QUser.user;
 
-    /**
-     * 게시글 목록 페이징 조회 (Projection 적용)
-     *
-     * 성능 최적화 포인트:
-     * 1. SELECT 절에 목록에 필요한 컬럼만 명시 (contents, imageUrls, comments 제외)
-     * 2. Entity 변환 없이 DTO로 직접 매핑 (영속성 컨텍스트 오버헤드 제거)
-     * 3. User 테이블에서 loginId만 조회 (User 전체 로딩 X)
-     *
-     * 실행되는 쿼리:
-     * SELECT l.id, l.title, u.login_id, l.cat_name, l.lost_location,
-     *        l.comment_count, l.view, l.is_completed, l.created_at
-     * FROM lost_cat_post l
-     * LEFT JOIN users u ON l.user_id = u.id
-     * ORDER BY l.created_at DESC
-     * LIMIT ? OFFSET ?
-     *
-     * 기존 방식 대비 개선 효과:
-     * - contents (TEXT) 컬럼 조회 제거 → 대용량 텍스트 전송 방지
-     * - imageUrls, comments 연관 테이블 조회 제거 → 추가 쿼리 방지
-     * - LazyInitializationException 완전 방지
-     */
     @Override
     public Page<LostCatPostListResponse> findAllWithProjection(Pageable pageable) {
-        // 목록 데이터 조회 (Projection으로 필요한 컬럼만 SELECT)
         List<LostCatPostListResponse> content = queryFactory
                 .select(new QLostCatPostListResponse(
                         lostCatPost.id,
@@ -68,13 +47,12 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                         lostCatPost.thumbnailUrl
                 ))
                 .from(lostCatPost)
-                .leftJoin(lostCatPost.user, user)       // FETCH가 아닌 일반 JOIN
+                .leftJoin(lostCatPost.user, user)
                 .orderBy(lostCatPost.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        // 전체 카운트 조회 (페이징 정보용)
         Long total = queryFactory
                 .select(lostCatPost.count())
                 .from(lostCatPost)
@@ -83,30 +61,18 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
-    /**
-     * 최근 게시물 20개 Projection 조회
-     *
-     * 성능 최적화 포인트:
-     * 1. SELECT 절에 목록에 필요한 컬럼만 명시 (contents, imageUrls 등 제외)
-     * 2. Entity 변환 없이 DTO로 직접 매핑 (영속성 컨텍스트 오버헤드 제거)
-     * 3. User 테이블에서 loginId만 조회 (User 전체 로딩 X)
-     *
-     * 실행되는 쿼리:
-     * SELECT l.id, l.title, u.login_id, l.cat_name, l.lost_location,
-     *        l.comment_count, l.view, l.is_completed, l.created_at
-     * FROM lost_cat_post l
-     * LEFT JOIN users u ON l.user_id = u.id
-     * ORDER BY l.created_at DESC
-     * LIMIT 20
-     *
-     * 기존 방식 대비 개선 효과:
-     * - contents (TEXT) 컬럼 조회 제거 → 대용량 텍스트 전송 방지
-     * - imageUrls 연관 테이블 조회 제거 → 추가 쿼리 방지
-     * - LostCatPostListResponse 재사용으로 코드 중복 제거
-     */
     @Override
-    public List<LostCatPostListResponse> findTop20RecentWithProjection() {
-        return queryFactory
+    public Page<LostCatPostListResponse> findNearbyWithProjection(double lat, double lng, double radiusKm, Pageable pageable) {
+        double latDelta = radiusKm / 111.0;
+        double lngDelta = radiusKm / (111.0 * Math.cos(Math.toRadians(lat)));
+
+        BooleanBuilder where = new BooleanBuilder();
+        where.and(lostCatPost.latitude.isNotNull());
+        where.and(lostCatPost.longitude.isNotNull());
+        where.and(lostCatPost.latitude.between(lat - latDelta, lat + latDelta));
+        where.and(lostCatPost.longitude.between(lng - lngDelta, lng + lngDelta));
+
+        List<LostCatPostListResponse> content = queryFactory
                 .select(new QLostCatPostListResponse(
                         lostCatPost.id,
                         lostCatPost.title,
@@ -120,9 +86,224 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                         lostCatPost.thumbnailUrl
                 ))
                 .from(lostCatPost)
-                .leftJoin(lostCatPost.user, user)       // FETCH가 아닌 일반 JOIN
+                .leftJoin(lostCatPost.user, user)
+                .where(where)
                 .orderBy(lostCatPost.createdAt.desc())
-                .limit(20)
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
                 .fetch();
+
+        Long total = queryFactory
+                .select(lostCatPost.count())
+                .from(lostCatPost)
+                .where(where)
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    // ST_Distance_Sphere 방식: SPATIAL INDEX(MBRContains) + ST 정밀필터 + 거리순 정렬
+    @Override
+    public Page<LostCatPostListResponse> findNearbyWithST(double lat, double lng, double radiusKm, Pageable pageable) {
+        double radiusMeters = radiusKm * 1000;
+        // MBRContains용 bbox 범위 계산 (SPATIAL INDEX 활용)
+        double latDelta = radiusKm / 111.0;
+        double lngDelta = radiusKm / (111.0 * Math.cos(Math.toRadians(lat)));
+
+        String dataSql = """
+                SELECT l.id, l.title, u.login_id, l.cat_name, l.lost_location,
+                       l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url
+                FROM lost_cat_post l
+                INNER JOIN user u ON u.id = l.user_id
+                WHERE l.location IS NOT NULL
+                  AND MBRContains(
+                        ST_SRID(ST_MakeEnvelope(POINT(:lngMin, :latMin), POINT(:lngMax, :latMax)), 4326),
+                        l.location)
+                  AND ST_Distance_Sphere(l.location, ST_SRID(POINT(:lng, :lat), 4326)) <= :radius
+                ORDER BY ST_Distance_Sphere(l.location, ST_SRID(POINT(:lng, :lat), 4326))
+                LIMIT :limit OFFSET :offset
+                """;
+
+        String countSql = """
+                SELECT COUNT(*)
+                FROM lost_cat_post l
+                WHERE l.location IS NOT NULL
+                  AND MBRContains(
+                        ST_SRID(ST_MakeEnvelope(POINT(:lngMin, :latMin), POINT(:lngMax, :latMax)), 4326),
+                        l.location)
+                  AND ST_Distance_Sphere(l.location, ST_SRID(POINT(:lng, :lat), 4326)) <= :radius
+                """;
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = entityManager.createNativeQuery(dataSql)
+                .setParameter("lat", lat)
+                .setParameter("lng", lng)
+                .setParameter("latMin", lat - latDelta)
+                .setParameter("latMax", lat + latDelta)
+                .setParameter("lngMin", lng - lngDelta)
+                .setParameter("lngMax", lng + lngDelta)
+                .setParameter("radius", radiusMeters)
+                .setParameter("limit", pageable.getPageSize())
+                .setParameter("offset", (int) pageable.getOffset())
+                .getResultList();
+
+        List<LostCatPostListResponse> content = rows.stream()
+                .map(row -> LostCatPostListResponse.builder()
+                        .id(((Number) row[0]).longValue())
+                        .title((String) row[1])
+                        .writer((String) row[2])
+                        .catName((String) row[3])
+                        .lostLocation((String) row[4])
+                        .commentCount(((Number) row[5]).intValue())
+                        .view(((Number) row[6]).intValue())
+                        .completed(toBoolean(row[7]))
+                        .createdAt(row[8] instanceof java.sql.Timestamp ts
+                                ? ts.toLocalDateTime()
+                                : (LocalDateTime) row[8])
+                        .thumbnailUrl((String) row[9])
+                        .build())
+                .toList();
+
+        long total = ((Number) entityManager.createNativeQuery(countSql)
+                .setParameter("lat", lat)
+                .setParameter("lng", lng)
+                .setParameter("latMin", lat - latDelta)
+                .setParameter("latMax", lat + latDelta)
+                .setParameter("lngMin", lng - lngDelta)
+                .setParameter("lngMax", lng + lngDelta)
+                .setParameter("radius", radiusMeters)
+                .getSingleResult()).longValue();
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    // LIKE 검색: '%keyword%' 방식
+    @Override
+    public Page<LostCatPostListResponse> search(String title, String contents, Long userId, Pageable pageable) {
+        List<LostCatPostListResponse> results = queryFactory
+                .select(new QLostCatPostListResponse(
+                        lostCatPost.id,
+                        lostCatPost.title,
+                        lostCatPost.user.loginId,
+                        lostCatPost.catName,
+                        lostCatPost.lostLocation,
+                        lostCatPost.commentCount,
+                        lostCatPost.view,
+                        lostCatPost.isCompleted,
+                        lostCatPost.createdAt,
+                        lostCatPost.thumbnailUrl
+                ))
+                .from(lostCatPost)
+                .leftJoin(lostCatPost.user, user)
+                .where(
+                        likeTitleOrContents(title, contents),
+                        eqUserId(userId))
+                .orderBy(lostCatPost.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = queryFactory
+                .select(lostCatPost.count())
+                .from(lostCatPost)
+                .where(
+                        likeTitleOrContents(title, contents),
+                        eqUserId(userId))
+                .fetchOne();
+
+        return new PageImpl<>(results, pageable, total != null ? total : 0L);
+    }
+
+    // FTS 검색: MATCH AGAINST (ngram 파서)
+    @Override
+    public Page<LostCatPostListResponse> searchByKeyword(String keyword, Long userId, Pageable pageable) {
+        // BOOLEAN MODE: 고빈도 단어 50% 규칙 없음, 단순 포함 여부만 체크
+        String booleanKeyword = sanitizeForBooleanMode(keyword);
+
+        String dataSql = """
+                SELECT l.id, l.title, u.login_id, l.cat_name, l.lost_location,
+                       l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url
+                FROM lost_cat_post l
+                INNER JOIN user u ON u.id = l.user_id
+                WHERE MATCH(l.title, l.contents) AGAINST(:keyword IN BOOLEAN MODE)
+                  AND (:userId IS NULL OR l.user_id = :userId)
+                ORDER BY l.created_at DESC
+                LIMIT :limit OFFSET :offset
+                """;
+
+        String countSql = """
+                SELECT COUNT(*)
+                FROM lost_cat_post l
+                WHERE MATCH(l.title, l.contents) AGAINST(:keyword IN BOOLEAN MODE)
+                  AND (:userId IS NULL OR l.user_id = :userId)
+                """;
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = entityManager.createNativeQuery(dataSql)
+                .setParameter("keyword", booleanKeyword)
+                .setParameter("userId", userId)
+                .setParameter("limit", pageable.getPageSize())
+                .setParameter("offset", (int) pageable.getOffset())
+                .getResultList();
+
+        // row 인덱스: id(0), title(1), writer(2), catName(3), lostLocation(4),
+        //             commentCount(5), view(6), isCompleted(7), createdAt(8), thumbnailUrl(9)
+        List<LostCatPostListResponse> content = rows.stream()
+                .map(row -> LostCatPostListResponse.builder()
+                        .id(((Number) row[0]).longValue())
+                        .title((String) row[1])
+                        .writer((String) row[2])
+                        .catName((String) row[3])
+                        .lostLocation((String) row[4])
+                        .commentCount(((Number) row[5]).intValue())
+                        .view(((Number) row[6]).intValue())
+                        .completed(toBoolean(row[7]))
+                        .createdAt(row[8] instanceof java.sql.Timestamp ts
+                                ? ts.toLocalDateTime()
+                                : (LocalDateTime) row[8])
+                        .thumbnailUrl((String) row[9])
+                        .build())
+                .toList();
+
+        long total = ((Number) entityManager.createNativeQuery(countSql)
+                .setParameter("keyword", booleanKeyword)
+                .setParameter("userId", userId)
+                .getSingleResult()).longValue();
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    // 제목 OR 내용 LIKE 검색 조건
+    private BooleanExpression likeTitleOrContents(String title, String contents) {
+        BooleanExpression titleExpr = (title != null && !title.isEmpty())
+                ? lostCatPost.title.containsIgnoreCase(title) : null;
+        BooleanExpression contentsExpr = (contents != null && !contents.isEmpty())
+                ? lostCatPost.contents.containsIgnoreCase(contents) : null;
+        if (titleExpr == null) return contentsExpr;
+        if (contentsExpr == null) return titleExpr;
+        return titleExpr.or(contentsExpr);
+    }
+
+    // userId 일치 조건 (null이면 전체 검색)
+    private BooleanExpression eqUserId(Long userId) {
+        if (userId == null) return null;
+        return lostCatPost.user.id.eq(userId);
+    }
+
+    // BOOLEAN MODE 변환: 각 단어를 + (필수 조건)으로 처리
+    private String sanitizeForBooleanMode(String keyword) {
+        String cleaned = keyword.replaceAll("[+\\-><()~*\"@]", "");
+        return Arrays.stream(cleaned.trim().split("\\s+"))
+                .filter(token -> !token.isEmpty())
+                .map(token -> "+" + token)
+                .collect(java.util.stream.Collectors.joining(" "));
+    }
+
+    // BIT(1) → boolean 변환 (드라이버별 반환 타입 방어 처리)
+    private boolean toBoolean(Object value) {
+        if (value instanceof Boolean b) return b;
+        if (value instanceof Number n) return n.intValue() != 0;
+        if (value instanceof byte[] arr) return arr.length > 0 && arr[0] != 0;
+        return false;
     }
 }

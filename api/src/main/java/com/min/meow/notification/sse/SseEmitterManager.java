@@ -1,6 +1,7 @@
 package com.min.meow.notification.sse;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -14,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * - 사용자가 접속하면 연결을 저장
  * - 사용자에게 알림이 오면 저장된 연결로 실시간 전송
  * - ConcurrentHashMap: 멀티스레드 환경에서 안전하게 Map 사용
- *
  * [중요] SSE 연결 교체 시 complete() 호출 금지!
  * 문제: 기존 연결에 complete()를 호출하면 Servlet Container(Tomcat)가
  *       Async Dispatch를 실행하여 Security Filter Chain을 재실행함.
@@ -33,13 +33,11 @@ public class SseEmitterManager {
 
     /**
      * SSE 연결 생성 및 저장
-     *
      * 중복 연결 처리 전략: put()으로 덮어쓰기
      * - 기존 연결에 complete() 호출 시 Servlet Async Dispatch가 발생하여
      *   Security Filter Chain이 재실행되고, 새 스레드에 SecurityContext가 없어서
      *   AuthorizationDeniedException이 발생하는 문제가 있었음.
      * - 해결: complete() 호출 없이 Map에서 덮어쓰기.
-     *
      * @param userId 사용자 ID (PK)
      * @return 생성된 SseEmitter
      */
@@ -119,5 +117,18 @@ public class SseEmitterManager {
      */
     public int getConnectedUserCount() {
         return emitters.size();
+    }
+
+    // 30초마다 모든 연결에 ping 전송 → 실패 시 좀비 커넥션 즉시 제거
+    @Scheduled(fixedDelay = 30000)
+    public void heartbeat() {
+        emitters.forEach((userId, emitter) -> {
+            try {
+                emitter.send(SseEmitter.event().name("heartbeat").data("ping"));
+            } catch (IOException e) {
+                emitters.remove(userId, emitter);
+                log.info("좀비 커넥션 제거: userId={}", userId);
+            }
+        });
     }
 }

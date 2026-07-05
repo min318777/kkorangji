@@ -8,24 +8,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-    // 전체 조회 (사용 안 함)
-    Page<Notification> findAllByOrderByCreatedAtDesc(Pageable pageable);
-
     // 특정 사용자의 알림만 최신 순으로 조회
     Page<Notification> findAllByReceiverUserIdOrderByCreatedAtDesc(Long receiverUserId, Pageable pageable);
-
-    /**
-     * 특정 사용자의 특정 알림 조회 (권한 검증용)
-     * @param id 알림 ID
-     * @param receiverUserId 수신자 사용자 ID (PK)
-     * @return 조회된 알림
-     */
-    Optional<Notification> findByIdAndReceiverUserId(Long id, Long receiverUserId);
 
     /**
      * 특정 사용자의 여러 알림 조회 (ID 목록으로)

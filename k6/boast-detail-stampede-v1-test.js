@@ -2,7 +2,7 @@ import http from "k6/http";
 import { sleep, check } from "k6";
 
 /**
- * 자랑글 상세조회 Cache Stampede 비교 — v1 (기본 @Cacheable)
+ * 인기글 상세조회 Cache Stampede 비교 — v1 (기본 @Cacheable)
  *
  * 동일 postId 1개에 트래픽 집중 → TTL 만료 시 동시 요청 → 여러 스레드 DB 조회
  * 관측 포인트:
@@ -31,8 +31,8 @@ const BASE_URL = "http://localhost:8080";
 const POST_ID = 1;
 
 export default function () {
-    // v1: 기본 캐시 (Stampede 방지 없음)
-    const res = http.get(`${BASE_URL}/api/meow/boast-cat/${POST_ID}`);
+    // v1: 인기글 상세 기본 캐시 (Stampede 방지 없음)
+    const res = http.get(`${BASE_URL}/api/meow/boast-cat/popular/detail/${POST_ID}`);
     check(res, { "200 OK": (r) => r.status === 200 });
     sleep(1);
 }

@@ -14,10 +14,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 권한(Permission) Redis 캐시 서비스 — v3 패턴
- *
- * <p>키: "permissions:{userId}" → JSON 직렬화된 권한 코드 목록
+ * <p>키: "auth:permissions:{userId}" → JSON 직렬화된 권한 코드 목록
  * <p>TTL: Access Token 만료 시간과 동일하게 설정
- *
  * <p>동작 원리:
  * <ul>
  *   <li>로그인 시 권한 캐싱</li>
@@ -36,7 +34,7 @@ public class PermissionCacheService {
     private final JwtConfig jwtConfig;
     private final ObjectMapper objectMapper;
 
-    private static final String KEY_PREFIX = "permissions:";
+    private static final String KEY_PREFIX = "auth:permissions:";
 
     /**
      * 권한 목록을 Redis에 저장
@@ -56,8 +54,7 @@ public class PermissionCacheService {
 
     /**
      * Redis에서 권한 목록 조회
-     *
-     * @return 권한 목록. 캐시 미스이거나 Redis 장애 시 null 반환 → 호출자가 DB fallback 처리
+     * @return 권한 목록. 캐시 미스이거나 Redis 장애 시 null 반환 → DB fallback 처리
      */
     public List<String> getPermissions(Long userId) {
         try {

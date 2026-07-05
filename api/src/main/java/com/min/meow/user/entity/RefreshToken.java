@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
     @Index(name = "idx_refresh_token_login_id", columnList = "login_id")
 })
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

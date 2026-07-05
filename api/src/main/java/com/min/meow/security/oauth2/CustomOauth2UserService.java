@@ -1,8 +1,8 @@
 package com.min.meow.security.oauth2;
 
 
-import com.min.meow.global.exception.CustomException;
-import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.common.exception.CustomException;
+import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.user.dto.reponse.GoogleResponse;
 import com.min.meow.user.dto.reponse.NaverResponse;
 import com.min.meow.user.dto.reponse.OAuth2Response;
@@ -79,9 +79,7 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
             return new CustomOAuth2User(user);
         }else{
 
-            existUser.get().setEmail(oAuth2Response.getEmail());
-            existUser.get().setNickname(oAuth2Response.getName());
-            existUser.get().setLastLoginAt(LocalDateTime.now());
+            existUser.get().updateOAuth2Info(oAuth2Response.getEmail(), oAuth2Response.getName());
             userRepository.save(existUser.get());
 
             return new CustomOAuth2User(existUser.get());

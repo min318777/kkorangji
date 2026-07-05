@@ -2,6 +2,7 @@ package com.min.meow.security.oauth2;
 
 import com.min.meow.security.jwt.JwtProvider;
 import com.min.meow.security.service.RefreshTokenService;
+import com.min.meow.user.service.DauService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +21,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
+    private final DauService dauService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -33,6 +35,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         // jti(JWT ID)만 Redis에 저장 (전체 JWT 대신 짧은 UUID로 메모리 절약)
         refreshTokenService.save(userId, refreshInfo.jti());
+        dauService.record(userId);
 
         response.addCookie(createRefreshCookie(refreshInfo.token()));
         response.sendRedirect("http://localhost:3000/");

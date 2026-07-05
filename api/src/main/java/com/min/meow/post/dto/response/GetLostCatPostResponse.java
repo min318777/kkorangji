@@ -4,13 +4,13 @@ import com.min.meow.post.entity.LostCatPost;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 실종글 상세 조회 응답 DTO
- *
  * 캐싱을 위해 정적 데이터만 포함:
  * - 댓글은 별도 API로 조회: GET /api/meow/lost-cat/comments/{postId}
  * - 조회수는 별도 API로 증가: POST /api/meow/lost-cat/{postId}/view
@@ -52,6 +52,12 @@ public class GetLostCatPostResponse {
     @Schema(description = "고양이 몸무게 (kg)", example = "5")
     private Integer catWeight;
 
+    @Schema(description = "고양이 성별 (MALE/FEMALE/UNKNOWN)", example = "MALE")
+    private String catGender;
+
+    @Schema(description = "실종일자", example = "2025-01-15")
+    private LocalDate lostDate;
+
     @Schema(description = "이미지 URL 목록")
     private List<String> imageUrls;
 
@@ -82,7 +88,7 @@ public class GetLostCatPostResponse {
     @Schema(description = "수정일시", example = "2025-01-15T11:00:00")
     private LocalDateTime updatedAt;
 
-    public static GetLostCatPostResponse toResponse(LostCatPost lostCatPost){
+    public static GetLostCatPostResponse from(LostCatPost lostCatPost){
 
         return GetLostCatPostResponse.builder()
                 .id(lostCatPost.getId())
@@ -95,6 +101,8 @@ public class GetLostCatPostResponse {
                 .catColor(lostCatPost.getCatColor())
                 .catAge(lostCatPost.getCatAge())
                 .catWeight(lostCatPost.getCatWeight())
+                .catGender(lostCatPost.getCatGender())
+                .lostDate(lostCatPost.getLostDate())
                 .imageUrls(new ArrayList<>(lostCatPost.getImageUrls()))
                 .lostLocation(lostCatPost.getLostLocation())
                 .reward(lostCatPost.getReward())

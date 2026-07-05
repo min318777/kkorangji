@@ -10,6 +10,7 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Check;
 // 위치 기반 조회용 JTS Point 타입 (Hibernate Spatial과 함께 동작)
+import org.locationtech.jts.geom.Point;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,12 +55,16 @@ public class LostCatPost extends BasePost {
     private Double latitude;
     private Double longitude;
 
+    // SPATIAL INDEX용 POINT 컬럼 (SRID 4326 = WGS 84)
+    // bbox 방식(latitude/longitude)과 성능 비교용으로 함께 유지
+    @Column(columnDefinition = "POINT SRID 4326")
+    private Point location;
+
     private Integer reward;
     private boolean isCompleted;
 
     /**
      * 이미지 URL 목록 (@ElementCollection)
-     *
      * @BatchSize(100) 적용 이유:
      * - @ElementCollection은 1:N 관계와 동일하게 동작
      * - Fetch Join 시 카테시안 곱 발생 (게시글 데이터 중복)
@@ -96,7 +101,7 @@ public class LostCatPost extends BasePost {
                           String catColor, Integer catAge, Integer catWeight,
                           String catGender, LocalDate lostDate,
                           String lostLocation, Double latitude, Double longitude,
-                          Integer reward, List<String> newImageUrls) {
+                          Point location, Integer reward, List<String> newImageUrls) {
         if (title != null) {
             this.title = title;
         }
@@ -132,6 +137,9 @@ public class LostCatPost extends BasePost {
         }
         if (longitude != null) {
             this.longitude = longitude;
+        }
+        if (location != null) {
+            this.location = location;
         }
         if (reward != null) {
             this.reward = reward;

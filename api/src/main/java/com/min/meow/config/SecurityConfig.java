@@ -11,6 +11,7 @@ import com.min.meow.security.service.PermissionCacheService;
 import com.min.meow.user.repository.UserRepository;
 import com.min.meow.security.oauth2.CustomOauth2UserService;
 import com.min.meow.security.service.RefreshTokenService;
+import com.min.meow.user.service.DauService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -47,11 +48,12 @@ public class SecurityConfig {
     private final CustomOauth2UserService customOauth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
     private final ObjectMapper objectMapper;
+    private final DauService dauService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 
-        CustomLoginFilter customLoginFilter = new CustomLoginFilter(authenticationManager(authenticationConfiguration), jwtProvider, refreshTokenService, permissionCacheService);
+        CustomLoginFilter customLoginFilter = new CustomLoginFilter(authenticationManager(authenticationConfiguration), jwtProvider, refreshTokenService, permissionCacheService, dauService);
         customLoginFilter.setFilterProcessesUrl("/api/users/login");
         http
                 .cors((cors) -> cors.configurationSource(new CorsConfigurationSource() {
@@ -81,7 +83,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/users/login",
                                 "/api/users/join",
-                                "/api/reissue",
+                                "/api/auth/token/refresh",
                                 "/api/logout",
                                 "/error",
                                 "/swagger-ui/**",
@@ -108,11 +110,12 @@ public class SecurityConfig {
                                 "/api/meow/boast-cat/v3/*/view",
                                 "/api/meow/lost-cat/*/view",
                                 "/api/meow/lost-cat/v1/*/view",
-                                "/api/meow/lost-cat/v3/*/view").permitAll()
-                        // 연결 상태 조회는 인증 불필요 (디버깅 용도)
+                                "/api/meow/lost-cat/v3/*/view",
+                                "/api/meow/boast-cat/v4/*/view") // 추가
+                        .permitAll()
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.GET,
-                                "/api/notice/status").permitAll()
+                                "/api/notifications/status").permitAll()
                         // 관리자 권한 필요
                         .requestMatchers("/admin").hasRole("ADMIN")
                         // 나머지 모든 요청은 인증 필요 (알림 구독, 읽음 처리 등)

@@ -4,11 +4,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
  * 실종 고양이 게시글 생성 요청 DTO
- *
  * Presigned URL 기반 이미지 업로드 방식:
  * 1. 클라이언트가 먼저 /api/images/presigned-urls 로 Presigned URL 요청
  * 2. Presigned URL로 S3에 이미지 직접 업로드
@@ -53,14 +53,29 @@ public class CreateLostCatPostRequest {
     @Max(value = 30, message = "몸무게는 30kg 이하로 입력해주세요.")
     private Integer catWeight;
 
+    @Schema(description = "고양이 성별 (MALE/FEMALE/UNKNOWN)", example = "MALE")
+    @Size(max = 10, message = "성별은 10자 이하로 입력해주세요.")
+    private String catGender;
+
+    @Schema(description = "실종일자", example = "2025-01-15")
+    private LocalDate lostDate;
+
     @Schema(description = "실종 장소 (최대 100자)", example = "서울시 강남구 역삼동")
     @Size(max = 100, message = "실종 장소는 100자 이하로 입력해주세요.")
     private String lostLocation;
 
-    @Schema(description = "실종 장소 위도", example = "37.4979")
+    // SPATIAL INDEX는 NOT NULL 컬럼을 요구하므로 위치 기반 검색 도입과 함께 좌표를 필수화한다.
+    // 프론트는 주소 검색 API(예: 카카오/다음)로 자동 변환된 좌표를 함께 전송하면 된다.
+    @Schema(description = "실종 장소 위도 (-90 ~ 90, 필수)", example = "37.4979")
+    @NotNull(message = "위도는 필수입니다.")
+    @DecimalMin(value = "-90.0", message = "위도는 -90 이상이어야 합니다.")
+    @DecimalMax(value = "90.0", message = "위도는 90 이하이어야 합니다.")
     private Double latitude;
 
-    @Schema(description = "실종 장소 경도", example = "127.0276")
+    @Schema(description = "실종 장소 경도 (-180 ~ 180, 필수)", example = "127.0276")
+    @NotNull(message = "경도는 필수입니다.")
+    @DecimalMin(value = "-180.0", message = "경도는 -180 이상이어야 합니다.")
+    @DecimalMax(value = "180.0", message = "경도는 180 이하이어야 합니다.")
     private Double longitude;
 
     @Schema(description = "사례금 (0원 이상)", example = "50000")
@@ -116,6 +131,14 @@ public class CreateLostCatPostRequest {
 
     public void setCatWeight(Integer catWeight) {
         this.catWeight = catWeight;
+    }
+
+    public void setCatGender(String catGender) {
+        this.catGender = catGender;
+    }
+
+    public void setLostDate(LocalDate lostDate) {
+        this.lostDate = lostDate;
     }
 
     public void setLatitude(Double latitude) {

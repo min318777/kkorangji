@@ -22,11 +22,13 @@ public class QLostCatPost extends EntityPathBase<LostCatPost> {
 
     public static final QLostCatPost lostCatPost = new QLostCatPost("lostCatPost");
 
-    public final com.min.meow.global.QBasePost _super;
+    public final com.min.meow.common.QBasePost _super;
 
     public final NumberPath<Integer> catAge = createNumber("catAge", Integer.class);
 
     public final StringPath catColor = createString("catColor");
+
+    public final StringPath catGender = createString("catGender");
 
     public final StringPath catName = createString("catName");
 
@@ -53,11 +55,17 @@ public class QLostCatPost extends EntityPathBase<LostCatPost> {
 
     public final NumberPath<Double> latitude = createNumber("latitude", Double.class);
 
+    public final ComparablePath<org.locationtech.jts.geom.Point> location = createComparable("location", org.locationtech.jts.geom.Point.class);
+
     public final NumberPath<Double> longitude = createNumber("longitude", Double.class);
+
+    public final DatePath<java.time.LocalDate> lostDate = createDate("lostDate", java.time.LocalDate.class);
 
     public final StringPath lostLocation = createString("lostLocation");
 
     public final NumberPath<Integer> reward = createNumber("reward", Integer.class);
+
+    public final StringPath thumbnailUrl = createString("thumbnailUrl");
 
     //inherited
     public final StringPath title;
@@ -89,7 +97,7 @@ public class QLostCatPost extends EntityPathBase<LostCatPost> {
 
     public QLostCatPost(Class<? extends LostCatPost> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this._super = new com.min.meow.global.QBasePost(type, metadata, inits);
+        this._super = new com.min.meow.common.QBasePost(type, metadata, inits);
         this.contents = _super.contents;
         this.createdAt = _super.createdAt;
         this.id = _super.id;

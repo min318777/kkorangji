@@ -1,24 +1,28 @@
 package com.min.meow.notification.event;
 
-import com.min.meow.global.NotificationType;
+import com.min.meow.common.NotificationType;
 import com.min.meow.notification.entity.Notification;
-import com.min.meow.notification.repository.NotificationRepository;
+import com.min.meow.notification.service.NotificationSaveService;
 import com.min.meow.notification.sse.SseEmitterManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * 알림 이벤트 리스너 (비동기 처리)
  * Spring Event를 수신하여 알림을 처리하는 리스너입니다.
  * 처리 흐름:
- * 1. CommentEvent 또는 LikeEvent 수신
+ * 1. CommentEvent 또는 LikeEvent를 트랜잭션 커밋 후(AFTER_COMMIT) 수신
  * 2. Notification 엔티티 생성
  * 3. DB에 알림 저장
  * 4. SSE를 통해 실시간 알림 전송
+ * @TransactionalEventListener(AFTER_COMMIT) 설명:
+ * - 발행자(댓글/좋아요 등록) 트랜잭션이 정상 커밋된 후에만 리스너 실행
+ * - 트랜잭션 롤백 시 리스너 미실행 → 댓글/좋아요와 알림 간 정합성 보장
+ * - 일반 @EventListener는 publishEvent 호출 즉시 실행되어 롤백 시 알림이 잘못 발송될 위험이 있음
  * @Async 설명:
  * - "notificationExecutor": AsyncConfig에서 정의한 스레드 풀 사용
  * - 이벤트 발행자(Service)는 블로킹 없이 즉시 반환
@@ -29,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NotificationEventListener {
 
-    private final NotificationRepository notificationRepository;
+    private final NotificationSaveService notificationSaveService;
     private final SseEmitterManager sseEmitterManager;
 
     /**
@@ -37,8 +41,7 @@ public class NotificationEventListener {
      * @param event 댓글 이벤트 정보
      */
     @Async("notificationExecutor")
-    @EventListener
-    @Transactional
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleCommentEvent(CommentEvent event) {
         log.debug("댓글 이벤트 수신 - commentId: {}, postId: {}, receiverUserId: {}",
                 event.commentId(), event.postId(), event.receiverUserId());
@@ -53,8 +56,9 @@ public class NotificationEventListener {
                     .isRead(false)
                     .build();
 
-            // 2. DB에 저장
-            Notification saved = notificationRepository.save(notification);
+            // 2. DB에 저장 (재시도 포함)
+            Notification saved = notificationSaveService.save(notification);
+            if (saved == null) return; // 3회 재시도 후 최종 실패
             log.debug("DB 알림 저장 완료 - ID: {}, Type: COMMENT, ReceiverUserId: {}",
                     saved.getId(), saved.getReceiverUserId());
 
@@ -73,8 +77,7 @@ public class NotificationEventListener {
      * @param event 좋아요 이벤트 정보
      */
     @Async("notificationExecutor")
-    @EventListener
-    @Transactional
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleLikeEvent(LikeEvent event) {
         log.debug("좋아요 이벤트 수신 - likeId: {}, postId: {}, receiverUserId: {}",
                 event.likeId(), event.postId(), event.receiverUserId());
@@ -90,8 +93,9 @@ public class NotificationEventListener {
                     .isRead(false)
                     .build();
 
-            // 2. DB에 저장
-            Notification saved = notificationRepository.save(notification);
+            // 2. DB에 저장 (재시도 포함)
+            Notification saved = notificationSaveService.save(notification);
+            if (saved == null) return; // 3회 재시도 후 최종 실패
             log.debug("DB 알림 저장 완료 - ID: {}, Type: LIKE, ReceiverUserId: {}",
                     saved.getId(), saved.getReceiverUserId());
 

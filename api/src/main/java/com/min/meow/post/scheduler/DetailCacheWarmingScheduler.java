@@ -1,7 +1,7 @@
 package com.min.meow.post.scheduler;
 
 import com.min.meow.post.dto.response.GetBoastCatPostResponse;
-import com.min.meow.post.service.BoastCatPostService;
+import com.min.meow.post.service.PopularPostService;
 import com.min.meow.post.service.PopularRankingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ import java.util.List;
 public class DetailCacheWarmingScheduler {
 
     private final PopularRankingService popularRankingService;
-    private final BoastCatPostService boastCatPostService;
+    private final PopularPostService popularPostService;
     private final CacheManager cacheManager;
 
     /**
@@ -46,7 +46,7 @@ public class DetailCacheWarmingScheduler {
         for (Long id : topIds) {
             try {
                 // DB에서 최신 데이터 조회 후 즉시 덮어쓰기 (공백 없음)
-                GetBoastCatPostResponse fresh = boastCatPostService.fetchDetail(id);
+                GetBoastCatPostResponse fresh = popularPostService.fetchDetail(id);
                 cache.put(id, fresh);
                 success++;
             } catch (Exception e) {

@@ -36,6 +36,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
 
+    // Hibernate Spatial: MySQL POINT 컬럼 ↔ JTS Point 객체 자동 매핑 지원
+    // - 위치 기반 조회(ST_Distance_Sphere)와 SPATIAL INDEX 활용을 위해 필요
+    // - Spring Boot 3.4 (Hibernate 6.x)는 ORM 코어와 통합되어 별도 dialect 설정 불필요
+    implementation 'org.hibernate.orm:hibernate-spatial'
+
     // QueryDSL
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
     annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
@@ -61,10 +66,15 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'org.redisson:redisson-spring-boot-starter:3.27.2'
+
+    // 재시도 처리 (@Retryable)
+    implementation 'org.springframework.retry:spring-retry'
+    implementation 'org.springframework:spring-aspects'
 
     // 모니터링 - Actuator & Prometheus
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.micrometer:micrometer-registry-prometheus:1.12.13'
 
 
     implementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -78,6 +88,8 @@ dependencies {
     // db
     runtimeOnly 'com.mysql:mysql-connector-j'
     testImplementation 'com.h2database:h2:2.3.230'
+    // Flyway: DB 스키마 마이그레이션 관리 (MySQL 전용 파서 지원 포함)
+    implementation 'org.flywaydb:flyway-mysql'
 }
 
 tasks.named('test') {

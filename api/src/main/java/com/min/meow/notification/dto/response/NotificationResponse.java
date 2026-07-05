@@ -1,6 +1,6 @@
 package com.min.meow.notification.dto.response;
 
-import com.min.meow.global.NotificationType;
+import com.min.meow.common.NotificationType;
 import com.min.meow.notification.entity.Notification;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

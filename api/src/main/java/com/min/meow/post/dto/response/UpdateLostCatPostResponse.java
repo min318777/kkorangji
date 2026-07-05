@@ -63,7 +63,7 @@ public class UpdateLostCatPostResponse {
     @Schema(description = "수정일시", example = "2025-01-15T11:00:00")
     private LocalDateTime updatedAt;
 
-    public static UpdateLostCatPostResponse toResponse(LostCatPost lostCatPost){
+    public static UpdateLostCatPostResponse from(LostCatPost lostCatPost){
 
         return UpdateLostCatPostResponse.builder()
                 .id(lostCatPost.getId())

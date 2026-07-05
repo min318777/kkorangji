@@ -12,10 +12,8 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 /**
  * AWS S3 설정
- *
  * S3Client: 파일 삭제, 존재 여부 확인 등 일반 S3 작업용
  * S3Presigner: Presigned URL 생성용 (클라이언트 직접 업로드)
- *
  * application.yml에서 AWS 자격 증명을 읽어와서 사용합니다.
  * 환경 변수: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
  */

@@ -1,8 +1,8 @@
 package com.min.meow.user.controller;
 
-import com.min.meow.global.PrincipalUser;
-import com.min.meow.global.PostType;
-import com.min.meow.global.ApiResponse;
+import com.min.meow.common.PrincipalUser;
+import com.min.meow.common.PostType;
+import com.min.meow.common.ApiResponse;
 import com.min.meow.user.dto.reponse.MyCommentListResponse;
 import com.min.meow.user.dto.reponse.MyPageSummaryResponse;
 import com.min.meow.user.dto.reponse.MyPostListResponse;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "마이페이지", description = "사용자 마이페이지 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/users/mypage")
+@RequestMapping("/api/users/me")
 public class MyPageController {
 
     private final MyPageService myPageService;
@@ -95,5 +95,20 @@ public class MyPageController {
         return ResponseEntity.ok(
                 ApiResponse.success( "내가 쓴 댓글 조회 성공", response)
         );
+    }
+
+    @Operation(summary = "내가 좋아요한 글 목록 조회",
+            description = "현재 사용자가 좋아요한 자랑글 목록을 페이징으로 조회합니다. 인증 필요.")
+    @GetMapping("/liked-posts")
+    public ResponseEntity<ApiResponse<MyPostListResponse>> getMyLikedPosts(
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10")
+            @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        MyPostListResponse response = myPageService.getMyLikedPosts(user.getUserId(), pageable);
+        return ResponseEntity.ok(ApiResponse.success("좋아요한 글 조회 성공", response));
     }
 }

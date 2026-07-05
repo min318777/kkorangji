@@ -29,11 +29,11 @@ public class QNotification extends EntityPathBase<Notification> {
 
     public final NumberPath<Long> postId = createNumber("postId", Long.class);
 
-    public final StringPath receiverLoginId = createString("receiverLoginId");
+    public final NumberPath<Long> receiverUserId = createNumber("receiverUserId", Long.class);
 
     public final NumberPath<Long> sourceId = createNumber("sourceId", Long.class);
 
-    public final EnumPath<com.min.meow.global.NotificationType> type = createEnum("type", com.min.meow.global.NotificationType.class);
+    public final EnumPath<com.min.meow.common.NotificationType> type = createEnum("type", com.min.meow.common.NotificationType.class);
 
     public QNotification(String variable) {
         super(Notification.class, forVariable(variable));

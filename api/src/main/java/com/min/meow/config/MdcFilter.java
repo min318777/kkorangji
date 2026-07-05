@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -14,12 +15,12 @@ import java.util.UUID;
 /**
  * MDC(Mapped Diagnostic Context) 필터
  * 모든 HTTP 요청에 고유한 requestId를 부여하여 로그 추적을 가능하게 합니다.
- *
  * 왜 MDC를 사용하는가?
  * - 동시 요청이 많을 때 로그가 뒤섞여 특정 요청의 흐름 추적이 불가능해짐
  * - MDC는 스레드 로컬 기반으로 요청별 컨텍스트 정보를 로그에 자동 포함시킴
  * - k6 부하 테스트(1,000 VU) 환경에서도 특정 요청 추적 가능
  */
+@Slf4j
 @Component
 public class MdcFilter extends OncePerRequestFilter {
 
@@ -38,11 +39,17 @@ public class MdcFilter extends OncePerRequestFilter {
         // 응답 헤더에도 requestId를 포함시켜 클라이언트 측 디버깅 지원
         response.setHeader("X-Request-Id", requestId);
 
+        long start = System.currentTimeMillis();
         try {
             // 다음 필터로 요청 전달 (JwtAuthenticationFilter → Controller → ...)
             filterChain.doFilter(request, response);
         } finally {
-            // 요청 완료 후 반드시 MDC를 초기화해야 함
+            long duration = System.currentTimeMillis() - start;
+            if (response.getStatus() >= 500) {
+                log.error("5xx {} {} {} {}ms", request.getMethod(), request.getRequestURI(), response.getStatus(), duration);
+            } else {
+                log.info("{} {} {} {}ms", request.getMethod(), request.getRequestURI(), response.getStatus(), duration);
+            }
             // ThreadPool 환경에서 스레드가 재사용될 때 이전 요청의 컨텍스트가 남아있지 않도록 방지
             MDC.clear();
         }

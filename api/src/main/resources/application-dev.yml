@@ -14,8 +14,8 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3307/meow?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: min3782
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 13          # 최대 DB Connection 수 (6코어 × 2 + SSD 1 = 13)
       minimum-idle: 5                # 유휴 시 최소 커넥션

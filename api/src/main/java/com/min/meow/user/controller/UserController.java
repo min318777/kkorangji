@@ -1,8 +1,8 @@
 package com.min.meow.user.controller;
 
 
-import com.min.meow.global.PrincipalUser;
-import com.min.meow.global.ApiResponse;
+import com.min.meow.common.PrincipalUser;
+import com.min.meow.common.ApiResponse;
 import com.min.meow.user.dto.reponse.JoinResponse;
 import com.min.meow.user.dto.reponse.LoginResponse;
 import com.min.meow.user.dto.request.JoinRequest;
@@ -60,7 +60,7 @@ public class UserController {
      */
     @Operation(summary = "회원 탈퇴",
             description = "현재 로그인한 사용자의 계정을 탈퇴합니다. 소프트 삭제 방식으로 개인정보는 비식별화됩니다. 인증 필요.")
-    @DeleteMapping("/withdraw")
+    @DeleteMapping("/me")
     public ResponseEntity<Void> withdraw(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
         userService.withdraw(user.getUserId());

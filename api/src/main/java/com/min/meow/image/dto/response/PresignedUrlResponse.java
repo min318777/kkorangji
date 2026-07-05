@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 /**
  * Presigned URL 응답 DTO
- *
  * 클라이언트는 이 정보를 사용하여:
  * 1. presignedUrl로 이미지를 S3에 직접 업로드 (PUT 요청)
  * 2. 업로드 완료 후 key를 게시글 생성 API에 전달

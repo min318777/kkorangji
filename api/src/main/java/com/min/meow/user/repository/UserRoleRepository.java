@@ -17,6 +17,7 @@ public interface UserRoleRepository extends JpaRepository<UserRole, Long> {
     // @Modifying + @Transactional: DELETE 쿼리는 트랜잭션 컨텍스트가 필요함
     @Modifying
     @Transactional
-    @Query("DELETE FROM UserRole ur WHERE ur.user.id = :userId")
+    @Query("DELETE FROM UserRole ur " +
+           "WHERE ur.user.id = :userId")
     void deleteByUserId(Long userId);
 }

@@ -11,7 +11,6 @@ import java.util.List;
 
 /**
  * Presigned URL 발급 요청 DTO
- *
  * 클라이언트가 업로드할 이미지의 Content-Type 목록을 전달하면
  * 해당 개수만큼 Presigned URL을 생성하여 반환합니다.
  */

@@ -2,13 +2,16 @@ package com.min.meow.post.repository;
 
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.QBoastCatPostListResponse;
+import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.QBoastCatPost;
+import com.min.meow.user.entity.QUser;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 인기글 전용 Repository
@@ -20,6 +23,21 @@ public class PopularPostRepository {
 
     private final JPAQueryFactory queryFactory;
     private final QBoastCatPost boastCatPost = QBoastCatPost.boastCatPost;
+    private final QUser user = QUser.user;
+
+    /**
+     * 인기글 상세 조회 — User JOIN FETCH (N+1 방지)
+     * fetchDetail / 워밍 스케줄러에서 사용
+     */
+    public Optional<BoastCatPost> findByIdWithUser(Long id) {
+        return Optional.ofNullable(
+                queryFactory
+                        .selectFrom(boastCatPost)
+                        .leftJoin(boastCatPost.user, user).fetchJoin()
+                        .where(boastCatPost.id.eq(id))
+                        .fetchOne()
+        );
+    }
 
     /**
      * 가중치 점수(좋아요×3 + 댓글×2 + 조회수×1) 기준 TOP 24 인기 게시물 조회

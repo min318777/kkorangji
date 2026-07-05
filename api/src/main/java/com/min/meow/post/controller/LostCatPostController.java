@@ -1,10 +1,10 @@
 package com.min.meow.post.controller;
 
 
-import com.min.meow.global.PostType;
-import com.min.meow.global.PrincipalUser;
-import com.min.meow.global.PageResponse;
-import com.min.meow.global.ApiResponse;
+import com.min.meow.common.PostType;
+import com.min.meow.common.PrincipalUser;
+import com.min.meow.common.PageResponse;
+import com.min.meow.common.ApiResponse;
 import com.min.meow.post.dto.request.CreateLostCatPostRequest;
 import com.min.meow.post.dto.request.UpdateLostCatPostRequest;
 import com.min.meow.post.dto.response.CreateLostCatPostResponse;
@@ -39,6 +39,8 @@ public class LostCatPostController {
 
     private final LostCatPostService lostCatPostService;
     private final ViewCountService viewCountService;
+
+    // ========== CRUD ==========
 
     @Operation(summary = "실종글 목록 조회", description = "페이징된 실종글 목록을 조회합니다. 인증 불필요.")
     @SecurityRequirements
@@ -113,6 +115,22 @@ public class LostCatPostController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "실종 상태 변경",
+            description = "찾는 중 ↔ 귀가 완료 상태를 변경합니다. 본인 게시글만 변경 가능. 인증 필요.")
+    @PreAuthorize("isAuthenticated()")
+    @PatchMapping("/{lostCatPostId}/status")
+    public ResponseEntity<ApiResponse<Void>> updateCompletedStatus(
+            @Parameter(description = "실종글 ID", example = "1")
+            @PathVariable Long lostCatPostId,
+            @RequestBody Map<String, Boolean> body,
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
+        boolean isCompleted = Boolean.TRUE.equals(body.get("isCompleted"));
+        lostCatPostService.updateCompletedStatus(lostCatPostId, isCompleted, user.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("상태 변경 성공", null));
+    }
+
+    // ========== 위치 기반 조회 ==========
+
     @Operation(summary = "내 주변 실종글 조회",
             description = "현재 위치(위도/경도) 기준으로 반경 내 실종글을 조회합니다. 위치 없는 글은 제외됩니다. 인증 불필요.")
     @SecurityRequirements
@@ -129,25 +147,23 @@ public class LostCatPostController {
         return ResponseEntity.ok(ApiResponse.success("내 주변 실종글 조회 성공", pageResponse));
     }
 
-    @Operation(summary = "최근 실종글 20개 조회",
-            description = "최신 실종글 20개를 Projection으로 조회합니다. 인증 불필요.")
+    @Operation(summary = "내 주변 실종글 조회 (ST_Distance_Sphere)",
+            description = "ST_Distance_Sphere로 정확한 원형 반경 필터 + 가까운 순 정렬. 성능 비교용. 인증 불필요.")
     @SecurityRequirements
-    @GetMapping("/recent")
-    public ResponseEntity<ApiResponse<List<LostCatPostListResponse>>> getRecentLostCatPosts() {
-        List<LostCatPostListResponse> posts = lostCatPostService.getRecentLostCatPosts();
-        return ResponseEntity.ok(ApiResponse.success("최근 실종글 20개 조회 성공", posts));
+    @GetMapping("/nearby/st")
+    public ResponseEntity<ApiResponse<PageResponse<LostCatPostListResponse>>> getNearbyLostCatPostsST(
+            @Parameter(description = "현재 위치 위도", example = "37.5665") @RequestParam double lat,
+            @Parameter(description = "현재 위치 경도", example = "126.9780") @RequestParam double lng,
+            @Parameter(description = "검색 반경 (km, 기본값 5)", example = "5") @RequestParam(defaultValue = "5") double radius,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10") @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<LostCatPostListResponse> pageResponse = lostCatPostService.getNearbyLostCatPostsST(lat, lng, radius, pageable);
+        return ResponseEntity.ok(ApiResponse.success("내 주변 실종글 조회 성공 (ST)", pageResponse));
     }
 
-    @Operation(summary = "조회수 증가 (v2 원자적)",
-            description = "DB 원자적 쿼리로 조회수를 증가시킵니다. 인증 불필요.")
-    @SecurityRequirements
-    @PostMapping("/{lostCatPostId}/view")
-    public ResponseEntity<ApiResponse<Void>> incrementViewCount(
-            @Parameter(description = "실종글 ID", example = "1")
-            @PathVariable Long lostCatPostId) {
-        lostCatPostService.incrementViewCount(lostCatPostId);
-        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공", null));
-    }
+    // ========== 조회수 ==========
 
     /**
      * @deprecated 동시성 이슈로 인해 POST /{lostCatPostId}/view 사용 권장
@@ -163,6 +179,17 @@ public class LostCatPostController {
             @PathVariable Long lostCatPostId) {
         lostCatPostService.incrementViewCountWithDirtyChecking(lostCatPostId);
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (더티 체킹 방식)", null));
+    }
+
+    @Operation(summary = "조회수 증가 (v2 원자적)",
+            description = "DB 원자적 쿼리로 조회수를 증가시킵니다. 인증 불필요.")
+    @SecurityRequirements
+    @PostMapping("/{lostCatPostId}/view")
+    public ResponseEntity<ApiResponse<Void>> incrementViewCount(
+            @Parameter(description = "실종글 ID", example = "1")
+            @PathVariable Long lostCatPostId) {
+        lostCatPostService.incrementViewCount(lostCatPostId);
+        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공", null));
     }
 
     @Operation(summary = "조회수 증가 (v3 Redis)",
@@ -190,19 +217,5 @@ public class LostCatPostController {
             return forwarded.split(",")[0].trim();
         }
         return request.getRemoteAddr();
-    }
-
-    @Operation(summary = "실종 상태 변경",
-            description = "찾는 중 ↔ 귀가 완료 상태를 변경합니다. 본인 게시글만 변경 가능. 인증 필요.")
-    @PreAuthorize("isAuthenticated()")
-    @PatchMapping("/{lostCatPostId}/status")
-    public ResponseEntity<ApiResponse<Void>> updateCompletedStatus(
-            @Parameter(description = "실종글 ID", example = "1")
-            @PathVariable Long lostCatPostId,
-            @RequestBody Map<String, Boolean> body,
-            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
-        boolean isCompleted = Boolean.TRUE.equals(body.get("isCompleted"));
-        lostCatPostService.updateCompletedStatus(lostCatPostId, isCompleted, user.getUserId());
-        return ResponseEntity.ok(ApiResponse.success("상태 변경 성공", null));
     }
 }

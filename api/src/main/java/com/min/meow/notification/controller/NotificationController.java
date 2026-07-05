@@ -1,11 +1,11 @@
 package com.min.meow.notification.controller;
 
-import com.min.meow.global.ApiResponse;
+import com.min.meow.common.ApiResponse;
 import com.min.meow.notification.dto.request.NotificationRequest;
 import com.min.meow.notification.dto.response.NotificationResponse;
 import com.min.meow.notification.service.NotificationQueryService;
 import com.min.meow.notification.sse.SseEmitterManager;
-import com.min.meow.global.PrincipalUser;
+import com.min.meow.common.PrincipalUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -26,7 +26,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/notice")
+@RequestMapping("/api/notifications")
 public class NotificationController {
 
     private final NotificationQueryService notificationQueryService;
@@ -100,7 +100,7 @@ public class NotificationController {
 
     @Operation(summary = "SSE 구독",
             description = "실시간 알림 수신을 위한 SSE 연결을 생성합니다. text/event-stream 형식으로 응답합니다. 인증 필요.")
-    @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 

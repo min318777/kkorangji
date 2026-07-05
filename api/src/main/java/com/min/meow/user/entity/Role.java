@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,7 @@ public class Role {
 
     // Role → RolePermission 관계 (이 역할이 가진 권한 목록)
     @OneToMany(mappedBy = "role", fetch = FetchType.EAGER)
+    @BatchSize(size = 10)
     private List<RolePermission> rolePermissions = new ArrayList<>();
 
     public Role(String name, String description) {

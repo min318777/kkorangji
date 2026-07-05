@@ -1,7 +1,7 @@
 package com.min.meow.notification.service;
 
-import com.min.meow.global.exception.CustomException;
-import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.common.exception.CustomException;
+import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.notification.entity.Notification;
 import com.min.meow.notification.repository.NotificationRepository;
 import com.min.meow.notification.dto.response.NotificationResponse;

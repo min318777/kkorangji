@@ -64,14 +64,14 @@ public class CreateLostCatPostResponse {
     @Schema(description = "수정일시", example = "2025-01-15T10:30:00")
     private LocalDateTime updatedAt;
 
-    public static CreateLostCatPostResponse toResponse(LostCatPost lostCatPost, User user){
+    public static CreateLostCatPostResponse from(LostCatPost lostCatPost){
 
         return CreateLostCatPostResponse.builder()
                 .id(lostCatPost.getId())
                 .title(lostCatPost.getTitle())
                 .content(lostCatPost.getContents())
                 .catName(lostCatPost.getCatName())
-                .writer(user.getLoginId())
+                .writer(lostCatPost.getUser().getLoginId())
                 .catType(lostCatPost.getCatType())
                 .catColor(lostCatPost.getCatColor())
                 .catAge(lostCatPost.getCatAge())

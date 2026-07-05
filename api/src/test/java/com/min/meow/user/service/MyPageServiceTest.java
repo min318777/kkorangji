@@ -2,9 +2,9 @@ package com.min.meow.user.service;
 
 import com.min.meow.comment.entity.Comment;
 import com.min.meow.comment.repository.CommentRepository;
-import com.min.meow.global.PostType;
-import com.min.meow.global.exception.CustomException;
-import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.common.PostType;
+import com.min.meow.common.exception.CustomException;
+import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;

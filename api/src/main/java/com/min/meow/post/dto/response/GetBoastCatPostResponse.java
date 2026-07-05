@@ -11,7 +11,6 @@ import java.util.List;
 
 /**
  * 자랑글 상세 조회 응답 DTO
- *
  * 캐싱을 위해 정적 데이터만 포함:
  * - 댓글은 별도 API로 조회: GET /api/meow/boast-cat/comments/{postId}
  * - 조회수는 별도 API로 증가: POST /api/meow/boast-cat/{postId}/view
@@ -56,7 +55,7 @@ public class GetBoastCatPostResponse {
     @Schema(description = "수정일시", example = "2025-01-15T11:00:00")
     private LocalDateTime updatedAt;
 
-    public static GetBoastCatPostResponse toResponse(BoastCatPost boastCatPost){
+    public static GetBoastCatPostResponse from(BoastCatPost boastCatPost){
         return GetBoastCatPostResponse.builder()
                 .id(boastCatPost.getId())
                 .writer(boastCatPost.getUser().getLoginId())

@@ -69,10 +69,8 @@ public class User{
 
     /**
      * 회원 탈퇴 및 개인정보 비식별화 처리
-     *
      * 소프트 삭제 방식으로 데이터 무결성을 유지하면서
      * 개인정보를 비식별화하여 개인정보보호법을 준수합니다.
-     *
      * 비식별화 항목:
      * - loginId: "deleted_" + UUID (유니크 제약조건 유지)
      * - email: UUID + "@deleted.meow.com" (유니크 제약조건 유지)
@@ -147,7 +145,6 @@ public class User{
     /**
      * 주어진 권한 중 하나라도 가지고 있는지 확인 (OR 조건)
      * Python: has_any_permission(user, permission_codes)
-     *
      * 사용 예: user.hasAnyPermission(List.of("post:write", "post:delete"))
      * → 둘 중 하나만 있어도 true
      */
@@ -159,7 +156,6 @@ public class User{
     /**
      * 주어진 권한을 모두 가지고 있는지 확인 (AND 조건)
      * Python: has_all_permissions(user, permission_codes)
-     *
      * 사용 예: user.hasAllPermissions(List.of("post:write", "post:delete"))
      * → 둘 다 있어야 true
      */

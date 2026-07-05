@@ -8,14 +8,11 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 /**
  * 스케줄링 설정 클래스
- *
  * Spring의 @Scheduled 어노테이션을 사용한 스케줄 작업 실행을 위한 설정입니다.
  * ThreadPoolTaskScheduler를 사용하여 스케줄 스레드 풀을 관리합니다.
- *
  * 주요 스케줄 작업:
  * - Redis 조회수 → DB 동기화 (1분마다)
  * - 기타 주기적 배치 작업
- *
  * @EnableScheduling: Spring의 스케줄링 기능을 활성화합니다.
  */
 @Slf4j
@@ -25,7 +22,6 @@ public class SchedulingConfig {
 
     /**
      * 스케줄링 전용 ThreadPoolTaskScheduler
-     *
      * 설정값 설명:
      * - poolSize: 스케줄러 스레드 풀 크기 (2개)
      *   → 여러 스케줄 작업이 동시에 실행될 수 있도록 최소 2개 설정

@@ -12,24 +12,18 @@ import com.min.meow.post.dto.request.UpdateBoastCatPostRequest;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
-import com.min.meow.common.PostType;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.common.SecurityUtil;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,9 +35,6 @@ public class BoastCatPostService {
     private final BoastCatPostRepository boastCatPostRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
-    private final ViewCountService viewCountService;
-    private final CacheManager cacheManager;
-    private final RedisTemplate<String, String> redisTemplate;
 
     // ========== 조회 ==========
 
@@ -60,86 +51,11 @@ public class BoastCatPostService {
         return PageResponse.from(posts);
     }
 
-    /**
-     * v1: 기본 @Cacheable — Stampede 방지 없음 (비교 기준선)
-     * TTL 만료 시 동시 요청 → 여러 스레드가 동시에 DB 조회
-     */
-    @Cacheable(cacheNames = "post:boast:detail", key = "#boastCatPostId")
+    /** 일반 자랑글 상세 조회 — 캐싱 없음, 단순 DB 조회 */
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
-        log.info("[v1 Cache MISS] DB 조회 - postId: {}, thread: {}", boastCatPostId, Thread.currentThread().getName());
-        return fetchDetail(boastCatPostId);
-    }
-
-    /**
-     * v2: Lettuce SETNX 분산 락 — Stampede 방지
-     * MISS 시 첫 스레드만 DB 조회, 나머지는 캐시 채워질 때까지 100ms 간격 대기 (최대 3초)
-     */
-    public GetBoastCatPostResponse getBoastCatPostV2(Long id) {
-        String lockKey = "lock:post:boast:detail:" + id;
-        Cache cache = cacheManager.getCache("post:boast:detail");
-
-        Cache.ValueWrapper cached = cache.get(id);
-        if (cached != null) return (GetBoastCatPostResponse) cached.get();
-
-        Boolean locked = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", Duration.ofSeconds(3));
-
-        if (Boolean.TRUE.equals(locked)) {
-            try {
-                // 락 획득 후 double-check (다른 스레드가 이미 채웠을 수 있음)
-                Cache.ValueWrapper recheck = cache.get(id);
-                if (recheck != null) return (GetBoastCatPostResponse) recheck.get();
-
-                log.info("[v2 락 획득-DB 조회] postId: {}, thread: {}", id, Thread.currentThread().getName());
-                GetBoastCatPostResponse result = fetchDetail(id);
-                cache.put(id, result);
-                return result;
-            } finally {
-                redisTemplate.delete(lockKey);
-            }
-        } else {
-            log.info("[v2 락 대기] postId: {}, thread: {}", id, Thread.currentThread().getName());
-            for (int i = 0; i < 30; i++) {
-                try { Thread.sleep(100); } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-                Cache.ValueWrapper retry = cache.get(id);
-                if (retry != null) return (GetBoastCatPostResponse) retry.get();
-            }
-            log.warn("[v2 타임아웃] 안전망 DB 조회 - postId: {}", id);
-            return fetchDetail(id);
-        }
-    }
-
-    /**
-     * v3: Cache Warming — DetailCacheWarmingScheduler가 25초마다 선제 갱신
-     * 정상 운영 시 "[v3 Cache MISS]"가 출력되지 않음
-     * (같은 post:boast:detail 캐시를 사용 — 워밍 후엔 v1과 동일한 캐시 HIT)
-     */
-    @Cacheable(cacheNames = "post:boast:detail", key = "#id")
-    public GetBoastCatPostResponse getBoastCatPostV3(Long id) {
-        log.warn("[v3 Cache MISS] 워밍 실패 또는 서버 시작 직후 - postId: {}, thread: {}", id, Thread.currentThread().getName());
-        return fetchDetail(id);
-    }
-
-    /** DB에서 상세 데이터 조회 (캐시 어노테이션 없음 — 내부 호출 및 워밍 스케줄러용) */
-    public GetBoastCatPostResponse fetchDetail(Long id) {
-        BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
+        BoastCatPost post = boastCatPostRepository.findByIdWithUser(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-        long redisDelta = viewCountService.getViewCount(PostType.BOAST, id);
-        return GetBoastCatPostResponse.builder()
-                .id(post.getId())
-                .writer(post.getUser().getLoginId())
-                .userId(post.getUser().getId())
-                .title(post.getTitle())
-                .contents(post.getContents())
-                .view((int)(post.getView() + redisDelta))
-                .imageUrls(new ArrayList<>(post.getImageUrls()))
-                .likeCount(post.getLikeCount())
-                .commentCount(post.getCommentCount())
-                .createdAt(post.getCreatedAt())
-                .updatedAt(post.getUpdatedAt())
-                .build();
+        return GetBoastCatPostResponse.from(post);
     }
 
     // ========== CRUD ==========

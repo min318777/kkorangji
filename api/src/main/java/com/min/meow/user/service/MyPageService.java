@@ -1,14 +1,15 @@
 package com.min.meow.user.service;
 
-import com.min.meow.global.PostType;
-import com.min.meow.global.exception.CustomException;
-import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.common.PostType;
+import com.min.meow.common.exception.CustomException;
+import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.comment.entity.Comment;
 import com.min.meow.comment.repository.CommentRepository;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.post.repository.LostCatRepository;
+import com.min.meow.postlike.repository.PostLikeRepository;
 import com.min.meow.user.dto.reponse.*;
 import com.min.meow.user.dto.request.UpdateProfileRequest;
 import com.min.meow.user.entity.User;
@@ -33,6 +34,7 @@ public class MyPageService {
     private final BoastCatPostRepository boastCatPostRepository;
     private final LostCatRepository lostCatRepository;
     private final CommentRepository commentRepository;
+    private final PostLikeRepository postLikeRepository;
 
     public MyPageSummaryResponse getMyPageSummary(Long userId) {
 
@@ -47,17 +49,14 @@ public class MyPageService {
 
     /**
      * 마이페이지 통계 조회 (캐싱 적용)
-     *
      * 캐시 설정:
      * - 캐시명: user:stats
      * - 키: userId (예: user:stats::1)
      * - TTL: 10분
-     *
      * 무효화 트리거:
      * - 자랑글 작성/삭제 → BoastCatPostService
      * - 실종글 작성/삭제 → LostCatPostService
      * - 댓글 작성/삭제   → CommentService
-     *
      * @return [자랑글 수, 실종글 수, 댓글 수]
      */
     @Cacheable(cacheNames = "user:stats", key = "#userId")
@@ -108,6 +107,19 @@ public class MyPageService {
 
         // 4. Response 생성
         return MyCommentListResponse.from(commentDtoPage);
+    }
+
+    /**
+     * 내가 좋아요한 게시글 목록 조회 (BOAST 전용, 최근 좋아요 순)
+     */
+    public MyPostListResponse getMyLikedPosts(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));
+
+        Page<BoastCatPost> likedPosts =
+                postLikeRepository.findLikedBoastCatPostsByUserId(user.getId(), pageable);
+
+        return MyPostListResponse.from(likedPosts.map(MyPostDto::from));
     }
 
     /**

@@ -32,6 +32,11 @@ scrape_configs:
         target_label: instance
         replacement: 'meow-api'
 
+  # Node Exporter - 호스트 CPU/메모리/디스크 메트릭
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
   # MySQL Exporter (선택사항 - 추후 추가 가능)
   # - job_name: 'mysql'
   #   static_configs:

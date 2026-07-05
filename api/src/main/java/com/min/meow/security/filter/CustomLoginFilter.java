@@ -6,6 +6,7 @@ import com.min.meow.user.dto.request.LoginRequest;
 import com.min.meow.security.jwt.JwtProvider;
 import com.min.meow.security.service.PermissionCacheService;
 import com.min.meow.security.service.RefreshTokenService;
+import com.min.meow.user.service.DauService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -33,6 +34,7 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
     private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
     private final PermissionCacheService permissionCacheService;
+    private final DauService dauService;
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
@@ -85,6 +87,7 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         // v3 권한 캐싱 — 로그인 시 점에서 permissions를 Redis에 저장
         // 이후 요청에서 DB 조회 없이 Redis에서 권한 확인 가능
         permissionCacheService.cachePermissions(userId, permissions);
+        dauService.record(userId);
 
         // 응답 설정 (쿠키에는 전체 JWT 토큰 사용)
         response.setHeader("Authorization", "Bearer " + accessToken);

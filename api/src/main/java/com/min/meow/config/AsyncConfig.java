@@ -13,6 +13,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * 비동기 처리 설정 클래스
@@ -66,6 +67,10 @@ public class AsyncConfig implements AsyncConfigurer {
         // 종료 시 최대 대기 시간 (초)
         executor.setAwaitTerminationSeconds(30);
 
+        // 큐가 꽉 찼을 때 호출자 스레드에서 직접 실행 (알림 유실 방지)
+        // AbortPolicy(기본값)는 RejectedExecutionException을 던져 알림이 사라짐
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+
         // MDC TaskDecorator 등록: 부모 스레드의 MDC 컨텍스트를 자식 스레드에 전파
         // @Async로 실행되는 비동기 메서드에서도 requestId가 로그에 출력되도록 보장
         executor.setTaskDecorator(new MdcTaskDecorator());
@@ -76,26 +81,6 @@ public class AsyncConfig implements AsyncConfigurer {
         log.debug("알림 비동기 처리 ThreadPoolTaskExecutor 초기화 완료 - core: {}, max: {}, queue: 100",
                 executor.getCorePoolSize(), executor.getMaxPoolSize());
 
-        return executor;
-    }
-
-    /**
-     * 좋아요 DB 기록 전용 비동기 Executor
-     * Redis 토글 후 DB 비동기 기록에 사용됩니다.
-     * - CallerRunsPolicy: 큐 포화 시 호출 스레드에서 직접 실행 (요청 손실 방지)
-     */
-    @Bean(name = "likeExecutor")
-    public Executor likeExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(10);
-        executor.setMaxPoolSize(30);
-        executor.setQueueCapacity(500);
-        executor.setThreadNamePrefix("like-async-");
-        executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
-        executor.setWaitForTasksToCompleteOnShutdown(true);
-        executor.setAwaitTerminationSeconds(30);
-        executor.setTaskDecorator(new MdcTaskDecorator());
-        executor.initialize();
         return executor;
     }
 
@@ -133,12 +118,10 @@ public class AsyncConfig implements AsyncConfigurer {
 
     /**
      * MDC 컨텍스트를 비동기 스레드로 전파하는 TaskDecorator
-     *
      * 왜 필요한가?
      * - @Async 메서드는 새 스레드(ThreadPool)에서 실행됨
      * - 새 스레드는 부모 스레드의 MDC 컨텍스트(requestId 등)를 자동으로 상속하지 않음
      * - TaskDecorator로 부모 MDC를 복사하면 비동기 로그에도 동일한 requestId 출력 가능
-     *
      * 동작 흐름:
      * HTTP 요청 스레드(MDC: requestId=abc) → @Async 실행
      * → TaskDecorator: 부모 MDC 복사 → 자식 스레드에 setContextMap

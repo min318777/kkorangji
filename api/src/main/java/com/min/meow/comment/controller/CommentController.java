@@ -1,9 +1,9 @@
 package com.min.meow.comment.controller;
 
 
-import com.min.meow.global.PageResponse;
-import com.min.meow.global.PrincipalUser;
-import com.min.meow.global.ApiResponse;
+import com.min.meow.common.PageResponse;
+import com.min.meow.common.PrincipalUser;
+import com.min.meow.common.ApiResponse;
 import com.min.meow.comment.dto.request.RegisterCommentRequest;
 import com.min.meow.comment.dto.request.UpdateCommentRequest;
 import com.min.meow.comment.dto.response.GetCommentResponse;
@@ -23,8 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = "댓글", description = "게시글 댓글 CRUD API")
 @RestController
@@ -53,25 +51,10 @@ public class CommentController {
         return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
     }
 
-    @Deprecated
-    @Operation(summary = "자랑글 댓글 조회 (전체)",
-            description = "하위 호환용 API. 페이징 버전 사용을 권장합니다.",
-            deprecated = true)
-    @SecurityRequirements
-    @GetMapping("/api/meow/boast-cat/comments/{boastCatPostId}")
-    public ResponseEntity<ApiResponse<List<GetCommentResponse>>> getBoastCatPostComment(
-            @Parameter(description = "자랑글 ID", example = "1")
-            @PathVariable Long boastCatPostId,
-            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
-
-        List<GetCommentResponse> comments = commentService.getBoastCatPostComment(boastCatPostId);
-        return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
-    }
-
     @Operation(summary = "자랑글 댓글 작성",
             description = "자랑글에 댓글을 작성합니다. 인증 필요.")
     @PreAuthorize("hasAuthority('comment:write')")
-    @PostMapping("/api/meow/boast-cat/comments/{boastCatPostId}")
+    @PostMapping("/api/meow/boast-cat/{boastCatPostId}/comments")
     public ResponseEntity<ApiResponse<RegisterCommentResponse>> registerBoastCatPostComment(
             @RequestBody @Valid RegisterCommentRequest registerCommentRequest,
             @Parameter(description = "자랑글 ID", example = "1")
@@ -103,25 +86,10 @@ public class CommentController {
         return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
     }
 
-    @Deprecated
-    @Operation(summary = "실종글 댓글 조회 (전체)",
-            description = "하위 호환용 API. 페이징 버전 사용을 권장합니다.",
-            deprecated = true)
-    @SecurityRequirements
-    @GetMapping("/api/meow/lost-cat/comments/{lostCatPostId}")
-    public ResponseEntity<ApiResponse<List<GetCommentResponse>>> getLostCatPostComment(
-            @Parameter(description = "실종글 ID", example = "1")
-            @PathVariable Long lostCatPostId,
-            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
-
-        List<GetCommentResponse> comments = commentService.getLostCatPostComment(lostCatPostId);
-        return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
-    }
-
     @Operation(summary = "실종글 댓글 작성",
             description = "실종글에 댓글을 작성합니다. 인증 필요.")
     @PreAuthorize("hasAuthority('comment:write')")
-    @PostMapping("/api/meow/lost-cat/comments/{lostCatPostId}")
+    @PostMapping("/api/meow/lost-cat/{lostCatPostId}/comments")
     public ResponseEntity<ApiResponse<RegisterCommentResponse>> registerLostCatPostComment(
             @RequestBody @Valid RegisterCommentRequest registerCommentRequest,
             @Parameter(description = "실종글 ID", example = "1")

@@ -2,9 +2,9 @@ package com.min.meow.security.jwt;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.min.meow.global.ApiResponse;
-import com.min.meow.global.Token;
-import com.min.meow.global.exception.CustomException;
+import com.min.meow.common.ApiResponse;
+import com.min.meow.common.TokenType;
+import com.min.meow.common.exception.CustomException;
 import com.min.meow.security.dto.CustomUserDetails;
 import com.min.meow.security.service.PermissionCacheService;
 import com.min.meow.user.entity.User;
@@ -44,7 +44,7 @@ import java.util.Optional;
  */
 @Slf4j
 @RequiredArgsConstructor
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class    JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
@@ -66,7 +66,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String accessToken = authorization.substring(7);
         Claims claims;
         try {
-            claims = jwtProvider.decodeAndVerify(accessToken, Token.ACCESS_TOKEN);
+            claims = jwtProvider.decodeAndVerify(accessToken, TokenType.ACCESS_TOKEN);
         } catch (ExpiredJwtException e) {
             log.warn("만료된 토큰으로 접근 시도: {}", request.getRequestURI());
             sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "TOKEN_EXPIRED", "토큰이 만료되었습니다.");
@@ -92,7 +92,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 캐시 미스 or Redis 장애 시 DB fallback 후 재캐싱
             Long userId = Long.valueOf(claims.getSubject());
             String role = claims.get("role", String.class);
-
             List<String> permissions = permissionCacheService.getPermissions(userId);
 
             if (permissions == null) {
@@ -108,6 +107,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 User user = userOptional.get();
 
+                // 탈퇴 사용자 차단 — 캐시 evict 후 DB fallback 시 반드시 체크
+                if (user.isWithdrawn()) {
+                    sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "WITHDRAWN_USER", "탈퇴한 사용자입니다.");
+                    return;
+                }
+
                 permissions = List.copyOf(user.getAllPermissionCodes());
 
                 // DB에서 조회한 최신 권한을 Redis에 재캐싱
@@ -117,14 +122,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             principal = new CustomUserDetails(userId, role, permissions);
 
         } else if ("v2".equals(authVersion)) {
-            // v2: Claims에서 직접 추출 — DB 조회 없음 (성능 최적화)
+            // v2: Claims에서 직접 추출 — DB 조회 없음
             Long userId = Long.valueOf(claims.getSubject());
             String role = claims.get("role", String.class);
 
             // permissions 추출 (RBAC 권한 목록)
             @SuppressWarnings("unchecked")
             List<String> permissions = claims.get("permissions", List.class);
-
             principal = new CustomUserDetails(userId, role, permissions);
         } else {
             // v1: DB에서 사용자 조회 후 상태 검증
@@ -138,7 +142,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             User user = userOptional.get();
-
             // User 엔티티에서 최신 role/permissions 추출
             principal = CustomUserDetails.from(user);
         }
@@ -150,8 +153,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // MDC에 로그인 사용자 ID 추가 (MdcFilter의 requestId와 함께 사용)
         MDC.put("userId", String.valueOf(principal.getUserId()));
-
-        // 다음 필터로 진행
         filterChain.doFilter(request, response);
     }
 
@@ -165,8 +166,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
-        // 전체 API와 동일한 포맷으로 응답 (errorCode는 로깅용이므로 메시지에만 반영)
-        ApiResponse<Void> apiResponse = ApiResponse.fail(HttpStatus.valueOf(status), message);
+        // errorCode 필드 포함 — 프론트가 JWT 관련 에러를 정확히 구분 가능
+        ApiResponse<Void> apiResponse = ApiResponse.fail(HttpStatus.valueOf(status), errorCode, message);
         String jsonResponse = objectMapper.writeValueAsString(apiResponse);
 
         response.getWriter().write(jsonResponse);

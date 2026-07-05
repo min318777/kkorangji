@@ -5,11 +5,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
  * 실종 고양이 게시글 수정 요청 DTO
- *
  * Presigned URL 기반 이미지 업로드 방식으로 변경:
  * - 새 이미지: Presigned URL로 S3에 업로드 후 key 전달
  * - 유지할 이미지: 기존 CloudFront URL 그대로 전달
@@ -52,14 +52,27 @@ public class UpdateLostCatPostRequest {
     @Max(value = 30, message = "몸무게는 30kg 이하로 입력해주세요.")
     private Integer catWeight;
 
+    @Schema(description = "고양이 성별 (MALE/FEMALE/UNKNOWN)", example = "MALE")
+    @Size(max = 10, message = "성별은 10자 이하로 입력해주세요.")
+    private String catGender;
+
+    @Schema(description = "실종일자", example = "2025-01-15")
+    private LocalDate lostDate;
+
     @Schema(description = "실종 장소 (최대 100자)", example = "서울시 강남구 역삼동")
     @Size(max = 100, message = "실종 장소는 100자 이하로 입력해주세요.")
     private String lostLocation;
 
-    @Schema(description = "실종 장소 위도", example = "37.4979")
+    // 수정은 부분 업데이트라 nullable 유지(둘 다 null이면 위치 변경 안 함)
+    // 다만 한쪽만 변경되는 케이스는 isCoordinatesValid()에서 차단
+    @Schema(description = "실종 장소 위도 (-90 ~ 90)", example = "37.4979")
+    @DecimalMin(value = "-90.0", message = "위도는 -90 이상이어야 합니다.")
+    @DecimalMax(value = "90.0", message = "위도는 90 이하이어야 합니다.")
     private Double latitude;
 
-    @Schema(description = "실종 장소 경도", example = "127.0276")
+    @Schema(description = "실종 장소 경도 (-180 ~ 180)", example = "127.0276")
+    @DecimalMin(value = "-180.0", message = "경도는 -180 이상이어야 합니다.")
+    @DecimalMax(value = "180.0", message = "경도는 180 이하이어야 합니다.")
     private Double longitude;
 
     @Schema(description = "사례금 (0원 이상)", example = "50000")
@@ -134,6 +147,14 @@ public class UpdateLostCatPostRequest {
 
     public void setCatWeight(Integer catWeight) {
         this.catWeight = catWeight;
+    }
+
+    public void setCatGender(String catGender) {
+        this.catGender = catGender;
+    }
+
+    public void setLostDate(LocalDate lostDate) {
+        this.lostDate = lostDate;
     }
 
     public void setLatitude(Double latitude) {

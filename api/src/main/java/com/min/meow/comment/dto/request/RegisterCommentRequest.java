@@ -14,10 +14,12 @@ import lombok.*;
 @Builder
 public class RegisterCommentRequest {
 
-    // 댓글: 1~500자, 필수
     @Schema(description = "댓글 내용 (1~500자)", example = "너무 귀여운 고양이네요!")
     @NotBlank(message = "댓글을 입력해 주세요.")
     @Size(min = 1, max = 500, message = "댓글은 1자 이상 500자 이하로 입력해주세요.")
     private String content;
+
+    @Schema(description = "부모 댓글 ID (null = 원댓글, 값 있으면 대댓글)", example = "1")
+    private Long parentCommentId;
 
 }

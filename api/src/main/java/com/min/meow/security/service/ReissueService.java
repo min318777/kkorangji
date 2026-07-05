@@ -1,8 +1,8 @@
 package com.min.meow.security.service;
 
-import com.min.meow.global.Token;
-import com.min.meow.global.exception.CustomException;
-import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.common.TokenType;
+import com.min.meow.common.exception.CustomException;
+import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.user.dto.response.TokenResponse;
 import com.min.meow.user.entity.User;
 import com.min.meow.security.jwt.JwtProvider;
@@ -40,7 +40,7 @@ public class ReissueService {
 
         Claims claims;
         try {
-            claims = jwtProvider.decodeAndVerify(refreshToken, Token.REFRESH_TOKEN);
+            claims = jwtProvider.decodeAndVerify(refreshToken, TokenType.REFRESH_TOKEN);
         } catch (ExpiredJwtException e) {
             throw new CustomException(ErrorCode.TOKEN_EXPIRED);
         } catch (CustomException e) {

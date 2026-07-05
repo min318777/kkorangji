@@ -1,7 +1,7 @@
 package com.min.meow.user.service;
 
-import com.min.meow.global.exception.CustomException;
-import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.common.exception.CustomException;
+import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.user.dto.reponse.JoinResponse;
 import com.min.meow.user.dto.reponse.LoginResponse;
 import com.min.meow.user.dto.request.JoinRequest;
@@ -10,7 +10,7 @@ import com.min.meow.user.entity.Role;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.entity.UserRole;
 import com.min.meow.security.service.PermissionCacheService;
-import com.min.meow.user.repository.RefreshTokenRepository;
+import com.min.meow.security.service.RefreshTokenService;
 import com.min.meow.user.repository.RoleRepository;
 import com.min.meow.user.repository.UserRepository;
 import com.min.meow.user.repository.UserRoleRepository;
@@ -28,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenService refreshTokenService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
@@ -105,7 +105,7 @@ public class UserService {
         }
 
         // 3. 리프레시 토큰 삭제 - 모든 디바이스에서 로그아웃 처리
-        refreshTokenRepository.deleteByLoginId(user.getLoginId());
+        refreshTokenService.delete(userId);
 
         // v3 권한 캐시 무효화 — 탈퇴 후 다음 요청에서 캐시 미스 → DB 확인 → 탈퇴 확인 → 차단
         permissionCacheService.evictPermissions(userId);

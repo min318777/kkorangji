@@ -22,7 +22,7 @@ public class QBoastCatPost extends EntityPathBase<BoastCatPost> {
 
     public static final QBoastCatPost boastCatPost = new QBoastCatPost("boastCatPost");
 
-    public final com.min.meow.global.QBasePost _super;
+    public final com.min.meow.common.QBasePost _super;
 
     public final NumberPath<Integer> commentCount = createNumber("commentCount", Integer.class);
 
@@ -42,6 +42,8 @@ public class QBoastCatPost extends EntityPathBase<BoastCatPost> {
     public final NumberPath<Integer> likeCount = createNumber("likeCount", Integer.class);
 
     public final ListPath<com.min.meow.postlike.entity.PostLike, com.min.meow.postlike.entity.QPostLike> postLikeList = this.<com.min.meow.postlike.entity.PostLike, com.min.meow.postlike.entity.QPostLike>createList("postLikeList", com.min.meow.postlike.entity.PostLike.class, com.min.meow.postlike.entity.QPostLike.class, PathInits.DIRECT2);
+
+    public final StringPath thumbnailUrl = createString("thumbnailUrl");
 
     //inherited
     public final StringPath title;
@@ -73,7 +75,7 @@ public class QBoastCatPost extends EntityPathBase<BoastCatPost> {
 
     public QBoastCatPost(Class<? extends BoastCatPost> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this._super = new com.min.meow.global.QBasePost(type, metadata, inits);
+        this._super = new com.min.meow.common.QBasePost(type, metadata, inits);
         this.contents = _super.contents;
         this.createdAt = _super.createdAt;
         this.id = _super.id;

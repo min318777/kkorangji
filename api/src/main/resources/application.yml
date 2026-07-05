@@ -1,4 +1,8 @@
 server:
+  tomcat:
+    threads:
+      max: 50       # 최대 스레드 수 (t3.small 기준)
+      min-spare: 10 # 최소 유지 스레드 수
   servlet:
     encoding:
       charset: UTF-8
@@ -15,19 +19,32 @@ spring:
     name: meow
 
   datasource:
-    url: jdbc:mysql://mysql:3306/meow
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/meow}
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: ${MYSQL_ROOT_PASSWORD}
+    hikari:
+      maximum-pool-size: 15      # 최대 DB 커넥션 수 (t3.small max_connections 225 기준)
+      minimum-idle: 5            # 평상시 유지 커넥션
+      connection-timeout: 30000  # 30초 내 못 얻으면 실패
+      max-lifetime: 1800000      # 30분마다 재생성 (AWS RDS idle 끊김 방지)
+      idle-timeout: 600000       # 10분 유휴 시 커넥션 반납
+      keepalive-time: 60000      # 60초마다 SELECT 1 (끊어진 연결 방지)
+      leak-detection-threshold: 5000  # 5초 이상 미반환 시 경고 로그
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
       database-platform: org.hibernate.dialect.MySQL8Dialect
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true  # 기존 DB를 V1 베이스라인으로 처리 (첫 적용 시 현재 상태를 완료로 표시)
+    baseline-version: 1
 
   cache:
     type: redis
@@ -106,6 +123,11 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}  # 메트릭에 애플리케이션 이름 태그 추가
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true  # p95 계산용 _bucket 메트릭 생성
+      slo:
+        http.server.requests: 50ms, 100ms, 200ms, 500ms, 1000ms  # SLO 구간별 카운트
     export:
       prometheus:
         enabled: true  # Prometheus 메트릭 내보내기 활성화

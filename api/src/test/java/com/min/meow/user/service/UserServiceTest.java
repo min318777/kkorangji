@@ -1,7 +1,7 @@
 package com.min.meow.user.service;
 
-import com.min.meow.global.exception.CustomException;
-import com.min.meow.global.exception.ErrorCode;
+import com.min.meow.common.exception.CustomException;
+import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.user.dto.reponse.JoinResponse;
 import com.min.meow.user.dto.request.JoinRequest;
 import com.min.meow.user.dto.request.LoginRequest;

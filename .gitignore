@@ -44,5 +44,49 @@ replay_pid*
 # SQL 파일
 sql/
 
+# 로그 폴더
+logs/
+
+# 성능 테스트
+k6/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
 # Windows 예약 파일명
 NUL
+
+# 개인 학습용 메모
+read-optimization.md
+write-optimization.md
+*-optimization.md
+fix.md
+*fix.md
+AWS.md
+
+
+# Claude Code 플랜 파일
+.claude/plans/
+
+# JVM 힙 덤프
+*.hprof
+
+# 테스트 리포트
+api/src/test/
+
+# Gradle wrapper 바이너리 (선택)
+# gradle/wrapper/gradle-wrapper.jar
+
+# macOS 확장 속성
+__MACOSX/
+
+# 임시 파일
+*.tmp
+*.swp
+*~

@@ -201,38 +201,6 @@ public class BoastCatPostController {
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (비관적 락 방식)", null));
     }
 
-    // ========== 상세조회 Stampede 방지 비교 ==========
-
-    /**
-     * 상세조회 v2 — Lettuce SETNX 분산 락 (Stampede 방지)
-     * 동시에 캐시 MISS 발생 시 첫 스레드만 DB 조회, 나머지는 캐시 채워질 때까지 대기
-     * 서버 로그: "[v2 락 획득-DB 조회]" 또는 "[v2 락 대기]"
-     */
-    @Operation(summary = "자랑글 상세 조회 (v2 - 분산 락)",
-            description = "Redis SETNX 분산 락. Cache MISS 시 첫 스레드만 DB 조회, 나머지 대기.")
-    @SecurityRequirements
-    @GetMapping("/v2/{boastCatPostId}")
-    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastPostV2(
-            @Parameter(description = "자랑글 ID", example = "1")
-            @PathVariable Long boastCatPostId) {
-        return ResponseEntity.ok(ApiResponse.success("글 조회 성공 (v2)", boastCatPostService.getBoastCatPostV2(boastCatPostId)));
-    }
-
-    /**
-     * 상세조회 v3 — Cache Warming (Stampede 방지)
-     * DetailCacheWarmingScheduler가 25초마다 TOP 24 상세 캐시를 선제 갱신
-     * TTL 만료 전 항상 캐시가 채워져 있음 → MISS 자체 방지
-     */
-    @Operation(summary = "자랑글 상세 조회 (v3 - Cache Warming)",
-            description = "스케줄러가 25초마다 TOP 24 캐시 선제 갱신. MISS 자체 발생 안 함.")
-    @SecurityRequirements
-    @GetMapping("/v3/{boastCatPostId}")
-    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastPostV3(
-            @Parameter(description = "자랑글 ID", example = "1")
-            @PathVariable Long boastCatPostId) {
-        return ResponseEntity.ok(ApiResponse.success("글 조회 성공 (v3)", boastCatPostService.getBoastCatPostV3(boastCatPostId)));
-    }
-
     // X-Forwarded-For 헤더 우선, 없으면 RemoteAddr
     private String getClientIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");

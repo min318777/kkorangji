@@ -33,11 +33,15 @@ public class DataInitializer implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
 
-        if (roleRepository.count() > 0) {
-            log.info("RBAC 초기 데이터가 이미 존재합니다. 스킵합니다.");
-            return;
+        if (roleRepository.count() == 0) {
+            initializeFromScratch();
+        } else {
+            // 기존 데이터가 있어도 ROLE_RESTRICTED 누락 시 추가
+            addRestrictedRoleIfMissing();
         }
+    }
 
+    private void initializeFromScratch() {
         log.info("RBAC 초기 데이터 생성 시작");
 
         // Permission 생성
@@ -65,6 +69,27 @@ public class DataInitializer implements ApplicationRunner {
         rolePermissionRepository.save(new RolePermission(adminRole, commentDelete));
         rolePermissionRepository.save(new RolePermission(adminRole, userManage));
 
-        log.info("RBAC 초기 데이터 생성 완료 - Permission: 6개, Role: 2개");
+        // ROLE_RESTRICTED: 조회만 가능 (작성/수정/댓글 불가 — 유해 사용자 제재용)
+        Role restrictedRole = roleRepository.save(new Role("ROLE_RESTRICTED", "제한된 사용자"));
+        rolePermissionRepository.save(new RolePermission(restrictedRole, postRead));
+
+        log.info("RBAC 초기 데이터 생성 완료 - Permission: 6개, Role: 3개");
+    }
+
+    /** 기존 DB에 ROLE_RESTRICTED가 없을 때만 추가 (멱등성 보장) */
+    private void addRestrictedRoleIfMissing() {
+        if (roleRepository.findByName("ROLE_RESTRICTED").isPresent()) {
+            log.info("RBAC 초기 데이터가 이미 존재합니다. 스킵합니다.");
+            return;
+        }
+
+        // post:read 권한이 없으면 직접 생성 (orElseThrow → 롤백 방지)
+        Permission postRead = permissionRepository.findByCode("post:read")
+                .orElseGet(() -> permissionRepository.save(new Permission("post:read", "게시글 조회")));
+
+        Role restrictedRole = roleRepository.save(new Role("ROLE_RESTRICTED", "제한된 사용자"));
+        rolePermissionRepository.save(new RolePermission(restrictedRole, postRead));
+
+        log.info("ROLE_RESTRICTED 역할 추가 완료");
     }
 }

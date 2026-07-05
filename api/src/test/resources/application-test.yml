@@ -29,6 +29,10 @@ spring:
       # 테스트 환경에서 Kafka 리스너 자동 시작 비활성화 (Kafka 서버 없어도 컨텍스트 로딩 성공)
       auto-startup: false
 
+  # Flyway 비활성화: H2에서 MySQL 전용 SQL(WITH PARSER ngram) 실행 방지
+  flyway:
+    enabled: false
+
   # Kafka 자동 설정 비활성화 (KafkaAutoConfiguration의 자동 Producer/Consumer Factory 제외)
   autoconfigure:
     exclude:

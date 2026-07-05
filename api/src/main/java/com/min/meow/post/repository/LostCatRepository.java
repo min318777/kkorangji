@@ -15,6 +15,7 @@ import java.util.Optional;
 @Repository
 public interface LostCatRepository extends JpaRepository<LostCatPost, Long>, LostCatRepositoryCustom {
 
+    // ========== 조회 ==========
 
     /**
      * 단일 게시글 상세 조회 (N+1 문제 해결)
@@ -41,43 +42,50 @@ public interface LostCatRepository extends JpaRepository<LostCatPost, Long>, Los
            "ORDER BY l.createdAt DESC")
     Page<LostCatPost> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
 
-    /**
-     * 메인페이지용: 최근 실종글 20개 조회
-     * N+1 문제 방지를 위해 User를 Fetch Join으로 함께 조회합니다.
-     * imageUrls는 ElementCollection이므로 별도 쿼리로 조회됩니다.
-     * 정렬: 최신순 (createdAt DESC)
-     */
-    @Query("SELECT DISTINCT l FROM LostCatPost l " +
-           "LEFT JOIN FETCH l.user " +
-           "ORDER BY l.createdAt DESC " +
-           "LIMIT 20")
-    List<LostCatPost> findTop20RecentPosts();
+    // ========== 조회수 ==========
 
     /**
-     * 조회수 원자적 증가 (동시성 문제 해결)
+     * 조회수 원자적 증가 (v2 — 동시성 문제 해결)
      * DB 레벨에서 view = view + 1을 수행하여 Race Condition을 방지합니다.
      * 여러 스레드가 동시에 호출해도 정확한 조회수가 보장됩니다.
      * @param id 게시글 ID
      * @return 업데이트된 행의 수 (정상: 1, 게시글 없음: 0)
      */
     @Modifying
-    @Query("UPDATE LostCatPost l SET l.view = l.view + 1 WHERE l.id = :id")
+    @Query("UPDATE LostCatPost l " +
+           "SET l.view = l.view + 1 " +
+           "WHERE l.id = :id")
     int incrementViewCount(@Param("id") Long id);
 
     /**
      * 조회수 델타값 일괄 증가 (Redis → DB 동기화용)
-     *
      * Redis에 누적된 조회수를 DB에 한 번에 반영합니다.
      * 스케줄러에 의해 주기적으로 호출됩니다.
-     *
      * 실행되는 쿼리:
      * UPDATE lost_cat_post SET view = view + :delta WHERE id = :id
-     *
      * @param id 게시글 ID
      * @param delta 증가시킬 조회수
      * @return 업데이트된 행의 수
      */
     @Modifying
-    @Query("UPDATE LostCatPost l SET l.view = l.view + :delta WHERE l.id = :id")
+    @Query("UPDATE LostCatPost l " +
+           "SET l.view = l.view + :delta " +
+           "WHERE l.id = :id")
     int incrementViewCountByDelta(@Param("id") Long id, @Param("delta") int delta);
+
+    // ========== 댓글 수 ==========
+
+    // 댓글 수 증가 — Post 전체 조회 없이 UPDATE만 실행
+    @Modifying
+    @Query("UPDATE LostCatPost l " +
+           "SET l.commentCount = l.commentCount + 1 " +
+           "WHERE l.id = :id")
+    void incrementCommentCount(@Param("id") Long id);
+
+    // 댓글 수 감소 — 0 미만으로 내려가지 않도록 보호
+    @Modifying
+    @Query("UPDATE LostCatPost l " +
+           "SET l.commentCount = CASE WHEN l.commentCount > 0 THEN l.commentCount - 1 ELSE 0 END " +
+           "WHERE l.id = :id")
+    void decrementCommentCount(@Param("id") Long id);
 }
