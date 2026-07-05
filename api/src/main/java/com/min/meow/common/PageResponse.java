@@ -1,4 +1,4 @@
-package com.min.meow.global;
+package com.min.meow.common;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;

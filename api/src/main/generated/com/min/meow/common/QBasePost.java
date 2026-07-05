@@ -1,4 +1,4 @@
-package com.min.meow.global;
+package com.min.meow.common;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -16,7 +16,7 @@ import com.querydsl.core.types.dsl.PathInits;
 @Generated("com.querydsl.codegen.DefaultSupertypeSerializer")
 public class QBasePost extends EntityPathBase<BasePost> {
 
-    private static final long serialVersionUID = -527808873L;
+    private static final long serialVersionUID = -1553551025L;
 
     private static final PathInits INITS = PathInits.DIRECT2;
 

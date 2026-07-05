@@ -1,15 +1,14 @@
-package com.min.meow.post.search.domain.request;
-
+package com.min.meow.search.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
-@Schema(description = "게시글 검색 요청")
+@Schema(description = "게시글 LIKE 검색 요청 (성능 비교용, '%keyword%' 방식)")
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostSearchRequest {
+public class PostLikeSearchRequest {
 
     @Schema(description = "제목 검색어 (부분 일치)", example = "고양이")
     private String title;
@@ -20,12 +19,11 @@ public class PostSearchRequest {
     @Schema(description = "작성자 ID (특정 유저 글만 검색)", example = "1")
     private Long userId;
 
-    // 검색어: 앞뒤 공백 제거 (검색 정확도 향상)
+    // 검색어 앞뒤 공백 제거
     public void setTitle(String title) {
         this.title = title != null ? title.trim() : null;
     }
 
-    // 검색어: 앞뒤 공백 제거
     public void setContents(String contents) {
         this.contents = contents != null ? contents.trim() : null;
     }

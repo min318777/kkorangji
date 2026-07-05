@@ -1,4 +1,4 @@
-package com.min.meow.global;
+package com.min.meow.common;
 
 public enum NotificationType {
     COMMENT("댓글"),

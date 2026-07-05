@@ -1,4 +1,4 @@
-package com.min.meow.global.exception;
+package com.min.meow.common.exception;
 
 
 import lombok.Getter;
