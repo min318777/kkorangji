@@ -44,4 +44,13 @@ public interface LostCatRepositoryCustom {
     // FTS 검색: MATCH AGAINST (ngram)
     Page<LostCatPostListResponse> searchByKeyword(String keyword, Long userId, Pageable pageable);
 
+    // count 캐싱용 - content만 조회 (COUNT 쿼리 없음)
+    List<LostCatPostListResponse> findContentWithProjection(Pageable pageable);
+
+    // count 캐싱용 - 전체 게시글 수만 조회
+    long countAllPosts();
+
+    // 커버링 인덱스 서브쿼리 + JOIN 방식 (OFFSET 대용량 성능 최적화)
+    List<LostCatPostListResponse> findContentWithCoveringIndex(Pageable pageable);
+
 }
