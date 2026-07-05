@@ -31,4 +31,6 @@ jobs:
           cache: gradle
 
       - name: Gradle 빌드 (테스트 제외)
-        run: ./gradlew :api:build -x test --no-daemon
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :api:build -x test --no-daemon
