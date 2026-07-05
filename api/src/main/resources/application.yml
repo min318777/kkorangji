@@ -21,8 +21,8 @@ spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/meow}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: ${MYSQL_ROOT_PASSWORD}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:${MYSQL_ROOT_PASSWORD:}}
     hikari:
       maximum-pool-size: 15      # 최대 DB 커넥션 수 (t3.small max_connections 225 기준)
       minimum-idle: 5            # 평상시 유지 커넥션
