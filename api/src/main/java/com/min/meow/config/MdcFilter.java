@@ -24,17 +24,20 @@ import java.util.UUID;
 @Component
 public class MdcFilter extends OncePerRequestFilter {
 
-    // MDC 키 상수: logback-spring.xml 패턴의 %X{requestId}와 일치해야 함
     private static final String REQUEST_ID_KEY = "requestId";
+    private static final String CLIENT_IP_KEY = "clientIp";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        // 요청마다 고유한 UUID를 생성하여 MDC에 등록
-        // UUID v4: 무작위 128비트 값, 충돌 확률 극히 낮음
         String requestId = UUID.randomUUID().toString();
         MDC.put(REQUEST_ID_KEY, requestId);
+
+        // nginx 뒤에서는 X-Forwarded-For 헤더에 실제 클라이언트 IP가 담김
+        // 여러 프록시 경유 시 "client, proxy1, proxy2" 형태 → 첫 번째가 실제 IP
+        String clientIp = extractClientIp(request);
+        MDC.put(CLIENT_IP_KEY, clientIp);
 
         // 응답 헤더에도 requestId를 포함시켜 클라이언트 측 디버깅 지원
         response.setHeader("X-Request-Id", requestId);
@@ -50,8 +53,19 @@ public class MdcFilter extends OncePerRequestFilter {
             } else {
                 log.info("{} {} {} {}ms", request.getMethod(), request.getRequestURI(), response.getStatus(), duration);
             }
-            // ThreadPool 환경에서 스레드가 재사용될 때 이전 요청의 컨텍스트가 남아있지 않도록 방지
             MDC.clear();
         }
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
+            return xForwardedFor.split(",")[0].strip();
+        }
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isBlank()) {
+            return xRealIp;
+        }
+        return request.getRemoteAddr();
     }
 }

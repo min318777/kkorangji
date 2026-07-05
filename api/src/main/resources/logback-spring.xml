@@ -4,11 +4,11 @@
     <!-- 콘솔 로그 패턴 -->
     <!-- %X{requestId:-NO_MDC}: MDC에 requestId가 없으면 "NO_MDC" 출력 -->
     <property name="CONSOLE_LOG_PATTERN"
-              value="[%d{HH:mm:ss.SSS}] [%X{requestId:-NO_MDC}] [%X{userId:-ANONYMOUS}] [%thread] %-5level %logger{36} - %msg%n"/>
+              value="[%d{HH:mm:ss.SSS}] [%X{requestId:-NO_MDC}] [%X{userId:-ANONYMOUS}] [%X{clientIp:-NO_IP}] [%thread] %-5level %logger{36} - %msg%n"/>
 
     <!-- 파일 로그 패턴 (날짜 포함) -->
     <property name="FILE_LOG_PATTERN"
-              value="[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%X{requestId:-NO_MDC}] [%X{userId:-ANONYMOUS}] [%thread] %-5level %logger{36} - %msg%n"/>
+              value="[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%X{requestId:-NO_MDC}] [%X{userId:-ANONYMOUS}] [%X{clientIp:-NO_IP}] [%thread] %-5level %logger{36} - %msg%n"/>
 
     <!-- 로그 파일 저장 경로 -->
     <property name="LOG_DIR" value="logs"/>
