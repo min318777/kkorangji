@@ -137,8 +137,10 @@ public class RedisConfig {
                 .withCacheConfiguration("post:boast:popular:warmed", popularPostsConfiguration)
                 // 상세조회 캐시 — v1/v2/v3 공용 (TTL 10분)
                 .withCacheConfiguration("post:boast:detail", postDetailConfiguration)
-                // 게시글 전체 수 캐시 (TTL 5분)
+                // 자랑글 전체 수 캐시 (TTL 5분)
                 .withCacheConfiguration("post:boast:count", postCountConfiguration)
+                // 실종글 전체 수 캐시 (TTL 5분)
+                .withCacheConfiguration("post:lost:count", postCountConfiguration)
                 .build();
     }
 

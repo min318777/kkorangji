@@ -22,8 +22,8 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.cache.annotation.CacheEvict;
-
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,6 +51,7 @@ public class LostCatPostService {
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final ViewCountService viewCountService;
+    private final LostCatPostCountCacheService countCacheService;
 
     // ========== 조회 ==========
 
@@ -70,9 +71,13 @@ public class LostCatPostService {
      * LIMIT ? OFFSET ?
      */
     public PageResponse<LostCatPostListResponse> getAllLostCatPosts(Pageable pageable){
-        // Projection으로 DB에서 필요한 컬럼만 조회 (Entity 변환 불필요)
-        Page<LostCatPostListResponse> posts = lostCatRepository.findAllWithProjection(pageable);
-
+        // COUNT는 캐시에서, content는 커버링 인덱스 서브쿼리로 조회
+        long total = countCacheService.countAll();
+        Page<LostCatPostListResponse> posts = new PageImpl<>(
+                lostCatRepository.findContentWithCoveringIndex(pageable),
+                pageable,
+                total
+        );
         return PageResponse.from(posts);
     }
 
@@ -151,6 +156,7 @@ public class LostCatPostService {
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public CreateLostCatPostResponse createLostCatPost(CreateLostCatPostRequest createLostCatPostRequest, Long userId){
+        countCacheService.evict();
         User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
@@ -247,7 +253,7 @@ public class LostCatPostService {
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public void deleteLostCatPost(Long lostCatPostId, Long userId) {
-
+        countCacheService.evict();
         User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)

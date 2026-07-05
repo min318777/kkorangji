@@ -273,6 +273,82 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
         return new PageImpl<>(content, pageable, total);
     }
 
+    @Override
+    public List<LostCatPostListResponse> findContentWithProjection(Pageable pageable) {
+        return queryFactory
+                .select(new QLostCatPostListResponse(
+                        lostCatPost.id,
+                        lostCatPost.title,
+                        lostCatPost.user.loginId,
+                        lostCatPost.catName,
+                        lostCatPost.lostLocation,
+                        lostCatPost.commentCount,
+                        lostCatPost.view,
+                        lostCatPost.isCompleted,
+                        lostCatPost.createdAt,
+                        lostCatPost.thumbnailUrl
+                ))
+                .from(lostCatPost)
+                .leftJoin(lostCatPost.user, user)
+                .orderBy(lostCatPost.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+    }
+
+    @Override
+    public long countAllPosts() {
+        Long total = queryFactory
+                .select(lostCatPost.count())
+                .from(lostCatPost)
+                .fetchOne();
+        return total != null ? total : 0L;
+    }
+
+    /**
+     * 커버링 인덱스 서브쿼리 + JOIN 방식
+     * 서브쿼리로 idx_lost_created_at(created_at, id) 커버링 인덱스만 스캔해 id 추출
+     * → 추출된 id로 클러스터 인덱스(PK) JOIN → 필요한 행만 접근
+     */
+    @Override
+    public List<LostCatPostListResponse> findContentWithCoveringIndex(Pageable pageable) {
+        String sql = """
+                SELECT l.id, l.title, u.login_id, l.cat_name, l.lost_location,
+                       l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url
+                FROM lost_cat_post l
+                INNER JOIN user u ON u.id = l.user_id
+                INNER JOIN (
+                    SELECT id FROM lost_cat_post
+                    ORDER BY created_at DESC
+                    LIMIT :limit OFFSET :offset
+                ) AS covering ON l.id = covering.id
+                ORDER BY l.created_at DESC
+                """;
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = entityManager.createNativeQuery(sql)
+                .setParameter("limit", pageable.getPageSize())
+                .setParameter("offset", (int) pageable.getOffset())
+                .getResultList();
+
+        return rows.stream()
+                .map(row -> LostCatPostListResponse.builder()
+                        .id(((Number) row[0]).longValue())
+                        .title((String) row[1])
+                        .writer((String) row[2])
+                        .catName((String) row[3])
+                        .lostLocation((String) row[4])
+                        .commentCount(((Number) row[5]).intValue())
+                        .view(((Number) row[6]).intValue())
+                        .completed(toBoolean(row[7]))
+                        .createdAt(row[8] instanceof java.sql.Timestamp ts
+                                ? ts.toLocalDateTime()
+                                : (LocalDateTime) row[8])
+                        .thumbnailUrl((String) row[9])
+                        .build())
+                .toList();
+    }
+
     // 제목 OR 내용 LIKE 검색 조건
     private BooleanExpression likeTitleOrContents(String title, String contents) {
         BooleanExpression titleExpr = (title != null && !title.isEmpty())
