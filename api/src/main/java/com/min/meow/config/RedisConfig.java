@@ -116,6 +116,16 @@ public class RedisConfig {
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
 
+        // 게시글 전체 수 캐시 (TTL 5분) — COUNT(*) 쿼리 대체
+        RedisCacheConfiguration postCountConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+                .disableCachingNullValues()
+                .entryTtl(Duration.ofMinutes(5))
+                .serializeKeysWith(RedisSerializationContext
+                        .SerializationPair
+                        .fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
+
         return RedisCacheManager.RedisCacheManagerBuilder
                 .fromConnectionFactory(redisConnectionFactory)
                 .cacheDefaults(defaultConfiguration)
@@ -127,6 +137,8 @@ public class RedisConfig {
                 .withCacheConfiguration("post:boast:popular:warmed", popularPostsConfiguration)
                 // 상세조회 캐시 — v1/v2/v3 공용 (TTL 10분)
                 .withCacheConfiguration("post:boast:detail", postDetailConfiguration)
+                // 게시글 전체 수 캐시 (TTL 5분)
+                .withCacheConfiguration("post:boast:count", postCountConfiguration)
                 .build();
     }
 

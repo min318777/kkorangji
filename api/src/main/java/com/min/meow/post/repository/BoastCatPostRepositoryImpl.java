@@ -124,12 +124,17 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
         return new PageImpl<>(content, pageable, total);
     }
 
-    /**
-     * 게시글 목록 페이징 조회 (Projection 적용)
-     */
     @Override
     public Page<BoastCatPostListResponse> findAllWithProjection(Pageable pageable) {
-        List<BoastCatPostListResponse> content = queryFactory
+        List<BoastCatPostListResponse> content = findContentWithProjection(pageable);
+        long total = countAllPosts();
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    // content만 조회 (COUNT 쿼리 없음) - 캐싱된 count와 조합하여 사용
+    @Override
+    public List<BoastCatPostListResponse> findContentWithProjection(Pageable pageable) {
+        return queryFactory
                 .select(new QBoastCatPostListResponse(
                         boastCatPost.id,
                         boastCatPost.title,
@@ -144,13 +149,16 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
+    }
 
+    // 전체 게시글 수만 조회 - BoastCatPostCountCacheService에서 캐싱
+    @Override
+    public long countAllPosts() {
         Long total = queryFactory
                 .select(boastCatPost.count())
                 .from(boastCatPost)
                 .fetchOne();
-
-        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+        return total != null ? total : 0L;
     }
 
     // 제목 OR 내용 LIKE 검색 조건 (하나라도 포함하면 매칭)

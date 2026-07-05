@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +36,7 @@ public class BoastCatPostService {
     private final BoastCatPostRepository boastCatPostRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
+    private final BoastCatPostCountCacheService countCacheService;
 
     // ========== 조회 ==========
 
@@ -45,9 +47,13 @@ public class BoastCatPostService {
      * - After: Projection으로 필요한 7개 컬럼만 SELECT (id, title, writer, likeCount, commentCount, view, createdAt)
      */
     public PageResponse<BoastCatPostListResponse> getAllBoastCatPosts(Pageable pageable){
-        // Projection으로 DB에서 필요한 컬럼만 조회 (Entity 변환 불필요)
-        Page<BoastCatPostListResponse> posts = boastCatPostRepository.findAllWithProjection(pageable);
-
+        // COUNT는 캐시에서, content는 DB에서 조회 (COUNT 쿼리 성능 개선)
+        long total = countCacheService.countAll();
+        Page<BoastCatPostListResponse> posts = new PageImpl<>(
+                boastCatPostRepository.findContentWithProjection(pageable),
+                pageable,
+                total
+        );
         return PageResponse.from(posts);
     }
 
@@ -71,6 +77,7 @@ public class BoastCatPostService {
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public CreateBoastCatPostResponse createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest, Long userId){
+        countCacheService.evict();
 
         User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
@@ -134,6 +141,7 @@ public class BoastCatPostService {
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public void deleteBoastCatPost(Long boastCatPostId, Long userId){
+        countCacheService.evict();
         User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
