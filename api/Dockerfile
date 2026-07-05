@@ -36,7 +36,7 @@ RUN ./gradlew dependencies --no-daemon
 COPY . .
 
 # 4단계: 빌드 (테스트 제외)
-RUN ./gradlew :api:build -x test --no-daemon
+RUN chmod +x ./gradlew && ./gradlew :api:build -x test --no-daemon
 
 # 실행 스테이지 (JRE만 포함 → 이미지 크기 최소화)
 # JDK(빌드 도구 포함) → JRE(실행만 가능)로 전환
