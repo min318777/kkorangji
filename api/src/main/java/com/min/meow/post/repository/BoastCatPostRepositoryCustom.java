@@ -22,4 +22,7 @@ public interface BoastCatPostRepositoryCustom {
     // count 캐싱용 - 전체 게시글 수만 조회
     long countAllPosts();
 
+    // 커버링 인덱스 서브쿼리 + JOIN 방식 (OFFSET 대용량 성능 최적화)
+    List<BoastCatPostListResponse> findContentWithCoveringIndex(Pageable pageable);
+
 }

@@ -50,7 +50,7 @@ public class BoastCatPostService {
         // COUNT는 캐시에서, content는 DB에서 조회 (COUNT 쿼리 성능 개선)
         long total = countCacheService.countAll();
         Page<BoastCatPostListResponse> posts = new PageImpl<>(
-                boastCatPostRepository.findContentWithProjection(pageable),
+                boastCatPostRepository.findContentWithCoveringIndex(pageable),
                 pageable,
                 total
         );
