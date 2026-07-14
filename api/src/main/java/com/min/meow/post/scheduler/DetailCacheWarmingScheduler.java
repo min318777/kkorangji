@@ -31,7 +31,7 @@ public class DetailCacheWarmingScheduler {
      * 1. Sorted Set에서 TOP 24 postId 조회
      * 2. 각 게시글 DB 조회 후 캐시 put (clear 없음 → 갱신 중 기존 데이터 유지)
      */
-    @Scheduled(fixedRate = 25_000, initialDelay = 5_000)
+    // @Scheduled(fixedRate = 25_000, initialDelay = 5_000) // v1 Stampede 테스트 시 비활성화
     public void warmDetailCaches() {
         List<Long> topIds = popularRankingService.getTop24PostIds();
         if (topIds.isEmpty()) {

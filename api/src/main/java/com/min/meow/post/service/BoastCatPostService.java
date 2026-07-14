@@ -17,6 +17,7 @@ import com.min.meow.common.SecurityUtil;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import com.min.meow.common.PostType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
@@ -37,6 +38,7 @@ public class BoastCatPostService {
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final BoastCatPostCountCacheService countCacheService;
+    private final ViewCountService viewCountService;
 
     // ========== 조회 ==========
 
@@ -158,7 +160,6 @@ public class BoastCatPostService {
                 .toList();
         boastCatPostRepository.deleteById(boastCatPostId);
         s3Service.deleteFiles(keys);
-        log.info("게시글 삭제 완료 - userId: {}, postId: {}", userId, boastCatPostId);
     }
 
     /**
@@ -192,70 +193,41 @@ public class BoastCatPostService {
         return finalImageUrls;
     }
 
-    // ========== 조회수 ==========
+    // ========== 상세조회 + 조회수 통합 API (v1~v4) ==========
 
-    /**
-     * 조회수 증가 - 더티 체킹 방식 (v1 - 동시성 이슈 있음)
-     * 동시성 문제 (Lost Update):
-     * 이 방식은 아래와 같은 Read-Modify-Write 패턴으로 동작합니다:
-     * 1. SELECT * FROM boast_cat_post WHERE id = ? (조회)
-     * 2. Java에서 view++ 연산 수행
-     * 3. UPDATE boast_cat_post SET view = 101 WHERE id = ? (절대값으로 UPDATE)
-     * 문제 시나리오 (현재 view = 100, 동시 2개 요청):
-     * - Thread A: view 읽기 (100) → view++ → 101로 UPDATE
-     * - Thread B: view 읽기 (100) → view++ → 101로 UPDATE (동시에!)
-     * - 결과: 2번 증가 요청 → 실제 1만 증가 (Lost Update)
-     */
-    @Deprecated
+    // v1: 상세조회 + 더티 체킹 (Lost Update 발생)
     @Transactional
-    public void incrementViewCountWithDirtyChecking(Long boastCatPostId) {
-        BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
+    public GetBoastCatPostResponse getBoastCatPostV1(Long id) {
+        BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-
-        // 더티 체킹으로 조회수 증가 (동시성 이슈 발생 가능)
-        boastCatPost.incrementView();
-        // 트랜잭션 종료 시 JPA가 변경 감지하여 UPDATE 쿼리 실행
-    }
-
-    /**
-     * 조회수 증가 - 원자적 쿼리 방식 (v2 - 개선된 버전)
-     * DB 레벨에서 view = view + 1을 수행하여 Race Condition을 방지합니다.
-     * 여러 스레드가 동시에 호출해도 정확한 조회수가 보장됩니다.
-     * 실행되는 쿼리:
-     * UPDATE boast_cat_post SET view = view + 1 WHERE id = ?
-     * 이 쿼리는 DB 레벨에서 원자적으로 실행되므로:
-     * - Read-Modify-Write 패턴이 아님
-     * - 동시 요청 시에도 모든 증가가 정확히 반영됨
-     */
-    @Transactional
-    public void incrementViewCount(Long boastCatPostId) {
-        int updatedCount = boastCatPostRepository.incrementViewCount(boastCatPostId);
-        if (updatedCount == 0) {
-            throw new CustomException(ErrorCode.NOT_FOUND_POST);
-        }
-    }
-
-    /**
-     * 조회수 증가 - 비관적 락 방식 (v4)
-     * 실행 순서:
-     * 1. SELECT ... FOR UPDATE → 행 X-Lock 획득 (다른 트랜잭션 접근 차단)
-     * 2. Java에서 view + 1 (더티 체킹)
-     * 3. 트랜잭션 종료 → UPDATE SET view = ? → 락 해제
-     * v1(더티 체킹)과 다른 점:
-     * - v1은 락 없이 SELECT → 동시 요청이 같은 값을 읽어 Lost Update 발생
-     * - v4는 SELECT FOR UPDATE → 순서 강제, 항상 최신값 읽음 → 정합성 보장
-     * 단점: 락 유지 시간 = SELECT ~ 커밋 (v2 원자적 UPDATE보다 훨씬 길다)
-     * → 대용량 트래픽 시 락 대기 폭증 → v2, v3보다 처리량 낮음
-     */
-    @Transactional
-    public void incrementViewCountWithPessimisticLock(Long boastCatPostId) {
-        // SELECT FOR UPDATE → 행 잠금 (다른 트랜잭션은 이 커밋 전까지 대기)
-        BoastCatPost post = boastCatPostRepository.findByIdWithPessimisticLock(boastCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-
-        // 잠금 상태에서 안전하게 최신값 +1
         post.incrementView();
-        // 트랜잭션 종료 → UPDATE SET view = {최신값+1} → 락 해제
+        return GetBoastCatPostResponse.from(post);
+    }
+
+    // v2: 상세조회 + 원자적 UPDATE (동시성 보장)
+    @Transactional
+    public GetBoastCatPostResponse getBoastCatPostV2(Long id) {
+        boastCatPostRepository.incrementViewCount(id);
+        BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+        return GetBoastCatPostResponse.from(post);
+    }
+
+    // v3: 상세조회 + Redis INCR (트랜잭션 없음 — Redis는 2PC 미지원)
+    public GetBoastCatPostResponse getBoastCatPostV3(Long id) {
+        viewCountService.incrementViewCount(PostType.BOAST, id, "test-" + System.nanoTime());
+        BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+        return GetBoastCatPostResponse.from(post);
+    }
+
+    // v4: 상세조회 + 비관적 락 (SELECT FOR UPDATE, 처리량 낮음)
+    @Transactional
+    public GetBoastCatPostResponse getBoastCatPostV4(Long id) {
+        BoastCatPost post = boastCatPostRepository.findByIdWithPessimisticLock(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+        post.incrementView();
+        return GetBoastCatPostResponse.from(post);
     }
 
 }

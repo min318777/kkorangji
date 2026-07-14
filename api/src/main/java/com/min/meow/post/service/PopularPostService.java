@@ -126,11 +126,12 @@ public class PopularPostService {
     }
 
     /**
-     * v5: Redis Sorted Set 실시간 집계
-     * 좋아요/댓글/조회수 변경 이벤트 → Sorted Set ZINCRBY → 목록 조회 시 ZRANGE
-     * DB 집계 쿼리 없이 O(log N) 으로 TOP 24 즉시 반환
-     * Sorted Set이 비어있으면 DB fallback
+     * v5: Redis Sorted Set 실시간 집계 + 캐시 워밍
+     * 좋아요/댓글/조회수 이벤트 → ZINCRBY 실시간 점수 누적
+     * 캐시 HIT → 즉시 반환 / MISS → Sorted Set → findByIds(DB) → 캐시 저장
+     * PopularPostV5CacheWarmingScheduler가 25초마다 선제 갱신 → Stampede 방지
      */
+    @Cacheable(cacheNames = "post:boast:popular:v5")
     public List<BoastCatPostListResponse> getPopularPostsV5() {
         List<Long> ids = popularRankingService.getTop24PostIds();
 

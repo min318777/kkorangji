@@ -12,9 +12,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 인기글 Sorted Set 관리 서비스
@@ -35,7 +38,22 @@ public class PopularRankingService {
     private final RedisTemplate<String, String> redisTemplate;
     private final PopularPostRepository popularPostRepository;
 
-    private static final String RANKING_KEY = "post:boast:popular:ranking";
+    private static final String RANKING_KEY_PREFIX = "post:boast:popular:ranking:";
+    // 오늘 키는 2일 후 자동 만료 (어제 데이터 fallback 용도)
+    private static final long KEY_TTL_DAYS = 2;
+
+    /** 오늘 날짜 기반 키 반환 (Asia/Seoul 기준) */
+    private String getRankingKey() {
+        return RANKING_KEY_PREFIX + LocalDate.now(ZoneId.of("Asia/Seoul"));
+    }
+
+    /** TTL이 설정되지 않은 키에만 만료 시간 부여 */
+    private void setTtlIfAbsent(String key) {
+        Long ttl = redisTemplate.getExpire(key);
+        if (ttl != null && ttl == -1) {
+            redisTemplate.expire(key, KEY_TTL_DAYS, TimeUnit.DAYS);
+        }
+    }
 
     /**
      * 서버 시작 시 Sorted Set 초기화
@@ -44,9 +62,11 @@ public class PopularRankingService {
     @PostConstruct
     public void initRanking() {
         try {
-            Long size = redisTemplate.opsForZSet().zCard(RANKING_KEY);
+            String key = getRankingKey();
+            Long size = redisTemplate.opsForZSet().zCard(key);
             if (size != null && size > 0) {
-                log.info("[PopularRanking] Sorted Set 이미 존재 - 초기화 생략 (size={})", size);
+                log.info("[PopularRanking] Sorted Set 이미 존재 - 초기화 생략 (key={}, size={})", key, size);
+                setTtlIfAbsent(key);
                 return;
             }
             List<Tuple> posts = popularPostRepository.findAllForRankingInit();
@@ -59,9 +79,10 @@ public class PopularRankingService {
                 double score = (likeCount != null ? likeCount : 0) * 3.0
                         + (commentCount != null ? commentCount : 0) * 2.0
                         + (view != null ? view : 0);
-                redisTemplate.opsForZSet().add(RANKING_KEY, String.valueOf(id), score);
+                redisTemplate.opsForZSet().add(key, String.valueOf(id), score);
             }
-            log.info("[PopularRanking] 초기화 완료 - {}개 게시글", posts.size());
+            setTtlIfAbsent(key);
+            log.info("[PopularRanking] 초기화 완료 - key={}, {}개 게시글", key, posts.size());
         } catch (Exception e) {
             log.error("[PopularRanking] 초기화 실패 - DB fallback으로 동작", e);
         }
@@ -75,7 +96,9 @@ public class PopularRankingService {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onScoreEvent(PopularScoreEvent event) {
         try {
-            redisTemplate.opsForZSet().incrementScore(RANKING_KEY, String.valueOf(event.postId()), event.scoreDelta());
+            String key = getRankingKey();
+            redisTemplate.opsForZSet().incrementScore(key, String.valueOf(event.postId()), event.scoreDelta());
+            setTtlIfAbsent(key);
             log.debug("[PopularRanking] ZINCRBY - postId: {}, delta: {}", event.postId(), event.scoreDelta());
         } catch (Exception e) {
             log.warn("[PopularRanking] ZINCRBY 실패 - postId: {}, delta: {}", event.postId(), event.scoreDelta(), e);
@@ -87,7 +110,7 @@ public class PopularRankingService {
      */
     public List<Long> getTop24PostIds() {
         try {
-            Set<String> members = redisTemplate.opsForZSet().reverseRange(RANKING_KEY, 0, 23);
+            Set<String> members = redisTemplate.opsForZSet().reverseRange(getRankingKey(), 0, 23);
             if (members == null || members.isEmpty()) return List.of();
             return members.stream().map(Long::parseLong).toList();
         } catch (Exception e) {
@@ -103,16 +126,18 @@ public class PopularRankingService {
      */
     public void updateViewScores(Map<String, Long> deltas) {
         if (deltas == null || deltas.isEmpty()) return;
+        String rankingKey = getRankingKey();
         String prefix = "view:count:";
         for (Map.Entry<String, Long> entry : deltas.entrySet()) {
             String key = entry.getKey();
             String[] parts = key.substring(prefix.length()).split(":");
             if (parts.length != 2 || !"boast".equalsIgnoreCase(parts[0])) continue;
             try {
-                redisTemplate.opsForZSet().incrementScore(RANKING_KEY, parts[1], entry.getValue());
+                redisTemplate.opsForZSet().incrementScore(rankingKey, parts[1], entry.getValue());
             } catch (Exception e) {
                 log.warn("[PopularRanking] 조회수 점수 갱신 실패 - key: {}", key, e);
             }
         }
+        setTtlIfAbsent(rankingKey);
     }
 }

@@ -106,10 +106,20 @@ public class RedisConfig {
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
 
-        // 상세조회 캐시 설정 (TTL 10분) — 스탬피드 방지 비교 (v1/v2/v3)
+        // 상세조회 캐시 설정 (TTL 30초) — 스탬피드 테스트용
         RedisCacheConfiguration postDetailConfiguration = RedisCacheConfiguration.defaultCacheConfig()
                 .disableCachingNullValues()
-                .entryTtl(Duration.ofMinutes(10))
+                .entryTtl(Duration.ofSeconds(30))
+                .serializeKeysWith(RedisSerializationContext
+                        .SerializationPair
+                        .fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
+
+        // v5 인기글 캐시 (TTL 30초) — Sorted Set + 캐시 워밍 조합 테스트용 (운영: 5분)
+        RedisCacheConfiguration popularV5Configuration = RedisCacheConfiguration.defaultCacheConfig()
+                .disableCachingNullValues()
+                .entryTtl(Duration.ofSeconds(30))
                 .serializeKeysWith(RedisSerializationContext
                         .SerializationPair
                         .fromSerializer(new StringRedisSerializer()))
@@ -135,6 +145,8 @@ public class RedisConfig {
                 .withCacheConfiguration("post:boast:popular", popularPostsConfiguration)
                 .withCacheConfiguration("post:boast:popular:v2", popularPostsConfiguration)
                 .withCacheConfiguration("post:boast:popular:warmed", popularPostsConfiguration)
+                // v5 인기글 캐시 — Sorted Set + 캐시 워밍 조합 (TTL 30초 테스트용)
+                .withCacheConfiguration("post:boast:popular:v5", popularV5Configuration)
                 // 상세조회 캐시 — v1/v2/v3 공용 (TTL 10분)
                 .withCacheConfiguration("post:boast:detail", postDetailConfiguration)
                 // 자랑글 전체 수 캐시 (TTL 5분)
