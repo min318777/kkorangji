@@ -1,7 +1,7 @@
 server:
   tomcat:
     threads:
-      max: 50       # 최대 스레드 수 (t3.small 기준)
+      max: 50       # 최대 워커 스레드 수 (t3.small 2코어 기준)
       min-spare: 10 # 최소 유지 스레드 수
   servlet:
     encoding:
