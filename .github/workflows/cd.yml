@@ -82,10 +82,10 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu/meow
+            git checkout -- docker-compose.prod.yml
             git pull origin main
-            export IMAGE_TAG=${{ github.sha }}
-            IMAGE_TAG=$IMAGE_TAG docker compose -f docker-compose.prod.yml pull
-            IMAGE_TAG=$IMAGE_TAG docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml pull api
+            docker compose -f docker-compose.prod.yml up -d api
             docker image prune -f
 
       - name: 헬스체크
