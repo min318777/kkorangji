@@ -11,6 +11,8 @@ server:
       force-response: true
 
 spring:
+  jmx:
+    enabled: true  # Tomcat 스레드 메트릭 수집용
   servlet:
     multipart:
       max-file-size: 10MB
