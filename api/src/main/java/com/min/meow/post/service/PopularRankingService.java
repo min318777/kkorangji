@@ -69,7 +69,7 @@ public class PopularRankingService {
                 setTtlIfAbsent(key);
                 return;
             }
-            List<Tuple> posts = popularPostRepository.findAllForRankingInit();
+            List<Tuple> posts = popularPostRepository.findTopForRankingInit(1000);
             for (Tuple post : posts) {
                 Long id = post.get(0, Long.class);
                 Integer likeCount = post.get(1, Integer.class);
@@ -82,7 +82,7 @@ public class PopularRankingService {
                 redisTemplate.opsForZSet().add(key, String.valueOf(id), score);
             }
             setTtlIfAbsent(key);
-            log.info("[PopularRanking] 초기화 완료 - key={}, {}개 게시글", key, posts.size());
+            log.info("[PopularRanking] 초기화 완료 - key={}, 상위 1000개 중 {}개 게시글", key, posts.size());
         } catch (Exception e) {
             log.error("[PopularRanking] 초기화 실패 - DB fallback으로 동작", e);
         }

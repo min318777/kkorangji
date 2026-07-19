@@ -29,7 +29,7 @@ public class PopularPostCacheWarmingScheduler {
      * 갱신 도중 들어오는 요청도 항상 HIT 보장
      * fixedRate = 25_000ms = 25초 (TTL 30초보다 5초 앞서 갱신)
      */
-    @Scheduled(fixedRate = 25_000, initialDelay = 0)
+    //@Scheduled(fixedRate = 25_000, initialDelay = 0)
     public void warmPopularPostsCache() {
         log.info("[v3 Cache Warming] 인기 게시물 캐시 갱신 시작");
         try {

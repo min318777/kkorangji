@@ -36,7 +36,7 @@ public class PopularPostV5CacheWarmingScheduler {
      * 2. findByIds()로 게시글 데이터 조회
      * 3. Sorted Set score 순서로 재정렬 후 캐시 put (clear 없음 → 공백 없음)
      */
-    // @Scheduled(fixedRate = 25_000, initialDelay = 0) // v1 스탬피드 테스트 시 비활성화
+    // @Scheduled(fixedRate = 25_000, initialDelay = 0)
     public void warmV5Cache() {
         try {
             List<Long> ids = popularRankingService.getTop24PostIds();

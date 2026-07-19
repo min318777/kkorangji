@@ -26,7 +26,7 @@ spring:
     hikari:
       maximum-pool-size: 15      # 최대 DB 커넥션 수 (t3.small max_connections 225 기준)
       minimum-idle: 5            # 평상시 유지 커넥션
-      connection-timeout: 30000  # 30초 내 못 얻으면 실패
+      connection-timeout: 5000  # 30초 내 못 얻으면 실패
       max-lifetime: 1800000      # 30분마다 재생성 (AWS RDS idle 끊김 방지)
       idle-timeout: 600000       # 10분 유휴 시 커넥션 반납
       keepalive-time: 60000      # 60초마다 SELECT 1 (끊어진 연결 방지)

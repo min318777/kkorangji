@@ -86,13 +86,15 @@ public class PopularPostRepository {
     }
 
     /**
-     * 랭킹 초기화용 전체 게시글 (id, likeCount, commentCount, view) 조회
-     * @PostConstruct에서 Sorted Set 초기값 계산에 사용
+     * 랭킹 초기화용 상위 N개 게시글 (id, likeCount, commentCount, view) 조회
+     * @PostConstruct에서 Sorted Set 초기값 계산에 사용 (전체 로드 → 기동 지연 방지)
      */
-    public List<Tuple> findAllForRankingInit() {
+    public List<Tuple> findTopForRankingInit(int limit) {
         return queryFactory
                 .select(boastCatPost.id, boastCatPost.likeCount, boastCatPost.commentCount, boastCatPost.view)
                 .from(boastCatPost)
+                .orderBy(boastCatPost.likeCount.desc())
+                .limit(limit)
                 .fetch();
     }
 }

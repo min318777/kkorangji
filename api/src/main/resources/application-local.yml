@@ -14,7 +14,7 @@ spring:
     hikari:
       maximum-pool-size: 15          # prod와 동일 환경 (t3.small 기준)
       minimum-idle: 5                # 평상시 유지 커넥션
-      connection-timeout: 30000      # 30초 내 못 얻으면 실패 (pool_timeout=30)
+      connection-timeout: 5000     # 30초 내 못 얻으면 실패 (pool_timeout=30)
       max-lifetime: 1800000          # 30분마다 커넥션 재생성 (pool_recycle=1800)
       idle-timeout: 600000           # 10분 유휴 시 커넥션 정리
       keepalive-time: 60000          # 60초마다 SELECT 1로 연결 확인 (pool_pre_ping=True)
