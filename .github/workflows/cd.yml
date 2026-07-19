@@ -82,6 +82,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu/meow
+            git pull origin main
             export IMAGE_TAG=${{ github.sha }}
             IMAGE_TAG=$IMAGE_TAG docker compose -f docker-compose.prod.yml pull
             IMAGE_TAG=$IMAGE_TAG docker compose -f docker-compose.prod.yml up -d
