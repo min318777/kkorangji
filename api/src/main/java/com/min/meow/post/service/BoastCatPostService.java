@@ -214,8 +214,8 @@ public class BoastCatPostService {
     }
 
     // v3: 상세조회 + Redis INCR (트랜잭션 없음 — Redis는 2PC 미지원)
-    public GetBoastCatPostResponse getBoastCatPostV3(Long id) {
-        viewCountService.incrementViewCount(PostType.BOAST, id, "test-" + System.nanoTime());
+    public GetBoastCatPostResponse getBoastCatPostV3(Long id, String clientIp) {
+        viewCountService.incrementViewCount(PostType.BOAST, id, "ip:" + clientIp);
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
         return GetBoastCatPostResponse.from(post);

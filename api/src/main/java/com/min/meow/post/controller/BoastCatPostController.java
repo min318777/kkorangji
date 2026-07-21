@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
 
 
 @Tag(name = "자랑글", description = "고양이 자랑 게시글 CRUD API")
@@ -135,8 +136,12 @@ public class BoastCatPostController {
     @SecurityRequirements
     @GetMapping("/view/v3/{boastCatPostId}")
     public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastCatPostV3(
-            @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId) {
-        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v3)", boastCatPostService.getBoastCatPostV3(boastCatPostId)));
+            @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId,
+            HttpServletRequest request) {
+        String clientIp = request.getHeader("X-Real-IP") != null
+                ? request.getHeader("X-Real-IP")
+                : request.getRemoteAddr();
+        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v3)", boastCatPostService.getBoastCatPostV3(boastCatPostId, clientIp)));
     }
 
     @Operation(summary = "자랑글 상세조회 + 조회수 증가 (v4 비관적 락)")
