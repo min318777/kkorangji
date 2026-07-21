@@ -6,8 +6,7 @@
 FROM eclipse-temurin:17-jdk-jammy
 WORKDIR /app
 COPY . .
-RUN chmod +x ./gradlew && ./gradlew :api:build -x test --no-daemon
-COPY api/build/libs/api-0.0.1-SNAPSHOT.jar app.jar
+RUN chmod +x ./gradlew && ./gradlew :api:build -x test --no-daemon && cp api/build/libs/api-0.0.1-SNAPSHOT.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
 
