@@ -33,8 +33,8 @@ RUN ./gradlew dependencies --no-daemon
 # 3단계: 소스 코드 복사 (자주 바뀌는 부분은 마지막에)
 COPY . .
 
-# 4단계: 빌드 (테스트 제외)
-RUN ./gradlew :api:build -x test --no-daemon
+# 4단계: 빌드 (테스트 제외) - COPY . . 후 gradlew 권한 재설정 필요
+RUN chmod +x ./gradlew && ./gradlew :api:build -x test --no-daemon
 
 # 실행 스테이지 (JRE만 포함 → 이미지 크기 최소화)
 FROM eclipse-temurin:17-jre-jammy
