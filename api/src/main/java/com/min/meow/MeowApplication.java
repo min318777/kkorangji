@@ -14,7 +14,7 @@ import org.springframework.retry.annotation.EnableRetry;
 public class MeowApplication {
 
 	public static void main(String[] args) {
-		// Spring Boot 애플리케이션 부트스트랩 (내장 톰캣 기동 + ApplicationContext 초기화) - 개선전 빌드 시간 측정용
+		// Spring Boot 애플리케이션 부트스트랩 (내장 톰캣 기동 + ApplicationContext 초기화) - 개선후 빌드 시간 측정용
 		SpringApplication.run(MeowApplication.class, args);
 	}
 
