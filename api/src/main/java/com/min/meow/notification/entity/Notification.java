@@ -2,6 +2,7 @@ package com.min.meow.notification.entity;
 
 
 import com.min.meow.common.NotificationType;
+import com.min.meow.common.PostType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,6 +47,11 @@ public class Notification {
     // DB 레벨 제약: 수신자 userId(PK)는 반드시 존재해야 함
     @Column(nullable = false)
     private Long receiverUserId;
+
+    // 알림이 속한 게시글 타입 (BOAST / LOST)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private PostType postType;
 
     private boolean isRead;
     private LocalDateTime createdAt;

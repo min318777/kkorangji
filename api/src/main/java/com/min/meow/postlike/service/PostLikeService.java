@@ -1,5 +1,6 @@
 package com.min.meow.postlike.service;
 
+import com.min.meow.common.PostType;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.notification.event.LikeEvent;
@@ -47,7 +48,7 @@ public class PostLikeService {
             // 본인 게시글이거나 탈퇴 회원이면 알림 생략
             if (!post.getUser().isWithdrawn() && !userId.equals(post.getUser().getId())) {
                 notificationEventPublisher.publishLikeEvent(
-                        new LikeEvent(like.getId(), postId, post.getUser().getId()));
+                        new LikeEvent(like.getId(), postId, PostType.BOAST, post.getUser().getId()));
             }
 
             // 인기글 Sorted Set 점수 +3 (AFTER_COMMIT 비동기 처리)

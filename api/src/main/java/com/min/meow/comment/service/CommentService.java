@@ -12,6 +12,7 @@ import com.min.meow.comment.dto.response.UpdateCommentResponse;
 import com.min.meow.notification.event.CommentEvent;
 import com.min.meow.comment.entity.Comment;
 import com.min.meow.comment.repository.CommentRepository;
+import com.min.meow.common.PostType;
 import com.min.meow.common.SecurityUtil;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.LostCatPost;
@@ -98,7 +99,7 @@ public class CommentService {
 
         if (!boastCatPost.getUser().isWithdrawn() && !user.getId().equals(boastCatPost.getUser().getId())) {
             notificationEventPublisher.publishCommentEvent(new CommentEvent(
-                    comment.getId(), boastCatPostId, user.getLoginId(), boastCatPost.getUser().getId()));
+                    comment.getId(), boastCatPostId, PostType.BOAST, user.getLoginId(), boastCatPost.getUser().getId()));
         }
 
         // 인기글 Sorted Set 점수 +2 (AFTER_COMMIT 비동기 처리)
@@ -130,7 +131,7 @@ public class CommentService {
 
         if (!lostCatPost.getUser().isWithdrawn() && !user.getId().equals(lostCatPost.getUser().getId())) {
             notificationEventPublisher.publishCommentEvent(new CommentEvent(
-                    comment.getId(), lostCatPostId, user.getLoginId(), lostCatPost.getUser().getId()));
+                    comment.getId(), lostCatPostId, PostType.LOST, user.getLoginId(), lostCatPost.getUser().getId()));
         }
         return RegisterCommentResponse.toResponse(comment);
     }

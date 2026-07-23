@@ -1,6 +1,8 @@
 package com.min.meow.notification.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.min.meow.common.NotificationType;
+import com.min.meow.common.PostType;
 import com.min.meow.notification.entity.Notification;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -38,6 +40,10 @@ public class NotificationResponse {
     @Schema(description = "알림 수신자 사용자 ID", example = "1")
     private Long receiverUserId;
 
+    @Schema(description = "게시글 타입", example = "BOAST")
+    private PostType postType;
+
+    @JsonProperty("isRead")
     @Schema(description = "읽음 여부", example = "false")
     private boolean isRead;
 
@@ -52,6 +58,7 @@ public class NotificationResponse {
                 .type(notification.getType())
                 .message(notification.getMessage())
                 .receiverUserId(notification.getReceiverUserId())
+                .postType(notification.getPostType())
                 .isRead(notification.isRead())
                 .createdAt(notification.getCreatedAt())
                 .build();

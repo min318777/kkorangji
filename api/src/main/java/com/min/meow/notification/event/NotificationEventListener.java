@@ -46,27 +46,24 @@ public class NotificationEventListener {
         log.debug("댓글 이벤트 수신 - commentId: {}, postId: {}, receiverUserId: {}",
                 event.commentId(), event.postId(), event.receiverUserId());
         try {
-            // 1. 알림 엔티티 생성
             Notification notification = Notification.builder()
                     .sourceId(event.commentId())
                     .postId(event.postId())
+                    .postType(event.postType())
                     .receiverUserId(event.receiverUserId())
                     .type(NotificationType.COMMENT)
                     .message(createCommentNotificationMessage(event.writer()))
                     .isRead(false)
                     .build();
 
-            // 2. DB에 저장 (재시도 포함)
             Notification saved = notificationSaveService.save(notification);
-            if (saved == null) return; // 3회 재시도 후 최종 실패
+            if (saved == null) return;
             log.debug("DB 알림 저장 완료 - ID: {}, Type: COMMENT, ReceiverUserId: {}",
                     saved.getId(), saved.getReceiverUserId());
 
-            // 3. SSE 실시간 전송 (사용자가 접속 중인 경우에만)
             sendSseNotification(saved);
 
         } catch (Exception e) {
-            // 알림 처리 실패는 메인 비즈니스 로직에 영향을 주지 않도록 로깅만 수행
             log.error("댓글 알림 처리 실패 - commentId: {}, error: {}",
                     event.commentId(), e.getMessage(), e);
         }
@@ -83,27 +80,24 @@ public class NotificationEventListener {
                 event.likeId(), event.postId(), event.receiverUserId());
 
         try {
-            // 1. 알림 엔티티 생성
             Notification notification = Notification.builder()
                     .sourceId(event.likeId())
                     .postId(event.postId())
+                    .postType(event.postType())
                     .receiverUserId(event.receiverUserId())
                     .type(NotificationType.LIKE)
                     .message("게시글에 좋아요가 추가되었습니다.")
                     .isRead(false)
                     .build();
 
-            // 2. DB에 저장 (재시도 포함)
             Notification saved = notificationSaveService.save(notification);
-            if (saved == null) return; // 3회 재시도 후 최종 실패
+            if (saved == null) return;
             log.debug("DB 알림 저장 완료 - ID: {}, Type: LIKE, ReceiverUserId: {}",
                     saved.getId(), saved.getReceiverUserId());
 
-            // 3. SSE 실시간 전송 (사용자가 접속 중인 경우에만)
             sendSseNotification(saved);
 
         } catch (Exception e) {
-            // 알림 처리 실패는 메인 비즈니스 로직에 영향을 주지 않도록 로깅만 수행
             log.error("좋아요 알림 처리 실패 - likeId: {}, error: {}",
                     event.likeId(), e.getMessage(), e);
         }
@@ -116,7 +110,6 @@ public class NotificationEventListener {
     private void sendSseNotification(Notification notification) {
         Long receiverUserId = notification.getReceiverUserId();
 
-        // 사용자 연결 상태 확인 후 전송
         if (sseEmitterManager.isConnected(receiverUserId)) {
             sseEmitterManager.sendToUser(receiverUserId, notification);
             log.debug("SSE 실시간 알림 전송 완료 - ReceiverUserId: {}", receiverUserId);
