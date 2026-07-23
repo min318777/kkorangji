@@ -24,7 +24,7 @@ public class RolePermission {
     private Long id;
 
     // 역할
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 

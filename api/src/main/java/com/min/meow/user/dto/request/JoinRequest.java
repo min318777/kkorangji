@@ -30,9 +30,8 @@ public class JoinRequest {
     @NotBlank(message = "비밀번호를 한번 더 입력해 주세요.")
     private String passwordConfirm;
 
-    // 이메일: 올바른 형식
-    @Schema(description = "이메일 주소", example = "catlover@example.com")
-    @NotBlank(message = "이메일을 입력해 주세요.")
+    // 이메일: 선택 입력, 입력 시 올바른 형식
+    @Schema(description = "이메일 주소 (선택)", example = "catlover@example.com")
     @Email(message = "올바르지 않은 이메일 형식입니다.")
     private String email;
 

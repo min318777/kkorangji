@@ -49,7 +49,7 @@ public class UserService {
     @Transactional
     public JoinResponse join(JoinRequest joinRequest){
 
-        if (userRepository.existsByEmail(joinRequest.getEmail())) {
+        if (joinRequest.getEmail() != null && userRepository.existsByEmail(joinRequest.getEmail())) {
             throw new CustomException(ErrorCode.ALREADY_EXISTING_EMAIL);
         }
         if (userRepository.existsByLoginId(joinRequest.getLoginId())){
