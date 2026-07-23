@@ -34,13 +34,35 @@ public class DauService {
         }
     }
 
-    /** 특정 날짜의 DAU 조회 */
+    /** 모든 요청 시 호출 — IP 기반 DAU SET에 추가 (비로그인 포함) */
+    public void recordByIp(String ip) {
+        try {
+            String key = DAU_KEY_PREFIX + "ip:" + LocalDate.now();
+            redisTemplate.opsForSet().add(key, ip);
+            redisTemplate.expire(key, Duration.ofDays(7));
+        } catch (Exception e) {
+            log.warn("DAU IP 기록 실패 - ip: {}", ip, e);
+        }
+    }
+
+    /** 특정 날짜의 로그인 유저 DAU 조회 */
     public Long getCount(LocalDate date) {
         try {
             Long count = redisTemplate.opsForSet().size(DAU_KEY_PREFIX + date);
             return count != null ? count : 0L;
         } catch (Exception e) {
             log.warn("DAU 조회 실패 - date: {}", date, e);
+            return 0L;
+        }
+    }
+
+    /** 특정 날짜의 IP 기반 DAU 조회 (비로그인 포함 전체 방문자) */
+    public Long getIpCount(LocalDate date) {
+        try {
+            Long count = redisTemplate.opsForSet().size(DAU_KEY_PREFIX + "ip:" + date);
+            return count != null ? count : 0L;
+        } catch (Exception e) {
+            log.warn("DAU IP 조회 실패 - date: {}", date, e);
             return 0L;
         }
     }

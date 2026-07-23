@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.min.meow.user.service.DauService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
@@ -22,7 +24,10 @@ import java.util.UUID;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class MdcFilter extends OncePerRequestFilter {
+
+    private final DauService dauService;
 
     private static final String REQUEST_ID_KEY = "requestId";
     private static final String CLIENT_IP_KEY = "clientIp";
@@ -38,6 +43,7 @@ public class MdcFilter extends OncePerRequestFilter {
         // 여러 프록시 경유 시 "client, proxy1, proxy2" 형태 → 첫 번째가 실제 IP
         String clientIp = extractClientIp(request);
         MDC.put(CLIENT_IP_KEY, clientIp);
+        dauService.recordByIp(clientIp);
 
         // 응답 헤더에도 requestId를 포함시켜 클라이언트 측 디버깅 지원
         response.setHeader("X-Request-Id", requestId);
