@@ -2,13 +2,14 @@ package com.min.meow.user.service;
 
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
-import com.min.meow.user.dto.reponse.JoinResponse;
+import com.min.meow.security.service.PermissionCacheService;
+import com.min.meow.security.service.RefreshTokenService;
+import com.min.meow.user.dto.response.JoinResponse;
 import com.min.meow.user.dto.request.JoinRequest;
 import com.min.meow.user.dto.request.LoginRequest;
 import com.min.meow.user.entity.Role;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.entity.UserRole;
-import com.min.meow.user.repository.RefreshTokenRepository;
 import com.min.meow.user.repository.RoleRepository;
 import com.min.meow.user.repository.UserRepository;
 import com.min.meow.user.repository.UserRoleRepository;
@@ -64,7 +65,10 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private RefreshTokenRepository refreshTokenRepository;
+    private RefreshTokenService refreshTokenService;
+
+    @Mock
+    private PermissionCacheService permissionCacheService;
 
     @Mock
     private BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -278,8 +282,7 @@ class UserServiceTest {
             userService.withdraw(1L);
 
             // then — 리프레시 토큰 삭제 + 소프트 삭제 처리 확인
-            // deleteByLoginId는 user 엔티티에서 loginId를 가져와 호출됨
-            verify(refreshTokenRepository, times(1)).deleteByLoginId("withdraw1");
+            verify(refreshTokenService, times(1)).delete(1L);
             verify(user, times(1)).withdraw();
             verify(userRepository, times(1)).save(user);
         }
@@ -297,7 +300,7 @@ class UserServiceTest {
                     .isEqualTo(ErrorCode.NOT_FOUND_USER);
 
             // 토큰 삭제와 저장이 호출되지 않아야 함
-            verify(refreshTokenRepository, never()).deleteByLoginId(anyString());
+            verify(refreshTokenService, never()).delete(any());
             verify(userRepository, never()).save(any());
         }
 
@@ -316,7 +319,7 @@ class UserServiceTest {
                     .isEqualTo(ErrorCode.ALREADY_WITHDRAWN_USER);
 
             // 실제 탈퇴 처리(토큰 삭제, 저장)가 호출되지 않아야 함
-            verify(refreshTokenRepository, never()).deleteByLoginId(anyString());
+            verify(refreshTokenService, never()).delete(any());
             verify(userRepository, never()).save(any());
         }
     }

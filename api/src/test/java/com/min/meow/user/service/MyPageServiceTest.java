@@ -7,11 +7,13 @@ import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.LostCatPost;
+import com.min.meow.common.PageResponse;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.post.repository.LostCatRepository;
-import com.min.meow.user.dto.reponse.MyCommentListResponse;
-import com.min.meow.user.dto.reponse.MyPageSummaryResponse;
-import com.min.meow.user.dto.reponse.MyPostListResponse;
+import com.min.meow.postlike.repository.PostLikeRepository;
+import com.min.meow.user.dto.response.MyCommentDto;
+import com.min.meow.user.dto.response.MyPageSummaryResponse;
+import com.min.meow.user.dto.response.MyPostDto;
 import com.min.meow.user.dto.request.UpdateProfileRequest;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
@@ -73,6 +75,9 @@ class MyPageServiceTest {
     @Mock
     private CommentRepository commentRepository;
 
+    @Mock
+    private PostLikeRepository postLikeRepository;
+
     // =========================================================================
     // 테스트 픽스처 헬퍼 — 반복되는 Mock User 생성 공통화
     // =========================================================================
@@ -104,7 +109,7 @@ class MyPageServiceTest {
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(userRepository.countBoastCatPostsByUserId(any())).willReturn(10L);
             given(userRepository.countLostCatPostsByUserId(any())).willReturn(5L);
-            given(commentRepository.countByUser(user)).willReturn(30L);
+            given(commentRepository.countByUserId(any())).willReturn(30L);
 
             // when
             MyPageSummaryResponse response = myPageService.getMyPageSummary(1L);
@@ -138,7 +143,7 @@ class MyPageServiceTest {
             given(userRepository.findById(2L)).willReturn(Optional.of(user));
             given(userRepository.countBoastCatPostsByUserId(any())).willReturn(0L);
             given(userRepository.countLostCatPostsByUserId(any())).willReturn(0L);
-            given(commentRepository.countByUser(user)).willReturn(0L);
+            given(commentRepository.countByUserId(any())).willReturn(0L);
 
             // when
             MyPageSummaryResponse response = myPageService.getMyPageSummary(2L);
@@ -166,7 +171,7 @@ class MyPageServiceTest {
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(userRepository.countBoastCatPostsByUserId(any())).willReturn(0L);
             given(userRepository.countLostCatPostsByUserId(any())).willReturn(0L);
-            given(commentRepository.countByUser(user)).willReturn(0L);
+            given(commentRepository.countByUserId(any())).willReturn(0L);
 
             UpdateProfileRequest request = new UpdateProfileRequest();
             request.setNickname("새닉네임");
@@ -203,7 +208,7 @@ class MyPageServiceTest {
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(userRepository.countBoastCatPostsByUserId(any())).willReturn(0L);
             given(userRepository.countLostCatPostsByUserId(any())).willReturn(0L);
-            given(commentRepository.countByUser(user)).willReturn(0L);
+            given(commentRepository.countByUserId(any())).willReturn(0L);
 
             UpdateProfileRequest request = new UpdateProfileRequest();
             request.setNickname("새닉네임");
@@ -224,65 +229,23 @@ class MyPageServiceTest {
     class GetMyPosts {
 
         @Test
-        @DisplayName("성공: PostType.ALL 조회 시 자랑글과 실종글을 합산하여 반환한다")
-        void test_성공_전체_게시글_조회() {
-            // given
+        @DisplayName("실패: PostType.ALL 조회 시 CustomException(INVALID_POST_TYPE)을 던진다")
+        void test_실패_전체_타입_조회_미지원() {
+            // given — ALL 타입은 OOM 위험으로 미지원 (전체 메모리 로딩 불가)
             User user = createTestUser(1L, "testuser");
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
 
-            // BoastCatPost Mock — getAllPosts에서 createdAt으로 정렬하므로 null이 아닌 값 필요
-            java.time.LocalDateTime now = java.time.LocalDateTime.now();
-            BoastCatPost boastPost1 = mock(BoastCatPost.class);
-            given(boastPost1.getId()).willReturn(1L);
-            given(boastPost1.getTitle()).willReturn("자랑글1");
-            given(boastPost1.getContents()).willReturn("내용1");
-            given(boastPost1.getCreatedAt()).willReturn(now);
-            given(boastPost1.getUpdatedAt()).willReturn(now);
-            given(boastPost1.getCommentCount()).willReturn(0);
-            given(boastPost1.getLikeCount()).willReturn(0);
-
-            BoastCatPost boastPost2 = mock(BoastCatPost.class);
-            given(boastPost2.getId()).willReturn(2L);
-            given(boastPost2.getTitle()).willReturn("자랑글2");
-            given(boastPost2.getContents()).willReturn("내용2");
-            given(boastPost2.getCreatedAt()).willReturn(now.minusHours(1));
-            given(boastPost2.getUpdatedAt()).willReturn(now.minusHours(1));
-            given(boastPost2.getCommentCount()).willReturn(0);
-            given(boastPost2.getLikeCount()).willReturn(0);
-
-            LostCatPost lostPost = mock(LostCatPost.class);
-            given(lostPost.getId()).willReturn(3L);
-            given(lostPost.getTitle()).willReturn("실종글1");
-            given(lostPost.getContents()).willReturn("내용3");
-            given(lostPost.getCreatedAt()).willReturn(now.minusHours(2));
-            given(lostPost.getUpdatedAt()).willReturn(now.minusHours(2));
-            given(lostPost.getCommentCount()).willReturn(0);
-            given(lostPost.isCompleted()).willReturn(false);
-
-            // 자랑글 2개, 실종글 1개 반환 Mock 설정
-            Page<BoastCatPost> boastPage = new PageImpl<>(
-                    List.of(boastPost1, boastPost2), Pageable.unpaged(), 2
-            );
-            Page<LostCatPost> lostPage = new PageImpl<>(
-                    List.of(lostPost), Pageable.unpaged(), 1
-            );
-
-            given(boastCatPostRepository.findByUserIdOrderByCreatedAtDesc(any(), eq(Pageable.unpaged())))
-                    .willReturn(boastPage);
-            given(lostCatRepository.findByUserIdOrderByCreatedAtDesc(any(), eq(Pageable.unpaged())))
-                    .willReturn(lostPage);
-
             Pageable pageable = PageRequest.of(0, 10);
 
-            // when
-            MyPostListResponse response = myPageService.getMyPosts(1L, pageable, PostType.ALL);
+            // when & then — INVALID_POST_TYPE 예외 발생
+            assertThatThrownBy(() -> myPageService.getMyPosts(1L, pageable, PostType.ALL))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorCode")
+                    .isEqualTo(ErrorCode.INVALID_POST_TYPE);
 
-            // then — 자랑글 2 + 실종글 1 = 총 3개
-            assertThat(response.getTotalElements()).isEqualTo(3L);
-
-            // 두 repository가 모두 호출되었는지 검증
-            verify(boastCatPostRepository).findByUserIdOrderByCreatedAtDesc(any(), eq(Pageable.unpaged()));
-            verify(lostCatRepository).findByUserIdOrderByCreatedAtDesc(any(), eq(Pageable.unpaged()));
+            // repository가 호출되지 않아야 함
+            verify(boastCatPostRepository, never()).findByUserIdOrderByCreatedAtDesc(any(), any());
+            verify(lostCatRepository, never()).findByUserIdOrderByCreatedAtDesc(any(), any());
         }
 
         @Test
@@ -342,23 +305,20 @@ class MyPageServiceTest {
 
             java.time.LocalDateTime now = java.time.LocalDateTime.now();
 
-            // MyCommentDto.from()에서 boastCatPost != null이면 boast로 분기
-            // Comment Mock에 boastCatPost를 설정하여 NPE 방지
-            BoastCatPost boastPost = mock(BoastCatPost.class);
-            given(boastPost.getId()).willReturn(10L);
-            given(boastPost.getTitle()).willReturn("자랑글 제목");
-
+            // Comment 엔티티는 postId + postType 구조 (boastCatPost FK 제거됨)
             Comment comment1 = mock(Comment.class);
             given(comment1.getId()).willReturn(1L);
             given(comment1.getContents()).willReturn("첫 번째 댓글");
-            given(comment1.getBoastCatPost()).willReturn(boastPost);  // boast 댓글
+            given(comment1.getPostType()).willReturn(PostType.BOAST);
+            given(comment1.getPostId()).willReturn(10L);
             given(comment1.getCreatedAt()).willReturn(now);
             given(comment1.getUpdatedAt()).willReturn(now);
 
             Comment comment2 = mock(Comment.class);
             given(comment2.getId()).willReturn(2L);
             given(comment2.getContents()).willReturn("두 번째 댓글");
-            given(comment2.getBoastCatPost()).willReturn(boastPost);  // boast 댓글
+            given(comment2.getPostType()).willReturn(PostType.BOAST);
+            given(comment2.getPostId()).willReturn(10L);
             given(comment2.getCreatedAt()).willReturn(now.minusHours(1));
             given(comment2.getUpdatedAt()).willReturn(now.minusHours(1));
 
@@ -369,7 +329,7 @@ class MyPageServiceTest {
                     .willReturn(commentPage);
 
             // when
-            MyCommentListResponse response = myPageService.getMyComments(1L, pageable);
+            PageResponse<MyCommentDto> response = myPageService.getMyComments(1L, pageable);
 
             // then
             assertThat(response.getTotalElements()).isEqualTo(2L);
@@ -405,7 +365,7 @@ class MyPageServiceTest {
                     .willReturn(emptyPage);
 
             // when
-            MyCommentListResponse response = myPageService.getMyComments(1L, pageable);
+            PageResponse<MyCommentDto> response = myPageService.getMyComments(1L, pageable);
 
             // then — 빈 목록
             assertThat(response.getContent()).isEmpty();
