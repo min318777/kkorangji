@@ -2,8 +2,8 @@ package com.min.meow.user.service;
 
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
-import com.min.meow.user.dto.reponse.JoinResponse;
-import com.min.meow.user.dto.reponse.LoginResponse;
+import com.min.meow.user.dto.response.JoinResponse;
+import com.min.meow.user.dto.response.LoginResponse;
 import com.min.meow.user.dto.request.JoinRequest;
 import com.min.meow.user.dto.request.LoginRequest;
 import com.min.meow.user.entity.Role;
@@ -34,7 +34,6 @@ public class UserService {
     private final UserRoleRepository userRoleRepository;
     private final PermissionCacheService permissionCacheService;
 
-
     public LoginResponse login(LoginRequest loginRequest){
         User user = userRepository.findByLoginId(loginRequest.getLoginId())
                 .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));
@@ -44,7 +43,6 @@ public class UserService {
                 .rememberMe(loginRequest.isRememberMe())
                 .build();
     }
-
 
     @Transactional
     public JoinResponse join(JoinRequest joinRequest){
@@ -65,7 +63,6 @@ public class UserService {
                 .email(joinRequest.getEmail())
                 .isDelete(false)
                 .build();
-
         userRepository.save(user);
 
         // 기본 역할(ROLE_USER) 부여

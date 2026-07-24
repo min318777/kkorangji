@@ -3,8 +3,8 @@ package com.min.meow.user.controller;
 
 import com.min.meow.common.PrincipalUser;
 import com.min.meow.common.ApiResponse;
-import com.min.meow.user.dto.reponse.JoinResponse;
-import com.min.meow.user.dto.reponse.LoginResponse;
+import com.min.meow.user.dto.response.JoinResponse;
+import com.min.meow.user.dto.response.LoginResponse;
 import com.min.meow.user.dto.request.JoinRequest;
 import com.min.meow.user.dto.request.LoginRequest;
 import com.min.meow.user.service.UserService;

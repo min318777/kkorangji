@@ -1,7 +1,6 @@
-package com.min.meow.user.dto.reponse;
+package com.min.meow.user.dto.response;
 
 public interface OAuth2Response {
-
 
     // 제공자
     String getProvider();

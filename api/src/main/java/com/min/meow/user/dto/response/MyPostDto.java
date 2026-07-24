@@ -1,4 +1,4 @@
-package com.min.meow.user.dto.reponse;
+package com.min.meow.user.dto.response;
 
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.LostCatPost;

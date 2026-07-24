@@ -1,4 +1,4 @@
-package com.min.meow.user.dto.reponse;
+package com.min.meow.user.dto.response;
 
 
 import java.util.Map;

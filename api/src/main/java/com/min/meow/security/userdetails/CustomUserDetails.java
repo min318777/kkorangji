@@ -1,4 +1,4 @@
-package com.min.meow.security.dto;
+package com.min.meow.security.userdetails;
 
 import com.min.meow.common.PrincipalUser;
 import com.min.meow.user.entity.User;

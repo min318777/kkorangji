@@ -1,4 +1,4 @@
-package com.min.meow.user.dto.reponse;
+package com.min.meow.user.dto.response;
 
 import com.min.meow.comment.entity.Comment;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -39,19 +39,14 @@ public class MyCommentDto {
     @Schema(description = "수정일시", example = "2025-01-15T11:00:00")
     private LocalDateTime updatedAt;
 
-    /**
-     * Comment 엔티티를 DTO로 변환
-     */
-    public static MyCommentDto from(Comment comment) {
-        // 댓글이 어느 게시글에 달렸는지 확인
-        boolean isBoastPost = comment.getBoastCatPost() != null;
-
+    // postTitle은 MyPageService에서 배치 조회 후 주입
+    public static MyCommentDto from(Comment comment, String postTitle) {
         return MyCommentDto.builder()
                 .commentId(comment.getId())
                 .contents(comment.getContents())
-                .postId(isBoastPost ? comment.getBoastCatPost().getId() : comment.getLostCatPost().getId())
-                .postType(isBoastPost ? "BOAST" : "LOST")
-                .postTitle(isBoastPost ? comment.getBoastCatPost().getTitle() : comment.getLostCatPost().getTitle())
+                .postId(comment.getPostId())
+                .postType(comment.getPostType().name())
+                .postTitle(postTitle)
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .build();

@@ -1,7 +1,7 @@
 package com.min.meow.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.min.meow.security.dto.CustomUserDetails;
+import com.min.meow.security.userdetails.CustomUserDetails;
 import com.min.meow.user.dto.request.LoginRequest;
 import com.min.meow.security.jwt.JwtProvider;
 import com.min.meow.security.service.PermissionCacheService;
@@ -35,11 +35,11 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
     private final RefreshTokenService refreshTokenService;
     private final PermissionCacheService permissionCacheService;
     private final DauService dauService;
+    private final ObjectMapper objectMapper;
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
             LoginRequest loginRequest = objectMapper.readValue(request.getInputStream(), LoginRequest.class);
 
             String loginId = loginRequest.getLoginId();

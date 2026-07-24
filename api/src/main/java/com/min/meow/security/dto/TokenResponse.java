@@ -1,4 +1,4 @@
-package com.min.meow.user.dto.response;
+package com.min.meow.security.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

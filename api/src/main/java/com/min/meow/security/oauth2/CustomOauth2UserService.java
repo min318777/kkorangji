@@ -3,9 +3,9 @@ package com.min.meow.security.oauth2;
 
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
-import com.min.meow.user.dto.reponse.GoogleResponse;
-import com.min.meow.user.dto.reponse.NaverResponse;
-import com.min.meow.user.dto.reponse.OAuth2Response;
+import com.min.meow.user.dto.response.GoogleResponse;
+import com.min.meow.user.dto.response.NaverResponse;
+import com.min.meow.user.dto.response.OAuth2Response;
 import com.min.meow.user.entity.Role;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.entity.UserRole;

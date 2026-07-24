@@ -3,7 +3,7 @@ package com.min.meow.security.service;
 import com.min.meow.common.TokenType;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
-import com.min.meow.user.dto.response.TokenResponse;
+import com.min.meow.security.dto.TokenResponse;
 import com.min.meow.user.entity.User;
 import com.min.meow.security.jwt.JwtProvider;
 import com.min.meow.user.repository.UserRepository;

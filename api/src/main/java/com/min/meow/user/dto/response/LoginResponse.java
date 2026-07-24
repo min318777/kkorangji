@@ -1,4 +1,4 @@
-package com.min.meow.user.dto.reponse;
+package com.min.meow.user.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;

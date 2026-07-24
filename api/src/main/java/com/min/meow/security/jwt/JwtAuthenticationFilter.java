@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.min.meow.common.ApiResponse;
 import com.min.meow.common.TokenType;
 import com.min.meow.common.exception.CustomException;
-import com.min.meow.security.dto.CustomUserDetails;
+import com.min.meow.security.userdetails.CustomUserDetails;
 import com.min.meow.security.service.PermissionCacheService;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;

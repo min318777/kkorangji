@@ -1,9 +1,9 @@
-package com.min.meow.user.controller;
+package com.min.meow.security.controller;
 
 import com.min.meow.common.ApiResponse;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
-import com.min.meow.user.dto.response.TokenResponse;
+import com.min.meow.security.dto.TokenResponse;
 import com.min.meow.security.service.ReissueService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,7 +13,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -67,7 +66,6 @@ public class ReissueController {
         return null;
     }
 
-    // 쿠키 생성
     private Cookie createCookie(String key, String value) {
         Cookie cookie = new Cookie(key, value);
         cookie.setMaxAge(14 * 24 * 60 * 60); // 14일

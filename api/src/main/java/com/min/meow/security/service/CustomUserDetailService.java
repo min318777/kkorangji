@@ -1,6 +1,6 @@
 package com.min.meow.security.service;
 
-import com.min.meow.security.dto.CustomUserDetails;
+import com.min.meow.security.userdetails.CustomUserDetails;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

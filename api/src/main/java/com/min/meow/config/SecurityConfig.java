@@ -2,6 +2,7 @@ package com.min.meow.config;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.min.meow.notification.sse.SseEmitterManager;
 import com.min.meow.security.filter.CustomLogoutFilter;
 import com.min.meow.security.jwt.JwtAuthenticationFilter;
 import com.min.meow.security.jwt.JwtProvider;
@@ -49,11 +50,12 @@ public class SecurityConfig {
     private final CustomSuccessHandler customSuccessHandler;
     private final ObjectMapper objectMapper;
     private final DauService dauService;
+    private final SseEmitterManager sseEmitterManager;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 
-        CustomLoginFilter customLoginFilter = new CustomLoginFilter(authenticationManager(authenticationConfiguration), jwtProvider, refreshTokenService, permissionCacheService, dauService);
+        CustomLoginFilter customLoginFilter = new CustomLoginFilter(authenticationManager(authenticationConfiguration), jwtProvider, refreshTokenService, permissionCacheService, dauService, objectMapper);
         customLoginFilter.setFilterProcessesUrl("/api/users/login");
         http
                 .cors((cors) -> cors.configurationSource(new CorsConfigurationSource() {
@@ -125,7 +127,7 @@ public class SecurityConfig {
         http.
                 addFilterAt(customLoginFilter, UsernamePasswordAuthenticationFilter.class);
         http.
-                addFilterBefore(new CustomLogoutFilter(refreshTokenService, jwtProvider), LogoutFilter.class);
+                addFilterBefore(new CustomLogoutFilter(refreshTokenService, jwtProvider, sseEmitterManager), LogoutFilter.class);
         http.
                 sessionManagement((session) -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));

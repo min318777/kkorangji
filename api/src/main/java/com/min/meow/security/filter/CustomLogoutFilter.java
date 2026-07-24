@@ -1,6 +1,7 @@
 package com.min.meow.security.filter;
 
 import com.min.meow.common.TokenType;
+import com.min.meow.notification.sse.SseEmitterManager;
 import com.min.meow.security.jwt.JwtProvider;
 import com.min.meow.security.service.RefreshTokenService;
 import io.jsonwebtoken.Claims;
@@ -25,6 +26,7 @@ public class CustomLogoutFilter extends OncePerRequestFilter {
 
     private final RefreshTokenService refreshTokenService;
     private final JwtProvider jwtProvider;
+    private final SseEmitterManager sseEmitterManager;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain ) throws ServletException, IOException {
@@ -68,6 +70,7 @@ public class CustomLogoutFilter extends OncePerRequestFilter {
             Claims claims = jwtProvider.decodeAndVerify(refreshToken, TokenType.REFRESH_TOKEN);
             Long userId = Long.valueOf(claims.getSubject());
             refreshTokenService.delete(userId);
+            sseEmitterManager.removeEmitter(userId);  // SSE 연결 종료
             log.info("로그아웃 완료 - userId: {}", userId);
 
         } catch (ExpiredJwtException e) {
@@ -76,6 +79,7 @@ public class CustomLogoutFilter extends OncePerRequestFilter {
             try {
                 Long userId = Long.valueOf(e.getClaims().getSubject());
                 refreshTokenService.delete(userId);
+                sseEmitterManager.removeEmitter(userId);  // SSE 연결 종료
             } catch (Exception ex) {
                 log.warn("만료된 토큰에서 userId 추출 실패", ex);
             }
