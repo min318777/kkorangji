@@ -10,7 +10,6 @@ import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Check;
 // 위치 기반 조회용 JTS Point 타입 (Hibernate Spatial과 함께 동작)
 import org.locationtech.jts.geom.Point;
@@ -78,71 +77,27 @@ public class LostCatPost extends BasePost {
     @ElementCollection
     private List<String> imageUrls = new ArrayList<>();
 
-    // 비정규화 필드: 조회 성능 최적화를 위해 카운트를 직접 저장
-    @Builder.Default
-    @ColumnDefault("0")
-    private int commentCount = 0;  // 댓글 수
-
-    // 댓글 수 증가
-    public void incrementCommentCount() {
-        this.commentCount++;
-    }
-
-    // 댓글 수 감소
-    public void decrementCommentCount() {
-        if (this.commentCount > 0) {
-            this.commentCount--;
-        }
-    }
-
     // 엔티티 업데이트 메서드
     public void updatePost(String title, String contents, String catName, String catType,
                           String catColor, Integer catAge, Integer catWeight,
                           String catGender, LocalDate lostDate,
                           String lostLocation, Double latitude, Double longitude,
                           Point location, Integer reward, List<String> newImageUrls) {
-        if (title != null) {
-            this.title = title;
-        }
-        if (contents != null) {
-            this.contents = contents;
-        }
-        if (catName != null) {
-            this.catName = catName;
-        }
-        if (catType != null) {
-            this.catType = catType;
-        }
-        if (catColor != null) {
-            this.catColor = catColor;
-        }
-        if (catAge != null) {
-            this.catAge = catAge;
-        }
-        if (catWeight != null) {
-            this.catWeight = catWeight;
-        }
-        if (catGender != null) {
-            this.catGender = catGender;
-        }
-        if (lostDate != null) {
-            this.lostDate = lostDate;
-        }
-        if (lostLocation != null) {
-            this.lostLocation = lostLocation;
-        }
-        if (latitude != null) {
-            this.latitude = latitude;
-        }
-        if (longitude != null) {
-            this.longitude = longitude;
-        }
-        if (location != null) {
-            this.location = location;
-        }
-        if (reward != null) {
-            this.reward = reward;
-        }
+        this.title = title;
+        this.contents = contents;
+        this.catName = catName;
+        this.catType = catType;
+        this.catColor = catColor;
+        this.catAge = catAge;
+        this.catWeight = catWeight;
+        this.catGender = catGender;
+        this.lostDate = lostDate;
+        this.lostLocation = lostLocation;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.location = location;
+        this.reward = reward;
+        // 이미지는 keep/new/delete 조합으로 관리되므로 null이면 변경 없음
         if (newImageUrls != null) {
             this.imageUrls.clear();
             this.imageUrls.addAll(newImageUrls);

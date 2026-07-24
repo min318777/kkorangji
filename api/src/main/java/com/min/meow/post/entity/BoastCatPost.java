@@ -50,46 +50,14 @@ public class BoastCatPost extends BasePost {
     @OneToMany(mappedBy = "boastCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostLike> postLikeList = new ArrayList<>();
 
-    // 비정규화 필드: 조회 성능 최적화를 위해 카운트를 직접 저장
-    @Builder.Default
-    @ColumnDefault("0")
-    private int commentCount = 0;  // 댓글 수
-
     @Builder.Default
     @ColumnDefault("0")
     private int likeCount = 0;     // 좋아요 수
 
-    // 댓글 수 증가
-    public void incrementCommentCount() {
-        this.commentCount++;
-    }
-
-    // 댓글 수 감소
-    public void decrementCommentCount() {
-        if (this.commentCount > 0) {
-            this.commentCount--;
-        }
-    }
-
-    // 좋아요 수 증가
-    public void incrementLikeCount() {
-        this.likeCount++;
-    }
-
-    // 좋아요 수 감소
-    public void decrementLikeCount() {
-        if (this.likeCount > 0) {
-            this.likeCount--;
-        }
-    }
-
     public void updatePost(String title, String contents, List<String> newImageUrls) {
-        if (title != null) {
-            this.title = title;
-        }
-        if (contents != null) {
-            this.contents = contents;
-        }
+        this.title = title;
+        this.contents = contents;
+        // 이미지는 keep/new/delete 조합으로 관리되므로 null이면 변경 없음
         if (newImageUrls != null) {
             this.imageUrls.clear();
             this.imageUrls.addAll(newImageUrls);
