@@ -8,14 +8,12 @@ import lombok.Getter;
 @Getter
 public class JoinRequest {
 
-    // 아이디: 5~20자, 영문/숫자만 허용
     @Schema(description = "로그인 ID (5~20자, 영문/숫자)", example = "catlover01")
     @NotBlank(message = "아이디를 입력해 주세요.")
     @Size(min = 5, max = 20, message = "아이디는 5자 이상 20자 이하로 입력해 주세요.")
     @Pattern(regexp = "^[a-zA-Z0-9]+$", message = "아이디는 영문과 숫자만 사용 가능합니다.")
     private String loginId;
 
-    // 비밀번호: 8~100자, 영문+숫자 필수 포함, 특수문자 허용
     @Schema(description = "비밀번호 (영문+숫자 필수 포함)", example = "password1!")
     @NotBlank(message = "비밀번호를 입력해 주세요.")
     //@Size(min = 8, max = 100, message = "비밀번호는 8자 이상 100자 이하로 입력해 주세요.")
@@ -25,24 +23,20 @@ public class JoinRequest {
     )
     private String password;
 
-    // 비밀번호 확인
     @Schema(description = "비밀번호 확인 (password와 동일해야 함)", example = "password1!")
     @NotBlank(message = "비밀번호를 한번 더 입력해 주세요.")
     private String passwordConfirm;
 
-    // 이메일: 선택 입력, 입력 시 올바른 형식
     @Schema(description = "이메일 주소 (선택)", example = "catlover@example.com")
     @Email(message = "올바르지 않은 이메일 형식입니다.")
     private String email;
 
-    // 닉네임: 1~10자, 한글/영문만 허용
     @Schema(description = "닉네임 (1~10자, 한글/영문)", example = "김냥이")
     @NotBlank(message = "닉네임을 입력해 주세요.")
     @Size(min = 1, max = 10, message = "닉네임은 1자 이상 10자 이하로 입력해 주세요.")
     @Pattern(regexp = "^[가-힣a-zA-Z]+$", message = "닉네임은 한글과 영문만 사용 가능합니다.")
     private String nickname;
 
-    // 필드 간 관계 검증: 비밀번호와 비밀번호 확인이 일치하는지 확인
     @AssertTrue(message = "비밀번호가 일치하지 않습니다.")
     @Schema(hidden = true)
     private boolean isPasswordMatching() {

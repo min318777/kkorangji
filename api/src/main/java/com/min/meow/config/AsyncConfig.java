@@ -58,7 +58,7 @@ public class AsyncConfig implements AsyncConfigurer {
         // 유휴 스레드 유지 시간 (초): 이 시간 이후 초과 스레드 종료
         executor.setKeepAliveSeconds(60);
 
-        // 스레드 이름 접두사: 로그에서 식별 용이
+        // 스레드 이름 접두사: 로그에서 식별
         executor.setThreadNamePrefix("notification-async-");
 
         // 애플리케이션 종료 시 진행 중인 작업 완료까지 대기

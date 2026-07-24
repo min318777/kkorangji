@@ -48,7 +48,6 @@ public class RedisConfig {
         return mapper;
     }
 
-
     @Bean
     public RedisConnectionFactory redisConnectionFactory(){
 
