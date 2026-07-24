@@ -1,11 +1,12 @@
 package com.min.meow.user.controller;
 
+import com.min.meow.common.PageResponse;
 import com.min.meow.common.PrincipalUser;
 import com.min.meow.common.PostType;
 import com.min.meow.common.ApiResponse;
-import com.min.meow.user.dto.reponse.MyCommentListResponse;
-import com.min.meow.user.dto.reponse.MyPageSummaryResponse;
-import com.min.meow.user.dto.reponse.MyPostListResponse;
+import com.min.meow.user.dto.response.MyCommentDto;
+import com.min.meow.user.dto.response.MyPageSummaryResponse;
+import com.min.meow.user.dto.response.MyPostDto;
 import com.min.meow.user.dto.request.UpdateProfileRequest;
 import com.min.meow.user.service.MyPageService;
 import jakarta.validation.Valid;
@@ -59,7 +60,7 @@ public class MyPageController {
     @Operation(summary = "내가 쓴 글 목록 조회",
             description = "현재 사용자가 작성한 게시글 목록을 페이징으로 조회합니다. type으로 게시글 종류를 필터링할 수 있습니다. 인증 필요.")
     @GetMapping("/posts")
-    public ResponseEntity<ApiResponse<MyPostListResponse>> getMyPosts(
+    public ResponseEntity<ApiResponse<PageResponse<MyPostDto>>> getMyPosts(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") int page,
@@ -71,7 +72,7 @@ public class MyPageController {
 
         Long userId = user.getUserId();
         Pageable pageable = PageRequest.of(page, size);
-        MyPostListResponse response = myPageService.getMyPosts(userId, pageable, type);
+        PageResponse<MyPostDto> response = myPageService.getMyPosts(userId, pageable, type);
 
         return ResponseEntity.ok(
                 ApiResponse.success( "내가 쓴 글 조회 성공", response)
@@ -81,7 +82,7 @@ public class MyPageController {
     @Operation(summary = "내가 쓴 댓글 목록 조회",
             description = "현재 사용자가 작성한 댓글 목록을 페이징으로 조회합니다. 인증 필요.")
     @GetMapping("/comments")
-    public ResponseEntity<ApiResponse<MyCommentListResponse>> getMyComments(
+    public ResponseEntity<ApiResponse<PageResponse<MyCommentDto>>> getMyComments(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") int page,
@@ -90,7 +91,7 @@ public class MyPageController {
 
         Long userId = user.getUserId();
         Pageable pageable = PageRequest.of(page, size);
-        MyCommentListResponse response = myPageService.getMyComments(userId, pageable);
+        PageResponse<MyCommentDto> response = myPageService.getMyComments(userId, pageable);
 
         return ResponseEntity.ok(
                 ApiResponse.success( "내가 쓴 댓글 조회 성공", response)
@@ -100,7 +101,7 @@ public class MyPageController {
     @Operation(summary = "내가 좋아요한 글 목록 조회",
             description = "현재 사용자가 좋아요한 자랑글 목록을 페이징으로 조회합니다. 인증 필요.")
     @GetMapping("/liked-posts")
-    public ResponseEntity<ApiResponse<MyPostListResponse>> getMyLikedPosts(
+    public ResponseEntity<ApiResponse<PageResponse<MyPostDto>>> getMyLikedPosts(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") int page,
@@ -108,7 +109,7 @@ public class MyPageController {
             @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        MyPostListResponse response = myPageService.getMyLikedPosts(user.getUserId(), pageable);
+        PageResponse<MyPostDto> response = myPageService.getMyLikedPosts(user.getUserId(), pageable);
         return ResponseEntity.ok(ApiResponse.success("좋아요한 글 조회 성공", response));
     }
 }

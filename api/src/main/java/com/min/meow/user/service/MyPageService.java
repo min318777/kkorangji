@@ -1,26 +1,31 @@
 package com.min.meow.user.service;
 
+import com.min.meow.comment.entity.Comment;
+import com.min.meow.comment.repository.CommentRepository;
 import com.min.meow.common.PostType;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
-import com.min.meow.comment.entity.Comment;
-import com.min.meow.comment.repository.CommentRepository;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.postlike.repository.PostLikeRepository;
-import com.min.meow.user.dto.reponse.*;
 import com.min.meow.user.dto.request.UpdateProfileRequest;
+import com.min.meow.common.PageResponse;
+import com.min.meow.user.dto.response.MyCommentDto;
+import com.min.meow.user.dto.response.MyPageSummaryResponse;
+import com.min.meow.user.dto.response.MyPostDto;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * 마이페이지 서비스
@@ -72,7 +77,7 @@ public class MyPageService {
      * 내가 쓴 게시글 목록 조회
      * - BOAST: 자랑글만, LOST: 실종글만 조회 (ALL 타입 미지원 — OOM 위험)
      */
-    public MyPostListResponse getMyPosts(Long userId, Pageable pageable, PostType type) {
+    public PageResponse<MyPostDto> getMyPosts(Long userId, Pageable pageable, PostType type) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));
 
@@ -89,37 +94,50 @@ public class MyPageService {
             throw new CustomException(ErrorCode.INVALID_POST_TYPE);
         }
 
-        return MyPostListResponse.from(postPage);
+        return PageResponse.from(postPage);
     }
 
     /**
      * 내가 쓴 댓글 목록 조회
      */
-    public MyCommentListResponse getMyComments(Long userId, Pageable pageable) {
+    public PageResponse<MyCommentDto> getMyComments(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));
 
         // 2. 댓글 조회 (페이징)
         Page<Comment> commentPage = commentRepository.findByUserOrderByCreatedAtDesc(user, pageable);
 
-        // 3. DTO 변환
-        Page<MyCommentDto> commentDtoPage = commentPage.map(MyCommentDto::from);
+        // 3. 게시글 제목 배치 조회 (N+1 방지)
+        List<Long> boastIds = commentPage.getContent().stream()
+                .filter(c -> c.getPostType() == PostType.BOAST)
+                .map(Comment::getPostId).distinct().toList();
+        List<Long> lostIds = commentPage.getContent().stream()
+                .filter(c -> c.getPostType() == PostType.LOST)
+                .map(Comment::getPostId).distinct().toList();
+
+        Map<Long, String> titleMap = new java.util.HashMap<>();
+        boastCatPostRepository.findAllById(boastIds).forEach(p -> titleMap.put(p.getId(), p.getTitle()));
+        lostCatRepository.findAllById(lostIds).forEach(p -> titleMap.put(p.getId(), p.getTitle()));
+
+        // 4. DTO 변환
+        Page<MyCommentDto> commentDtoPage = commentPage.map(c ->
+                MyCommentDto.from(c, titleMap.getOrDefault(c.getPostId(), "")));
 
         // 4. Response 생성
-        return MyCommentListResponse.from(commentDtoPage);
+        return PageResponse.from(commentDtoPage);
     }
 
     /**
      * 내가 좋아요한 게시글 목록 조회 (BOAST 전용, 최근 좋아요 순)
      */
-    public MyPostListResponse getMyLikedPosts(Long userId, Pageable pageable) {
+    public PageResponse<MyPostDto> getMyLikedPosts(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));
 
         Page<BoastCatPost> likedPosts =
                 postLikeRepository.findLikedBoastCatPostsByUserId(user.getId(), pageable);
 
-        return MyPostListResponse.from(likedPosts.map(MyPostDto::from));
+        return PageResponse.from(likedPosts.map(MyPostDto::from));
     }
 
     /**

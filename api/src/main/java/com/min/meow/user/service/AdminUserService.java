@@ -3,8 +3,7 @@ package com.min.meow.user.service;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.security.service.PermissionCacheService;
-import com.min.meow.user.dto.reponse.AdminUserListResponse;
-import com.min.meow.user.dto.reponse.AdminUserResponse;
+import com.min.meow.user.dto.response.AdminUserResponse;
 import com.min.meow.user.entity.Role;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.entity.UserRole;
@@ -144,9 +143,9 @@ public class AdminUserService {
      * 유저 목록 조회 (역할 필터 옵션, 페이징)
      * roleName이 null이면 전체 유저 반환
      */
-    public Page<AdminUserListResponse> getUserList(String roleName, Pageable pageable) {
+    public Page<AdminUserResponse> getUserList(String roleName, Pageable pageable) {
         Page<User> users = userRepository.findAllByOptionalRole(roleName, pageable);
-        return users.map(AdminUserListResponse::from);
+        return users.map(AdminUserResponse::from);
     }
 
     private User findActiveUser(Long userId) {
