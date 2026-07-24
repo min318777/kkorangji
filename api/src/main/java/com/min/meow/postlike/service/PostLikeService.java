@@ -43,7 +43,7 @@ public class PostLikeService {
                     .boastCatPost(post)
                     .build();
             postLikeRepository.save(like);
-            boastCatPostRepository.incrementLikeCountByDelta(postId, 1);
+            boastCatPostRepository.updateLikeCount(postId, 1);
 
             // 본인 게시글이거나 탈퇴 회원이면 알림 생략
             if (!post.getUser().isWithdrawn() && !userId.equals(post.getUser().getId())) {
@@ -74,7 +74,7 @@ public class PostLikeService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
         postLikeRepository.deleteByBoastCatPostIdAndUserId(postId, userId);
-        boastCatPostRepository.incrementLikeCountByDelta(postId, -1);
+        boastCatPostRepository.updateLikeCount(postId, -1);
 
         // 인기글 Sorted Set 점수 -3 (AFTER_COMMIT 비동기 처리)
         notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(postId, -3));

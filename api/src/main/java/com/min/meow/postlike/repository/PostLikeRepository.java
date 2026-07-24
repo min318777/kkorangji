@@ -21,8 +21,6 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
            "WHERE pl.boastCatPost.id = :boastCatPostId AND pl.user.id = :userId")
     Optional<PostLike> findByBoastCatPostIdAndUserId(@Param("boastCatPostId") Long boastCatPostId, @Param("userId") Long userId);
 
-    // ==================== Redis 좋아요 서비스용 메서드 ====================
-
     /**
      * 특정 게시글에 좋아요한 모든 사용자 ID 조회 (캐시 워밍용)
      * Redis SET에 로드할 사용자 ID 목록을 조회합니다.
