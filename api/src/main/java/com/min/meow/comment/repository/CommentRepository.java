@@ -1,6 +1,7 @@
 package com.min.meow.comment.repository;
 
 import com.min.meow.comment.entity.Comment;
+import com.min.meow.common.PostType;
 import com.min.meow.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,23 +15,16 @@ import java.util.List;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    // 자랑글 원댓글 조회 (parent IS NULL, 작성자 fetch join)
+    // 게시글 원댓글 조회 (postId + postType 통합, 작성자 fetch join)
     @Query(value = "SELECT c FROM Comment c " +
                    "JOIN FETCH c.user " +
-                   "WHERE c.boastCatPost.id = :postId AND c.parentComment IS NULL " +
+                   "WHERE c.postId = :postId AND c.postType = :postType AND c.parentComment IS NULL " +
                    "ORDER BY c.createdAt DESC, c.id DESC",
            countQuery = "SELECT COUNT(c) FROM Comment c " +
-                        "WHERE c.boastCatPost.id = :postId AND c.parentComment IS NULL")
-    Page<Comment> findRootByBoastCatPostId(@Param("postId") Long postId, Pageable pageable);
-
-    // 실종글 원댓글 조회 (parent IS NULL, 작성자 fetch join)
-    @Query(value = "SELECT c FROM Comment c " +
-                   "JOIN FETCH c.user " +
-                   "WHERE c.lostCatPost.id = :postId AND c.parentComment IS NULL " +
-                   "ORDER BY c.createdAt DESC, c.id DESC",
-           countQuery = "SELECT COUNT(c) FROM Comment c " +
-                        "WHERE c.lostCatPost.id = :postId AND c.parentComment IS NULL")
-    Page<Comment> findRootByLostCatPostId(@Param("postId") Long postId, Pageable pageable);
+                        "WHERE c.postId = :postId AND c.postType = :postType AND c.parentComment IS NULL")
+    Page<Comment> findRootByPostIdAndPostType(@Param("postId") Long postId,
+                                              @Param("postType") PostType postType,
+                                              Pageable pageable);
 
     // 여러 원댓글의 대댓글 일괄 조회 (쿼리 1번으로 N+1 방지)
     @Query("SELECT c FROM Comment c " +
@@ -44,10 +38,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
            "WHERE c.parentComment.id = :parentId AND c.isDeleted = false")
     long countActiveRepliesByParentId(@Param("parentId") Long parentId);
 
-    // 마이페이지: 사용자가 작성한 댓글 목록 조회 (게시글 정보 함께 로딩)
+    // 마이페이지: 사용자가 작성한 댓글 목록 조회
     @Query(value = "SELECT c FROM Comment c " +
-                   "LEFT JOIN FETCH c.boastCatPost " +
-                   "LEFT JOIN FETCH c.lostCatPost " +
                    "WHERE c.user = :user " +
                    "ORDER BY c.createdAt DESC",
            countQuery = "SELECT COUNT(c) FROM Comment c " +
@@ -56,4 +48,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     // 사용자가 작성한 댓글 총 개수
     long countByUserId(Long userId);
+
+    // 게시글 삭제 시 연관 댓글 일괄 삭제 (cascade 대체)
+    void deleteAllByPostIdAndPostType(Long postId, PostType postType);
 }

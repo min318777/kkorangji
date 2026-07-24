@@ -1,7 +1,6 @@
 package com.min.meow.post.entity;
 
 import com.min.meow.common.BasePost;
-import com.min.meow.comment.entity.Comment;
 import com.min.meow.postlike.entity.PostLike;
 import com.min.meow.user.entity.User;
 import jakarta.persistence.CascadeType;
@@ -50,10 +49,6 @@ public class BoastCatPost extends BasePost {
     @BatchSize(size = 100)
     @OneToMany(mappedBy = "boastCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostLike> postLikeList = new ArrayList<>();
-
-    @BatchSize(size = 100)
-    @OneToMany(mappedBy = "boastCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comment> comments = new ArrayList<>();
 
     // 비정규화 필드: 조회 성능 최적화를 위해 카운트를 직접 저장
     @Builder.Default

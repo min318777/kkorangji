@@ -46,24 +46,17 @@ public class CommentService {
     private final NotificationEventPublisher notificationEventPublisher;
     private final UserRepository userRepository;
 
-    // 자랑글 댓글 조회 (원댓글 + 대댓글 2뎁스, 쿼리 2번으로 N+1 방지)
-    public PageResponse<GetCommentResponse> getBoastCatPostComment(Long boastCatPostId, Pageable pageable) {
-        Page<Comment> rootComments = commentRepository.findRootByBoastCatPostId(boastCatPostId, pageable);
+    // 댓글 조회 (자랑글·실종글 공통, 원댓글 + 대댓글 2뎁스, 쿼리 2번으로 N+1 방지)
+    public PageResponse<GetCommentResponse> getComments(Long postId, PostType postType, Pageable pageable) {
+        Page<Comment> rootComments = commentRepository.findRootByPostIdAndPostType(postId, postType, pageable);
         return buildCommentResponse(rootComments, pageable);
     }
 
-    // 실종글 댓글 조회 
-    public PageResponse<GetCommentResponse> getLostCatPostComment(Long lostCatPostId, Pageable pageable) {
-        Page<Comment> rootComments = commentRepository.findRootByLostCatPostId(lostCatPostId, pageable);
-        return buildCommentResponse(rootComments, pageable);
-    }
-
-    // 원댓글 ID 목록으로 대댓글 일괄 조회 후 응답
+    // 원댓글 ID 목록으로 대댓글 일괄 조회 후 응답 조립
     private PageResponse<GetCommentResponse> buildCommentResponse(Page<Comment> rootComments, Pageable pageable) {
         List<Long> commentIds = rootComments.getContent().stream()
                 .map(Comment::getId).toList();
 
-        // 대댓글 일괄 조회 (쿼리 1번)
         Map<Long, List<Comment>> repliesMap = commentIds.isEmpty()
                 ? Map.of()
                 : commentRepository.findRepliesByParentIds(commentIds).stream()
@@ -76,63 +69,48 @@ public class CommentService {
         return PageResponse.from(new PageImpl<>(responses, pageable, rootComments.getTotalElements()));
     }
 
-    // 자랑글 댓글 작성 (원댓글 / 대댓글 공통 처리)
+    // 댓글 작성 (자랑글·실종글 공통, 원댓글·대댓글 공통 처리)
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
-    public RegisterCommentResponse registerBoastCatPostComment(RegisterCommentRequest request, Long boastCatPostId, Long userId) {
-        BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+    public RegisterCommentResponse registerComment(RegisterCommentRequest request, Long postId, PostType postType, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 
-        Comment parentComment = resolveParentComment(request.getParentCommentId(), boastCatPostId, null);
+        Comment parentComment = resolveParentComment(request.getParentCommentId(), postId, postType);
 
         Comment comment = Comment.builder()
                 .contents(request.getContent())
                 .user(user)
-
-                .boastCatPost(boastCatPost)
+                .postId(postId)
+                .postType(postType)
                 .parentComment(parentComment)
                 .build();
         commentRepository.save(comment);
-        boastCatPostRepository.incrementCommentCount(boastCatPostId);
 
-        if (!boastCatPost.getUser().isWithdrawn() && !user.getId().equals(boastCatPost.getUser().getId())) {
-            notificationEventPublisher.publishCommentEvent(new CommentEvent(
-                    comment.getId(), boastCatPostId, PostType.BOAST, user.getLoginId(), boastCatPost.getUser().getId()));
+        // postType에 따라 댓글 수 증가 및 알림 발행
+        if (postType == PostType.BOAST) {
+            BoastCatPost post = boastCatPostRepository.findById(postId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+            boastCatPostRepository.incrementCommentCount(postId);
+
+            if (!post.getUser().isWithdrawn() && !user.getId().equals(post.getUser().getId())) {
+                notificationEventPublisher.publishCommentEvent(
+                        new CommentEvent(comment.getId(), postId, PostType.BOAST, user.getLoginId(), post.getUser().getId()));
+            }
+            // 인기글 Sorted Set 점수 +2
+            notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(postId, 2));
+
+        } else {
+            LostCatPost post = lostCatRepository.findById(postId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+            lostCatRepository.incrementCommentCount(postId);
+
+            if (!post.getUser().isWithdrawn() && !user.getId().equals(post.getUser().getId())) {
+                notificationEventPublisher.publishCommentEvent(
+                        new CommentEvent(comment.getId(), postId, PostType.LOST, user.getLoginId(), post.getUser().getId()));
+            }
         }
 
-        // 인기글 Sorted Set 점수 +2 (AFTER_COMMIT 비동기 처리)
-        notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(boastCatPostId, 2));
-
-        return RegisterCommentResponse.toResponse(comment);
-    }
-
-    // 실종글 댓글 작성 (원댓글 / 대댓글 공통 처리)
-    @Transactional
-    @CacheEvict(cacheNames = "user:stats", key = "#userId")
-    public RegisterCommentResponse registerLostCatPostComment(RegisterCommentRequest request, Long lostCatPostId, Long userId) {
-        LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
-
-        Comment parentComment = resolveParentComment(request.getParentCommentId(), null, lostCatPostId);
-
-        Comment comment = Comment.builder()
-                .contents(request.getContent())
-                .user(user)
-
-                .lostCatPost(lostCatPost)
-                .parentComment(parentComment)
-                .build();
-        commentRepository.save(comment);
-        lostCatRepository.incrementCommentCount(lostCatPostId);
-
-        if (!lostCatPost.getUser().isWithdrawn() && !user.getId().equals(lostCatPost.getUser().getId())) {
-            notificationEventPublisher.publishCommentEvent(new CommentEvent(
-                    comment.getId(), lostCatPostId, PostType.LOST, user.getLoginId(), lostCatPost.getUser().getId()));
-        }
         return RegisterCommentResponse.toResponse(comment);
     }
 
@@ -166,10 +144,8 @@ public class CommentService {
         }
 
         if (comment.getParentComment() != null) {
-            // 대댓글: 즉시 삭제
             deleteReply(comment);
         } else {
-            // 원댓글: 활성 대댓글 여부에 따라 분기
             deleteRootComment(comment);
         }
     }
@@ -180,7 +156,6 @@ public class CommentService {
         decrementPostCommentCount(reply);
         commentRepository.delete(reply);
 
-        // 부모가 소프트삭제 상태이고 활성 대댓글이 더 없으면 부모도 삭제
         if (parent.isDeleted() && commentRepository.countActiveRepliesByParentId(parent.getId()) == 0) {
             decrementPostCommentCount(parent);
             commentRepository.delete(parent);
@@ -198,39 +173,32 @@ public class CommentService {
         }
     }
 
-    // 게시글 댓글 수 감소 + 인기글 점수 -2 (자랑글만)
+    // 게시글 댓글 수 감소 + 인기글 점수 차감 (자랑글만)
     private void decrementPostCommentCount(Comment comment) {
-        if (comment.getBoastCatPost() != null) {
-            boastCatPostRepository.decrementCommentCount(comment.getBoastCatPost().getId());
-            // 인기글 Sorted Set 점수 -2 (AFTER_COMMIT 비동기 처리)
+        if (comment.getPostType() == PostType.BOAST) {
+            boastCatPostRepository.decrementCommentCount(comment.getPostId());
             notificationEventPublisher.publishPopularScoreEvent(
-                    new PopularScoreEvent(comment.getBoastCatPost().getId(), -2));
-        }
-        if (comment.getLostCatPost() != null) {
-            lostCatRepository.decrementCommentCount(comment.getLostCatPost().getId());
+                    new PopularScoreEvent(comment.getPostId(), -2));
+        } else {
+            lostCatRepository.decrementCommentCount(comment.getPostId());
         }
     }
 
     // 부모 댓글 유효성 검증 (2뎁스 제한, 같은 게시글 여부 확인)
-    private Comment resolveParentComment(Long parentCommentId, Long boastCatPostId, Long lostCatPostId) {
+    private Comment resolveParentComment(Long parentCommentId, Long postId, PostType postType) {
         if (parentCommentId == null) return null;
 
         Comment parent = commentRepository.findById(parentCommentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT));
 
-        // 대댓글에 대댓글 금지 (2뎁스 제한)
         if (parent.getParentComment() != null) {
             throw new CustomException(ErrorCode.COMMENT_DEPTH_EXCEEDED);
         }
-        // 삭제된 댓글에 대댓글 금지
         if (parent.isDeleted()) {
             throw new CustomException(ErrorCode.NOT_FOUND_COMMENT);
         }
         // 같은 게시글의 댓글인지 확인
-        if (boastCatPostId != null && (parent.getBoastCatPost() == null || !parent.getBoastCatPost().getId().equals(boastCatPostId))) {
-            throw new CustomException(ErrorCode.NOT_FOUND_COMMENT);
-        }
-        if (lostCatPostId != null && (parent.getLostCatPost() == null || !parent.getLostCatPost().getId().equals(lostCatPostId))) {
+        if (!parent.getPostId().equals(postId) || parent.getPostType() != postType) {
             throw new CustomException(ErrorCode.NOT_FOUND_COMMENT);
         }
         return parent;

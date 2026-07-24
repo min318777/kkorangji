@@ -1,9 +1,12 @@
 package com.min.meow.post.entity;
 
-import com.min.meow.comment.entity.Comment;
 import com.min.meow.common.BasePost;
 import com.min.meow.user.entity.User;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.BatchSize;
@@ -74,10 +77,6 @@ public class LostCatPost extends BasePost {
     @BatchSize(size = 100)
     @ElementCollection
     private List<String> imageUrls = new ArrayList<>();
-
-    @BatchSize(size = 100)
-    @OneToMany(mappedBy = "lostCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comment> comments = new ArrayList<>();
 
     // 비정규화 필드: 조회 성능 최적화를 위해 카운트를 직접 저장
     @Builder.Default

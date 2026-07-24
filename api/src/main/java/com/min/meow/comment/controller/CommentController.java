@@ -2,8 +2,11 @@ package com.min.meow.comment.controller;
 
 
 import com.min.meow.common.PageResponse;
+import com.min.meow.common.PostType;
 import com.min.meow.common.PrincipalUser;
 import com.min.meow.common.ApiResponse;
+import com.min.meow.common.exception.CustomException;
+import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.comment.dto.request.RegisterCommentRequest;
 import com.min.meow.comment.dto.request.UpdateCommentRequest;
 import com.min.meow.comment.dto.response.GetCommentResponse;
@@ -31,74 +34,42 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    // ==================== 자랑글 댓글 API ====================
+    // ==================== 댓글 조회/작성 (자랑글·실종글 공통) ====================
 
-    @Operation(summary = "자랑글 댓글 조회 (페이징)",
-            description = "자랑글의 댓글을 페이징으로 조회합니다. 인증 불필요.")
+    @Operation(summary = "댓글 조회 (페이징)",
+            description = "게시글 댓글을 조회합니다. postType: boast-cat | lost-cat. 인증 불필요.")
     @SecurityRequirements
-    @GetMapping("/api/meow/boast-cat/{boastCatPostId}/comments")
-    public ResponseEntity<ApiResponse<PageResponse<GetCommentResponse>>> getBoastCatPostCommentPaged(
-            @Parameter(description = "자랑글 ID", example = "1")
-            @PathVariable Long boastCatPostId,
+    @GetMapping("/api/meow/{postType}/{postId}/comments")
+    public ResponseEntity<ApiResponse<PageResponse<GetCommentResponse>>> getComments(
+            @Parameter(description = "게시글 타입 (boast-cat | lost-cat)", example = "boast-cat")
+            @PathVariable String postType,
+            @Parameter(description = "게시글 ID", example = "1")
+            @PathVariable Long postId,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기", example = "20")
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        PageResponse<GetCommentResponse> comments = commentService.getBoastCatPostComment(boastCatPostId, pageable);
-
+        PageResponse<GetCommentResponse> comments = commentService.getComments(postId, resolvePostType(postType), pageable);
         return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
     }
 
-    @Operation(summary = "자랑글 댓글 작성",
-            description = "자랑글에 댓글을 작성합니다. 인증 필요.")
+    @Operation(summary = "댓글 작성",
+            description = "게시글에 댓글을 작성합니다. postType: boast-cat | lost-cat. 인증 필요.")
     @PreAuthorize("hasAuthority('comment:write')")
-    @PostMapping("/api/meow/boast-cat/{boastCatPostId}/comments")
-    public ResponseEntity<ApiResponse<RegisterCommentResponse>> registerBoastCatPostComment(
-            @RequestBody @Valid RegisterCommentRequest registerCommentRequest,
-            @Parameter(description = "자랑글 ID", example = "1")
-            @PathVariable Long boastCatPostId,
-            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
+    @PostMapping("/api/meow/{postType}/{postId}/comments")
+    public ResponseEntity<ApiResponse<RegisterCommentResponse>> registerComment(
+            @RequestBody @Valid RegisterCommentRequest request,
+            @Parameter(description = "게시글 타입 (boast-cat | lost-cat)", example = "boast-cat")
+            @PathVariable String postType,
+            @Parameter(description = "게시글 ID", example = "1")
+            @PathVariable Long postId,
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
 
-        RegisterCommentResponse registerCommentResponse = commentService.registerBoastCatPostComment(registerCommentRequest, boastCatPostId, user.getUserId());
+        RegisterCommentResponse response = commentService.registerComment(request, postId, resolvePostType(postType), user.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.created("댓글 작성 성공", registerCommentResponse));
-    }
-
-    // ==================== 실종글 댓글 API ====================
-
-    @Operation(summary = "실종글 댓글 조회 (페이징)",
-            description = "실종글의 댓글을 페이징으로 조회합니다. 인증 불필요.")
-    @SecurityRequirements
-    @GetMapping("/api/meow/lost-cat/{lostCatPostId}/comments")
-    public ResponseEntity<ApiResponse<PageResponse<GetCommentResponse>>> getLostCatPostCommentPaged(
-            @Parameter(description = "실종글 ID", example = "1")
-            @PathVariable Long lostCatPostId,
-            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
-            @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기", example = "20")
-            @RequestParam(defaultValue = "20") int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-        PageResponse<GetCommentResponse> comments = commentService.getLostCatPostComment(lostCatPostId, pageable);
-
-        return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
-    }
-
-    @Operation(summary = "실종글 댓글 작성",
-            description = "실종글에 댓글을 작성합니다. 인증 필요.")
-    @PreAuthorize("hasAuthority('comment:write')")
-    @PostMapping("/api/meow/lost-cat/{lostCatPostId}/comments")
-    public ResponseEntity<ApiResponse<RegisterCommentResponse>> registerLostCatPostComment(
-            @RequestBody @Valid RegisterCommentRequest registerCommentRequest,
-            @Parameter(description = "실종글 ID", example = "1")
-            @PathVariable Long lostCatPostId,
-            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
-
-        RegisterCommentResponse registerCommentResponse = commentService.registerLostCatPostComment(registerCommentRequest, lostCatPostId, user.getUserId());
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.created("댓글 작성 성공", registerCommentResponse));
+                .body(ApiResponse.created("댓글 작성 성공", response));
     }
 
     // ==================== 공통 댓글 관리 API ====================
@@ -128,5 +99,14 @@ public class CommentController {
 
         commentService.deleteComment(commentId, user.getUserId());
         return ResponseEntity.noContent().build();
+    }
+
+    // URL의 postType 문자열을 PostType enum으로 변환
+    private PostType resolvePostType(String postType) {
+        return switch (postType) {
+            case "boast-cat" -> PostType.BOAST;
+            case "lost-cat"  -> PostType.LOST;
+            default          -> throw new CustomException(ErrorCode.NOT_FOUND_POST);
+        };
     }
 }

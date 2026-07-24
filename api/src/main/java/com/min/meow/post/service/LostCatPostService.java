@@ -13,6 +13,7 @@ import com.min.meow.post.dto.request.UpdateLostCatPostRequest;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.common.PostType;
 import com.min.meow.post.repository.LostCatRepository;
+import com.min.meow.comment.repository.CommentRepository;
 import com.min.meow.common.SecurityUtil;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
@@ -48,6 +49,7 @@ public class LostCatPostService {
     private static final GeometryFactory GEO_FACTORY = new GeometryFactory(new PrecisionModel(), 4326);
 
     private final LostCatRepository lostCatRepository;
+    private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final ViewCountService viewCountService;
@@ -270,6 +272,8 @@ public class LostCatPostService {
                 .map(s3Service::extractKeyFromUrl)
                 .filter(key -> key != null && !key.isEmpty())
                 .toList();
+        // 연관 댓글 먼저 삭제 (cascade 제거로 인한 수동 처리)
+        commentRepository.deleteAllByPostIdAndPostType(lostCatPostId, PostType.LOST);
         lostCatRepository.deleteById(lostCatPostId);
         s3Service.deleteFiles(keys);
         log.info("게시글 삭제 완료 - userId: {}, postId: {}", userId, lostCatPostId);

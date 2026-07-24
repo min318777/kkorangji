@@ -1,7 +1,6 @@
 package com.min.meow.comment.entity;
 
-import com.min.meow.post.entity.BoastCatPost;
-import com.min.meow.post.entity.LostCatPost;
+import com.min.meow.common.PostType;
 import com.min.meow.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -13,10 +12,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "comment", indexes = {
-    // 게시글별 원댓글 조회: WHERE boast_cat_post_id = ? ORDER BY created_at DESC
-    @Index(name = "idx_comment_boast_post_created_at", columnList = "boast_cat_post_id, created_at DESC"),
-    // 게시글별 원댓글 조회: WHERE lost_cat_post_id = ? ORDER BY created_at DESC
-    @Index(name = "idx_comment_lost_post_created_at", columnList = "lost_cat_post_id, created_at DESC"),
+    // 게시글별 원댓글 조회: WHERE post_id = ? AND post_type = ? ORDER BY created_at DESC
+    @Index(name = "idx_comment_post_created_at", columnList = "post_id, post_type, created_at DESC"),
     // 마이페이지 내 댓글: WHERE user_id = ? ORDER BY created_at DESC
     @Index(name = "idx_comment_user_created_at", columnList = "user_id, created_at DESC"),
     // 대댓글 조회: WHERE parent_comment_id = ? ORDER BY created_at ASC
@@ -53,19 +50,14 @@ public class Comment {
             foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE RESTRICT"))
     private User user;
 
-    // FK 삭제 전략: 실종 게시글 삭제 시 관련 댓글도 함께 삭제
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lost_cat_post_id",
-        foreignKey = @ForeignKey(name = "fk_comment_lost_cat_post",
-            foreignKeyDefinition = "FOREIGN KEY (lost_cat_post_id) REFERENCES lost_cat_post(id) ON DELETE CASCADE"))
-    private LostCatPost lostCatPost;
+    // 댓글이 속한 게시글 ID (boast_cat_post 또는 lost_cat_post 참조)
+    @Column(nullable = false)
+    private Long postId;
 
-    // FK 삭제 전략: 자랑 게시글 삭제 시 관련 댓글도 함께 삭제
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "boast_cat_post_id",
-        foreignKey = @ForeignKey(name = "fk_comment_boast_cat_post",
-            foreignKeyDefinition = "FOREIGN KEY (boast_cat_post_id) REFERENCES boast_cat_post(id) ON DELETE CASCADE"))
-    private BoastCatPost boastCatPost;
+    // 게시글 타입으로 어떤 테이블을 참조하는지 구분
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private PostType postType;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -97,5 +89,4 @@ public class Comment {
         this.isDeleted = true;
         this.contents = "삭제된 댓글입니다.";
     }
-
 }

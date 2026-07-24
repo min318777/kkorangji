@@ -13,6 +13,7 @@ import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.post.repository.BoastCatPostRepository;
+import com.min.meow.comment.repository.CommentRepository;
 import com.min.meow.common.SecurityUtil;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
@@ -35,6 +36,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class BoastCatPostService {
     private final BoastCatPostRepository boastCatPostRepository;
+    private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final BoastCatPostCountCacheService countCacheService;
@@ -158,6 +160,8 @@ public class BoastCatPostService {
                 .map(s3Service::extractKeyFromUrl)
                 .filter(key -> key != null && !key.isEmpty())
                 .toList();
+        // 연관 댓글 먼저 삭제 (cascade 제거로 인한 수동 처리)
+        commentRepository.deleteAllByPostIdAndPostType(boastCatPostId, PostType.BOAST);
         boastCatPostRepository.deleteById(boastCatPostId);
         s3Service.deleteFiles(keys);
     }
