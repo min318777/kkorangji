@@ -66,7 +66,7 @@ public class PopularPostRepository {
     }
 
     /**
-     * ID 목록으로 게시글 조회 — Sorted Set v5에서 ID 확보 후 데이터 조회 시 사용
+     * ID 목록으로 게시글 조회 — Sorted Set ID 확보 후 데이터 조회 시 사용
      */
     public List<BoastCatPostListResponse> findByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) return List.of();

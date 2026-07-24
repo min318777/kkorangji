@@ -48,15 +48,15 @@ public class SseEmitterManager {
         // 2. Map에 저장 (기존 연결이 있으면 덮어쓰기 - complete() 호출 안 함!)
         SseEmitter oldEmitter = emitters.put(userId, emitter);
         if (oldEmitter != null) {
-            log.debug("기존 SSE 연결 교체: userId={} (기존 연결은 자연스럽게 정리됨)", userId);
+            log.debug("기존 SSE 연결 교체: userId={} (Map에서 제거됨, 소켓은 heartbeat가 정리)", userId);
         }
         log.debug("SSE 연결 생성: userId={} (현재 {}명 접속)", userId, emitters.size());
 
-        // 3. 연결 완료 시 Map에서 제거 (현재 emitter일 때만!)
+        // 3. 연결 종료 시 Map에서 제거 (현재 emitter일 때만)
         emitter.onCompletion(() -> {
             boolean removed = emitters.remove(userId, emitter);
             if (removed) {
-                log.debug("SSE 연결 완료: userId={}", userId);
+                log.debug("SSE 연결 종료: userId={}", userId);
             }
         });
 
@@ -75,6 +75,14 @@ public class SseEmitterManager {
                 log.error("SSE 에러: userId={}", userId, e);
             }
         });
+
+        // 6. 초기 연결 확인 이벤트 전송 (Nginx 504 타임아웃 방지)
+        try {
+            emitter.send(SseEmitter.event().name("connect").data("connected"));
+        } catch (IOException e) {
+            emitters.remove(userId, emitter);
+            log.error("SSE 초기 이벤트 전송 실패: userId={}", userId, e);
+        }
 
         return emitter;
     }
@@ -96,9 +104,21 @@ public class SseEmitterManager {
                     .data(data));          // 전송할 데이터
             log.debug("알림 전송 성공: userId={}", userId);
         } catch (IOException e) {
-            emitters.remove(userId);
+            // remove(userId, emitter): 이 emitter일 때만 제거 (새로 교체된 emitter 보호)
+            emitters.remove(userId, emitter);
             emitter.completeWithError(e);
             log.error("알림 전송 실패: userId={}", userId, e);
+        }
+    }
+
+    /**
+     * 로그아웃 시 SSE 연결 종료
+     */
+    public void removeEmitter(Long userId) {
+        SseEmitter emitter = emitters.remove(userId);
+        if (emitter != null) {
+            emitter.complete();
+            log.debug("로그아웃으로 SSE 연결 종료: userId={}", userId);
         }
     }
 
@@ -127,6 +147,7 @@ public class SseEmitterManager {
                 emitter.send(SseEmitter.event().name("heartbeat").data("ping"));
             } catch (IOException e) {
                 emitters.remove(userId, emitter);
+                emitter.completeWithError(e);  // Tomcat 서블릿 리소스 정리
                 log.info("좀비 커넥션 제거: userId={}", userId);
             }
         });

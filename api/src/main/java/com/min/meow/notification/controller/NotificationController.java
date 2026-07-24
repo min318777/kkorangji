@@ -22,7 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-@Tag(name = "알림", description = "알림 조회·읽음 처리 및 SSE 구독 API")
+@Tag(name = "알림", description = "알림 조회,읽음 처리 및 SSE 구독 API")
 @Slf4j
 @RestController
 @RequiredArgsConstructor
