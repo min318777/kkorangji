@@ -9,9 +9,9 @@ import lombok.*;
 @Schema(description = "댓글 수정 요청")
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UpdateCommentRequest {
 
     @Schema(description = "수정할 댓글 내용 (1~500자)", example = "수정된 댓글입니다.")
