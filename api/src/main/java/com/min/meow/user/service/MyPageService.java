@@ -44,7 +44,7 @@ public class MyPageService {
     public MyPageSummaryResponse getMyPageSummary(Long userId) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 
         // 캐싱된 통계 메서드 호출 (캐시 히트 시 COUNT 쿼리 3개 생략)
         long[] stats = getMyPageStats(userId);
@@ -79,7 +79,7 @@ public class MyPageService {
      */
     public PageResponse<MyPostDto> getMyPosts(Long userId, Pageable pageable, PostType type) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 
         // 타입에 따라 게시글 조회 (DB 레벨 페이징)
         Page<MyPostDto> postPage;
@@ -102,7 +102,7 @@ public class MyPageService {
      */
     public PageResponse<MyCommentDto> getMyComments(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 
         // 2. 댓글 조회 (페이징)
         Page<Comment> commentPage = commentRepository.findByUserOrderByCreatedAtDesc(user, pageable);
@@ -132,7 +132,7 @@ public class MyPageService {
      */
     public PageResponse<MyPostDto> getMyLikedPosts(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 
         Page<BoastCatPost> likedPosts =
                 postLikeRepository.findLikedBoastCatPostsByUserId(user.getId(), pageable);

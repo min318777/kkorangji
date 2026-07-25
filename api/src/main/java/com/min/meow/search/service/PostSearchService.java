@@ -44,6 +44,9 @@ public class PostSearchService {
     // LIKE 검색 (자랑글): '%keyword%' 방식 (성능 비교용)
     public Page<BoastCatPostListResponse> searchByLike(PostLikeSearchRequest request, Pageable pageable) {
         String keyword = request.getTitle() != null ? request.getTitle() : request.getContents();
+        if (keyword == null || keyword.length() < 2) {
+            throw new CustomException(ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
+        }
         log.info("[자랑글 검색] LIKE | keyword=\"{}\"", keyword);
         return boastCatPostRepositoryImpl.search(
                 request.getTitle(),
@@ -73,6 +76,9 @@ public class PostSearchService {
     // LIKE 검색 (실종글): '%keyword%' 방식 (성능 비교용)
     public Page<LostCatPostListResponse> searchLostByLike(PostLikeSearchRequest request, Pageable pageable) {
         String keyword = request.getTitle() != null ? request.getTitle() : request.getContents();
+        if (keyword == null || keyword.length() < 2) {
+            throw new CustomException(ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
+        }
         log.info("[실종글 검색] LIKE | keyword=\"{}\"", keyword);
         return lostCatRepositoryImpl.search(
                 request.getTitle(),

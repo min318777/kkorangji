@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ public class PostLikeController {
     private final PostLikeService postLikeService;
 
     @Operation(summary = "좋아요 등록", description = "자랑글에 좋아요를 등록합니다. 이미 좋아요한 경우 409 반환.")
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/{boastCatPostId}/like")
     public ResponseEntity<ApiResponse<Long>> addLike(
             @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId,
@@ -31,6 +33,7 @@ public class PostLikeController {
     }
 
     @Operation(summary = "좋아요 취소", description = "자랑글 좋아요를 취소합니다. 좋아요하지 않은 경우 400 반환.")
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{boastCatPostId}/like")
     public ResponseEntity<ApiResponse<Long>> cancelLike(
             @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId,
@@ -40,6 +43,7 @@ public class PostLikeController {
     }
 
     @Operation(summary = "좋아요 여부 확인", description = "현재 로그인 사용자의 좋아요 여부를 조회합니다.")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{boastCatPostId}/like/status")
     public ResponseEntity<ApiResponse<Boolean>> isLiked(
             @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId,

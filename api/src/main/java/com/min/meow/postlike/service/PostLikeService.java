@@ -38,8 +38,15 @@ public class PostLikeService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
         try {
+            // getReferenceById 대신 findById로 탈퇴/미존재 사용자 명시적 검증
+            var user = userRepository.findById(userId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
+            if (user.isWithdrawn()) {
+                throw new CustomException(ErrorCode.NOT_FOUND_USER);
+            }
+
             PostLike like = PostLike.builder()
-                    .user(userRepository.getReferenceById(userId))
+                    .user(user)
                     .boastCatPost(post)
                     .build();
             postLikeRepository.save(like);

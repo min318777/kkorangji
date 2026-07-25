@@ -34,8 +34,6 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    // ==================== 댓글 조회/작성 (자랑글·실종글 공통) ====================
-
     @Operation(summary = "댓글 조회 (페이징)",
             description = "게시글 댓글을 조회합니다. postType: boast-cat | lost-cat. 인증 불필요.")
     @SecurityRequirements
@@ -72,8 +70,6 @@ public class CommentController {
                 .body(ApiResponse.created("댓글 작성 성공", response));
     }
 
-    // ==================== 공통 댓글 관리 API ====================
-
     @Operation(summary = "댓글 수정",
             description = "댓글을 수정합니다. 게시글 타입에 관계없이 댓글 ID로 수정합니다. 인증 필요.")
     @PreAuthorize("hasAuthority('comment:write')")
@@ -106,7 +102,7 @@ public class CommentController {
         return switch (postType) {
             case "boast-cat" -> PostType.BOAST;
             case "lost-cat"  -> PostType.LOST;
-            default          -> throw new CustomException(ErrorCode.NOT_FOUND_POST);
+            default          -> throw new CustomException(ErrorCode.INVALID_POST_TYPE);
         };
     }
 }
