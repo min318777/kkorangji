@@ -1,7 +1,12 @@
-# Meow — 고양이 테마 소셜 플랫폼
+# Meow — 반려동물 테마 소셜 플랫폼
 
-고양이를 사랑하는 사람들을 위한 커뮤니티 플랫폼입니다.  
-자랑 게시글, 실종 고양이 신고, 댓글, 좋아요, 실시간 알림 기능을 제공합니다.
+반려동물을 사랑하는 사람들을 위한 커뮤니티 플랫폼입니다.  
+일상공유(자랑) 게시글, 실종 반려동물 신고, 댓글, 좋아요, 실시간 알림 기능을 제공합니다.
+
+---
+## 아키텍처
+
+<img width="850" height="476" alt="Image" src="https://github.com/user-attachments/assets/d5088a3d-93fd-4446-a8ea-cd063a08adaf" />
 
 ---
 
@@ -27,8 +32,8 @@
 
 ## 주요 기능
 
-- **자랑 게시글** — 고양이 사진과 함께 게시글 작성, 좋아요, 댓글
-- **실종 고양이 신고** — 실종 위치(위도/경도), 고양이 특징 등록
+- **자랑 게시글** — 반려동물 사진과 함께 게시글 작성, 좋아요, 댓글
+- **실종 반려동물 신고** — 실종 위치(위도/경도), 반려동물 특징 등록
 - **댓글 시스템** — 원댓글 + 대댓글 (2depth), 소프트 삭제
 - **좋아요** — 동시성 처리 (UniqueConstraint + DataIntegrityViolationException 핸들링)
 - **실시간 알림** — SSE 기반 댓글/좋아요 알림
@@ -61,26 +66,11 @@
 - QueryDSL Projection (필요한 컬럼만 SELECT)
 
 ### 마이페이지 통계 캐싱
-- `user:stats` 캐시 (TTL 10분)
-- 게시글/댓글 작성·삭제 시 @CacheEvict 무효화
+- user:stats 캐시 (TTL 10분)
+- 게시글/댓글 작성, 삭제 시 @CacheEvict 무효화
 
 ---
 
-## 아키텍처
-
-```
-단일 모듈 Spring Boot 애플리케이션 (포트 8080)
-
-Client
-  └─ Spring Security (JWT Filter + OAuth2)
-       └─ Controller
-            └─ Service
-                 ├─ JPA Repository (MySQL)
-                 ├─ Redis (캐시 / 조회수 / 세션)
-                 └─ Spring Event (비동기 알림 → SSE)
-```
-
----
 
 ## 실행 방법
 
@@ -94,11 +84,6 @@ docker-compose -f docker-compose.local.yml up -d
 
 # 로그 확인
 docker-compose -f docker-compose.local.yml logs -f api
-```
-
-### 로컬 직접 실행
-```bash
-./gradlew :api:bootRun
 ```
 
 ---
