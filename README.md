@@ -32,10 +32,10 @@
 
 ## 주요 기능
 
-- **자랑 게시글** — 반려동물 사진과 함께 게시글 작성, 좋아요, 댓글
-- **실종 반려동물 신고** — 실종 위치(위도/경도), 반려동물 특징 등록
-- **댓글 시스템** — 원댓글 + 대댓글 (2depth), 소프트 삭제
-- **좋아요** — 동시성 처리 (UniqueConstraint + DataIntegrityViolationException 핸들링)
+- **반려동물 자랑 게시글** — 반려동물 사진과 함께 게시글 작성, 좋아요, 댓글, 인기글
+- **반려동물 실종 신고** — 실종 위치(위도/경도), 반려동물 특징 등록, 내 위치기반 게시글 조회
+- **댓글 시스템** — 댓글 + 대댓글
+- **좋아요** — 동시성 처리 (UniqueConstraint + DataIntegrityViolationException 예외 처리)
 - **실시간 알림** — SSE 기반 댓글/좋아요 알림
 - **검색** — Full-Text Search (ngram, 한글 지원) + LIKE 폴백
 - **RBAC 권한 관리** — Role/Permission 기반 접근 제어
@@ -45,17 +45,17 @@
 
 ## 성능 최적화
 
-### 조회수 — Redis INCR + 배치 동기화
+### 조회수 Redis INCR + 배치 동기화
 - 동일 사용자 10분 내 재조회 어뷰징 방지 (Redis SET NX)
 - Redis INCR으로 원자적 증가, 30초마다 DB 배치 동기화
 - Redis 장애 시 DB 직접 업데이트 Fallback
 
-### 인기글 캐시 스탬피드 방지 (3가지 방식 비교)
+### 인기글 캐시 스탬피드 방지 (3가지 방식 측정)
 - v1: 단순 캐시
 - v2: Redis 분산 락 (SET NX)
-- v3: Cache Warming (25초마다 선제 갱신)
+- v3: Cache Warming (30초마다 선제 갱신)
 
-### JWT 권한 조회 방식 (3가지 비교)
+### JWT 권한 조회 방식 (3가지 방식 측정)
 - v1: 매 요청마다 DB 조회
 - v2: JWT claims에서 직접 추출
 - v3: Redis 캐시 조회 (캐시 미스 시 DB Fallback)
@@ -74,17 +74,44 @@
 
 ## 실행 방법
 
-### Docker로 실행 (권장)
+### 사전 요구사항
+- Docker & Docker Compose
+- Google OAuth2 클라이언트 ID/Secret
+- AWS S3 버킷 및 액세스 키
+
+### 1. 레포지토리 클론
 ```bash
-# 환경변수 파일 준비
-cp .env.example .env.local  # 값 채워넣기
-
-# 전체 서비스 실행
-docker-compose -f docker-compose.local.yml up -d
-
-# 로그 확인
-docker-compose -f docker-compose.local.yml logs -f api
+git clone https://github.com/min318777/meow.git
+cd meow
 ```
+
+### 2. 환경변수 파일 생성
+프로젝트 루트에 `.env.local` 파일 생성 후 아래 키에 맞는 값 입력:
+
+```
+JWT_SECRET=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+AWS_S3_BUCKET=
+AWS_S3_BASE_URL=
+AWS_CLOUDFRONT_DOMAIN=
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+GF_ADMIN_USER=
+GF_ADMIN_PASSWORD=
+```
+
+### 3. 실행
+```bash
+docker-compose -f docker-compose.local.yml up -d
+```
+
+### 4. 접속
+| 서비스 | URL |
+|--------|-----|
+| API Swagger | http://localhost:8080/swagger-ui.html |
+| Grafana | http://localhost:3001 |
+| Prometheus | http://localhost:9090 |
 
 ---
 
