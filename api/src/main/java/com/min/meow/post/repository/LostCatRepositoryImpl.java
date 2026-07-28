@@ -4,7 +4,6 @@ import com.min.meow.post.dto.response.LostCatPostListResponse;
 import com.min.meow.post.dto.response.QLostCatPostListResponse;
 import com.min.meow.post.entity.QLostCatPost;
 import com.min.meow.user.entity.QUser;
-import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -61,45 +60,77 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
+    // BB 방식: 위도/경도 BETWEEN(B-Tree 인덱스) + ST_Distance_Sphere 정밀 필터 + 거리순 정렬
     @Override
     public Page<LostCatPostListResponse> findNearbyWithProjection(double lat, double lng, double radiusKm, Pageable pageable) {
+        double radiusMeters = radiusKm * 1000;
         double latDelta = radiusKm / 111.0;
         double lngDelta = radiusKm / (111.0 * Math.cos(Math.toRadians(lat)));
 
-        BooleanBuilder where = new BooleanBuilder();
-        where.and(lostCatPost.latitude.isNotNull());
-        where.and(lostCatPost.longitude.isNotNull());
-        where.and(lostCatPost.latitude.between(lat - latDelta, lat + latDelta));
-        where.and(lostCatPost.longitude.between(lng - lngDelta, lng + lngDelta));
+        String dataSql = """
+                SELECT l.id, l.title, u.login_id, l.cat_name, l.lost_location,
+                       l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url,
+                       ST_Distance_Sphere(POINT(l.longitude, l.latitude), POINT(:lng, :lat)) AS distance
+                FROM lost_cat_post l
+                LEFT JOIN user u ON u.id = l.user_id
+                WHERE l.latitude IS NOT NULL AND l.longitude IS NOT NULL
+                  AND l.latitude BETWEEN :latMin AND :latMax
+                  AND l.longitude BETWEEN :lngMin AND :lngMax
+                  AND ST_Distance_Sphere(POINT(l.longitude, l.latitude), POINT(:lng, :lat)) <= :radius
+                ORDER BY distance
+                LIMIT :limit OFFSET :offset
+                """;
 
-        List<LostCatPostListResponse> content = queryFactory
-                .select(new QLostCatPostListResponse(
-                        lostCatPost.id,
-                        lostCatPost.title,
-                        lostCatPost.user.loginId,
-                        lostCatPost.catName,
-                        lostCatPost.lostLocation,
-                        lostCatPost.commentCount,
-                        lostCatPost.view,
-                        lostCatPost.isCompleted,
-                        lostCatPost.createdAt,
-                        lostCatPost.thumbnailUrl
-                ))
-                .from(lostCatPost)
-                .leftJoin(lostCatPost.user, user)
-                .where(where)
-                .orderBy(lostCatPost.createdAt.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+        String countSql = """
+                SELECT COUNT(*)
+                FROM lost_cat_post l
+                WHERE l.latitude IS NOT NULL AND l.longitude IS NOT NULL
+                  AND l.latitude BETWEEN :latMin AND :latMax
+                  AND l.longitude BETWEEN :lngMin AND :lngMax
+                  AND ST_Distance_Sphere(POINT(l.longitude, l.latitude), POINT(:lng, :lat)) <= :radius
+                """;
 
-        Long total = queryFactory
-                .select(lostCatPost.count())
-                .from(lostCatPost)
-                .where(where)
-                .fetchOne();
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = entityManager.createNativeQuery(dataSql)
+                .setParameter("lat", lat)
+                .setParameter("lng", lng)
+                .setParameter("latMin", lat - latDelta)
+                .setParameter("latMax", lat + latDelta)
+                .setParameter("lngMin", lng - lngDelta)
+                .setParameter("lngMax", lng + lngDelta)
+                .setParameter("radius", radiusMeters)
+                .setParameter("limit", pageable.getPageSize())
+                .setParameter("offset", (int) pageable.getOffset())
+                .getResultList();
 
-        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+        List<LostCatPostListResponse> content = rows.stream()
+                .map(row -> LostCatPostListResponse.builder()
+                        .id(((Number) row[0]).longValue())
+                        .title((String) row[1])
+                        .writer((String) row[2])
+                        .catName((String) row[3])
+                        .lostLocation((String) row[4])
+                        .commentCount(((Number) row[5]).intValue())
+                        .view(((Number) row[6]).intValue())
+                        .completed(toBoolean(row[7]))
+                        .createdAt(row[8] instanceof java.sql.Timestamp ts
+                                ? ts.toLocalDateTime()
+                                : (LocalDateTime) row[8])
+                        .thumbnailUrl((String) row[9])
+                        .build())
+                .toList();
+
+        long total = ((Number) entityManager.createNativeQuery(countSql)
+                .setParameter("lat", lat)
+                .setParameter("lng", lng)
+                .setParameter("latMin", lat - latDelta)
+                .setParameter("latMax", lat + latDelta)
+                .setParameter("lngMin", lng - lngDelta)
+                .setParameter("lngMax", lng + lngDelta)
+                .setParameter("radius", radiusMeters)
+                .getSingleResult()).longValue();
+
+        return new PageImpl<>(content, pageable, total);
     }
 
     // ST_Distance_Sphere 방식: SPATIAL INDEX(MBRContains) + ST 정밀필터 + 거리순 정렬
@@ -112,7 +143,8 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
 
         String dataSql = """
                 SELECT l.id, l.title, u.login_id, l.cat_name, l.lost_location,
-                       l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url
+                       l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url,
+                       ST_Distance_Sphere(l.location, ST_SRID(POINT(:lng, :lat), 4326)) AS distance
                 FROM lost_cat_post l
                 INNER JOIN user u ON u.id = l.user_id
                 WHERE l.location IS NOT NULL
@@ -120,7 +152,7 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                         ST_SRID(ST_MakeEnvelope(POINT(:lngMin, :latMin), POINT(:lngMax, :latMax)), 4326),
                         l.location)
                   AND ST_Distance_Sphere(l.location, ST_SRID(POINT(:lng, :lat), 4326)) <= :radius
-                ORDER BY ST_Distance_Sphere(l.location, ST_SRID(POINT(:lng, :lat), 4326))
+                ORDER BY distance
                 LIMIT :limit OFFSET :offset
                 """;
 
