@@ -50,6 +50,7 @@ services:
       - --collation-server=utf8mb4_unicode_ci
       - --ngram-token-size=2
       - --innodb-ft-min-token-size=2
+      - --bind-address=0.0.0.0
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s

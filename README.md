@@ -23,7 +23,7 @@
 | 실시간 알림 | SSE (Server-Sent Events) |
 | 비동기 처리 | Spring ApplicationEvent + @Async |
 | DB 마이그레이션 | Flyway |
-| 모니터링 | Prometheus + Grafana |
+| 모니터링 | Prometheus + Grafana + AWS CloudWatch |
 | API 문서 | Springdoc OpenAPI (Swagger) |
 | 컨테이너 | Docker + docker-compose |
 | 성능 테스트 | k6 |

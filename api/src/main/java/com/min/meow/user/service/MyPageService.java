@@ -48,7 +48,6 @@ public class MyPageService {
 
         // 캐싱된 통계 메서드 호출 (캐시 히트 시 COUNT 쿼리 3개 생략)
         long[] stats = getMyPageStats(userId);
-
         return MyPageSummaryResponse.from(user, stats[0], stats[1], stats[2]);
     }
 

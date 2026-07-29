@@ -31,11 +31,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
-    /**
-     * 바로 n+1해결함 n+1전의 쿼리를 쓰고 성능비교해보자
-     * @param userId
-     * @return
-     */
     @Query("SELECT COUNT(b) FROM BoastCatPost b " +
            "WHERE b.user.id = :userId")
     long countBoastCatPostsByUserId(@Param("userId") Long userId);

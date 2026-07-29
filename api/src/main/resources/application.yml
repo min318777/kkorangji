@@ -35,6 +35,7 @@ spring:
       leak-detection-threshold: 5000  # 5초 이상 미반환 시 경고 로그
 
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: validate
       database-platform: org.hibernate.dialect.MySQL8Dialect
