@@ -1,11 +1,14 @@
 package com.min.meow.notification.event;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.min.meow.common.NotificationType;
+import com.min.meow.notification.dto.response.NotificationResponse;
 import com.min.meow.notification.entity.Notification;
 import com.min.meow.notification.service.NotificationSaveService;
-import com.min.meow.notification.sse.SseEmitterManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -34,7 +37,8 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class NotificationEventListener {
 
     private final NotificationSaveService notificationSaveService;
-    private final SseEmitterManager sseEmitterManager;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     /**
      * 댓글 이벤트 처리
@@ -107,15 +111,15 @@ public class NotificationEventListener {
      * SSE 실시간 알림 전송
      * @param notification 저장된 알림 엔티티
      */
+    // Redis 채널에 알림 발행 — 모든 서버 인스턴스가 수신하여 연결된 사용자에게 SSE 전송
     private void sendSseNotification(Notification notification) {
-        Long receiverUserId = notification.getReceiverUserId();
-
-        if (sseEmitterManager.isConnected(receiverUserId)) {
-            sseEmitterManager.sendToUser(receiverUserId, notification);
-            log.debug("SSE 실시간 알림 전송 완료 - ReceiverUserId: {}", receiverUserId);
-        } else {
-            log.debug("[SSE] 사용자 미접속 - ReceiverUserId: {} (DB 저장 완료, 나중에 조회 가능)",
-                    receiverUserId);
+        try {
+            String channel = "sse:notify:" + notification.getReceiverUserId();
+            String payload = objectMapper.writeValueAsString(NotificationResponse.from(notification));
+            redisTemplate.convertAndSend(channel, payload);
+            log.debug("[Redis Pub/Sub] 알림 발행 완료 - receiverUserId: {}", notification.getReceiverUserId());
+        } catch (JsonProcessingException e) {
+            log.error("[Redis Pub/Sub] 알림 직렬화 실패 - receiverUserId: {}", notification.getReceiverUserId(), e);
         }
     }
 

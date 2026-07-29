@@ -1,5 +1,6 @@
 package com.min.meow.notification.sse;
 
+import com.min.meow.notification.dto.response.NotificationResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -15,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * - 사용자가 접속하면 연결을 저장
  * - 사용자에게 알림이 오면 저장된 연결로 실시간 전송
  * - ConcurrentHashMap: 멀티스레드 환경에서 안전하게 Map 사용
- * [중요] SSE 연결 교체 시 complete() 호출 금지!
+ * SSE 연결 교체 시 complete() 호출 금지!
  * 문제: 기존 연결에 complete()를 호출하면 Servlet Container(Tomcat)가
  *       Async Dispatch를 실행하여 Security Filter Chain을 재실행함.
  *       이때 새 스레드에는 SecurityContext가 없어서 AuthorizationDeniedException 발생.
@@ -92,7 +93,7 @@ public class SseEmitterManager {
      * @param userId 받을 사람 사용자 ID (PK)
      * @param data 전송할 데이터
      */
-    public void sendToUser(Long userId, Object data) {
+    public void sendToUser(Long userId, NotificationResponse data) {
         SseEmitter emitter = emitters.get(userId);
         if (emitter == null) {
             log.warn("SSE 연결이 없는 사용자: userId={} (사용자가 오프라인 상태)", userId);
@@ -135,8 +136,7 @@ public class SseEmitterManager {
      * 현재 연결된 사용자 수 조회
      * @return 연결된 사용자 수
      */
-    public int getConnectedUserCount() {
-        return emitters.size();
+    public int getConnectedUserCount() {return emitters.size();
     }
 
     // 30초마다 모든 연결에 ping 전송 → 실패 시 좀비 커넥션 즉시 제거

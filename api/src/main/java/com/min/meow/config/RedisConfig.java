@@ -10,11 +10,14 @@ import org.redisson.config.Config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import com.min.meow.notification.sse.SseRedisSubscriber;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -181,6 +184,16 @@ public class RedisConfig {
             serverConfig.setPassword(redisPassword);
         }
         return Redisson.create(config);
+    }
+
+    // SSE 알림 채널 구독 컨테이너 — "sse:notify:*" 패턴의 메시지를 SseRedisSubscriber로 전달
+    @Bean
+    public RedisMessageListenerContainer redisMessageListenerContainer(
+            RedisConnectionFactory redisConnectionFactory, SseRedisSubscriber sseRedisSubscriber) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(redisConnectionFactory);
+        container.addMessageListener(sseRedisSubscriber, new PatternTopic("sse:notify:*"));
+        return container;
     }
 
     @Bean
