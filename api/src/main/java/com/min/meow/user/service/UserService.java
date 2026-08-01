@@ -34,6 +34,10 @@ public class UserService {
     private final UserRoleRepository userRoleRepository;
     private final PermissionCacheService permissionCacheService;
 
+    public boolean isLoginIdAvailable(String loginId) {
+        return !userRepository.existsByLoginId(loginId);
+    }
+
     public LoginResponse login(LoginRequest loginRequest){
         User user = userRepository.findByLoginId(loginRequest.getLoginId())
                 .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));

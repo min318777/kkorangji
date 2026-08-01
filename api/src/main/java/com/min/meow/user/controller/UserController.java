@@ -18,9 +18,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "사용자", description = "회원가입, 로그인, 탈퇴 API")
@@ -30,6 +32,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+
+    @Operation(summary = "아이디 중복 확인",
+            description = "아이디 사용 가능 여부를 확인합니다. 인증 불필요.")
+    @SecurityRequirements
+    @GetMapping("/check-id")
+    public ResponseEntity<ApiResponse<Boolean>> checkLoginId(
+            @RequestParam String loginId) {
+        boolean available = userService.isLoginIdAvailable(loginId);
+        String message = available ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다.";
+        return ResponseEntity.ok(ApiResponse.success(message, available));
+    }
 
     @Operation(summary = "회원가입",
             description = "새 사용자를 등록합니다. 아이디 중복 시 409 응답. 인증 불필요.")
