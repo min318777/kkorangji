@@ -1,8 +1,9 @@
 package com.min.meow.notification.sse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.min.meow.notification.dto.response.NotificationResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
@@ -16,11 +17,19 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class SseRedisSubscriber implements MessageListener {
 
     private final SseEmitterManager sseEmitterManager;
+    // RedisConfig ObjectMapper는 activateDefaultTyping이 적용되어 타입 정보가 포함된 JSON을 생성함
+    // Pub/Sub 역직렬화는 순수 ObjectMapper로 분리하여 타입 충돌 방지
     private final ObjectMapper objectMapper;
+
+    public SseRedisSubscriber(SseEmitterManager sseEmitterManager) {
+        this.sseEmitterManager = sseEmitterManager;
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.registerModule(new JavaTimeModule());
+        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
 
     @Override
     public void onMessage(Message message, byte[] pattern) {

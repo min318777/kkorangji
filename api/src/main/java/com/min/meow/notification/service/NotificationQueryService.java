@@ -101,6 +101,17 @@ public class NotificationQueryService {
     }
 
     /**
+     * SSE 재연결 시 lastEventId 이후 누락된 알림 조회
+     */
+    public List<NotificationResponse> getMissedNotifications(Long userId, Long lastEventId) {
+        return notificationRepository
+                .findByReceiverUserIdAndIdGreaterThanOrderByIdAsc(userId, lastEventId)
+                .stream()
+                .map(NotificationResponse::from)
+                .toList();
+    }
+
+    /**
      * 특정 사용자의 모든 읽지 않은 알림을 읽음 처리
      * @param userId 요청한 사용자의 ID (PK)
      * @return 읽음 처리된 알림 개수

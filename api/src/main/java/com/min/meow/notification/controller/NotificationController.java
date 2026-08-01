@@ -102,23 +102,24 @@ public class NotificationController {
             description = "실시간 알림 수신을 위한 SSE 연결을 생성합니다. text/event-stream 형식으로 응답합니다. 인증 필요.")
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(
-            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user,
+            @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
+            jakarta.servlet.http.HttpServletResponse response) {
+
+        // Nginx 계열 리버스 프록시의 버퍼링을 응답 헤더로 직접 비활성화
+        response.setHeader("X-Accel-Buffering", "no");
+        response.setHeader("Cache-Control", "no-cache");
 
         Long userId = user.getUserId();
-        log.debug("SSE 구독 요청 - UserId: {}", userId);
+        log.debug("SSE 구독 요청 - UserId: {}, lastEventId: {}", userId, lastEventId);
 
-        // SSE 연결 생성 및 저장
         SseEmitter emitter = sseEmitterManager.createEmitter(userId);
 
-        // 연결 성공 메시지 전송
-        try {
-            emitter.send(SseEmitter.event()
-                    .name("connect")
-                    .data("SSE 연결 성공!"));
-            log.debug("SSE 연결 성공 - UserId: {}", userId);
-        } catch (Exception e) {
-            log.error("초기 메시지 전송 실패 - UserId: {}", userId, e);
-            throw new RuntimeException("SSE 연결 실패");
+        // 재연결 시 끊긴 동안 누락된 알림 재전송
+        if (lastEventId != null && !lastEventId.isBlank()) {
+            notificationQueryService
+                    .getMissedNotifications(userId, Long.parseLong(lastEventId))
+                    .forEach(n -> sseEmitterManager.sendToUser(userId, n));
         }
 
         return emitter;

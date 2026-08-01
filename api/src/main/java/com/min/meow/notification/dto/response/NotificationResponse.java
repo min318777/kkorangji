@@ -45,7 +45,7 @@ public class NotificationResponse {
 
     @JsonProperty("isRead")
     @Schema(description = "읽음 여부", example = "false")
-    private boolean isRead;
+    private boolean read;
 
     @Schema(description = "알림 생성일시", example = "2025-01-15T10:30:00")
     private LocalDateTime createdAt;
@@ -59,7 +59,7 @@ public class NotificationResponse {
                 .message(notification.getMessage())
                 .receiverUserId(notification.getReceiverUserId())
                 .postType(notification.getPostType())
-                .isRead(notification.isRead())
+                .read(notification.isRead())
                 .createdAt(notification.getCreatedAt())
                 .build();
     }
