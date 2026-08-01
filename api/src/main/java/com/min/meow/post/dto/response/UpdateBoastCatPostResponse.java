@@ -26,6 +26,7 @@ public class UpdateBoastCatPostResponse {
     private String content;
 
     @Schema(description = "이미지 URL 목록")
+    @Builder.Default
     private List<String> imageUrls = new ArrayList<>();
 
     @Schema(description = "작성일시", example = "2025-01-15T10:30:00")

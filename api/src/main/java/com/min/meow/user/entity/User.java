@@ -39,6 +39,7 @@ public class User{
 
     // CASCADE 제거: User는 소프트 삭제 정책이므로 실제 삭제가 발생하지 않음
     // DB 레벨 FK RESTRICT가 마지막 방어선 역할 수행
+    @Builder.Default
     @OneToMany(mappedBy = "user")
     private List<PostLike> postLike = new ArrayList<>();
 

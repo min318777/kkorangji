@@ -42,10 +42,12 @@ public class BoastCatPost extends BasePost {
     @Column(length = 500)
     private String thumbnailUrl;
 
+    @Builder.Default
     @BatchSize(size = 100)
     @ElementCollection
     private List<String> imageUrls = new ArrayList<>();
 
+    @Builder.Default
     @BatchSize(size = 100)
     @OneToMany(mappedBy = "boastCatPost", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostLike> postLikeList = new ArrayList<>();
