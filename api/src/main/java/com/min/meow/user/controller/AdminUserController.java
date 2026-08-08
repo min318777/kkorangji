@@ -30,13 +30,13 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin/users")
-@PreAuthorize("hasAuthority('user:manage')")
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
 
     @Operation(summary = "유저 목록 조회",
             description = "역할 필터(ROLE_USER / ROLE_RESTRICTED / ROLE_ADMIN)와 페이징을 지원합니다. roleName 미입력 시 전체 조회.")
+    @PreAuthorize("hasAuthority('user:read')")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<AdminUserResponse>>> getUserList(
             @Parameter(description = "역할 필터 (없으면 전체)") @RequestParam(required = false) String roleName,
@@ -50,6 +50,7 @@ public class AdminUserController {
             description = "사용자 상태를 변경합니다. Body: { \"status\": \"RESTRICTED\" | \"ACTIVE\" }. "
                     + "RESTRICTED: 조회만 가능, 작성·수정·댓글 즉시 차단. "
                     + "ACTIVE: 모든 일반 권한 즉시 복구.")
+    @PreAuthorize("hasAuthority('user:restrict')")
     @PatchMapping("/{userId}/status")
     public ResponseEntity<ApiResponse<AdminUserResponse>> updateUserStatus(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser admin,
@@ -67,6 +68,7 @@ public class AdminUserController {
 
     @Operation(summary = "강제 탈퇴",
             description = "대상 사용자를 강제 탈퇴 처리합니다. 개인정보가 비식별화되고 모든 디바이스에서 즉시 로그아웃됩니다.")
+    @PreAuthorize("hasAuthority('user:delete')")
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> forceWithdraw(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser admin,

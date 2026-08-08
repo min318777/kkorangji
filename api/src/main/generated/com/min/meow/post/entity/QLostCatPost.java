@@ -36,9 +36,8 @@ public class QLostCatPost extends EntityPathBase<LostCatPost> {
 
     public final NumberPath<Integer> catWeight = createNumber("catWeight", Integer.class);
 
-    public final NumberPath<Integer> commentCount = createNumber("commentCount", Integer.class);
-
-    public final ListPath<com.min.meow.comment.entity.Comment, com.min.meow.comment.entity.QComment> comments = this.<com.min.meow.comment.entity.Comment, com.min.meow.comment.entity.QComment>createList("comments", com.min.meow.comment.entity.Comment.class, com.min.meow.comment.entity.QComment.class, PathInits.DIRECT2);
+    //inherited
+    public final NumberPath<Integer> commentCount;
 
     //inherited
     public final StringPath contents;
@@ -55,7 +54,7 @@ public class QLostCatPost extends EntityPathBase<LostCatPost> {
 
     public final NumberPath<Double> latitude = createNumber("latitude", Double.class);
 
-    public final ComparablePath<org.locationtech.jts.geom.Point> location = createComparable("location", org.locationtech.jts.geom.Point.class);
+    public final NumberPath<Point> location = createNumber("location", Point.class);
 
     public final NumberPath<Double> longitude = createNumber("longitude", Double.class);
 
@@ -98,6 +97,7 @@ public class QLostCatPost extends EntityPathBase<LostCatPost> {
     public QLostCatPost(Class<? extends LostCatPost> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this._super = new com.min.meow.common.QBasePost(type, metadata, inits);
+        this.commentCount = _super.commentCount;
         this.contents = _super.contents;
         this.createdAt = _super.createdAt;
         this.id = _super.id;

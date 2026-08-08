@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 /**
  * 권한(Permission) 엔티티.
  * RBAC 모델에서 가장 세분화된 권한 단위를 표현한다.
- * 예: "post:read", "post:write", "user:manage"
+ * 예: "post:create", "post:update", "post:delete", "user:restrict", "user:delete"
  */
 @Entity
 @Getter
@@ -20,7 +20,7 @@ public class Permission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 권한 코드 (예: "post:read", "comment:write")
+    // 권한 코드 (예: "post:create", "comment:update", "user:restrict")
     @Column(unique = true, nullable = false, length = 50)
     private String code;
 

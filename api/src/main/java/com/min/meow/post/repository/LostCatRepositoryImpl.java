@@ -257,7 +257,7 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                        l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url
                 FROM lost_cat_post l
                 INNER JOIN user u ON u.id = l.user_id
-                WHERE MATCH(l.title, l.contents) AGAINST(:keyword IN BOOLEAN MODE)
+                WHERE MATCH(l.title, l.contents, l.cat_name, l.lost_location) AGAINST(:keyword IN BOOLEAN MODE)
                   AND (:userId IS NULL OR l.user_id = :userId)
                 ORDER BY l.created_at DESC
                 LIMIT :limit OFFSET :offset
@@ -266,7 +266,7 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
         String countSql = """
                 SELECT COUNT(*)
                 FROM lost_cat_post l
-                WHERE MATCH(l.title, l.contents) AGAINST(:keyword IN BOOLEAN MODE)
+                WHERE MATCH(l.title, l.contents, l.cat_name, l.lost_location) AGAINST(:keyword IN BOOLEAN MODE)
                   AND (:userId IS NULL OR l.user_id = :userId)
                 """;
 

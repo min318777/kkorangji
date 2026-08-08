@@ -22,6 +22,8 @@ public class QBasePost extends EntityPathBase<BasePost> {
 
     public static final QBasePost basePost = new QBasePost("basePost");
 
+    public final NumberPath<Integer> commentCount = createNumber("commentCount", Integer.class);
+
     public final StringPath contents = createString("contents");
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);

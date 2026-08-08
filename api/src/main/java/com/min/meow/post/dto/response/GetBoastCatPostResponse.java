@@ -58,7 +58,7 @@ public class GetBoastCatPostResponse {
     public static GetBoastCatPostResponse from(BoastCatPost boastCatPost){
         return GetBoastCatPostResponse.builder()
                 .id(boastCatPost.getId())
-                .writer(boastCatPost.getUser().getLoginId())
+                .writer(boastCatPost.getUser().getNickname())
                 .userId(boastCatPost.getUser().getId())
                 .title(boastCatPost.getTitle())
                 .contents(boastCatPost.getContents())

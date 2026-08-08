@@ -31,10 +31,10 @@ public class JoinRequest {
     @Email(message = "올바르지 않은 이메일 형식입니다.")
     private String email;
 
-    @Schema(description = "닉네임 (1~10자, 한글/영문)", example = "김냥이")
+    @Schema(description = "닉네임 (2~10자, 한글/영문/숫자)", example = "김냥이123")
     @NotBlank(message = "닉네임을 입력해 주세요.")
-    @Size(min = 1, max = 10, message = "닉네임은 1자 이상 10자 이하로 입력해 주세요.")
-    @Pattern(regexp = "^[가-힣a-zA-Z]+$", message = "닉네임은 한글과 영문만 사용 가능합니다.")
+    @Size(min = 2, max = 10, message = "닉네임은 2자 이상 10자 이하로 입력해 주세요.")
+    @Pattern(regexp = "^[가-힣a-zA-Z0-9]+$", message = "닉네임은 한글, 영문, 숫자만 사용 가능합니다.")
     private String nickname;
 
     @AssertTrue(message = "비밀번호가 일치하지 않습니다.")

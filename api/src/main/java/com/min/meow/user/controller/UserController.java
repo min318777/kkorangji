@@ -44,6 +44,17 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(message, available));
     }
 
+    @Operation(summary = "닉네임 중복 확인",
+            description = "닉네임 사용 가능 여부를 확인합니다. 인증 불필요.")
+    @SecurityRequirements
+    @GetMapping("/check-nickname")
+    public ResponseEntity<ApiResponse<Boolean>> checkNickname(
+            @RequestParam String nickname) {
+        boolean available = userService.isNicknameAvailable(nickname);
+        String message = available ? "사용 가능한 닉네임입니다." : "이미 사용 중인 닉네임입니다.";
+        return ResponseEntity.ok(ApiResponse.success(message, available));
+    }
+
     @Operation(summary = "회원가입",
             description = "새 사용자를 등록합니다. 아이디 중복 시 409 응답. 인증 불필요.")
     @SecurityRequirements

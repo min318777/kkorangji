@@ -94,7 +94,7 @@ public class GetLostCatPostResponse {
                 .id(lostCatPost.getId())
                 .title(lostCatPost.getTitle())
                 .content(lostCatPost.getContents())
-                .writer(lostCatPost.getUser().getLoginId())
+                .writer(lostCatPost.getUser().getNickname())
                 .userId(lostCatPost.getUser().getId())
                 .catName(lostCatPost.getCatName())
                 .catType(lostCatPost.getCatType())

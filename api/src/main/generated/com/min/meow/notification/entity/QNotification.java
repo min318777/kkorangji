@@ -29,6 +29,8 @@ public class QNotification extends EntityPathBase<Notification> {
 
     public final NumberPath<Long> postId = createNumber("postId", Long.class);
 
+    public final EnumPath<com.min.meow.common.PostType> postType = createEnum("postType", com.min.meow.common.PostType.class);
+
     public final NumberPath<Long> receiverUserId = createNumber("receiverUserId", Long.class);
 
     public final NumberPath<Long> sourceId = createNumber("sourceId", Long.class);

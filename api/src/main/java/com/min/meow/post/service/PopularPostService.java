@@ -246,7 +246,7 @@ public class PopularPostService {
         long redisDelta = viewCountService.getViewCount(PostType.BOAST, id);
         return GetBoastCatPostResponse.builder()
                 .id(post.getId())
-                .writer(post.getUser().getLoginId())
+                .writer(post.getUser().getNickname())
                 .userId(post.getUser().getId())
                 .title(post.getTitle())
                 .contents(post.getContents())

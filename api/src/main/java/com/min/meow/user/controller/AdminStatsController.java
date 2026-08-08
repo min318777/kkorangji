@@ -20,7 +20,7 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin/stats")
-@PreAuthorize("hasAuthority('user:manage')")
+@PreAuthorize("hasAuthority('user:read')")
 public class AdminStatsController {
 
     private final DauService dauService;

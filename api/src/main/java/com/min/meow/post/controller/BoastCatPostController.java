@@ -68,7 +68,7 @@ public class BoastCatPostController {
      */
     @Operation(summary = "자랑글 생성",
             description = "새 자랑글을 작성합니다. 이미지는 Presigned URL로 S3에 먼저 업로드 후 key를 전달합니다. 인증 필요.")
-    @PreAuthorize("hasAuthority('post:write')")
+    @PreAuthorize("hasAuthority('post:create')")
     @PostMapping
     public ResponseEntity<ApiResponse<CreateBoastCatPostResponse>> createBoastCatPost(
             @RequestBody @Valid CreateBoastCatPostRequest createBoastCatPostRequest,
@@ -87,7 +87,7 @@ public class BoastCatPostController {
      */
     @Operation(summary = "자랑글 수정",
             description = "자랑글을 수정합니다. 본인 게시글만 수정 가능합니다. 인증 필요.")
-    @PreAuthorize("hasAuthority('post:write')")
+    @PreAuthorize("hasAuthority('post:update')")
     @PutMapping("/{boastCatPostId}")
     public ResponseEntity<ApiResponse<UpdateBoastCatPostResponse>> updateBoastCatPost(
             @RequestBody @Valid UpdateBoastCatPostRequest updateBoastCatPostRequest,

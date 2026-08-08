@@ -44,36 +44,60 @@ public class DataInitializer implements ApplicationRunner {
     private void initializeFromScratch() {
         log.info("RBAC 초기 데이터 생성 시작");
 
-        // Permission 생성
-        Permission postRead = permissionRepository.save(new Permission("post:read", "게시글 조회"));
-        Permission postWrite = permissionRepository.save(new Permission("post:write", "게시글 작성"));
-        Permission postDelete = permissionRepository.save(new Permission("post:delete", "게시글 삭제"));
-        Permission commentWrite = permissionRepository.save(new Permission("comment:write", "댓글 작성"));
-        Permission commentDelete = permissionRepository.save(new Permission("comment:delete", "댓글 삭제"));
-        Permission userManage = permissionRepository.save(new Permission("user:manage", "사용자 관리"));
+        // ── Permission 생성 (10개) ──────────────────────────────────────
+        // 게시글
+        Permission postRead   = permissionRepository.save(new Permission("post:read",   "게시글 조회"));
+        Permission postCreate = permissionRepository.save(new Permission("post:create", "게시글 작성"));
+        Permission postUpdate = permissionRepository.save(new Permission("post:update", "게시글 수정"));
+        Permission postDelete = permissionRepository.save(new Permission("post:delete", "게시글 삭제 (타인 포함)"));
+        // 댓글
+        Permission commentCreate = permissionRepository.save(new Permission("comment:create", "댓글 작성"));
+        Permission commentUpdate = permissionRepository.save(new Permission("comment:update", "댓글 수정"));
+        Permission commentDelete = permissionRepository.save(new Permission("comment:delete", "댓글 삭제 (타인 포함)"));
+        // 유저 관리 (세분화)
+        Permission userRead     = permissionRepository.save(new Permission("user:read",     "유저 목록/통계 조회"));
+        Permission userRestrict = permissionRepository.save(new Permission("user:restrict", "유저 계정 제재/복원"));
+        Permission userDelete   = permissionRepository.save(new Permission("user:delete",   "유저 강제 탈퇴"));
 
-        // Role 생성
-        Role userRole = roleRepository.save(new Role("ROLE_USER", "일반 사용자"));
-        Role adminRole = roleRepository.save(new Role("ROLE_ADMIN", "관리자"));
-
-        // ROLE_USER: 조회, 작성, 댓글
-        rolePermissionRepository.save(new RolePermission(userRole, postRead));
-        rolePermissionRepository.save(new RolePermission(userRole, postWrite));
-        rolePermissionRepository.save(new RolePermission(userRole, commentWrite));
-
-        // ROLE_ADMIN: 모든 권한
-        rolePermissionRepository.save(new RolePermission(adminRole, postRead));
-        rolePermissionRepository.save(new RolePermission(adminRole, postWrite));
-        rolePermissionRepository.save(new RolePermission(adminRole, postDelete));
-        rolePermissionRepository.save(new RolePermission(adminRole, commentWrite));
-        rolePermissionRepository.save(new RolePermission(adminRole, commentDelete));
-        rolePermissionRepository.save(new RolePermission(adminRole, userManage));
-
-        // ROLE_RESTRICTED: 조회만 가능 (작성/수정/댓글 불가 — 유해 사용자 제재용)
+        // ── Role 생성 ────────────────────────────────────────────────────
+        Role userRole     = roleRepository.save(new Role("ROLE_USER",     "일반 사용자"));
+        Role adminRole    = roleRepository.save(new Role("ROLE_ADMIN",    "관리자"));
+        Role viewerRole   = roleRepository.save(new Role("ROLE_VIEWER",   "뷰어 (콘텐츠 관리 가능)"));
         Role restrictedRole = roleRepository.save(new Role("ROLE_RESTRICTED", "제한된 사용자"));
+
+        // ── ROLE_USER: 조회, 작성, 수정, 댓글 작성/수정 (삭제는 본인것만 서비스 레이어 isAuthor 체크) ──
+        rolePermissionRepository.save(new RolePermission(userRole, postRead));
+        rolePermissionRepository.save(new RolePermission(userRole, postCreate));
+        rolePermissionRepository.save(new RolePermission(userRole, postUpdate));
+        rolePermissionRepository.save(new RolePermission(userRole, commentCreate));
+        rolePermissionRepository.save(new RolePermission(userRole, commentUpdate));
+
+        // ── ROLE_VIEWER: 콘텐츠 전체 관리 + 유저 조회 (제재/탈퇴 제외) ──
+        rolePermissionRepository.save(new RolePermission(viewerRole, postRead));
+        rolePermissionRepository.save(new RolePermission(viewerRole, postCreate));
+        rolePermissionRepository.save(new RolePermission(viewerRole, postUpdate));
+        rolePermissionRepository.save(new RolePermission(viewerRole, postDelete));
+        rolePermissionRepository.save(new RolePermission(viewerRole, commentCreate));
+        rolePermissionRepository.save(new RolePermission(viewerRole, commentUpdate));
+        rolePermissionRepository.save(new RolePermission(viewerRole, commentDelete));
+        rolePermissionRepository.save(new RolePermission(viewerRole, userRead));
+
+        // ── ROLE_ADMIN: 모든 권한 10개 ──
+        rolePermissionRepository.save(new RolePermission(adminRole, postRead));
+        rolePermissionRepository.save(new RolePermission(adminRole, postCreate));
+        rolePermissionRepository.save(new RolePermission(adminRole, postUpdate));
+        rolePermissionRepository.save(new RolePermission(adminRole, postDelete));
+        rolePermissionRepository.save(new RolePermission(adminRole, commentCreate));
+        rolePermissionRepository.save(new RolePermission(adminRole, commentUpdate));
+        rolePermissionRepository.save(new RolePermission(adminRole, commentDelete));
+        rolePermissionRepository.save(new RolePermission(adminRole, userRead));
+        rolePermissionRepository.save(new RolePermission(adminRole, userRestrict));
+        rolePermissionRepository.save(new RolePermission(adminRole, userDelete));
+
+        // ── ROLE_RESTRICTED: 조회만 가능 (제재된 사용자) ──
         rolePermissionRepository.save(new RolePermission(restrictedRole, postRead));
 
-        log.info("RBAC 초기 데이터 생성 완료 - Permission: 6개, Role: 3개");
+        log.info("RBAC 초기 데이터 생성 완료 - Permission: 10개, Role: 4개");
     }
 
     /** 기존 DB에 ROLE_RESTRICTED가 없을 때만 추가 (멱등성 보장) */
@@ -83,7 +107,6 @@ public class DataInitializer implements ApplicationRunner {
             return;
         }
 
-        // post:read 권한이 없으면 직접 생성 (orElseThrow → 롤백 방지)
         Permission postRead = permissionRepository.findByCode("post:read")
                 .orElseGet(() -> permissionRepository.save(new Permission("post:read", "게시글 조회")));
 

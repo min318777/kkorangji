@@ -86,6 +86,7 @@ public class SecurityConfig {
                                 "/api/users/login",
                                 "/api/users/join",
                                 "/api/users/check-id",
+                                "/api/users/check-nickname",
                                 "/api/auth/token/refresh",
                                 "/api/logout",
                                 "/error",

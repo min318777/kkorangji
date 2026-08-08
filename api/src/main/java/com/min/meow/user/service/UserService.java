@@ -38,6 +38,10 @@ public class UserService {
         return !userRepository.existsByLoginId(loginId);
     }
 
+    public boolean isNicknameAvailable(String nickname) {
+        return !userRepository.existsByNickname(nickname);
+    }
+
     public LoginResponse login(LoginRequest loginRequest){
         User user = userRepository.findByLoginId(loginRequest.getLoginId())
                 .orElseThrow(() -> new CustomException(ErrorCode.UNREGISTERED_USER));

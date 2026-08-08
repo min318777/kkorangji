@@ -9,6 +9,9 @@ import com.min.meow.notification.service.NotificationSaveService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -46,31 +49,33 @@ public class NotificationEventListener {
      */
     @Async("notificationExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public void handleCommentEvent(CommentEvent event) {
         log.debug("댓글 이벤트 수신 - commentId: {}, postId: {}, receiverUserId: {}",
                 event.commentId(), event.postId(), event.receiverUserId());
-        try {
-            Notification notification = Notification.builder()
-                    .sourceId(event.commentId())
-                    .postId(event.postId())
-                    .postType(event.postType())
-                    .receiverUserId(event.receiverUserId())
-                    .type(NotificationType.COMMENT)
-                    .message(createCommentNotificationMessage(event.writer()))
-                    .isRead(false)
-                    .build();
 
-            Notification saved = notificationSaveService.save(notification);
-            if (saved == null) return;
-            log.debug("DB 알림 저장 완료 - ID: {}, Type: COMMENT, ReceiverUserId: {}",
-                    saved.getId(), saved.getReceiverUserId());
+        Notification notification = Notification.builder()
+                .sourceId(event.commentId())
+                .postId(event.postId())
+                .postType(event.postType())
+                .receiverUserId(event.receiverUserId())
+                .type(NotificationType.COMMENT)
+                .message(createCommentNotificationMessage(event.writer()))
+                .isRead(false)
+                .build();
 
-            sendSseNotification(saved);
+        Notification saved = notificationSaveService.save(notification);
+        if (saved == null) return;
+        log.debug("DB 알림 저장 완료 - ID: {}, Type: COMMENT, ReceiverUserId: {}",
+                saved.getId(), saved.getReceiverUserId());
 
-        } catch (Exception e) {
-            log.error("댓글 알림 처리 실패 - commentId: {}, error: {}",
-                    event.commentId(), e.getMessage(), e);
-        }
+        sendSseNotification(saved);
+    }
+
+    @Recover
+    public void recoverCommentEvent(Exception e, CommentEvent event) {
+        log.error("댓글 알림 최종 실패 (3회 재시도 소진) - commentId: {}, error: {}",
+                event.commentId(), e.getMessage());
     }
 
     /**
@@ -79,32 +84,33 @@ public class NotificationEventListener {
      */
     @Async("notificationExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
     public void handleLikeEvent(LikeEvent event) {
         log.debug("좋아요 이벤트 수신 - likeId: {}, postId: {}, receiverUserId: {}",
                 event.likeId(), event.postId(), event.receiverUserId());
 
-        try {
-            Notification notification = Notification.builder()
-                    .sourceId(event.likeId())
-                    .postId(event.postId())
-                    .postType(event.postType())
-                    .receiverUserId(event.receiverUserId())
-                    .type(NotificationType.LIKE)
-                    .message("게시글에 좋아요가 추가되었습니다.")
-                    .isRead(false)
-                    .build();
+        Notification notification = Notification.builder()
+                .sourceId(event.likeId())
+                .postId(event.postId())
+                .postType(event.postType())
+                .receiverUserId(event.receiverUserId())
+                .type(NotificationType.LIKE)
+                .message("게시글에 좋아요가 추가되었습니다.")
+                .isRead(false)
+                .build();
 
-            Notification saved = notificationSaveService.save(notification);
-            if (saved == null) return;
-            log.debug("DB 알림 저장 완료 - ID: {}, Type: LIKE, ReceiverUserId: {}",
-                    saved.getId(), saved.getReceiverUserId());
+        Notification saved = notificationSaveService.save(notification);
+        if (saved == null) return;
+        log.debug("DB 알림 저장 완료 - ID: {}, Type: LIKE, ReceiverUserId: {}",
+                saved.getId(), saved.getReceiverUserId());
 
-            sendSseNotification(saved);
+        sendSseNotification(saved);
+    }
 
-        } catch (Exception e) {
-            log.error("좋아요 알림 처리 실패 - likeId: {}, error: {}",
-                    event.likeId(), e.getMessage(), e);
-        }
+    @Recover
+    public void recoverLikeEvent(Exception e, LikeEvent event) {
+        log.error("좋아요 알림 최종 실패 (3회 재시도 소진) - likeId: {}, error: {}",
+                event.likeId(), e.getMessage());
     }
 
     /**

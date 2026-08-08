@@ -15,6 +15,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByLoginId(String loginId);
 
+    boolean existsByNickname(String nickname);
+
     /**
      * 역할 필터를 지원하는 유저 목록 페이징 조회.
      * FETCH JOIN + Pageable 충돌 방지를 위해 서브쿼리 방식 사용.

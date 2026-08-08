@@ -72,7 +72,7 @@ public class LostCatPostController {
      */
     @Operation(summary = "실종글 생성",
             description = "새 실종글을 작성합니다. 이미지는 Presigned URL로 S3에 먼저 업로드 후 key를 전달합니다. 인증 필요.")
-    @PreAuthorize("hasAuthority('post:write')")
+    @PreAuthorize("hasAuthority('post:create')")
     @PostMapping
     public ResponseEntity<ApiResponse<CreateLostCatPostResponse>> createLostCatPost(
             @RequestBody @Valid CreateLostCatPostRequest createLostCatPostRequest,
@@ -89,7 +89,7 @@ public class LostCatPostController {
      */
     @Operation(summary = "실종글 수정",
             description = "실종글을 수정합니다. 본인 게시글만 수정 가능합니다. 인증 필요.")
-    @PreAuthorize("hasAuthority('post:write')")
+    @PreAuthorize("hasAuthority('post:update')")
     @PutMapping("/{lostCatPostId}")
     public ResponseEntity<ApiResponse<UpdateLostCatPostResponse>> updateLostCatPost(
             @Parameter(description = "실종글 ID", example = "1")
