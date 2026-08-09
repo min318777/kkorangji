@@ -12,9 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ===========================================
   # Job 1: Gradle 빌드 검증 (푸시 없음)
-  # ===========================================
   build:
     name: Build
     runs-on: ubuntu-latest

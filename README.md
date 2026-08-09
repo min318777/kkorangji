@@ -135,8 +135,32 @@ docker-compose -f docker-compose.local.yml up -d
 
 ## RBAC 권한 구조
 
-| 역할 | 권한 |
-|------|------|
-| ROLE_USER | post:read, post:write, comment:write |
-| ROLE_ADMIN | 모든 권한 (post:delete, comment:delete, user:manage 포함) |
-| ROLE_RESTRICTED | post:read만 (신고된 사용자) |
+### 권한 목록 (10개)
+
+| 권한 코드 | 설명 |
+|-----------|------|
+| `post:read` | 게시글 조회 |
+| `post:create` | 게시글 작성 |
+| `post:update` | 게시글 수정 |
+| `post:delete` | 게시글 삭제 (타인 포함) |
+| `comment:create` | 댓글 작성 |
+| `comment:update` | 댓글 수정 |
+| `comment:delete` | 댓글 삭제 (타인 포함) |
+| `user:read` | 유저 목록/통계 조회 |
+| `user:restrict` | 유저 계정 제재/복원 |
+| `user:delete` | 유저 강제 탈퇴 |
+
+### 역할별 권한 매핑 (4개 역할)
+
+| 권한 | ROLE_USER | ROLE_VIEWER | ROLE_ADMIN | ROLE_RESTRICTED |
+|------|:---------:|:-----------:|:----------:|:---------------:|
+| post:read | ✓ | ✓ | ✓ | ✓ |
+| post:create | ✓ | ✓ | ✓ | |
+| post:update | ✓ | ✓ | ✓ | |
+| post:delete | | ✓ | ✓ | |
+| comment:create | ✓ | ✓ | ✓ | |
+| comment:update | ✓ | ✓ | ✓ | |
+| comment:delete | | ✓ | ✓ | |
+| user:read | | ✓ | ✓ | |
+| user:restrict | | | ✓ | |
+| user:delete | | | ✓ | |

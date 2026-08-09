@@ -63,9 +63,9 @@ public class SecurityConfig {
                     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                         CorsConfiguration corsConfiguration = new CorsConfiguration();
                         corsConfiguration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://meow-front.vercel.app"));
-                        corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
+                        corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                         corsConfiguration.setAllowCredentials(true);
-                        corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
+                        corsConfiguration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-Auth-Version", "Last-Event-ID"));
                         corsConfiguration.setMaxAge(3600L);
                         corsConfiguration.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
 
