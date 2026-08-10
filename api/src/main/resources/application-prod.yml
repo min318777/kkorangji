@@ -4,3 +4,5 @@ spring:
     properties:
       hibernate:
         format_sql: false
+  flyway:
+    out-of-order: true  # V5 placeholder가 V6~V13 이후에 적용되도록 허용
