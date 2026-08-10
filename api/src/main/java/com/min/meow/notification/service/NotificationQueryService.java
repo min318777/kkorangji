@@ -101,6 +101,16 @@ public class NotificationQueryService {
     }
 
     /**
+     * SSE 최초 연결 시 해당 사용자의 최신 알림 ID 조회
+     * connect 이벤트 id로 사용 → 재연결 시 Last-Event-ID 기준점 역할
+     */
+    public Long getLatestNotificationId(Long userId) {
+        return notificationRepository.findTopByReceiverUserIdOrderByIdDesc(userId)
+                .map(Notification::getId)
+                .orElse(null);
+    }
+
+    /**
      * SSE 재연결 시 lastEventId 이후 누락된 알림 조회
      */
     public List<NotificationResponse> getMissedNotifications(Long userId, Long lastEventId) {

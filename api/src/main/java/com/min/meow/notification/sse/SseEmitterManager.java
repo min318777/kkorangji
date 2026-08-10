@@ -34,7 +34,7 @@ public class SseEmitterManager {
      * SSE 연결 생성 및 저장
      * 동일 사용자의 새 탭 연결은 리스트에 추가 (기존 연결 유지)
      */
-    public SseEmitter createEmitter(Long userId) {
+    public SseEmitter createEmitter(Long userId, Long latestNotificationId) {
         SseEmitter emitter = new SseEmitter(TIMEOUT);
 
         // 사용자 리스트에 추가 (없으면 새 리스트 생성)
@@ -49,11 +49,16 @@ public class SseEmitterManager {
         emitter.onError(e -> removeOne(userId, emitter, "에러"));
 
         // 초기 connect 이벤트 전송 (Nginx 504 방지, 재연결 주기 3초 지정)
+        // latestNotificationId를 id로 포함 → 프론트 lastEventId 초기값으로 사용
         try {
-            emitter.send(SseEmitter.event()
+            SseEmitter.SseEventBuilder event = SseEmitter.event()
                     .reconnectTime(3000L)
                     .name("connect")
-                    .data("connected"));
+                    .data("connected");
+            if (latestNotificationId != null) {
+                event.id(String.valueOf(latestNotificationId));
+            }
+            emitter.send(event);
         } catch (IOException e) {
             removeOne(userId, emitter, "초기 이벤트 전송 실패");
             log.error("SSE 초기 이벤트 전송 실패: userId={}", userId, e);

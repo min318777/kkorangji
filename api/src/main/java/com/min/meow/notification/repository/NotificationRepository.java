@@ -32,4 +32,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     // SSE 재연결 시 lastEventId 이후 누락된 알림 조회
     List<Notification> findByReceiverUserIdAndIdGreaterThanOrderByIdAsc(Long receiverUserId, Long lastEventId);
+
+    // SSE 연결 시 최신 알림 ID 조회 (connect 이벤트 id로 사용)
+    java.util.Optional<Notification> findTopByReceiverUserIdOrderByIdDesc(Long receiverUserId);
 }

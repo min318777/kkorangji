@@ -113,7 +113,9 @@ public class NotificationController {
         Long userId = user.getUserId();
         log.debug("SSE 구독 요청 - UserId: {}, lastEventId: {}", userId, lastEventId);
 
-        SseEmitter emitter = sseEmitterManager.createEmitter(userId);
+        // connect 이벤트 id로 사용할 최신 알림 ID 조회 (프론트 lastEventId 초기값)
+        Long latestNotificationId = notificationQueryService.getLatestNotificationId(userId);
+        SseEmitter emitter = sseEmitterManager.createEmitter(userId, latestNotificationId);
 
         // 재연결 시 끊긴 동안 누락된 알림 재전송
         if (lastEventId != null && !lastEventId.isBlank()) {
