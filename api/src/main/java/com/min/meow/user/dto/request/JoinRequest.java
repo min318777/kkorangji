@@ -14,12 +14,12 @@ public class JoinRequest {
     @Pattern(regexp = "^[a-zA-Z0-9]+$", message = "아이디는 영문과 숫자만 사용 가능합니다.")
     private String loginId;
 
-    @Schema(description = "비밀번호 (영문+숫자 필수 포함)", example = "password1!")
+    @Schema(description = "비밀번호 (영문/숫자, 8~100자)", example = "password123")
     @NotBlank(message = "비밀번호를 입력해 주세요.")
-    //@Size(min = 8, max = 100, message = "비밀번호는 8자 이상 100자 이하로 입력해 주세요.")
+    @Size(min = 8, max = 100, message = "비밀번호는 8자 이상 100자 이하로 입력해 주세요.")
     @Pattern(
-            regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d@$!%*#?&]+$",
-            message = "비밀번호는 영문과 숫자를 반드시 포함해야 합니다."
+            regexp = "^[a-zA-Z0-9]+$",
+            message = "비밀번호는 영문과 숫자만 사용 가능합니다."
     )
     private String password;
 
