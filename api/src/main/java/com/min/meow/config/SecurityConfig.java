@@ -62,7 +62,7 @@ public class SecurityConfig {
                     @Override
                     public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                         CorsConfiguration corsConfiguration = new CorsConfiguration();
-                        corsConfiguration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://meow-front.vercel.app", "https://kkorangji-vercel-web.vercel.app", "https://kkorangji.com", "https://www.kkorangji.com"));
+                        corsConfiguration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://meow-front.vercel.app", "https://kkorangji-vercel-web.vercel.app", "https://kkorangji.com", "https://www.kkorangji.com", "https://ggorangji-vercel-web.vercel.app"));
                         corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                         corsConfiguration.setAllowCredentials(true);
                         corsConfiguration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-Auth-Version", "Last-Event-ID"));
