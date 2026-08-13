@@ -11,7 +11,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
  * Spring의 @Scheduled 어노테이션을 사용한 스케줄 작업 실행을 위한 설정입니다.
  * ThreadPoolTaskScheduler를 사용하여 스케줄 스레드 풀을 관리합니다.
  * 주요 스케줄 작업:
- * - Redis 조회수 → DB 동기화 (1분마다)
+ * - Redis 조회수 → DB 동기화 (30초마다)
  * - 기타 주기적 배치 작업
  * @EnableScheduling: Spring의 스케줄링 기능을 활성화합니다.
  */

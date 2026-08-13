@@ -14,8 +14,8 @@ import java.util.List;
 
 /**
  * 인기글 TOP 24 상세 캐시 워밍 스케줄러 — Cache Stampede 방지 (v3)
- * 25초마다 Sorted Set에서 상위 24개 ID를 가져와 post:boast:detail 캐시를 선제 갱신
- * TTL(10분) 만료 전 항상 캐시가 채워져 있음 → MISS 자체 방지
+ * 현재 @Scheduled 주석 처리로 비활성 상태 (v1 Stampede 테스트 시 비교 기준선 유지 목적).
+ * 활성화 시 Sorted Set에서 상위 24개 ID를 가져와 post:boast:detail 캐시(TTL 30초)를 선제 갱신 → MISS 방지가 설계 의도.
  */
 @Slf4j
 @Component

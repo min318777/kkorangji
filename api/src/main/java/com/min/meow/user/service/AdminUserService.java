@@ -34,7 +34,7 @@ public class AdminUserService {
 
     /**
      * 사용자 제한: ROLE_USER → ROLE_RESTRICTED
-     * 이후 요청부터 post:write, comment:write 권한 없음 → 작성/수정/댓글 불가
+     * 이후 요청부터 post:create/update, comment:create/update 권한 없음 → 작성/수정/댓글 불가
      */
     @Transactional
     public AdminUserResponse restrictUser(Long adminId, Long targetUserId) {
@@ -75,7 +75,7 @@ public class AdminUserService {
 
     /**
      * 사용자 복원: ROLE_RESTRICTED → ROLE_USER
-     * 이후 요청부터 post:write, comment:write 권한 복구
+     * 이후 요청부터 post:create/update, comment:create/update 권한 복구
      */
     @Transactional
     public AdminUserResponse restoreUser(Long adminId, Long targetUserId) {

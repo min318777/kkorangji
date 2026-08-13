@@ -13,10 +13,10 @@ import org.springframework.stereotype.Component;
  * 동작 방식:
  * ┌─────────────┐    INCR    ┌─────────────┐    Batch    ┌─────────────┐
  * │   Client    │ ─────────▶ │    Redis    │ ─────────▶  │   MySQL     │
- * │  (Request)  │            │   (Cache)   │  (1분마다)  │    (DB)     │
+ * │  (Request)  │            │   (Cache)   │  (30초마다) │    (DB)     │
  * └─────────────┘            └─────────────┘             └─────────────┘
  * 동기화 주기 설정:
- * - 기본값: 1분 (60,000ms)
+ * - 기본값: 30초 (30,000ms)
  * - 너무 짧으면: DB 부하 증가, Redis의 장점 감소
  * - 너무 길면: 서버 장애 시 데이터 손실 증가, 실시간성 감소
  * 운영 고려사항:
@@ -36,11 +36,11 @@ public class ViewCountSyncScheduler {
     private final PopularRankingService popularRankingService;
 
     /**
-     * Redis 조회수를 DB에 동기화 (1분마다 실행)
+     * Redis 조회수를 DB에 동기화 (30초마다 실행)
      * @Scheduled 설정:
      * - fixedRate: 이전 실행 시작 시점으로부터 지정 시간 후 실행
      * - initialDelay: 애플리케이션 시작 후 첫 실행까지 대기 시간
-     *   → 애플리케이션 초기화 완료 후 실행하기 위해 60초 대기
+     *   → 애플리케이션 초기화 완료 후 실행하기 위해 30초 대기
      * 실행 시간이 fixedRate보다 길어지면:
      * - 다음 실행은 현재 실행 완료 직후 시작됨
      * - 동시 실행은 발생하지 않음 (기본 설정)
