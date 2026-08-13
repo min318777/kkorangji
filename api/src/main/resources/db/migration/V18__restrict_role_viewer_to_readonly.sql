@@ -1,0 +1,8 @@
+DELETE rp FROM role_permission rp
+JOIN role r ON rp.role_id = r.id
+JOIN permission p ON rp.permission_id = p.id
+WHERE r.name = 'ROLE_VIEWER'
+  AND p.code IN ('post:create', 'post:update', 'post:delete',
+                 'comment:create', 'comment:update', 'comment:delete');
+
+UPDATE role SET description = '뷰어 (읽기 전용, 면접관용)' WHERE name = 'ROLE_VIEWER';

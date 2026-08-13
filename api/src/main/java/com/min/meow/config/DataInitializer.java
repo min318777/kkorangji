@@ -62,7 +62,7 @@ public class DataInitializer implements ApplicationRunner {
         // ── Role 생성 ────────────────────────────────────────────────────
         Role userRole     = roleRepository.save(new Role("ROLE_USER",     "일반 사용자"));
         Role adminRole    = roleRepository.save(new Role("ROLE_ADMIN",    "관리자"));
-        Role viewerRole   = roleRepository.save(new Role("ROLE_VIEWER",   "뷰어 (콘텐츠 관리 가능)"));
+        Role viewerRole   = roleRepository.save(new Role("ROLE_VIEWER",   "뷰어 (읽기 전용, 면접관용)"));
         Role restrictedRole = roleRepository.save(new Role("ROLE_RESTRICTED", "제한된 사용자"));
 
         // ── ROLE_USER: 조회, 작성, 수정, 댓글 작성/수정 (삭제는 본인것만 서비스 레이어 isAuthor 체크) ──
@@ -72,14 +72,8 @@ public class DataInitializer implements ApplicationRunner {
         rolePermissionRepository.save(new RolePermission(userRole, commentCreate));
         rolePermissionRepository.save(new RolePermission(userRole, commentUpdate));
 
-        // ── ROLE_VIEWER: 콘텐츠 전체 관리 + 유저 조회 (제재/탈퇴 제외) ──
+        // ── ROLE_VIEWER: 읽기 전용 (게시글/유저 조회만, 생성·수정·삭제 불가) ──
         rolePermissionRepository.save(new RolePermission(viewerRole, postRead));
-        rolePermissionRepository.save(new RolePermission(viewerRole, postCreate));
-        rolePermissionRepository.save(new RolePermission(viewerRole, postUpdate));
-        rolePermissionRepository.save(new RolePermission(viewerRole, postDelete));
-        rolePermissionRepository.save(new RolePermission(viewerRole, commentCreate));
-        rolePermissionRepository.save(new RolePermission(viewerRole, commentUpdate));
-        rolePermissionRepository.save(new RolePermission(viewerRole, commentDelete));
         rolePermissionRepository.save(new RolePermission(viewerRole, userRead));
 
         // ── ROLE_ADMIN: 모든 권한 10개 ──
