@@ -9,10 +9,11 @@ on:
       - 'api/Dockerfile'
       - 'docker-compose.prod.yml'
       - 'nginx/**'
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}  # min318777/meow
+  IMAGE_NAME: min318777/meow  # docker-compose.prod.yml이 참조하는 이미지명과 반드시 일치해야 함 (저장소명은 kkorangji로 github.repository와 다름)
 
 jobs:
   # Job 1: Docker 이미지 빌드 & GHCR 푸시
