@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 /**
  * 인기글 서비스
  * [목록] v1~v5: @Cacheable / 분산 락 / Cache Warming / Redisson / Sorted Set
- * [상세] v1~v3: @Cacheable / 분산 락 / Cache Warming (스탬피드 방지 비교)
+ * [상세] v1~v4: @Cacheable / 분산 락 / Cache Warming / 비관적 락 (스탬피드 방지 비교)
  */
 @Slf4j
 @Service
@@ -89,7 +89,7 @@ public class PopularPostService {
         }
     }
 
-    // v3: Cache Warming — PopularPostCacheWarmingScheduler가 25초마다 선제 갱신
+    // v3: Cache Warming — PopularPostCacheWarmingScheduler가 25초마다 선제 갱신 (현재 스케줄러 비활성 상태, 설계 의도만 반영)
     @Cacheable(cacheNames = "post:boast:popular:warmed")
     public List<BoastCatPostListResponse> getPopularPostsV3() {
         log.warn("[v3 Cache MISS] 스케줄러 워밍 전 DB 조회 - thread: {}", Thread.currentThread().getName());
@@ -129,7 +129,7 @@ public class PopularPostService {
      * v5: Redis Sorted Set 실시간 집계 + 캐시 워밍
      * 좋아요/댓글/조회수 이벤트 → ZINCRBY 실시간 점수 누적
      * 캐시 HIT → 즉시 반환 / MISS → Sorted Set → findByIds(DB) → 캐시 저장
-     * PopularPostV5CacheWarmingScheduler가 25초마다 선제 갱신 → Stampede 방지
+     * PopularPostV5CacheWarmingScheduler가 25초마다 선제 갱신 → Stampede 방지 (현재 스케줄러 비활성 상태, 설계 의도만 반영)
      */
     @Cacheable(cacheNames = "post:boast:popular:v5")
     public List<BoastCatPostListResponse> getPopularPostsV5() {
@@ -199,7 +199,7 @@ public class PopularPostService {
         }
     }
 
-    // v3: Cache Warming — DetailCacheWarmingScheduler가 25초마다 선제 갱신
+    // v3: Cache Warming — DetailCacheWarmingScheduler가 25초마다 선제 갱신 (현재 스케줄러 비활성 상태, 설계 의도만 반영)
     @Cacheable(cacheNames = "post:boast:detail", key = "#id")
     public GetBoastCatPostResponse getDetailV3(Long id) {
         log.warn("[인기글 상세 v3 Cache MISS] 워밍 실패 - postId: {}", id);

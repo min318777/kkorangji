@@ -43,9 +43,9 @@ public class PopularPostController {
         return ResponseEntity.ok(ApiResponse.success("인기 게시물 조회 성공 (v2)", popularPostService.getPopularPostsV2()));
     }
 
-    // v3: Cache Warming — 스케줄러가 25초마다 선제 갱신
+    // v3: Cache Warming (스케줄러 현재 비활성 상태 — 설계 의도만 반영)
     @Operation(summary = "인기 게시물 TOP 24 (v3 - Cache Warming)",
-            description = "스케줄러가 25초마다 미리 갱신. MISS 자체 발생 안 함.")
+            description = "설계상 스케줄러가 25초마다 미리 갱신해 MISS를 방지하나, 현재 워밍 스케줄러가 비활성 상태라 TTL 만료 시 MISS 발생.")
     @SecurityRequirements
     @GetMapping("/popular/v3")
     public ResponseEntity<ApiResponse<List<BoastCatPostListResponse>>> getPopularPostsV3() {
@@ -103,12 +103,12 @@ public class PopularPostController {
     }
 
     /**
-     * 인기글 상세조회 v3 — Cache Warming (Stampede 원천 차단)
-     * DetailCacheWarmingScheduler가 25초마다 TOP 24 상세 캐시 선제 갱신
-     * TTL 만료 전 항상 캐시가 채워져 있음 → MISS 자체 발생하지 않음
+     * 인기글 상세조회 v3 — Cache Warming (Stampede 원천 차단, 설계 의도)
+     * 설계상 DetailCacheWarmingScheduler가 25초마다 TOP 24 상세 캐시 선제 갱신하여
+     * TTL(30초) 만료 전 항상 캐시가 채워져 있어야 하나, 현재 워밍 스케줄러는 비활성 상태
      */
     @Operation(summary = "인기글 상세 조회 (v3 - Cache Warming)",
-            description = "스케줄러가 25초마다 TOP 24 상세 캐시 선제 갱신. MISS 자체 발생 안 함.")
+            description = "설계상 스케줄러가 25초마다 TOP 24 상세 캐시 선제 갱신해 MISS를 방지하나, 현재 워밍 스케줄러가 비활성 상태라 TTL 만료 시 MISS 발생.")
     @SecurityRequirements
     @GetMapping("/popular/detail/v3/{id}")
     public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getPopularPostDetailV3(

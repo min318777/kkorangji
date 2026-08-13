@@ -12,7 +12,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/** 인기 게시물 캐시 워밍 스케줄러 — Cache Stampede 방지 */
+/**
+ * 인기 게시물 캐시 워밍 스케줄러 — Cache Stampede 방지
+ * 현재 @Scheduled 주석 처리로 비활성 상태 (v1 무방지 방식과의 비교 기준선 유지 목적).
+ * 활성화 시 TTL(30초) 만료 전 선제 갱신하여 MISS를 방지하는 것이 설계 의도.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
