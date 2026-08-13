@@ -1,7 +1,6 @@
 package com.min.meow.post.controller;
 
 
-import com.min.meow.common.PostType;
 import com.min.meow.common.PrincipalUser;
 import com.min.meow.common.PageResponse;
 import com.min.meow.common.ApiResponse;
@@ -11,7 +10,6 @@ import com.min.meow.post.dto.response.CreateLostCatPostResponse;
 import com.min.meow.post.dto.response.GetLostCatPostResponse;
 import com.min.meow.post.dto.response.LostCatPostListResponse;
 import com.min.meow.post.dto.response.UpdateLostCatPostResponse;
-import com.min.meow.post.service.ViewCountService;
 import com.min.meow.post.service.LostCatPostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -38,7 +36,6 @@ import java.util.Map;
 public class LostCatPostController {
 
     private final LostCatPostService lostCatPostService;
-    private final ViewCountService viewCountService;
 
     // ========== CRUD ==========
 
@@ -192,11 +189,12 @@ public class LostCatPostController {
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공", null));
     }
 
-    @Operation(summary = "조회수 증가 (v3 Redis)",
-            description = "Redis INCR 방식. DB 부하를 줄이고 동시성을 완벽 보장합니다. Redis 장애 시 DB fallback. 인증 불필요.")
+    @Operation(summary = "실종글 상세조회 + 조회수 증가 통합 (v3 Redis INCR)",
+            description = "Redis INCR 방식. DB 부하를 줄이고 동시성을 완벽 보장합니다. Redis 장애 시 DB fallback. " +
+                    "방금 증가한 조회수까지 반영된 상세 게시글을 그대로 반환합니다. 인증 불필요.")
     @SecurityRequirements
     @PostMapping("/v3/{lostCatPostId}/view")
-    public ResponseEntity<ApiResponse<Long>> incrementViewCountV3(
+    public ResponseEntity<ApiResponse<GetLostCatPostResponse>> incrementViewCountV3(
             @Parameter(description = "실종글 ID", example = "1")
             @PathVariable Long lostCatPostId,
             HttpServletRequest request,
@@ -206,8 +204,8 @@ public class LostCatPostController {
                 ? "user:" + user.getUserId()
                 : "ip:" + getClientIp(request);
 
-        Long newCount = viewCountService.incrementViewCount(PostType.LOST, lostCatPostId, identifier);
-        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (Redis INCR 방식)", newCount));
+        GetLostCatPostResponse response = lostCatPostService.getLostCatPostV3(lostCatPostId, identifier);
+        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v3)", response));
     }
 
     // X-Forwarded-For 헤더 우선, 없으면 RemoteAddr

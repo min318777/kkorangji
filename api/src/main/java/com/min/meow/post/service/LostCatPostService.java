@@ -84,18 +84,23 @@ public class LostCatPostService {
     }
 
     /**
-     * 글 상세 조회 (N+1 최적화 적용 + 캐싱)
+     * 상세조회 + 조회수 증가 통합 (v3) — Redis INCR 후 최신 상태로 상세조회 반환
+     * getLostCatPost()가 이미 DB view + Redis delta를 더해 반환하므로
+     * 방금 증가시킨 값까지 포함된 정확한 view가 응답에 실림
+     */
+    public GetLostCatPostResponse getLostCatPostV3(Long lostCatPostId, String identifier){
+        viewCountService.incrementViewCount(PostType.LOST, lostCatPostId, identifier);
+        return getLostCatPost(lostCatPostId);
+    }
+
+    /**
+     * 글 상세 조회 (N+1 최적화 적용, 캐싱 없음)
      * findByIdWithUser()로 User를 Fetch Join하여 N+1 문제 해결
      * - User: Fetch Join (N:1 관계 → 카테시안 곱 없음)
      * - imageUrls: @BatchSize(100) 적용 (1:N 관계)
-     * - comments: @BatchSize(100) 적용 (1:N 관계)
-     * 조회수 증가는 별도 API로 분리됨
-     * 캐시 설정:
-     * - 캐시명: post:lost:detail
-     * - 키: 게시글 ID (예: post:lost:detail::123)
-     * - TTL: 10분
+     * 조회수 = DB view + Redis delta (v3 방식, 항상 정확한 실시간 값)
      */
-    // 조회수 = DB view + Redis delta (v3 방식, 항상 정확한 실시간 값)
+
     public GetLostCatPostResponse getLostCatPost(Long lostCatPostId){
         LostCatPost lostCatPost = lostCatRepository.findByIdWithUser(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
@@ -331,7 +336,7 @@ public class LostCatPostService {
 
     /**
      * 조회수 증가 - 더티 체킹 방식 (v1 - 동시성 이슈 있음)
-     * ⚠️ 동시성 문제 (Lost Update):
+     * 동시성 문제 (Lost Update):
      * 이 방식은 아래와 같은 Read-Modify-Write 패턴으로 동작합니다:
      * 1. SELECT * FROM lost_cat_post WHERE id = ? (조회)
      * 2. Java에서 view++ 연산 수행
@@ -350,7 +355,6 @@ public class LostCatPostService {
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        // 더티 체킹으로 조회수 증가 (동시성 이슈 발생 가능)
         lostCatPost.incrementView();
         // 트랜잭션 종료 시 JPA가 변경 감지하여 UPDATE 쿼리 실행
     }
