@@ -148,7 +148,7 @@ public class PopularPostService {
         return ids.stream()
                 .map(postMap::get)
                 .filter(Objects::nonNull)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     // ========== 인기글 상세조회 — Cache Stampede 방지 비교 ==========
