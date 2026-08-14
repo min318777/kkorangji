@@ -10,10 +10,11 @@ import java.util.List;
 
 /**
  * 실종 고양이 게시글 수정 요청 DTO
- * Presigned URL 기반 이미지 업로드 방식으로 변경:
- * - 새 이미지: Presigned URL로 S3에 업로드 후 key 전달
- * - 유지할 이미지: 기존 CloudFront URL 그대로 전달
- * - 삭제할 이미지: CloudFront URL 전달 (서버에서 S3 key 추출 후 삭제)
+ * Presigned URL 기반 이미지 업로드 방식:
+ * - images 리스트 하나로 최종 이미지 순서를 그대로 전달 (기존 이미지 + 새 이미지 혼합 가능)
+ * - EXISTING 타입: value = 기존 CloudFront URL
+ * - NEW 타입: value = 새로 업로드한 S3 key
+ * - images에 포함되지 않은 기존 이미지는 자동으로 삭제 처리됨
  */
 @Schema(description = "실종글 수정 요청")
 @Getter
@@ -82,32 +83,16 @@ public class UpdateLostCatPostRequest {
     @Schema(description = "고양이 발견 완료 여부", example = "false")
     private boolean isCompleted;
 
-    @Schema(description = "새로 업로드한 이미지의 S3 key 목록 (최대 10장)",
-            example = "[\"meow/uuid-new-1.jpg\"]")
+    @Schema(description = "최종 이미지 목록 (순서 = 노출 순서, 기존/신규 이미지 혼합 가능, 최대 10장)",
+            example = "[{\"type\": \"EXISTING\", \"value\": \"https://d1234.cloudfront.net/meow/uuid-old.jpg\"}, {\"type\": \"NEW\", \"value\": \"meow/uuid-new-1.jpg\"}]")
     @Size(max = 10, message = "이미지는 최대 10장까지 업로드 가능합니다.")
-    private List<String> newImageKeys;
-
-    @Schema(description = "유지할 기존 이미지의 CloudFront URL 목록",
-            example = "[\"https://d1234.cloudfront.net/meow/uuid-old.jpg\"]")
-    private List<String> keepImageUrls;
-
-    @Schema(description = "삭제할 이미지의 CloudFront URL 목록",
-            example = "[\"https://d1234.cloudfront.net/meow/uuid-delete.jpg\"]")
-    private List<String> deleteImageUrls;
+    private List<ImageItemRequest> images;
 
     // 필드 간 관계 검증: 위도와 경도는 모두 있거나 모두 없어야 함
     @AssertTrue(message = "위도와 경도는 모두 입력하거나, 모두 비워야 합니다.")
     @Schema(hidden = true)
     private boolean isCoordinatesValid() {
         return (latitude == null) == (longitude == null);
-    }
-
-    // 필드 간 관계 검증: 유지할 이미지와 삭제할 이미지에 중복 URL이 없어야 함
-    @AssertTrue(message = "유지할 이미지와 삭제할 이미지에 중복된 URL이 있습니다.")
-    @Schema(hidden = true)
-    private boolean isImageUrlsNotOverlapping() {
-        if (keepImageUrls == null || deleteImageUrls == null) return true;
-        return keepImageUrls.stream().noneMatch(deleteImageUrls::contains);
     }
 
     // 제목: 앞뒤 공백 제거
@@ -173,15 +158,7 @@ public class UpdateLostCatPostRequest {
         isCompleted = completed;
     }
 
-    public void setNewImageKeys(List<String> newImageKeys) {
-        this.newImageKeys = newImageKeys;
-    }
-
-    public void setKeepImageUrls(List<String> keepImageUrls) {
-        this.keepImageUrls = keepImageUrls;
-    }
-
-    public void setDeleteImageUrls(List<String> deleteImageUrls) {
-        this.deleteImageUrls = deleteImageUrls;
+    public void setImages(List<ImageItemRequest> images) {
+        this.images = images;
     }
 }
