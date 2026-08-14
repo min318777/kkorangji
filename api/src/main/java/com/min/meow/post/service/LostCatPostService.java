@@ -9,6 +9,7 @@ import com.min.meow.post.dto.response.GetLostCatPostResponse;
 import com.min.meow.post.dto.response.LostCatPostListResponse;
 import com.min.meow.post.dto.response.UpdateLostCatPostResponse;
 import com.min.meow.post.dto.request.CreateLostCatPostRequest;
+import com.min.meow.post.dto.request.ImageItemRequest;
 import com.min.meow.post.dto.request.UpdateLostCatPostRequest;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.common.PostType;
@@ -211,9 +212,8 @@ public class LostCatPostService {
     /**
      * 글 수정 (Presigned URL 기반 이미지 업로드)
      * 이미지 처리:
-     * - 새 이미지: newImageKeys의 S3 key를 CloudFront URL로 변환
-     * - 유지할 이미지: keepImageUrls 그대로 사용
-     * - 삭제할 이미지: deleteImageUrls의 URL에서 S3 key 추출 후 삭제
+     * - images 리스트 순서 그대로 최종 이미지 목록 구성 (기존 URL + 새 S3 key 혼합 가능)
+     * - images에 없는 기존 이미지는 삭제된 것으로 간주하여 S3에서 제거
      */
     @Transactional
     public UpdateLostCatPostResponse updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest, Long userId){
@@ -227,7 +227,7 @@ public class LostCatPostService {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
 
-        List<String> finalImageUrls = updateImage(updateLostCatPostRequest);
+        List<String> finalImageUrls = updateImage(updateLostCatPostRequest, lostCatPost);
 
         Double lat = updateLostCatPostRequest.getLatitude();
         Double lng = updateLostCatPostRequest.getLongitude();
@@ -303,29 +303,29 @@ public class LostCatPostService {
 
     /**
      * 이미지 업데이트 처리 (Presigned URL 방식)
+     * images 리스트 순서 그대로 최종 이미지 목록을 구성하고,
+     * 기존 이미지 중 최종 목록에서 빠진 것은 S3에서 삭제한다.
      * @param request 수정 요청 DTO
+     * @param post 수정 대상 게시글 (삭제 대상 판별용)
      * @return 최종 이미지 URL 목록 (CloudFront URL)
      */
-    private List<String> updateImage(UpdateLostCatPostRequest request){
+    private List<String> updateImage(UpdateLostCatPostRequest request, LostCatPost post){
         List<String> finalImageUrls = new ArrayList<>();
 
-        // 1. 유지할 기존 이미지 추가 (CloudFront URL 그대로)
-        if (request.getKeepImageUrls() != null && !request.getKeepImageUrls().isEmpty()){
-            finalImageUrls.addAll(request.getKeepImageUrls());
+        if (request.getImages() != null) {
+            for (ImageItemRequest image : request.getImages()) {
+                finalImageUrls.add(image.getType() == ImageItemRequest.ImageType.NEW
+                        ? s3Service.toCloudFrontUrl(image.getValue())
+                        : image.getValue());
+            }
         }
 
-        // 2. 새로운 이미지 URL 추가 (S3 key → CloudFront URL 변환)
-        if (request.getNewImageKeys() != null && !request.getNewImageKeys().isEmpty()){
-            List<String> newCloudFrontUrls = s3Service.toCloudFrontUrls(request.getNewImageKeys());
-            finalImageUrls.addAll(newCloudFrontUrls);
-        }
-
-        // 3. 삭제할 이미지 S3에서 제거
-        if (request.getDeleteImageUrls() != null && !request.getDeleteImageUrls().isEmpty()){
-            // CloudFront URL에서 S3 key 추출 후 삭제
-            List<String> keysToDelete = request.getDeleteImageUrls().stream()
-                    .map(s3Service::extractKeyFromUrl)
-                    .toList();
+        // 기존 이미지 중 최종 목록에 없는 것은 삭제된 것으로 간주하여 S3에서 제거
+        List<String> keysToDelete = post.getImageUrls().stream()
+                .filter(url -> !finalImageUrls.contains(url))
+                .map(s3Service::extractKeyFromUrl)
+                .toList();
+        if (!keysToDelete.isEmpty()) {
             s3Service.deleteFiles(keysToDelete);
         }
 
