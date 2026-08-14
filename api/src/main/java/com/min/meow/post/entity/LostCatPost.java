@@ -102,6 +102,8 @@ public class LostCatPost extends BasePost {
         if (newImageUrls != null) {
             this.imageUrls.clear();
             this.imageUrls.addAll(newImageUrls);
+            // 목록 썸네일도 첫 번째 이미지로 갱신 (없으면 null)
+            this.thumbnailUrl = newImageUrls.isEmpty() ? null : newImageUrls.get(0);
         }
     }
 
