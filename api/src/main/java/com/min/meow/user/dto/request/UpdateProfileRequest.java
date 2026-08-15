@@ -15,10 +15,11 @@ import lombok.Getter;
 @Getter
 public class UpdateProfileRequest {
 
-    @Schema(description = "닉네임 (1~10자, 한글/영문)", example = "김냥이")
+    @Schema(description = "닉네임 (2~10자, 한글/영문/숫자)", example = "김냥이")
     @NotBlank(message = "닉네임을 입력해 주세요.")
-    @Size(min = 1, max = 10, message = "닉네임은 1자 이상 10자 이하로 입력해 주세요.")
-    @Pattern(regexp = "^[가-힣a-zA-Z]+$", message = "닉네임은 한글과 영문만 사용 가능합니다.")
+    @Size(min = 2, max = 10, message = "닉네임은 2자 이상 10자 이하로 입력해 주세요.")
+    // 가입 시 규칙(JoinRequest) 및 소셜 로그인 자동생성 닉네임(NicknameGenerator, 숫자 포함)과 동일하게 맞춤
+    @Pattern(regexp = "^[가-힣a-zA-Z0-9]+$", message = "닉네임은 한글, 영문, 숫자만 사용 가능합니다.")
     private String nickname;
 
     // 닉네임: 앞뒤 공백 제거
