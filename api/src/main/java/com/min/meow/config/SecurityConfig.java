@@ -88,8 +88,11 @@ public class SecurityConfig {
                                 "/api/users/check-id",
                                 "/api/users/check-nickname",
                                 "/api/auth/token/refresh",
+                                "/api/auth/kakao/webhook/unlink",
                                 "/api/logout",
                                 "/error",
+                                "/oauth2/**",
+                                "/login/oauth2/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
@@ -124,6 +127,10 @@ public class SecurityConfig {
                         .requestMatchers("/admin").hasRole("ADMIN")
                         // 나머지 모든 요청은 인증 필요 (알림 구독, 읽음 처리 등)
                         .anyRequest().authenticated());
+        http
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOauth2UserService))
+                        .successHandler(customSuccessHandler));
         http.
                 addFilterBefore(new JwtAuthenticationFilter(jwtProvider, userRepository, objectMapper, permissionCacheService), UsernamePasswordAuthenticationFilter.class);
         http.

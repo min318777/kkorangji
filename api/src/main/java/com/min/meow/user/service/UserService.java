@@ -123,4 +123,24 @@ public class UserService {
 
         log.info("회원 탈퇴 완료 - userId: {}, 비식별화된 loginId: {}", user.getId(), user.getLoginId());
     }
+
+    /**
+     * 카카오 연결 해제(Unlink) 웹훅 처리
+     * 사용자가 카카오 쪽(카카오톡 앱 설정)에서 서비스 연결을 끊으면 카카오가 이 정보를 알려주는데,
+     * 해당 계정을 찾아 일반 탈퇴와 동일하게 비식별화 처리한다 (개인정보보호법 준수).
+     * 이미 탈퇴했거나 존재하지 않는 계정이면 조용히 종료 (카카오 쪽 재시도 대응, 웹훅은 실패해도 안 됨)
+     * @param socialId 카카오 고유 사용자 ID
+     */
+    @Transactional
+    public void withdrawByKakaoUnlink(String socialId) {
+        userRepository.findByProviderAndSocialId("kakao", socialId)
+                .filter(user -> !user.isWithdrawn())
+                .ifPresent(user -> {
+                    refreshTokenService.delete(user.getId());
+                    permissionCacheService.evictPermissions(user.getId());
+                    user.withdraw();
+                    userRepository.save(user);
+                    log.info("카카오 연결 해제 웹훅으로 인한 탈퇴 처리 - userId: {}", user.getId());
+                });
+    }
 }

@@ -3,8 +3,7 @@ package com.min.meow.security.oauth2;
 
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
-import com.min.meow.user.dto.response.GoogleResponse;
-import com.min.meow.user.dto.response.NaverResponse;
+import com.min.meow.user.dto.response.KakaoResponse;
 import com.min.meow.user.dto.response.OAuth2Response;
 import com.min.meow.user.entity.Role;
 import com.min.meow.user.entity.User;
@@ -12,6 +11,7 @@ import com.min.meow.user.entity.UserRole;
 import com.min.meow.user.repository.RoleRepository;
 import com.min.meow.user.repository.UserRepository;
 import com.min.meow.user.repository.UserRoleRepository;
+import com.min.meow.user.util.NicknameGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -29,41 +29,35 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
+    private final NicknameGenerator nicknameGenerator;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        // 구글에서 온값인지, 네이버에서 온값인지 구분하는 id
+        // 어느 소셜 provider에서 온 응답인지 구분
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
-        OAuth2Response oAuth2Response = null;
-
-        if(registrationId.equals("naver")){
-            oAuth2Response = new NaverResponse(oAuth2User.getAttributes());
-        }else if(registrationId.equals("google")){
-            oAuth2Response = new GoogleResponse(oAuth2User.getAttributes());
-        } else{
-            return null;
+        OAuth2Response oAuth2Response;
+        if (registrationId.equals("kakao")) {
+            oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
+        } else {
+            // 카카오 외 provider는 현재 범위 밖 (google/naver 응답 파서는 남겨뒀지만 아직 미연결)
+            throw new OAuth2AuthenticationException("지원하지 않는 로그인 provider입니다: " + registrationId);
         }
 
-        String loginId = oAuth2Response.getProvider() + " " + oAuth2Response.getProviderId();
-        String existEmail = oAuth2Response.getEmail();
+        String provider = oAuth2Response.getProvider();
+        String socialId = oAuth2Response.getProviderId();
 
+        Optional<User> existUser = userRepository.findByProviderAndSocialId(provider, socialId);
 
-        User emailConflictUser = userRepository.findByEmail(existEmail);
-        if (emailConflictUser != null && !emailConflictUser.getLoginId().equals(loginId)) {
-            throw new OAuth2AuthenticationException("이미 동일한 이메일로 가입된 계정이 존재합니다.");
-        }
-
-        Optional<User> existUser = userRepository.findByLoginId(loginId);
-
-        if(existUser.isEmpty()){
+        if (existUser.isEmpty()) {
+            // 최초 로그인 → 그 자리에서 자동 가입 (loginId/email은 소셜 계정 전용이라 null)
             User user = User.builder()
-                    .loginId(loginId)
-                    .email(oAuth2Response.getEmail())
+                    .provider(provider)
+                    .socialId(socialId)
                     .password(null)
-                    .nickname(oAuth2Response.getName())
+                    .nickname(nicknameGenerator.generate())
                     .isDelete(false)
                     .lastLoginAt(LocalDateTime.now())
                     .build();
@@ -77,12 +71,12 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
             user.getUserRoles().add(newUserRole);
 
             return new CustomOAuth2User(user);
-        }else{
+        } else {
+            User user = existUser.get();
+            user.updateLastLogin();
+            userRepository.save(user);
 
-            existUser.get().updateOAuth2Info(oAuth2Response.getEmail(), oAuth2Response.getName());
-            userRepository.save(existUser.get());
-
-            return new CustomOAuth2User(existUser.get());
+            return new CustomOAuth2User(user);
         }
     }
 

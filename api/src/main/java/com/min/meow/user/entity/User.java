@@ -24,7 +24,8 @@ public class User{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false, length = 20)
+    // 일반 가입 전용 식별자 — 소셜 로그인 계정은 null (NULL은 유니크 제약에서 여러 개 허용됨)
+    @Column(unique = true, length = 20)
     private String loginId;
 
     @Column(length = 100)
@@ -36,6 +37,13 @@ public class User{
 
     @Column(nullable = false, length = 10)
     private String nickname;
+
+    // 소셜 로그인 전용 식별자 — 일반 가입 계정은 둘 다 null. (provider, socialId) 조합에 유니크 제약
+    @Column(length = 20)
+    private String provider;
+
+    @Column(length = 50)
+    private String socialId;
 
     // CASCADE 제거: User는 소프트 삭제 정책이므로 실제 삭제가 발생하지 않음
     // DB 레벨 FK RESTRICT가 마지막 방어선 역할 수행
@@ -77,6 +85,7 @@ public class User{
      * - email: UUID + "@deleted.meow.com" (유니크 제약조건 유지)
      * - nickname: "탈퇴한 사용자"
      * - password: null
+     * - provider/socialId: null (같은 소셜 계정으로 재가입 시 새 계정 생성 가능하도록 유니크 제약 해제)
      */
     public void withdraw() {
         // 소프트 삭제 처리
@@ -90,6 +99,8 @@ public class User{
         this.email = anonymousId + "@deleted.meow.com";
         this.nickname = "탈퇴한 사용자";
         this.password = null;
+        this.provider = null;
+        this.socialId = null;
     }
 
     public boolean isWithdrawn() {
@@ -98,13 +109,6 @@ public class User{
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
-    }
-
-    // OAuth2 재로그인 시 프로필 동기화
-    public void updateOAuth2Info(String email, String nickname) {
-        this.email = email;
-        this.nickname = nickname;
-        this.lastLoginAt = LocalDateTime.now();
     }
 
     // 마지막 로그인 시간 업데이트
