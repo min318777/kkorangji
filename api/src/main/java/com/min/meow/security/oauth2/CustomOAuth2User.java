@@ -54,19 +54,19 @@ public class CustomOAuth2User implements OAuth2User, PrincipalUser {
 
     @Override
     public String getUsername() {
-        return user.getLoginId();
+        // AbstractAuthenticationToken.getName()은 principal이 UserDetails면 getUsername()을 우선 사용함
+        // (getName()보다 먼저 체크됨) — 소셜 로그인 유저는 loginId가 null이라 principalName이 빈 값이 되어
+        // "principalName cannot be empty" 예외가 발생했음. loginId가 없으면 provider+socialId로 대체
+        String loginId = user.getLoginId();
+        if (loginId != null && !loginId.isBlank()) {
+            return loginId;
+        }
+        return user.getProvider() + "_" + user.getSocialId();
     }
 
     @Override
     public String getName() {
-        String nickname = user.getNickname();
-        log.info("[CustomOAuth2User] getName() 호출 - userId: {}, nickname: '{}'", user.getId(), nickname);
-        // principalName은 절대 비어있으면 안 됨 (Spring이 OAuth2AuthorizedClient 생성 시 검증) — 방어 폴백
-        if (nickname == null || nickname.isBlank()) {
-            log.warn("[CustomOAuth2User] nickname이 비어있어 userId 기반 폴백 사용 - userId: {}", user.getId());
-            return "user" + user.getId();
-        }
-        return nickname;
+        return getUsername();
     }
 
 
