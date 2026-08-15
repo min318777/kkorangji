@@ -71,7 +71,7 @@ public class CreateLostCatPostResponse {
                 .title(lostCatPost.getTitle())
                 .content(lostCatPost.getContents())
                 .catName(lostCatPost.getCatName())
-                .writer(lostCatPost.getUser().getLoginId())
+                .writer(lostCatPost.getUser().getNickname())
                 .catType(lostCatPost.getCatType())
                 .catColor(lostCatPost.getCatColor())
                 .catAge(lostCatPost.getCatAge())

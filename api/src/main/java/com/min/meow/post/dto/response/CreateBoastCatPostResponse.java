@@ -44,7 +44,7 @@ public class CreateBoastCatPostResponse {
         return CreateBoastCatPostResponse.builder()
                 .id(boastCatPost.getId())
                 .title(boastCatPost.getTitle())
-                .writer(boastCatPost.getUser().getLoginId())
+                .writer(boastCatPost.getUser().getNickname())
                 .content(boastCatPost.getContents())
                 .imageUrls(boastCatPost.getImageUrls())
                 .createdAt(boastCatPost.getCreatedAt())

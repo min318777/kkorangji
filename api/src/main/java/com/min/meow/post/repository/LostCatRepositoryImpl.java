@@ -36,7 +36,7 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .select(new QLostCatPostListResponse(
                         lostCatPost.id,
                         lostCatPost.title,
-                        lostCatPost.user.loginId,
+                        lostCatPost.user.nickname,
                         lostCatPost.catName,
                         lostCatPost.lostLocation,
                         lostCatPost.commentCount,
@@ -216,7 +216,7 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .select(new QLostCatPostListResponse(
                         lostCatPost.id,
                         lostCatPost.title,
-                        lostCatPost.user.loginId,
+                        lostCatPost.user.nickname,
                         lostCatPost.catName,
                         lostCatPost.lostLocation,
                         lostCatPost.commentCount,
@@ -311,7 +311,7 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .select(new QLostCatPostListResponse(
                         lostCatPost.id,
                         lostCatPost.title,
-                        lostCatPost.user.loginId,
+                        lostCatPost.user.nickname,
                         lostCatPost.catName,
                         lostCatPost.lostLocation,
                         lostCatPost.commentCount,

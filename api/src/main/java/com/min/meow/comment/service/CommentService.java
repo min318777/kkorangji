@@ -95,7 +95,7 @@ public class CommentService {
 
             if (!post.getUser().isWithdrawn() && !user.getId().equals(post.getUser().getId())) {
                 notificationEventPublisher.publishCommentEvent(
-                        new CommentEvent(comment.getId(), postId, PostType.BOAST, user.getLoginId(), post.getUser().getId()));
+                        new CommentEvent(comment.getId(), postId, PostType.BOAST, user.getNickname(), post.getUser().getId()));
             }
             // 인기글 Sorted Set 점수 +2
             notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(postId, 2));
@@ -107,7 +107,7 @@ public class CommentService {
 
             if (!post.getUser().isWithdrawn() && !user.getId().equals(post.getUser().getId())) {
                 notificationEventPublisher.publishCommentEvent(
-                        new CommentEvent(comment.getId(), postId, PostType.LOST, user.getLoginId(), post.getUser().getId()));
+                        new CommentEvent(comment.getId(), postId, PostType.LOST, user.getNickname(), post.getUser().getId()));
             }
         }
 
