@@ -1,4 +1,7 @@
 server:
+  # nginx가 넘겨주는 X-Forwarded-Proto/Host를 신뢰 — OAuth2 redirect-uri의 {baseUrl}이
+  # http://...:8080이 아니라 실제 요청받은 https 도메인으로 정확히 계산되도록 함
+  forward-headers-strategy: framework
   tomcat:
     threads:
       max: 50       # 최대 워커 스레드 수 (t3.small 2코어 기준)
