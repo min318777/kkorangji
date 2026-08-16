@@ -98,6 +98,10 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
+kakao:
+  # 회원 탈퇴 시 연결 해제(Unlink) API 호출용 — 카카오 개발자 콘솔 > 앱 설정 > 앱 키 > Admin 키
+  admin-key: ${KAKAO_ADMIN_KEY:}
+
 jwt:
   secret: ${JWT_SECRET}
   access-ttl-minutes: 30

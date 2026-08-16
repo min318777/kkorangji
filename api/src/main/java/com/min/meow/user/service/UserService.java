@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final KakaoUnlinkClient kakaoUnlinkClient;
     private final RefreshTokenService refreshTokenService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final RoleRepository roleRepository;
@@ -117,7 +118,13 @@ public class UserService {
 
         log.info("회원 탈퇴 처리 - userId: {}, 리프레시 토큰 및 권한 캐시 삭제 완료", userId);
 
-        // 4. 개인정보 비식별화 및 소프트 삭제 처리
+        // 4. 카카오 계정이면 연결 해제 API 호출 (비식별화로 socialId가 지워지기 전에 미리 확보)
+        //    실패해도 우리 서비스 탈퇴 자체는 계속 진행 (best-effort)
+        if ("kakao".equals(user.getProvider()) && user.getSocialId() != null) {
+            kakaoUnlinkClient.unlink(user.getSocialId());
+        }
+
+        // 5. 개인정보 비식별화 및 소프트 삭제 처리
         user.withdraw();
         userRepository.save(user);
 
