@@ -112,6 +112,18 @@ public class PopularRankingService {
     }
 
     /**
+     * 게시글 삭제 시 Sorted Set에서도 제거
+     * 안 지우면 삭제된 글이 인기글 순위에 계속 남아 상세조회 시 404가 남
+     */
+    public void removeFromRanking(Long postId) {
+        try {
+            redisTemplate.opsForZSet().remove(getRankingKey(), String.valueOf(postId));
+        } catch (Exception e) {
+            log.warn("[PopularRanking] 삭제 반영 실패 - postId: {}", postId, e);
+        }
+    }
+
+    /**
      * 조회수 배치 동기화 시 Sorted Set 점수 갱신
      * ViewCountSyncScheduler가 DB 반영 후 호출
      * key 형식: "view:count:boast:{postId}"

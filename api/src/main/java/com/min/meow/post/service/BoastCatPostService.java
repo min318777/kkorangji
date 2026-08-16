@@ -42,6 +42,7 @@ public class BoastCatPostService {
     private final S3Service s3Service;
     private final BoastCatPostCountCacheService countCacheService;
     private final ViewCountService viewCountService;
+    private final PopularRankingService popularRankingService;
 
     // ========== 조회 ==========
 
@@ -163,6 +164,7 @@ public class BoastCatPostService {
         // 연관 댓글 먼저 삭제 (cascade 제거로 인한 수동 처리)
         commentRepository.deleteAllByPostIdAndPostType(boastCatPostId, PostType.BOAST);
         boastCatPostRepository.deleteById(boastCatPostId);
+        popularRankingService.removeFromRanking(boastCatPostId);
         s3Service.deleteFiles(keys);
     }
 
