@@ -52,6 +52,14 @@ public class ViewCountService {
             return null;
         }
 
+        // 존재하지 않는 postId는 카운트 키 자체를 만들지 않음 — 없으면 나중에 인기글 Sorted Set에
+        // 좀비 데이터로 계속 쌓이고, DB UPDATE는 0건으로 조용히 무시되어 아무도 못 알아챔 (실제 발생했던 문제)
+        // 락 체크 다음에 둬서, 같은 identifier의 반복 요청은 10분에 한 번만 DB 조회하도록 함
+        if (!postExists(postType, postId)) {
+            log.debug("[조회수] 존재하지 않는 게시글 무시 - {}:{}", postType, postId);
+            return null;
+        }
+
         String countKey = COUNT_KEY_PREFIX + postType.name().toLowerCase() + ":" + postId;
         try {
             return redisTemplate.opsForValue().increment(countKey);
@@ -59,6 +67,12 @@ public class ViewCountService {
             log.warn("Redis 증가 실패, DB fallback - key: {}", countKey, e);
             return incrementDbDirectly(postType, postId);
         }
+    }
+
+    private boolean postExists(PostType type, Long postId) {
+        return type == PostType.BOAST
+                ? boastCatPostRepository.existsById(postId)
+                : lostCatRepository.existsById(postId);
     }
 
     /** Redis 장애 시 DB에 직접 +1 (fallback) */
