@@ -33,9 +33,9 @@
 
 ## 우선순위 3 — 댓글
 
-- [ ] `POST /api/meow/{postType}/{postId}/comments` — 원댓글/대댓글, 본인 글에 본인이 달면 알림 생략되는지
-- [ ] `DELETE /api/meow/comments/{commentId}`
-- [ ] `GET /api/meow/{postType}/{postId}/comments` — 2뎁스 조합
+- [x] `POST /api/meow/{postType}/{postId}/comments` — `CommentServiceTest` (원댓글/대댓글, 2뎁스 제한, 알림 생략 조건, LOST는 인기점수 이벤트 미발행)
+- [x] `DELETE /api/meow/comments/{commentId}` — `CommentServiceTest` (즉시삭제/소프트삭제/대댓글 연쇄삭제/권한)
+- [ ] `GET /api/meow/{postType}/{postId}/comments` — 단순 조회 조합 로직, 프로젝트 규칙상 우선순위 낮음 (skip 후보)
 
 ## 우선순위 4 — 조회 API (프론트가 실제 쓰는 버전만: v3)
 
