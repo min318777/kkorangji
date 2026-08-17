@@ -123,16 +123,17 @@ class MyPageServiceTest {
         }
 
         @Test
-        @DisplayName("실패: 존재하지 않는 userId로 조회하면 CustomException(UNREGISTERED_USER)을 던진다")
+        @DisplayName("실패: 존재하지 않는 userId로 조회하면 CustomException(NOT_FOUND_USER)을 던진다")
         void test_실패_존재하지_않는_사용자() {
             // given — 사용자 없음
             given(userRepository.findById(999L)).willReturn(Optional.empty());
 
-            // when & then — UNREGISTERED_USER 에러 발생
+            // when & then — MyPageService.getMyPageSummary()는 NOT_FOUND_USER를 던짐
+            // (UNREGISTERED_USER는 UserService.login()에서만 사용됨)
             assertThatThrownBy(() -> myPageService.getMyPageSummary(999L))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.UNREGISTERED_USER);
+                    .isEqualTo(ErrorCode.NOT_FOUND_USER);
         }
 
         @Test
@@ -192,8 +193,7 @@ class MyPageServiceTest {
             UpdateProfileRequest request = new UpdateProfileRequest();
             request.setNickname("닉네임");
 
-            // when & then — NOT_FOUND_USER: getMyPageSummary는 UNREGISTERED_USER이지만
-            // updateProfile은 NOT_FOUND_USER로 다른 에러코드 사용
+            // when & then
             assertThatThrownBy(() -> myPageService.updateProfile(999L, request))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
@@ -337,7 +337,7 @@ class MyPageServiceTest {
         }
 
         @Test
-        @DisplayName("실패: 존재하지 않는 userId로 조회하면 CustomException(UNREGISTERED_USER)을 던진다")
+        @DisplayName("실패: 존재하지 않는 userId로 조회하면 CustomException(NOT_FOUND_USER)을 던진다")
         void test_실패_존재하지_않는_사용자_댓글_조회() {
             // given
             given(userRepository.findById(999L)).willReturn(Optional.empty());
@@ -348,7 +348,7 @@ class MyPageServiceTest {
             assertThatThrownBy(() -> myPageService.getMyComments(999L, pageable))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
-                    .isEqualTo(ErrorCode.UNREGISTERED_USER);
+                    .isEqualTo(ErrorCode.NOT_FOUND_USER);
         }
 
         @Test
