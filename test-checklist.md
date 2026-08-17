@@ -50,7 +50,7 @@
 
 ## 우선순위 5 — 이미지 업로드
 
-- [ ] `POST /api/images/presigned-urls` — 요청 개수만큼 URL 발급되는지
+- [ ] `POST /api/images/presigned-urls` — Content-Type 검증은 Controller에 있고, 실제 URL 생성은 AWS S3Presigner 호출이라 순수 유닛보다 `@SpringBootTest` 통합테스트(또는 LocalStack)가 적합. 남겨둠
 
 ## 우선순위 6 — 알림 (SSE 포함)
 
@@ -80,9 +80,19 @@
 
 ---
 
-## 시작 순서 제안
+## 진행 현황
 
-1. `PostLikeService` — 동시성 로직이 명확하고 이미 있는 `UserServiceTest` 패턴을 그대로 따라 짤 수 있음
-2. 자랑글/실종글 CRUD 권한 검증 (`isAuthor` 체크가 여러 메서드에 반복되므로 하나 짜면 나머지도 패턴 재사용)
-3. 조회수 v3의 "존재하지 않는 postId" 케이스 — 실제 장애를 재현하는 회귀 테스트라 가치가 큼
-4. 나머지는 여유 될 때 순서 무관하게 진행
+우선순위 1~7에서 유닛테스트로 다룰 가치가 있는 항목은 전부 완료 (8개 테스트 클래스, 총 60여 개 케이스):
+`PostLikeServiceTest`, `BoastCatPostServiceTest`, `LostCatPostServiceTest`, `CommentServiceTest`,
+`ViewCountServiceTest`, `PopularRankingServiceTest`, `AdminUserServiceTest`, `NotificationQueryServiceTest`.
+
+남은 미체크 항목은 전부 두 부류 중 하나라 의도적으로 제외함:
+1. 단순 위임/단순 조회라 프로젝트 규칙(`test.md`)상 생략 대상 (`check-id`, `like/status`, 목록 조회 등)
+2. AWS S3 / Redis(Redisson) / QueryDSL 지리 쿼리처럼 실제 인프라가 필요해 `@SpringBootTest` 통합테스트가 더 적합한 것
+   (`presigned-urls`, `token/refresh`, `nearby/st`, SSE `stream`)
+
+부가로 발견한 것:
+- `.gitignore`의 `api/src/test/` 규칙이 테스트 소스 전체를 무시하고 있던 버그 → 제거
+- `MyPageServiceTest`에 있던 잘못된 에러코드 기대값(`UNREGISTERED_USER` → `NOT_FOUND_USER`) → 수정
+- 기존 `@SpringBootTest` 통합테스트 3종(`UserControllerTest`, `MyPageControllerTest`, `PermissionControllerTest`)은
+  로컬에 Redis(`localhost:6379`)가 떠있지 않아 실패 — 이번 작업과 무관한 기존 환경 문제, 로컬 Redis 기동 시 해결됨
