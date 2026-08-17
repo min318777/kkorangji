@@ -53,6 +53,11 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    // Testcontainers: 통합 테스트에서 로컬에 떠있는 Redis에 의존하지 않고
+    // JVM 시작 시 Docker로 임시 Redis 컨테이너를 띄워 사용 (버전은 Spring Boot BOM이 관리)
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+
     // oauth2
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-security'

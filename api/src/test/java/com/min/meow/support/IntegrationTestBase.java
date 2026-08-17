@@ -8,6 +8,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +25,8 @@ import java.util.List;
  * <ul>
  *   <li>@SpringBootTest: 전체 애플리케이션 컨텍스트 로딩 (컨트롤러~DB 레이어 통합)</li>
  *   <li>@ActiveProfiles("test"): H2 + Kafka 제외 설정 활성화</li>
+ *   <li>@Testcontainers + @Container: 로컬에 Redis가 떠있지 않아도 되도록 Docker로
+ *       임시 Redis 컨테이너를 띄움 (Docker 데몬이 실행 중이어야 함)</li>
  * </ul>
  *
  * <h3>@Transactional을 사용하지 않는 이유</h3>
@@ -41,9 +49,26 @@ import java.util.List;
  * 테스트에서 저장한 User는 실제로 H2에 커밋되어 있으므로 v1으로도 동작한다.
  * v2 헤더를 추가하면 DB 조회 없이 JWT Claims만으로 인증하여 더 빠르고 독립적이다.
  */
+@Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 public abstract class IntegrationTestBase {
+
+    /**
+     * 로컬에 Redis가 떠있지 않아도 통합 테스트가 자체 완결되도록,
+     * JVM 시작 시 Docker로 임시 Redis 컨테이너를 띄워 사용한다.
+     * (RedisConfig의 RedissonClient/RedisTemplate 둘 다 spring.data.redis.host/port를 읽으므로
+     * 아래 @DynamicPropertySource로 컨테이너의 실제 호스트/포트를 주입하면 그대로 연결됨)
+     */
+    @Container
+    static GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:7.0-alpine"))
+            .withExposedPorts(6379);
+
+    @DynamicPropertySource
+    static void redisProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.redis.host", redis::getHost);
+        registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
+    }
 
     /** 실제 HTTP 요청을 보내는 클라이언트 (포트는 랜덤으로 할당됨) */
     @Autowired
