@@ -71,8 +71,8 @@ class UserControllerTest extends IntegrationTestBase {
             createdLoginId = "newcat01";
             Map<String, String> requestBody = Map.of(
                     "loginId", createdLoginId,
-                    "password", "password1!",
-                    "passwordConfirm", "password1!",
+                    "password", "password1",
+                    "passwordConfirm", "password1",
                     "email", "newcat@example.com",
                     "nickname", "냥이"
             );
@@ -121,8 +121,8 @@ class UserControllerTest extends IntegrationTestBase {
 
             Map<String, String> requestBody = Map.of(
                     "loginId", createdLoginId,        // 중복 loginId
-                    "password", "password1!",
-                    "passwordConfirm", "password1!",
+                    "password", "password1",
+                    "passwordConfirm", "password1",
                     "email", "another@example.com",   // 다른 이메일이라도
                     "nickname", "다른냥이"
             );
@@ -151,8 +151,8 @@ class UserControllerTest extends IntegrationTestBase {
 
             Map<String, String> requestBody = Map.of(
                     "loginId", createdLoginId,        // 다른 loginId라도
-                    "password", "password1!",
-                    "passwordConfirm", "password1!",
+                    "password", "password1",
+                    "passwordConfirm", "password1",
                     "email", "dup@example.com",       // 중복 이메일
                     "nickname", "새냥이"
             );
@@ -178,14 +178,15 @@ class UserControllerTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("실패: 비밀번호가 숫자만 포함하면 (영문 없음) 400 Bad Request를 반환한다 (@Pattern 검증)")
+        @DisplayName("실패: 비밀번호에 특수문자가 포함되면 400 Bad Request를 반환한다 (@Pattern 검증)")
         void test_실패_비밀번호_형식_불충족() {
-            // FastAPI: test_실패_비밀번호_너무_짧음 → 우리 프로젝트는 형식(영문+숫자 필수) 검증
-            // given — 숫자만 있는 비밀번호 (영문 없음)
+            // JoinRequest.password @Pattern은 "^[a-zA-Z0-9]+$" — 영문/숫자만 허용, 특수문자 금지
+            // (프론트 join/page.tsx의 검증 규칙과 동일). 숫자만 있는 비밀번호는 이 정규식을
+            // 실제로 통과하므로(영문 필수 조건은 없음) 그걸로는 위반을 재현할 수 없어 특수문자로 검증
             Map<String, String> requestBody = Map.of(
                     "loginId", "validcat1",
-                    "password", "12345678",     // 숫자만 — @Pattern 위반 (영문 필수)
-                    "passwordConfirm", "12345678",
+                    "password", "pass1234!",     // 특수문자(!) 포함 — @Pattern 위반
+                    "passwordConfirm", "pass1234!",
                     "email", "valid@example.com",
                     "nickname", "유효냥이"
             );
@@ -211,8 +212,8 @@ class UserControllerTest extends IntegrationTestBase {
             // given — password != passwordConfirm
             Map<String, String> requestBody = Map.of(
                     "loginId", "mismatch1",
-                    "password", "password1!",
-                    "passwordConfirm", "different1!",   // 불일치
+                    "password", "password1",
+                    "passwordConfirm", "different1",   // 불일치
                     "email", "mismatch@example.com",
                     "nickname", "불일치냥이"
             );
@@ -233,15 +234,17 @@ class UserControllerTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("실패: 닉네임에 숫자가 포함되면 400 Bad Request를 반환한다")
-        void test_실패_닉네임_숫자_포함() {
-            // given — 숫자 포함 닉네임 (@Pattern(^[가-힣a-zA-Z]+$) 위반)
+        @DisplayName("실패: 닉네임에 특수문자가 포함되면 400 Bad Request를 반환한다")
+        void test_실패_닉네임_특수문자_포함() {
+            // JoinRequest.nickname @Pattern은 "^[가-힣a-zA-Z0-9]+$" — 한글/영문/숫자만 허용.
+            // 소셜 로그인 자동생성 닉네임(NicknameGenerator)이 숫자를 포함해서 숫자는 이제
+            // 허용 대상이라 위반 케이스로 못 씀 — 특수문자로 검증
             Map<String, String> requestBody = Map.of(
                     "loginId", "numcat01",
-                    "password", "password1!",
-                    "passwordConfirm", "password1!",
+                    "password", "password1",
+                    "passwordConfirm", "password1",
                     "email", "numcat@example.com",
-                    "nickname", "냥이1"             // 숫자 포함 — 위반
+                    "nickname", "냥이!"             // 특수문자 포함 — 위반
             );
 
             HttpHeaders headers = new HttpHeaders();
@@ -265,8 +268,8 @@ class UserControllerTest extends IntegrationTestBase {
             // given — 4자 loginId (@Size(min=5) 위반)
             Map<String, String> requestBody = Map.of(
                     "loginId", "cat",           // 3자 — 위반
-                    "password", "password1!",
-                    "passwordConfirm", "password1!",
+                    "password", "password1",
+                    "passwordConfirm", "password1",
                     "email", "short@example.com",
                     "nickname", "짧은냥이"
             );
@@ -317,8 +320,8 @@ class UserControllerTest extends IntegrationTestBase {
 
             Map<String, String> joinBody = Map.of(
                     "loginId", "logintest1",
-                    "password", "password1!",
-                    "passwordConfirm", "password1!",
+                    "password", "password1",
+                    "passwordConfirm", "password1",
                     "email", "logintest@example.com",
                     "nickname", "로그인냥이"
             );
@@ -338,7 +341,7 @@ class UserControllerTest extends IntegrationTestBase {
 
             Map<String, String> loginBody = Map.of(
                     "loginId", "logintest1",
-                    "password", "password1!"    // 올바른 비밀번호
+                    "password", "password1"    // 올바른 비밀번호
             );
 
             // when
@@ -380,8 +383,8 @@ class UserControllerTest extends IntegrationTestBase {
                     HttpMethod.POST,
                     new HttpEntity<>(Map.of(
                             "loginId", "wrongpw01",
-                            "password", "password1!",
-                            "passwordConfirm", "password1!",
+                            "password", "password1",
+                            "passwordConfirm", "password1",
                             "email", "wrongpw@example.com",
                             "nickname", "비밀번호냥이"
                     ), joinHeaders),
@@ -395,7 +398,7 @@ class UserControllerTest extends IntegrationTestBase {
 
             Map<String, String> loginBody = Map.of(
                     "loginId", "wrongpw01",
-                    "password", "wrongpassword1!"   // 틀린 비밀번호
+                    "password", "wrongpassword1"   // 틀린 비밀번호
             );
 
             // when
@@ -422,7 +425,7 @@ class UserControllerTest extends IntegrationTestBase {
 
             Map<String, String> loginBody = Map.of(
                     "loginId", "nonexist1",     // DB에 없는 아이디
-                    "password", "anypassword1!"
+                    "password", "anypassword1"
             );
 
             // when
