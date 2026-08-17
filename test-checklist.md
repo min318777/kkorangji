@@ -17,21 +17,19 @@
 
 ## 우선순위 1 — 게시글 CRUD (프론트 사용 빈도 가장 높음, 권한 검증 필수)
 
-- [ ] `POST /api/meow/boast-cat` (글쓰기) — `BoastCatPostService.createBoastCatPost()`
-- [ ] `PUT /api/meow/boast-cat/{id}` (글수정) — 본인 수정 성공 / 타인 수정 시 403
-- [ ] `DELETE /api/meow/boast-cat/{id}` — 본인 삭제 / 관리자(`post:delete`) 타인 삭제 허용 / 권한 없는 타인 삭제 차단
-- [ ] `POST /api/meow/lost-cat` (실종글 작성) — lat/lng 있을 때 Point 생성, 없을 때 null
-- [ ] `PUT /api/meow/lost-cat/{id}`
-- [ ] `DELETE /api/meow/lost-cat/{id}`
-- [ ] `PATCH /api/meow/lost-cat/{id}/status` (찾는중↔완료) — 본인만 가능(관리자 예외 없음, 삭제와 다른 정책이라 주의)
+- [x] `POST /api/meow/boast-cat` (글쓰기) — `BoastCatPostServiceTest`
+- [x] `PUT /api/meow/boast-cat/{id}` (글수정) — `BoastCatPostServiceTest` (본인 성공 / 타인 시 관리자 권한이어도 403)
+- [x] `DELETE /api/meow/boast-cat/{id}` — `BoastCatPostServiceTest` (본인 / `post:delete` 권한 / 권한 없는 타인 차단)
+- [x] `POST /api/meow/lost-cat` (실종글 작성) — `LostCatPostServiceTest` (lat/lng 있음/없음 둘 다)
+- [x] `PUT /api/meow/lost-cat/{id}` — `LostCatPostServiceTest`
+- [x] `DELETE /api/meow/lost-cat/{id}` — `LostCatPostServiceTest`
+- [x] `PATCH /api/meow/lost-cat/{id}/status` (찾는중↔완료) — `LostCatPostServiceTest` (관리자 권한으로도 불가한 비대칭성 검증 완료)
 
 ## 우선순위 2 — 좋아요 (동시성 처리 검증)
 
-- [ ] `POST /api/meow/boast-cat/{id}/like` — `PostLikeService.addLike()`
-  - 정상 등록, 중복 시 `ALREADY_LIKED`, 탈퇴 회원 차단, `DataIntegrityViolationException`(동시 요청) 발생 시 `ALREADY_LIKED`로 변환되는지
-- [ ] `DELETE /api/meow/boast-cat/{id}/like` — `cancelLike()`
-  - 안 누른 좋아요 취소 시 `NOT_LIKED`, 좋아요 수 0 밑으로 안 내려가는지
-- [ ] `GET /api/meow/boast-cat/{id}/like/status`
+- [x] `POST /api/meow/boast-cat/{id}/like` — `PostLikeServiceTest`
+- [x] `DELETE /api/meow/boast-cat/{id}/like` — `PostLikeServiceTest`
+- [ ] `GET /api/meow/boast-cat/{id}/like/status` — 단순 위임(`existsByBoastCatPostIdAndUserId` 그대로 반환)이라 프로젝트 규칙상 생략 대상
 
 ## 우선순위 3 — 댓글
 
