@@ -39,14 +39,14 @@
 
 ## 우선순위 4 — 조회 API (프론트가 실제 쓰는 버전만: v3)
 
-- [ ] `GET /api/meow/boast-cat`, `GET /api/meow/boast-cat/{id}`
-- [ ] `GET /api/meow/boast-cat/view/v3/{id}` (상세+조회수 통합)
-  - **존재하지 않는 postId 요청 시 조회수 증가 없이 404만 나는지 — 최근 실제 장애(인기글 Sorted Set에 좀비 데이터 93만 건) 재발 방지 지점, 반드시 검증**
-- [ ] `GET /api/meow/boast-cat/popular/v5` (인기글 TOP24)
-- [ ] `GET /api/meow/lost-cat`, `GET /api/meow/lost-cat/{id}`
-- [ ] `POST /api/meow/lost-cat/{id}/view`
-- [ ] `POST /api/meow/lost-cat/v3/{id}/view` — 마찬가지로 존재하지 않는 postId 케이스
-- [ ] `GET /api/meow/lost-cat/nearby`, `/nearby/st` — 반경 밖 게시글 필터링 확인
+- [ ] `GET /api/meow/boast-cat`, `GET /api/meow/boast-cat/{id}` — 단순 조회, 우선순위 낮음
+- [x] `GET /api/meow/boast-cat/view/v3/{id}`, `POST /api/meow/lost-cat/v3/{id}/view` — `ViewCountServiceTest`
+  - `incrementViewCount()`: 정상 증가, 어뷰징 락 차단, **존재하지 않는 postId는 카운트 증가 없이 무시(회귀 방지 핵심 검증 완료)**, Redis 장애 시 DB fallback
+- [x] `GET /api/meow/boast-cat/popular/v5` (인기글 TOP24) — `PopularRankingServiceTest`
+  - `removeFromRanking()`(삭제 시 랭킹 제거), `updateViewScores()`(boast만 반영, lost 무시), `getTop24PostIds()`
+- [ ] `GET /api/meow/lost-cat`, `GET /api/meow/lost-cat/{id}` — 단순 조회, 우선순위 낮음
+- [ ] `POST /api/meow/lost-cat/{id}/view` — 단순 위임 (postExists 체크 없는 구버전, 프론트는 이것보다 v3 위주로 사용)
+- [ ] `GET /api/meow/lost-cat/nearby`, `/nearby/st` — QueryDSL 지리 쿼리라 유닛보다 `@DataJpaTest` 통합테스트가 적합, 남겨둠
 
 ## 우선순위 5 — 이미지 업로드
 
