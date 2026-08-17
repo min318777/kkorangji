@@ -60,11 +60,11 @@
 
 ## 우선순위 7 — 인증 부가 기능 / 관리자
 
-- [ ] `POST /api/auth/token/refresh` — 재발급 성공/만료·위조 토큰 실패
-- [ ] `GET /api/users/check-id`, `check-nickname` — 중복 있음/없음
-- [ ] `GET /api/admin/users`, `PATCH .../status`, `DELETE /api/admin/users/{id}`
-  - 제재/복원/강제탈퇴 시 `PermissionCacheService` 캐시 무효화가 같이 불리는지
-- [ ] `GET /api/admin/stats/dau`
+- [ ] `POST /api/auth/token/refresh` — `ReissueService`, 로컬 Redis 필요해 통합테스트가 적합. 남겨둠
+- [ ] `GET /api/users/check-id`, `check-nickname` — 단순 위임(`!existsByX`)이라 프로젝트 규칙상 생략 대상
+- [x] `GET /api/admin/users`, `PATCH .../status`, `DELETE /api/admin/users/{id}` — `AdminUserServiceTest`
+  - 본인 관리 차단, 관리자 계정 면역, 상태 전이 규칙(이미 제한/제한 아님), 탈퇴 유저 차단, 캐시 무효화 항상 호출 확인
+- [ ] `GET /api/admin/stats/dau` — 단순 조회, 우선순위 낮음
 
 ---
 
