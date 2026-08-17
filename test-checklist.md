@@ -54,9 +54,10 @@
 
 ## 우선순위 6 — 알림 (SSE 포함)
 
-- [ ] `GET /api/notifications`
-- [ ] `PATCH /api/notifications/{id}/read`, `PATCH /api/notifications/read-all`
-- [ ] `GET /api/notifications/stream` (SSE) — MockMvc로 검증 까다로움. 우선순위 낮게, 대신 `NotificationEventListener` 단위 테스트로 "저장 시 publish 호출되는지"만 확인
+- [ ] `GET /api/notifications` — 단순 조회, 우선순위 낮음
+- [x] `PATCH /api/notifications/{id}/read`, `PATCH /api/notifications/read-all` — `NotificationQueryServiceTest`
+  - 타인 알림 접근 차단(`FORBIDDEN_NOTIFICATION_ACCESS`), 이미 읽은 알림 재요청 시 예외 없이 통과, 다건/전체 읽음 처리 시 "실제로 새로 읽은 개수"만 정확히 집계되는지
+- [ ] `GET /api/notifications/stream` (SSE) — MockMvc로 검증 까다로움. 남겨둠
 
 ## 우선순위 7 — 인증 부가 기능 / 관리자
 
