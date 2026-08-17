@@ -39,6 +39,8 @@ spring:
       - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
 
   # OAuth2 클라이언트 설정 (더미값 — 실제 연동 불필요)
+  # kakao도 반드시 필요: application.yml에 등록된 registration은 client-id가 비어있으면
+  # (KAKAO_CLIENT_ID 환경변수 미설정 시 기본값 "") 테스트 프로파일에서도 컨텍스트 로딩 자체가 실패함
   security:
     oauth2:
       client:
@@ -47,6 +49,9 @@ spring:
             client-id: test-client-id
             client-secret: test-client-secret
             scope: email, profile
+          kakao:
+            client-id: test-kakao-client-id
+            client-secret: test-kakao-client-secret
 
 # JWT 시크릿 및 설정 (테스트용 — 충분한 길이의 더미값)
 jwt:
