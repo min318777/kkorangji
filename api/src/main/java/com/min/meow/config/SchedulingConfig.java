@@ -23,8 +23,8 @@ public class SchedulingConfig {
     /**
      * 스케줄링 전용 ThreadPoolTaskScheduler
      * 설정값 설명:
-     * - poolSize: 스케줄러 스레드 풀 크기 (2개)
-     *   → 여러 스케줄 작업이 동시에 실행될 수 있도록 최소 2개 설정
+     * - poolSize: 스케줄러 스레드 풀 크기 (4개)
+     *   → 등록된 스케줄 작업 3개(조회수 동기화, SSE 하트비트, 인기글 v5 캐시 워밍) + 여유분 1개
      * - threadNamePrefix: 스레드 이름 접두사
      *   → 로그에서 스케줄 작업 스레드를 쉽게 식별
      * - waitForTasksToCompleteOnShutdown: 종료 시 작업 완료 대기
@@ -37,7 +37,8 @@ public class SchedulingConfig {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 
         // 스케줄러 스레드 풀 크기
-        scheduler.setPoolSize(2);
+        // 등록된 스케줄 작업 3개(조회수 동기화, SSE 하트비트, 인기글 v5 캐시 워밍) + 여유분 1개
+        scheduler.setPoolSize(4);
 
         // 스레드 이름 접두사: 로그에서 식별 용이
         scheduler.setThreadNamePrefix("scheduler-");
@@ -57,3 +58,4 @@ public class SchedulingConfig {
         return scheduler;
     }
 }
+
