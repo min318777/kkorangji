@@ -169,11 +169,11 @@ public class LostCatPostService {
         // 첫 번째 이미지를 썸네일로 저장 (목록 조회 시 JOIN 없이 사용)
         String thumbnailUrl = imageUrls.isEmpty() ? null : imageUrls.get(0);
 
-        // lat/lng → POINT 변환 (SPATIAL INDEX 활용)
-        Double lat = createLostCatPostRequest.getLatitude();
-        Double lng = createLostCatPostRequest.getLongitude();
-        Point location = (lat != null && lng != null)
-                ? GEO_FACTORY.createPoint(new Coordinate(lng, lat)) : null;
+        // latitude/longitude → POINT 변환 (SPATIAL INDEX 활용)
+        Double latitude = createLostCatPostRequest.getLatitude();
+        Double longitude = createLostCatPostRequest.getLongitude();
+        Point location = (latitude != null && longitude != null)
+                ? GEO_FACTORY.createPoint(new Coordinate(longitude, latitude)) : null;
 
         // 엔티티 생성
         LostCatPost lostCatPost = LostCatPost.builder()
@@ -182,8 +182,8 @@ public class LostCatPostService {
                 .user(writer)
                 .isCompleted(false)
                 .lostLocation(createLostCatPostRequest.getLostLocation())
-                .latitude(lat)
-                .longitude(lng)
+                .latitude(latitude)
+                .longitude(longitude)
                 .location(location)
                 .catName(createLostCatPostRequest.getCatName())
                 .catAge(createLostCatPostRequest.getCatAge())
@@ -221,10 +221,10 @@ public class LostCatPostService {
 
         List<String> finalImageUrls = updateImage(updateLostCatPostRequest, lostCatPost);
 
-        Double lat = updateLostCatPostRequest.getLatitude();
-        Double lng = updateLostCatPostRequest.getLongitude();
-        Point location = (lat != null && lng != null)
-                ? GEO_FACTORY.createPoint(new Coordinate(lng, lat)) : null;
+        Double latitude = updateLostCatPostRequest.getLatitude();
+        Double longitude = updateLostCatPostRequest.getLongitude();
+        Point location = (latitude != null && longitude != null)
+                ? GEO_FACTORY.createPoint(new Coordinate(longitude, latitude)) : null;
 
         lostCatPost.updatePost(
                 updateLostCatPostRequest.getTitle(),
@@ -237,8 +237,8 @@ public class LostCatPostService {
                 updateLostCatPostRequest.getCatGender(),
                 updateLostCatPostRequest.getLostDate(),
                 updateLostCatPostRequest.getLostLocation(),
-                lat,
-                lng,
+                latitude,
+                longitude,
                 location,
                 updateLostCatPostRequest.getReward(),
                 finalImageUrls
