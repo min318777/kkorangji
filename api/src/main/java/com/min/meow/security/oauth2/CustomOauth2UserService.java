@@ -49,9 +49,9 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
         String provider = oAuth2Response.getProvider();
         String socialId = oAuth2Response.getProviderId();
 
-        Optional<User> existUser = userRepository.findByProviderAndSocialId(provider, socialId);
+        Optional<User> existingUser = userRepository.findByProviderAndSocialId(provider, socialId);
 
-        if (existUser.isEmpty()) {
+        if (existingUser.isEmpty()) {
             // 최초 로그인 → 그 자리에서 자동 가입 (loginId/email은 소셜 계정 전용이라 null)
             User user = User.builder()
                     .provider(provider)
@@ -72,7 +72,7 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
 
             return new CustomOAuth2User(user);
         } else {
-            User user = existUser.get();
+            User user = existingUser.get();
             user.updateLastLogin();
             userRepository.save(user);
 
