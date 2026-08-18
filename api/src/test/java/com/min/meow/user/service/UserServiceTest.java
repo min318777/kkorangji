@@ -32,27 +32,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
-/**
- * UserService 유닛 테스트 — 회원가입, 로그인, 회원 탈퇴 비즈니스 로직
- *
- * <h3>FastAPI 매핑</h3>
- * <pre>
- * FastAPI (test_auth.py)                Java (UserServiceTest)
- * ─────────────────────────────────     ──────────────────────────────────────
- * pytest + unittest.mock.patch      →   @ExtendWith(MockitoExtension) + @Mock
- * dependency_overrides[get_session] →   Mock 객체 반환값 설정 (given(...).willReturn())
- * assert response.status_code       →   assertThatThrownBy(...).extracting("errorCode")
- * </pre>
- *
- * <h3>통합 테스트(UserControllerTest)와의 차이</h3>
- * <pre>
- * 통합 테스트                        유닛 테스트
- * 실제 HTTP 요청 + 전체 필터 체인  →  순수 Java 메서드 호출
- * H2 DB                          →  Mock 객체 (DB 없음)
- * 느림 (Spring 컨텍스트 로딩)     →  빠름 (Mockito만 사용)
- * 외부 의존성(@Valid, Filter) 검증 →  비즈니스 로직만 검증
- * </pre>
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService 유닛 테스트")
 class UserServiceTest {

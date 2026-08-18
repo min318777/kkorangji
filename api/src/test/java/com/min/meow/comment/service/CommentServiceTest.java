@@ -17,7 +17,6 @@ import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,10 +24,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,16 +36,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
-/**
- * CommentService 유닛 테스트 — 댓글 작성/수정/삭제, 2뎁스 제한, 연쇄 삭제 로직
- * <p>
- * 검증 초점:
- * - 대댓글에는 또 댓글을 달 수 없음(2뎁스 제한)
- * - 본인 글/탈퇴 작성자에 대한 알림 생략 조건
- * - 활성 대댓글이 있는 원댓글은 소프트 삭제, 없으면 즉시 삭제
- * - 대댓글 삭제 후 부모가 소프트 삭제 상태이고 활성 대댓글이 0개면 부모도 연쇄 삭제
- * - 실종글(LOST)은 인기글 랭킹 대상이 아니므로 점수 이벤트를 발행하지 않음
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CommentService 유닛 테스트")
 class CommentServiceTest {
@@ -72,11 +57,6 @@ class CommentServiceTest {
 
     @Mock
     private UserRepository userRepository;
-
-    @AfterEach
-    void clearSecurityContext() {
-        SecurityContextHolder.clearContext();
-    }
 
     private User createUser(Long id) {
         return User.builder()
@@ -369,7 +349,7 @@ class CommentServiceTest {
             given(commentRepository.countActiveRepliesByParentId(1L)).willReturn(0L);
 
             // when
-            commentService.deleteComment(1L, userId);
+            commentService.deleteComment(1L, userId, false);
 
             // then
             then(commentRepository).should().delete(root);
@@ -388,7 +368,7 @@ class CommentServiceTest {
             given(commentRepository.countActiveRepliesByParentId(1L)).willReturn(2L);
 
             // when
-            commentService.deleteComment(1L, userId);
+            commentService.deleteComment(1L, userId, false);
 
             // then
             assertThat(root.isDeleted()).isTrue();
@@ -410,7 +390,7 @@ class CommentServiceTest {
             given(commentRepository.countActiveRepliesByParentId(1L)).willReturn(0L);
 
             // when
-            commentService.deleteComment(2L, userId);
+            commentService.deleteComment(2L, userId, false);
 
             // then — 대댓글 삭제 + 부모 연쇄 삭제로 댓글수가 2번 감소
             then(commentRepository).should().delete(reply);
@@ -430,7 +410,7 @@ class CommentServiceTest {
             given(commentRepository.findById(2L)).willReturn(Optional.of(reply));
 
             // when
-            commentService.deleteComment(2L, userId);
+            commentService.deleteComment(2L, userId, false);
 
             // then
             then(commentRepository).should().delete(reply);
@@ -447,7 +427,7 @@ class CommentServiceTest {
             given(commentRepository.findById(1L)).willReturn(Optional.of(comment));
 
             // when & then
-            assertThatThrownBy(() -> commentService.deleteComment(1L, 2L))
+            assertThatThrownBy(() -> commentService.deleteComment(1L, 2L, false))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.FORBIDDEN_NOT_AUTHOR);
@@ -464,12 +444,8 @@ class CommentServiceTest {
             given(commentRepository.findById(1L)).willReturn(Optional.of(comment));
             given(commentRepository.countActiveRepliesByParentId(1L)).willReturn(0L);
 
-            List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("comment:delete"));
-            SecurityContextHolder.getContext().setAuthentication(
-                    new UsernamePasswordAuthenticationToken("admin", null, authorities));
-
             // when
-            commentService.deleteComment(1L, 2L);
+            commentService.deleteComment(1L, 2L, true);
 
             // then
             then(commentRepository).should().delete(comment);

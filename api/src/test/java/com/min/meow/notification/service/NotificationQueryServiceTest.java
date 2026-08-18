@@ -20,14 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
-/**
- * NotificationQueryService 유닛 테스트 — 알림 읽음 처리 권한 검증 및 부분 읽음 카운트
- * <p>
- * 검증 초점:
- * - 본인 알림이 아니면 읽음 처리를 막는지 (FORBIDDEN_NOTIFICATION_ACCESS)
- * - 이미 읽은 알림을 다시 읽어도 예외 없이 그대로 반환하는지
- * - 여러 건 읽음 처리 시 이미 읽은 건은 세지 않고 실제로 새로 읽은 개수만 반환하는지
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("NotificationQueryService 유닛 테스트")
 class NotificationQueryServiceTest {

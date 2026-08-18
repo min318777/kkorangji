@@ -23,14 +23,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
-/**
- * ViewCountService 유닛 테스트 — 조회수 어뷰징 방지 + 존재하지 않는 게시글 카운트 차단
- * <p>
- * 검증 초점 (회귀 방지):
- * 실제로 존재하지 않는 postId로 조회수 증가 요청이 반복되어 인기글 Sorted Set에
- * 좀비 데이터 93만 건이 쌓였던 장애가 있었음. postExists() 체크가 어뷰징 락 통과
- * 이후에도 반드시 카운트 증가를 막는지 확인한다.
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ViewCountService 유닛 테스트")
 class ViewCountServiceTest {

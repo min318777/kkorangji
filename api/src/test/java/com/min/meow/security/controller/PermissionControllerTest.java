@@ -12,39 +12,6 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * RBAC 권한 체크 통합 테스트.
- *
- * <h3>FastAPI 매핑</h3>
- * <pre>
- * FastAPI (test_permission.py)                Java (PermissionControllerTest)
- * ─────────────────────────────────           ───────────────────────────────────────────
- * @pytest.fixture async def admin_user    →   createAdminUserWithPermissions()
- * @pytest.fixture async def admin_client  →   createAuthHeader(user.getId(), "ROLE_ADMIN", ...)
- * test_session.add(RolePermissionLink)    →   rolePermissionRepository.save(new RolePermission(role, perm))
- * test_session.add(UserRoleLink)          →   userRoleRepository.save(new UserRole(user, role))
- * assert response.status_code == 403     →   assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN)
- * </pre>
- *
- * <h3>테스트 대상 엔드포인트</h3>
- * <ul>
- *   <li>POST /api/meow/boast-cat/comments/{id} → @PreAuthorize("hasAuthority('comment:write')")</li>
- *   <li>POST /api/meow/lost-cat/comments/{id}  → @PreAuthorize("hasAuthority('comment:write')")</li>
- *   <li>PUT  /api/meow/comments/{id}           → @PreAuthorize("hasAuthority('comment:write')")</li>
- * </ul>
- *
- * <h3>왜 Link 테이블에 직접 레코드를 삽입하는가</h3>
- * 비동기 세션(또는 JPA 1차 캐시 경계)에서 Relationship에 list.append()로 추가할 때
- * 트랜잭션 타이밍 이슈가 발생할 수 있다.
- * 테스트에서는 중간 테이블(UserRole, RolePermission)에 직접 레코드를 저장하는 것이
- * 더 명확하고 안전하다.
- *
- * <h3>JWT 권한 포함 방법</h3>
- * createAuthHeader()는 권한 목록을 받지 않으므로, 권한이 필요한 테스트에서는
- * createAuthHeaderWithPermissions()를 사용한다.
- * JwtProvider.createAccessToken()의 permissions 파라미터에 권한 코드를 담아
- * JwtAuthenticationFilter → CustomUserDetails.getAuthorities()로 @PreAuthorize가 확인한다.
- */
 @DisplayName("RBAC 권한 체크 통합 테스트")
 class PermissionControllerTest extends IntegrationTestBase {
 

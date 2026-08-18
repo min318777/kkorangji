@@ -11,32 +11,6 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * UserController 통합 테스트 — 회원가입 & 로그인
- *
- * <h3>FastAPI 매핑</h3>
- * <pre>
- * FastAPI (test_auth.py)                Java (UserControllerTest)
- * ─────────────────────────────────     ──────────────────────────────────────
- * class TestRegister                →   @Nested class Join
- * class TestLogin                   →   @Nested class Login
- * unauthenticated_client            →   restTemplate (토큰 없이 요청)
- * test_session.add(user)            →   createAndSaveUser() + userRepository.save()
- * assert response.status_code == X  →   assertThat(response.getStatusCode()).isEqualTo(X)
- * assert "password" not in data     →   assertThat(data.containsKey("password")).isFalse()
- * </pre>
- *
- * <h3>테스트 대상 엔드포인트</h3>
- * <ul>
- *   <li>POST /api/users/join  — 회원가입 (인증 불필요)</li>
- *   <li>POST /login           — 로그인 (Spring Security CustomLoginFilter 처리)</li>
- * </ul>
- *
- * <h3>로그인 보안 원칙</h3>
- * "아이디 없음"과 "비밀번호 틀림"을 모두 401로 통일합니다.
- * 두 경우를 구분하면 공격자가 계정 존재 여부를 알 수 있기 때문입니다.
- * (User Enumeration Attack 방지)
- */
 @DisplayName("UserController 통합 테스트 — 회원가입 & 로그인")
 class UserControllerTest extends IntegrationTestBase {
 

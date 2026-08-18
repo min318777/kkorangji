@@ -32,15 +32,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
-/**
- * PostLikeService 유닛 테스트 — 좋아요 등록/취소 비즈니스 로직
- * <p>
- * 검증 초점:
- * - 중복 좋아요 차단 (사전 체크 + 동시 요청 시 UNIQUE 제약 위반 변환)
- * - 탈퇴 회원의 좋아요 차단
- * - 본인 글/탈퇴 작성자에 대한 알림 생략 조건
- * - 좋아요 취소 시 카운트가 음수로 내려가지 않는 하한선 보장
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PostLikeService 유닛 테스트")
 class PostLikeServiceTest {

@@ -14,7 +14,6 @@ import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,10 +21,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,14 +34,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
-/**
- * BoastCatPostService 유닛 테스트 — 자랑글 CRUD 권한 검증 + 이미지 처리
- * <p>
- * 검증 초점:
- * - 수정은 본인만 허용 (관리자도 예외 없음)
- * - 삭제는 본인이거나 post:delete 권한 보유자만 허용
- * - S3 key → CloudFront URL 변환, 최종 이미지 목록에서 빠진 기존 이미지의 S3 삭제
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("BoastCatPostService 유닛 테스트")
 class BoastCatPostServiceTest {
@@ -75,12 +62,6 @@ class BoastCatPostServiceTest {
     @Mock
     private PopularRankingService popularRankingService;
 
-    @AfterEach
-    void clearSecurityContext() {
-        // hasAuthority()가 SecurityContextHolder를 직접 참조하므로 테스트 간 오염 방지
-        SecurityContextHolder.clearContext();
-    }
-
     private User createUser(Long id) {
         return User.builder()
                 .id(id)
@@ -100,13 +81,6 @@ class BoastCatPostServiceTest {
                 .user(writer)
                 .imageUrls(new ArrayList<>(List.of("https://cdn.example.com/old.jpg")))
                 .build();
-    }
-
-    /** post:delete 권한만 가진 인증 정보를 SecurityContext에 심는다 (관리자 시뮬레이션) */
-    private void authenticateAsAdminWithDeletePermission() {
-        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("post:delete"));
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("admin", null, authorities));
     }
 
     @Nested
@@ -224,7 +198,6 @@ class BoastCatPostServiceTest {
 
             given(userRepository.findById(otherUserId)).willReturn(Optional.of(other));
             given(boastCatPostRepository.findById(postId)).willReturn(Optional.of(post));
-            authenticateAsAdminWithDeletePermission();
 
             // when & then — 수정은 post:delete 권한과 무관하게 본인만 가능
             assertThatThrownBy(() -> boastCatPostService.updateBoastCatPost(request, postId, otherUserId))
@@ -278,7 +251,7 @@ class BoastCatPostServiceTest {
             given(boastCatPostRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when
-            boastCatPostService.deleteBoastCatPost(postId, userId);
+            boastCatPostService.deleteBoastCatPost(postId, userId, false);
 
             // then
             then(commentRepository).should().deleteAllByPostIdAndPostType(postId, PostType.BOAST);
@@ -299,10 +272,9 @@ class BoastCatPostServiceTest {
 
             given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
             given(boastCatPostRepository.findById(postId)).willReturn(Optional.of(post));
-            authenticateAsAdminWithDeletePermission();
 
             // when
-            boastCatPostService.deleteBoastCatPost(postId, adminId);
+            boastCatPostService.deleteBoastCatPost(postId, adminId, true);
 
             // then
             then(boastCatPostRepository).should().deleteById(postId);
@@ -321,10 +293,9 @@ class BoastCatPostServiceTest {
 
             given(userRepository.findById(otherUserId)).willReturn(Optional.of(other));
             given(boastCatPostRepository.findById(postId)).willReturn(Optional.of(post));
-            // SecurityContext에 인증 정보 없음 → hasAuthority()는 false 반환
 
             // when & then
-            assertThatThrownBy(() -> boastCatPostService.deleteBoastCatPost(postId, otherUserId))
+            assertThatThrownBy(() -> boastCatPostService.deleteBoastCatPost(postId, otherUserId, false))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.FORBIDDEN_NOT_AUTHOR);

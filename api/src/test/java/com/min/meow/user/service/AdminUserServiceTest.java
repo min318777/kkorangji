@@ -30,15 +30,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
-/**
- * AdminUserService 유닛 테스트 — 관리자의 사용자 제재/복원/강제탈퇴
- * <p>
- * 검증 초점:
- * - 본인 계정은 관리 불가 (CANNOT_MANAGE_SELF)
- * - 관리자 계정은 제한/강제탈퇴 불가 (CANNOT_MANAGE_ADMIN)
- * - 상태 전이 규칙 (이미 제한됨 / 제한 상태 아님)
- * - 권한 변경 시 Redis 권한 캐시 무효화가 항상 함께 호출되는지
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AdminUserService 유닛 테스트")
 class AdminUserServiceTest {

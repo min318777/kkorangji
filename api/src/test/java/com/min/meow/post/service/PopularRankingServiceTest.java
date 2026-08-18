@@ -22,14 +22,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
-/**
- * PopularRankingService 유닛 테스트 — 인기글 Sorted Set 갱신/삭제 로직
- * <p>
- * 검증 초점 (회귀 방지):
- * - 게시글 삭제 시 Sorted Set에서도 제거되는지 (안 지우면 삭제된 글이 순위에 남아 상세조회 404 유발)
- * - 조회수 배치 반영 시 "boast:" 접두사 키만 반영하고 "lost:"는 무시하는지
- *   (실종글은 인기 랭킹 대상이 아님에도 잘못 반영되면 랭킹이 오염됨)
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PopularRankingService 유닛 테스트")
 class PopularRankingServiceTest {

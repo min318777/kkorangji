@@ -41,20 +41,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
-/**
- * MyPageService 유닛 테스트
- *
- * <h3>테스트 전략</h3>
- * <ul>
- *   <li>@ExtendWith(MockitoExtension): JUnit 5 + Mockito 통합, Spring 컨텍스트 불필요</li>
- *   <li>@InjectMocks: MyPageService의 모든 의존성을 Mock으로 주입</li>
- *   <li>DB 없이 순수 서비스 로직만 검증 — 빠르고 격리된 테스트</li>
- * </ul>
- *
- * <h3>FastAPI 매핑</h3>
- * pytest + unittest.mock.patch → @Mock + @InjectMocks
- * dependency_overrides[get_session] → Mock 객체 직접 반환값 설정
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("MyPageService 유닛 테스트")
 class MyPageServiceTest {
@@ -78,10 +64,6 @@ class MyPageServiceTest {
     @Mock
     private PostLikeRepository postLikeRepository;
 
-    // =========================================================================
-    // 테스트 픽스처 헬퍼 — 반복되는 Mock User 생성 공통화
-    // =========================================================================
-
     /** 기본 테스트용 User 객체 생성 (DB 없이 순수 Java 객체) */
     private User createTestUser(Long id, String loginId) {
         return User.builder()
@@ -94,9 +76,6 @@ class MyPageServiceTest {
         // Note: id는 @GeneratedValue이므로 직접 설정 불가 — Mock에서 stub으로 처리
     }
 
-    // =========================================================================
-    // getMyPageSummary 테스트
-    // =========================================================================
     @Nested
     @DisplayName("getMyPageSummary — 마이페이지 요약 조회")
     class GetMyPageSummary {
@@ -157,9 +136,6 @@ class MyPageServiceTest {
         }
     }
 
-    // =========================================================================
-    // updateProfile 테스트
-    // =========================================================================
     @Nested
     @DisplayName("updateProfile — 프로필 수정")
     class UpdateProfile {
@@ -221,9 +197,6 @@ class MyPageServiceTest {
         }
     }
 
-    // =========================================================================
-    // getMyPosts 테스트
-    // =========================================================================
     @Nested
     @DisplayName("getMyPosts — 내가 쓴 게시글 목록 조회")
     class GetMyPosts {
@@ -289,9 +262,6 @@ class MyPageServiceTest {
         }
     }
 
-    // =========================================================================
-    // getMyComments 테스트
-    // =========================================================================
     @Nested
     @DisplayName("getMyComments — 내가 쓴 댓글 목록 조회")
     class GetMyComments {

@@ -14,7 +14,6 @@ import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,10 +21,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,14 +33,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
-/**
- * LostCatPostService 유닛 테스트 — 실종글 CRUD 권한 검증 + 좌표 변환 + 완료 상태 토글
- * <p>
- * 검증 초점:
- * - 수정/완료상태 변경은 본인만 허용 (관리자 예외 없음)
- * - 삭제는 본인이거나 post:delete 권한 보유자만 허용 (수정과 다른 정책이므로 별도 검증)
- * - lat/lng이 있을 때만 Point 좌표가 생성되는지
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("LostCatPostService 유닛 테스트")
 class LostCatPostServiceTest {
@@ -71,11 +58,6 @@ class LostCatPostServiceTest {
     @Mock
     private LostCatPostCountCacheService countCacheService;
 
-    @AfterEach
-    void clearSecurityContext() {
-        SecurityContextHolder.clearContext();
-    }
-
     private User createUser(Long id) {
         return User.builder()
                 .id(id)
@@ -98,12 +80,6 @@ class LostCatPostServiceTest {
                 .isCompleted(false)
                 .imageUrls(new ArrayList<>(List.of("https://cdn.example.com/old.jpg")))
                 .build();
-    }
-
-    private void authenticateAsAdminWithDeletePermission() {
-        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("post:delete"));
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("admin", null, authorities));
     }
 
     @Nested
@@ -216,7 +192,6 @@ class LostCatPostServiceTest {
 
             given(userRepository.findById(otherUserId)).willReturn(Optional.of(other));
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
-            authenticateAsAdminWithDeletePermission();
 
             // when & then
             assertThatThrownBy(() -> lostCatPostService.updateLostCatPost(postId, request, otherUserId))
@@ -272,7 +247,7 @@ class LostCatPostServiceTest {
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when
-            lostCatPostService.deleteLostCatPost(postId, userId);
+            lostCatPostService.deleteLostCatPost(postId, userId, false);
 
             // then
             then(commentRepository).should().deleteAllByPostIdAndPostType(postId, PostType.LOST);
@@ -292,10 +267,9 @@ class LostCatPostServiceTest {
 
             given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
-            authenticateAsAdminWithDeletePermission();
 
             // when
-            lostCatPostService.deleteLostCatPost(postId, adminId);
+            lostCatPostService.deleteLostCatPost(postId, adminId, true);
 
             // then
             then(lostCatRepository).should().deleteById(postId);
@@ -316,7 +290,7 @@ class LostCatPostServiceTest {
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when & then
-            assertThatThrownBy(() -> lostCatPostService.deleteLostCatPost(postId, otherUserId))
+            assertThatThrownBy(() -> lostCatPostService.deleteLostCatPost(postId, otherUserId, false))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.FORBIDDEN_NOT_AUTHOR);
@@ -362,7 +336,6 @@ class LostCatPostServiceTest {
 
             given(userRepository.findById(otherUserId)).willReturn(Optional.of(other));
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
-            authenticateAsAdminWithDeletePermission();
 
             // when & then
             assertThatThrownBy(() -> lostCatPostService.updateCompletedStatus(postId, true, otherUserId))
