@@ -30,11 +30,6 @@ class PermissionControllerTest extends IntegrationTestBase {
     @Autowired
     private UserRoleRepository userRoleRepository;
 
-    // =========================================================================
-    // 테스트용 픽스처 생성 헬퍼
-    // FastAPI의 @pytest.fixture에 해당
-    // =========================================================================
-
     /**
      * 권한이 있는 사용자를 위한 JWT 헤더를 생성한다.
      *
@@ -111,10 +106,6 @@ class PermissionControllerTest extends IntegrationTestBase {
         return user;
     }
 
-    // =========================================================================
-    // POST /api/meow/boast-cat/{postId}/comments — @PreAuthorize("hasAuthority('comment:create')")
-    // FastAPI: class TestPermission
-    // =========================================================================
     @Nested
     @DisplayName("POST /api/meow/boast-cat/{postId}/comments — comment:create 권한 체크")
     class BoastCatCommentPermission {
@@ -224,9 +215,6 @@ class PermissionControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // POST /api/meow/lost-cat/{postId}/comments — @PreAuthorize("hasAuthority('comment:create')")
-    // =========================================================================
     @Nested
     @DisplayName("POST /api/meow/lost-cat/{postId}/comments — comment:create 권한 체크")
     class LostCatCommentPermission {
@@ -299,9 +287,6 @@ class PermissionControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // PUT /api/meow/comments/{id} — @PreAuthorize("hasAuthority('comment:update')")
-    // =========================================================================
     @Nested
     @DisplayName("PUT /api/meow/comments/{id} — comment:update 권한 체크 (댓글 수정)")
     class UpdateCommentPermission {
@@ -374,10 +359,6 @@ class PermissionControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // ROLE_ADMIN vs ROLE_USER 역할 비교
-    // 관리자는 모든 권한을, 일반 사용자는 일부 권한만 가진다
-    // =========================================================================
     @Nested
     @DisplayName("ROLE_ADMIN vs ROLE_USER — 역할별 권한 차이")
     class AdminVsUserPermission {

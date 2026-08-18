@@ -3,6 +3,7 @@ package com.min.meow.user.controller;
 import com.min.meow.support.IntegrationTestBase;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
+import com.min.meow.user.repository.UserRoleRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -17,10 +18,9 @@ class UserControllerTest extends IntegrationTestBase {
     @Autowired
     private UserRepository userRepository;
 
-    // =========================================================================
-    // POST /api/users/join — 회원가입
-    // FastAPI: class TestRegister
-    // =========================================================================
+    @Autowired
+    private UserRoleRepository userRoleRepository;
+
     @Nested
     @DisplayName("POST /api/users/join — 회원가입")
     class Join {
@@ -32,8 +32,11 @@ class UserControllerTest extends IntegrationTestBase {
         void tearDown() {
             // 각 테스트 후 생성된 User 삭제 — 테스트 간 데이터 격리
             if (createdLoginId != null) {
-                userRepository.findByLoginId(createdLoginId)
-                        .ifPresent(u -> userRepository.deleteById(u.getId()));
+                userRepository.findByLoginId(createdLoginId).ifPresent(u -> {
+                    // 가입 시 부여된 UserRole(FK)을 먼저 지워야 User 삭제 시 제약/캐스케이드 문제가 없다
+                    userRoleRepository.deleteByUserId(u.getId());
+                    userRepository.deleteById(u.getId());
+                });
             }
         }
 
@@ -263,20 +266,17 @@ class UserControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // POST /login — 로그인 (Spring Security CustomLoginFilter 처리)
-    // FastAPI: class TestLogin
-    // =========================================================================
     @Nested
-    @DisplayName("POST /login — 로그인")
+    @DisplayName("POST /api/users/login — 로그인")
     class Login {
 
         private User savedUser;
 
         @AfterEach
         void tearDown() {
-            // 각 테스트 후 저장한 User 삭제
+            // 각 테스트 후 저장한 User 삭제 — UserRole(FK)을 먼저 지워야 함
             if (savedUser != null) {
+                userRoleRepository.deleteByUserId(savedUser.getId());
                 userRepository.deleteById(savedUser.getId());
             }
         }
@@ -318,7 +318,7 @@ class UserControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/login",
+                    "/api/users/login",
                     HttpMethod.POST,
                     new HttpEntity<>(loginBody, loginHeaders),
                     Map.class
@@ -374,7 +374,7 @@ class UserControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/login",
+                    "/api/users/login",
                     HttpMethod.POST,
                     new HttpEntity<>(loginBody, loginHeaders),
                     Map.class
@@ -400,7 +400,7 @@ class UserControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/login",
+                    "/api/users/login",
                     HttpMethod.POST,
                     new HttpEntity<>(loginBody, headers),
                     Map.class
@@ -412,11 +412,8 @@ class UserControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // DELETE /api/users/withdraw — 회원 탈퇴 (인증 필요)
-    // =========================================================================
     @Nested
-    @DisplayName("DELETE /api/users/withdraw — 회원 탈퇴")
+    @DisplayName("DELETE /api/users/me — 회원 탈퇴")
     class Withdraw {
 
         private User savedUser;
@@ -438,7 +435,7 @@ class UserControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Void> response = restTemplate.exchange(
-                    "/api/users/withdraw",
+                    "/api/users/me",
                     HttpMethod.DELETE,
                     new HttpEntity<>(headers),
                     Void.class
@@ -459,7 +456,7 @@ class UserControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Void> response = restTemplate.exchange(
-                    "/api/users/withdraw",
+                    "/api/users/me",
                     HttpMethod.DELETE,
                     HttpEntity.EMPTY,
                     Void.class

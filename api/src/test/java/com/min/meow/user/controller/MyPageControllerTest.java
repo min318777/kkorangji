@@ -21,9 +21,6 @@ class MyPageControllerTest extends IntegrationTestBase {
     @Autowired
     private CommentRepository commentRepository;
 
-    // =========================================================================
-    // GET /api/users/mypage — 마이페이지 요약 조회
-    // =========================================================================
     @Nested
     @DisplayName("GET /api/users/mypage — 마이페이지 요약 조회")
     class GetMyPageSummary {
@@ -116,9 +113,6 @@ class MyPageControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // PATCH /api/users/mypage — 프로필 수정
-    // =========================================================================
     @Nested
     @DisplayName("PATCH /api/users/mypage — 프로필 수정")
     class UpdateProfile {
@@ -230,9 +224,6 @@ class MyPageControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // GET /api/users/mypage/posts — 내가 쓴 글 목록 조회
-    // =========================================================================
     @Nested
     @DisplayName("GET /api/users/mypage/posts — 내가 쓴 글 목록 조회")
     class GetMyPosts {
@@ -276,9 +267,6 @@ class MyPageControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // GET /api/users/mypage/comments — 내가 쓴 댓글 목록 조회
-    // =========================================================================
     @Nested
     @DisplayName("GET /api/users/mypage/comments — 내가 쓴 댓글 목록 조회")
     class GetMyComments {
@@ -315,9 +303,6 @@ class MyPageControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // 인증 토큰 불일치 — DB에 없는 loginId
-    // =========================================================================
     @Nested
     @DisplayName("인증 토큰 불일치 — DB에 없는 loginId")
     class TokenMismatch {

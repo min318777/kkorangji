@@ -58,10 +58,6 @@ class UserServiceTest {
     @Mock
     private UserRoleRepository userRoleRepository;
 
-    // =========================================================================
-    // 테스트 픽스처 헬퍼 — 반복 생성 공통화
-    // =========================================================================
-
     /** 기본 테스트용 JoinRequest 생성 */
     private JoinRequest createJoinRequest(String loginId, String email, String nickname) {
         JoinRequest req = new JoinRequest();
@@ -91,10 +87,6 @@ class UserServiceTest {
         return new Role("ROLE_USER", "일반 사용자");
     }
 
-    // =========================================================================
-    // join() — 회원가입
-    // FastAPI: class TestRegister
-    // =========================================================================
     @Nested
     @DisplayName("join() — 회원가입")
     class Join {
@@ -188,10 +180,6 @@ class UserServiceTest {
         }
     }
 
-    // =========================================================================
-    // login() — 로그인 (서비스 레이어 — 실제 인증은 Spring Security가 담당)
-    // FastAPI: class TestLogin
-    // =========================================================================
     @Nested
     @DisplayName("login() — 로그인 서비스 레이어")
     class Login {
@@ -237,9 +225,6 @@ class UserServiceTest {
         }
     }
 
-    // =========================================================================
-    // withdraw() — 회원 탈퇴 (우리 프로젝트 고유 기능)
-    // =========================================================================
     @Nested
     @DisplayName("withdraw() — 회원 탈퇴")
     class Withdraw {
