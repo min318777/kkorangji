@@ -17,7 +17,6 @@ public class LoginRequest {
 
     @Schema(description = "비밀번호", example = "password1!")
     @NotBlank(message = "비밀번호를 입력해 주세요.")
-    //@Size(min = 8, max = 100, message = "비밀번호는 8자 이상 100자 이하로 입력해 주세요.")
     private String password;
 
     @Schema(description = "로그인 상태 유지 여부", example = "false")

@@ -19,7 +19,6 @@ public record JwtConfig(
         String issuer,
         String audience
 ) {
-    // Access Token TTL을 밀리초로 변환
     public long accessTtlMillis() {
         return (long) accessTtlMinutes * 60 * 1000;
     }

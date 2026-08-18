@@ -66,7 +66,6 @@ class UserControllerTest extends IntegrationTestBase {
         @Test
         @DisplayName("성공: 유효한 정보로 회원가입하면 201과 사용자 정보를 반환한다")
         void test_성공_회원가입() {
-            // FastAPI: test_성공_회원가입
             // given — 유효한 회원가입 요청 바디
             createdLoginId = "newcat01";
             Map<String, String> requestBody = Map.of(
@@ -114,7 +113,7 @@ class UserControllerTest extends IntegrationTestBase {
         @Test
         @DisplayName("실패: 이미 존재하는 loginId로 가입하면 409 Conflict를 반환한다")
         void test_실패_아이디_중복() {
-            // FastAPI: test_실패_이메일_중복 (우리 프로젝트는 loginId + email 모두 유니크 검증)
+            // 우리 프로젝트는 loginId + email 모두 유니크 검증
             // given — DB에 동일 loginId를 가진 User 저장
             createdLoginId = "dupcat01";
             createAndSaveUser(userRepository, createdLoginId, "original@example.com", "원본냥이");
@@ -311,7 +310,6 @@ class UserControllerTest extends IntegrationTestBase {
         @Test
         @DisplayName("성공: 올바른 자격증명으로 로그인하면 200과 JWT 토큰을 반환한다")
         void test_성공_로그인() {
-            // FastAPI: test_성공_로그인
             // given — DB에 User 저장 (BCrypt 인코딩된 비밀번호 필요)
             // createAndSaveUser는 "encoded_password"를 평문으로 저장하므로
             // 로그인 테스트는 회원가입 API를 통해 User를 생성한 후 로그인한다
@@ -370,7 +368,6 @@ class UserControllerTest extends IntegrationTestBase {
         @Test
         @DisplayName("실패: 잘못된 비밀번호로 로그인하면 401 Unauthorized를 반환한다")
         void test_실패_잘못된_비밀번호() {
-            // FastAPI: test_실패_잘못된_비밀번호
             // 보안 원칙: "비밀번호가 틀렸다"는 정보도 공격자에게 유용하므로
             // 아이디 없음과 동일한 401을 반환한다 (User Enumeration Attack 방지)
 
@@ -416,7 +413,6 @@ class UserControllerTest extends IntegrationTestBase {
         @Test
         @DisplayName("실패: 존재하지 않는 loginId로 로그인하면 401 Unauthorized를 반환한다")
         void test_실패_존재하지_않는_아이디() {
-            // FastAPI: test_실패_존재하지_않는_이메일
             // 핵심: 비밀번호 틀림(위)과 동일한 401 반환 → 계정 존재 여부를 알 수 없음
 
             // given — DB에 없는 loginId

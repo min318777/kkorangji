@@ -167,7 +167,6 @@ class PermissionControllerTest extends IntegrationTestBase {
         @Test
         @DisplayName("성공: comment:write 권한이 있으면 댓글 작성 요청이 처리된다 (201 또는 4xx — 게시글 없음)")
         void test_comment_write_권한_있음() {
-            // FastAPI: test_관리자_삭제_권한_있음
 
             // given — comment:write 권한을 가진 사용자 생성
             savedUser = createUserWithPermissions(
@@ -206,7 +205,6 @@ class PermissionControllerTest extends IntegrationTestBase {
         @Test
         @DisplayName("실패: comment:write 권한이 없으면 403 Forbidden을 반환한다")
         void test_comment_write_권한_없음() {
-            // FastAPI: test_일반_사용자_삭제_권한_없음
 
             // given — comment:write 권한 없이 post:read만 가진 사용자
             savedUser = createUserWithPermissions(

@@ -36,20 +36,10 @@ public class SchedulingConfig {
     public ThreadPoolTaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 
-        // 스케줄러 스레드 풀 크기
-        // 등록된 스케줄 작업 3개(조회수 동기화, SSE 하트비트, 인기글 v5 캐시 워밍) + 여유분 1개
         scheduler.setPoolSize(4);
-
-        // 스레드 이름 접두사: 로그에서 식별 용이
         scheduler.setThreadNamePrefix("scheduler-");
-
-        // 애플리케이션 종료 시 진행 중인 작업 완료까지 대기
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
-
-        // 종료 시 최대 대기 시간 (초)
         scheduler.setAwaitTerminationSeconds(30);
-
-        // 스케줄러 초기화
         scheduler.initialize();
 
         log.info("스케줄링 ThreadPoolTaskScheduler 초기화 완료");

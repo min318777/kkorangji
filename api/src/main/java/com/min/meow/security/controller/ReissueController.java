@@ -68,7 +68,7 @@ public class ReissueController {
 
     private Cookie createCookie(String key, String value) {
         Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(14 * 24 * 60 * 60); // 14일
+        cookie.setMaxAge(14 * 24 * 60 * 60);
         //cookie.setSecure(true); -> https 통신시 필요
         cookie.setPath("/");
         cookie.setHttpOnly(true); // XSS 공격 방어

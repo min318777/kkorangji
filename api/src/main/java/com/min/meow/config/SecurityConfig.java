@@ -118,7 +118,7 @@ public class SecurityConfig {
                                 "/api/meow/lost-cat/*/view",
                                 "/api/meow/lost-cat/v1/*/view",
                                 "/api/meow/lost-cat/v3/*/view",
-                                "/api/meow/boast-cat/v4/*/view") // 추가
+                                "/api/meow/boast-cat/v4/*/view")
                         .permitAll()
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.GET,

@@ -123,7 +123,6 @@ class UserServiceTest {
         @Test
         @DisplayName("성공: 유효한 정보로 회원가입하면 JoinResponse를 반환하고 User를 저장한다")
         void test_성공_회원가입() {
-            // FastAPI: test_성공_회원가입
             // given
             JoinRequest request = createJoinRequest("newcat01", "newcat@example.com", "냥이");
 
@@ -160,7 +159,6 @@ class UserServiceTest {
         @Test
         @DisplayName("실패: 이미 존재하는 이메일로 가입하면 CustomException(ALREADY_EXISTING_EMAIL)을 던진다")
         void test_실패_이메일_중복() {
-            // FastAPI: test_실패_이메일_중복
             // given — 이메일 중복
             JoinRequest request = createJoinRequest("newcat01", "dup@example.com", "냥이");
             given(userRepository.existsByEmail("dup@example.com")).willReturn(true);
@@ -222,7 +220,6 @@ class UserServiceTest {
         @Test
         @DisplayName("성공: 존재하는 loginId로 호출하면 LoginResponse를 반환한다")
         void test_성공_로그인_서비스() {
-            // FastAPI: test_성공_로그인
             // 참고: 실제 비밀번호 검증은 Spring Security AuthenticationManager가 담당.
             // UserService.login()은 User 조회 + LoginResponse 생성만 수행한다.
 
@@ -244,7 +241,6 @@ class UserServiceTest {
         @Test
         @DisplayName("실패: 존재하지 않는 loginId로 호출하면 CustomException(UNREGISTERED_USER)을 던진다")
         void test_실패_존재하지_않는_아이디() {
-            // FastAPI: test_실패_존재하지_않는_이메일
             // 핵심: 아이디 없음 = UNREGISTERED_USER(401) 반환 → 계정 존재 여부 비공개
 
             // given — DB에 없는 loginId

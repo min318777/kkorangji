@@ -149,7 +149,7 @@ public class RedisConfig {
                 .withCacheConfiguration("post:boast:popular:warmed", popularPostsConfiguration)
                 // v5 인기글 캐시 — Sorted Set + 캐시 워밍 조합 (TTL 30초 테스트용)
                 .withCacheConfiguration("post:boast:popular:v5", popularV5Configuration)
-                // 상세조회 캐시 — v1/v2/v3 공용 (TTL 10분)
+                // 상세조회 캐시 — v1/v2/v3 공용 (TTL 30초)
                 .withCacheConfiguration("post:boast:detail", postDetailConfiguration)
                 // 자랑글 전체 수 캐시 (TTL 5분)
                 .withCacheConfiguration("post:boast:count", postCountConfiguration)

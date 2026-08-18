@@ -15,7 +15,6 @@ import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.comment.repository.CommentRepository;
-import com.min.meow.common.SecurityUtil;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +49,7 @@ public class BoastCatPostService {
      * 모든 글 조회 (Projection 적용으로 성능 최적화)
      * 성능 개선 내역:
      * - Before: Entity 전체 조회 + DTO 변환 → contents, imageUrls, comments 모두 조회
-     * - After: Projection으로 필요한 7개 컬럼만 SELECT (id, title, writer, likeCount, commentCount, view, createdAt)
+     * - After: Projection으로 필요한 7개 컬럼만 SELECT (id, title, likeCount, commentCount, view, createdAt, thumbnailUrl)
      */
     public PageResponse<BoastCatPostListResponse> getAllBoastCatPosts(Pageable pageable){
         // COUNT는 캐시에서, content는 DB에서 조회 (COUNT 쿼리 성능 개선)
@@ -145,15 +144,14 @@ public class BoastCatPostService {
      */
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
-    public void deleteBoastCatPost(Long boastCatPostId, Long userId){
+    public void deleteBoastCatPost(Long boastCatPostId, Long userId, boolean hasDeleteAuthority){
         countCacheService.evict();
         User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
         // 본인이 아니고 관리자 권한(post:delete)도 없으면 → 403
-        if (!boastCatPost.isAuthor(writer)
-                && !SecurityUtil.hasAuthority("post:delete")) {
+        if (!boastCatPost.isAuthor(writer) && !hasDeleteAuthority) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
         // S3 이미지 삭제 (DB 삭제 전에 URL 추출)

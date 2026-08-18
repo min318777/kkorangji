@@ -63,15 +63,8 @@ public class LostCatPostService {
      * 성능 개선 내역:
      * - Before: Entity 전체 조회 + DTO 변환 → contents, imageUrls, comments 모두 조회
      *           → LazyInitializationException 발생 가능
-     * - After: Projection으로 필요한 9개 컬럼만 SELECT
-     *          (id, title, writer, catName, lostLocation, commentCount, view, isCompleted, createdAt)
-     * 실행되는 쿼리:
-     * SELECT l.id, l.title, u.login_id, l.cat_name, l.lost_location,
-     *        l.comment_count, l.view, l.is_completed, l.created_at
-     * FROM lost_cat_post l
-     * LEFT JOIN users u ON l.user_id = u.id
-     * ORDER BY l.created_at DESC
-     * LIMIT ? OFFSET ?
+     * - After: Projection으로 필요한 10개 컬럼만 SELECT
+     *          (id, title, writer(nickname), catName, lostLocation, commentCount, view, isCompleted, createdAt, thumbnailUrl)
      */
     public PageResponse<LostCatPostListResponse> getAllLostCatPosts(Pageable pageable){
         // COUNT는 캐시에서, content는 커버링 인덱스 서브쿼리로 조회
