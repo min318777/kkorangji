@@ -5,6 +5,7 @@ import com.min.meow.common.PageResponse;
 import com.min.meow.common.PostType;
 import com.min.meow.common.PrincipalUser;
 import com.min.meow.common.ApiResponse;
+import com.min.meow.common.SecurityUtil;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.comment.dto.request.RegisterCommentRequest;
@@ -93,7 +94,8 @@ public class CommentController {
             @PathVariable Long commentId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        commentService.deleteComment(commentId, user.getUserId());
+        boolean hasDeleteAuthority = SecurityUtil.hasAuthority("comment:delete");
+        commentService.deleteComment(commentId, user.getUserId(), hasDeleteAuthority);
         return ResponseEntity.noContent().build();
     }
 
