@@ -54,7 +54,7 @@ public class BoastCatPost extends BasePost {
 
     @Builder.Default
     @ColumnDefault("0")
-    private int likeCount = 0;     // 좋아요 수
+    private int likeCount = 0;
 
     public void updatePost(String title, String contents, List<String> newImageUrls) {
         this.title = title;

@@ -18,8 +18,7 @@ import java.util.stream.Collectors;
 
 /**
  * 인기글 v5 캐시 워밍 스케줄러 — Sorted Set + Cache Stampede 방지
- * 현재 @Scheduled 주석 처리로 비활성 상태.
- * 활성화 시 Sorted Set에서 Top 24 ID를 가져와 post:boast:popular:v5 캐시를 선제 갱신 → MISS 방지가 설계 의도.
+ * 25초마다 Sorted Set에서 Top 24 ID를 가져와 post:boast:popular:v5 캐시를 선제 갱신 → MISS 방지.
  * DB ORDER BY 없이 Sorted Set 기반 실시간 순위 반영
  */
 @Slf4j

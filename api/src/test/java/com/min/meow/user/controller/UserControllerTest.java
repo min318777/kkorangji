@@ -3,6 +3,7 @@ package com.min.meow.user.controller;
 import com.min.meow.support.IntegrationTestBase;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
+import com.min.meow.user.repository.UserRoleRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -11,42 +12,15 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * UserController 통합 테스트 — 회원가입 & 로그인
- *
- * <h3>FastAPI 매핑</h3>
- * <pre>
- * FastAPI (test_auth.py)                Java (UserControllerTest)
- * ─────────────────────────────────     ──────────────────────────────────────
- * class TestRegister                →   @Nested class Join
- * class TestLogin                   →   @Nested class Login
- * unauthenticated_client            →   restTemplate (토큰 없이 요청)
- * test_session.add(user)            →   createAndSaveUser() + userRepository.save()
- * assert response.status_code == X  →   assertThat(response.getStatusCode()).isEqualTo(X)
- * assert "password" not in data     →   assertThat(data.containsKey("password")).isFalse()
- * </pre>
- *
- * <h3>테스트 대상 엔드포인트</h3>
- * <ul>
- *   <li>POST /api/users/join  — 회원가입 (인증 불필요)</li>
- *   <li>POST /login           — 로그인 (Spring Security CustomLoginFilter 처리)</li>
- * </ul>
- *
- * <h3>로그인 보안 원칙</h3>
- * "아이디 없음"과 "비밀번호 틀림"을 모두 401로 통일합니다.
- * 두 경우를 구분하면 공격자가 계정 존재 여부를 알 수 있기 때문입니다.
- * (User Enumeration Attack 방지)
- */
 @DisplayName("UserController 통합 테스트 — 회원가입 & 로그인")
 class UserControllerTest extends IntegrationTestBase {
 
     @Autowired
     private UserRepository userRepository;
 
-    // =========================================================================
-    // POST /api/users/join — 회원가입
-    // FastAPI: class TestRegister
-    // =========================================================================
+    @Autowired
+    private UserRoleRepository userRoleRepository;
+
     @Nested
     @DisplayName("POST /api/users/join — 회원가입")
     class Join {
@@ -58,21 +32,23 @@ class UserControllerTest extends IntegrationTestBase {
         void tearDown() {
             // 각 테스트 후 생성된 User 삭제 — 테스트 간 데이터 격리
             if (createdLoginId != null) {
-                userRepository.findByLoginId(createdLoginId)
-                        .ifPresent(u -> userRepository.deleteById(u.getId()));
+                userRepository.findByLoginId(createdLoginId).ifPresent(u -> {
+                    // 가입 시 부여된 UserRole(FK)을 먼저 지워야 User 삭제 시 제약/캐스케이드 문제가 없다
+                    userRoleRepository.deleteByUserId(u.getId());
+                    userRepository.deleteById(u.getId());
+                });
             }
         }
 
         @Test
         @DisplayName("성공: 유효한 정보로 회원가입하면 201과 사용자 정보를 반환한다")
         void test_성공_회원가입() {
-            // FastAPI: test_성공_회원가입
             // given — 유효한 회원가입 요청 바디
             createdLoginId = "newcat01";
             Map<String, String> requestBody = Map.of(
                     "loginId", createdLoginId,
-                    "password", "password1!",
-                    "passwordConfirm", "password1!",
+                    "password", "password1",
+                    "passwordConfirm", "password1",
                     "email", "newcat@example.com",
                     "nickname", "냥이"
             );
@@ -114,15 +90,15 @@ class UserControllerTest extends IntegrationTestBase {
         @Test
         @DisplayName("실패: 이미 존재하는 loginId로 가입하면 409 Conflict를 반환한다")
         void test_실패_아이디_중복() {
-            // FastAPI: test_실패_이메일_중복 (우리 프로젝트는 loginId + email 모두 유니크 검증)
+            // 우리 프로젝트는 loginId + email 모두 유니크 검증
             // given — DB에 동일 loginId를 가진 User 저장
             createdLoginId = "dupcat01";
             createAndSaveUser(userRepository, createdLoginId, "original@example.com", "원본냥이");
 
             Map<String, String> requestBody = Map.of(
                     "loginId", createdLoginId,        // 중복 loginId
-                    "password", "password1!",
-                    "passwordConfirm", "password1!",
+                    "password", "password1",
+                    "passwordConfirm", "password1",
                     "email", "another@example.com",   // 다른 이메일이라도
                     "nickname", "다른냥이"
             );
@@ -151,8 +127,8 @@ class UserControllerTest extends IntegrationTestBase {
 
             Map<String, String> requestBody = Map.of(
                     "loginId", createdLoginId,        // 다른 loginId라도
-                    "password", "password1!",
-                    "passwordConfirm", "password1!",
+                    "password", "password1",
+                    "passwordConfirm", "password1",
                     "email", "dup@example.com",       // 중복 이메일
                     "nickname", "새냥이"
             );
@@ -178,14 +154,15 @@ class UserControllerTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("실패: 비밀번호가 숫자만 포함하면 (영문 없음) 400 Bad Request를 반환한다 (@Pattern 검증)")
+        @DisplayName("실패: 비밀번호에 특수문자가 포함되면 400 Bad Request를 반환한다 (@Pattern 검증)")
         void test_실패_비밀번호_형식_불충족() {
-            // FastAPI: test_실패_비밀번호_너무_짧음 → 우리 프로젝트는 형식(영문+숫자 필수) 검증
-            // given — 숫자만 있는 비밀번호 (영문 없음)
+            // JoinRequest.password @Pattern은 "^[a-zA-Z0-9]+$" — 영문/숫자만 허용, 특수문자 금지
+            // (프론트 join/page.tsx의 검증 규칙과 동일). 숫자만 있는 비밀번호는 이 정규식을
+            // 실제로 통과하므로(영문 필수 조건은 없음) 그걸로는 위반을 재현할 수 없어 특수문자로 검증
             Map<String, String> requestBody = Map.of(
                     "loginId", "validcat1",
-                    "password", "12345678",     // 숫자만 — @Pattern 위반 (영문 필수)
-                    "passwordConfirm", "12345678",
+                    "password", "pass1234!",     // 특수문자(!) 포함 — @Pattern 위반
+                    "passwordConfirm", "pass1234!",
                     "email", "valid@example.com",
                     "nickname", "유효냥이"
             );
@@ -211,8 +188,8 @@ class UserControllerTest extends IntegrationTestBase {
             // given — password != passwordConfirm
             Map<String, String> requestBody = Map.of(
                     "loginId", "mismatch1",
-                    "password", "password1!",
-                    "passwordConfirm", "different1!",   // 불일치
+                    "password", "password1",
+                    "passwordConfirm", "different1",   // 불일치
                     "email", "mismatch@example.com",
                     "nickname", "불일치냥이"
             );
@@ -233,15 +210,17 @@ class UserControllerTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("실패: 닉네임에 숫자가 포함되면 400 Bad Request를 반환한다")
-        void test_실패_닉네임_숫자_포함() {
-            // given — 숫자 포함 닉네임 (@Pattern(^[가-힣a-zA-Z]+$) 위반)
+        @DisplayName("실패: 닉네임에 특수문자가 포함되면 400 Bad Request를 반환한다")
+        void test_실패_닉네임_특수문자_포함() {
+            // JoinRequest.nickname @Pattern은 "^[가-힣a-zA-Z0-9]+$" — 한글/영문/숫자만 허용.
+            // 소셜 로그인 자동생성 닉네임(NicknameGenerator)이 숫자를 포함해서 숫자는 이제
+            // 허용 대상이라 위반 케이스로 못 씀 — 특수문자로 검증
             Map<String, String> requestBody = Map.of(
                     "loginId", "numcat01",
-                    "password", "password1!",
-                    "passwordConfirm", "password1!",
+                    "password", "password1",
+                    "passwordConfirm", "password1",
                     "email", "numcat@example.com",
-                    "nickname", "냥이1"             // 숫자 포함 — 위반
+                    "nickname", "냥이!"             // 특수문자 포함 — 위반
             );
 
             HttpHeaders headers = new HttpHeaders();
@@ -265,8 +244,8 @@ class UserControllerTest extends IntegrationTestBase {
             // given — 4자 loginId (@Size(min=5) 위반)
             Map<String, String> requestBody = Map.of(
                     "loginId", "cat",           // 3자 — 위반
-                    "password", "password1!",
-                    "passwordConfirm", "password1!",
+                    "password", "password1",
+                    "passwordConfirm", "password1",
                     "email", "short@example.com",
                     "nickname", "짧은냥이"
             );
@@ -287,20 +266,17 @@ class UserControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // POST /login — 로그인 (Spring Security CustomLoginFilter 처리)
-    // FastAPI: class TestLogin
-    // =========================================================================
     @Nested
-    @DisplayName("POST /login — 로그인")
+    @DisplayName("POST /api/users/login — 로그인")
     class Login {
 
         private User savedUser;
 
         @AfterEach
         void tearDown() {
-            // 각 테스트 후 저장한 User 삭제
+            // 각 테스트 후 저장한 User 삭제 — UserRole(FK)을 먼저 지워야 함
             if (savedUser != null) {
+                userRoleRepository.deleteByUserId(savedUser.getId());
                 userRepository.deleteById(savedUser.getId());
             }
         }
@@ -308,7 +284,6 @@ class UserControllerTest extends IntegrationTestBase {
         @Test
         @DisplayName("성공: 올바른 자격증명으로 로그인하면 200과 JWT 토큰을 반환한다")
         void test_성공_로그인() {
-            // FastAPI: test_성공_로그인
             // given — DB에 User 저장 (BCrypt 인코딩된 비밀번호 필요)
             // createAndSaveUser는 "encoded_password"를 평문으로 저장하므로
             // 로그인 테스트는 회원가입 API를 통해 User를 생성한 후 로그인한다
@@ -317,8 +292,8 @@ class UserControllerTest extends IntegrationTestBase {
 
             Map<String, String> joinBody = Map.of(
                     "loginId", "logintest1",
-                    "password", "password1!",
-                    "passwordConfirm", "password1!",
+                    "password", "password1",
+                    "passwordConfirm", "password1",
                     "email", "logintest@example.com",
                     "nickname", "로그인냥이"
             );
@@ -338,12 +313,12 @@ class UserControllerTest extends IntegrationTestBase {
 
             Map<String, String> loginBody = Map.of(
                     "loginId", "logintest1",
-                    "password", "password1!"    // 올바른 비밀번호
+                    "password", "password1"    // 올바른 비밀번호
             );
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/login",
+                    "/api/users/login",
                     HttpMethod.POST,
                     new HttpEntity<>(loginBody, loginHeaders),
                     Map.class
@@ -367,7 +342,6 @@ class UserControllerTest extends IntegrationTestBase {
         @Test
         @DisplayName("실패: 잘못된 비밀번호로 로그인하면 401 Unauthorized를 반환한다")
         void test_실패_잘못된_비밀번호() {
-            // FastAPI: test_실패_잘못된_비밀번호
             // 보안 원칙: "비밀번호가 틀렸다"는 정보도 공격자에게 유용하므로
             // 아이디 없음과 동일한 401을 반환한다 (User Enumeration Attack 방지)
 
@@ -380,8 +354,8 @@ class UserControllerTest extends IntegrationTestBase {
                     HttpMethod.POST,
                     new HttpEntity<>(Map.of(
                             "loginId", "wrongpw01",
-                            "password", "password1!",
-                            "passwordConfirm", "password1!",
+                            "password", "password1",
+                            "passwordConfirm", "password1",
                             "email", "wrongpw@example.com",
                             "nickname", "비밀번호냥이"
                     ), joinHeaders),
@@ -395,12 +369,12 @@ class UserControllerTest extends IntegrationTestBase {
 
             Map<String, String> loginBody = Map.of(
                     "loginId", "wrongpw01",
-                    "password", "wrongpassword1!"   // 틀린 비밀번호
+                    "password", "wrongpassword1"   // 틀린 비밀번호
             );
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/login",
+                    "/api/users/login",
                     HttpMethod.POST,
                     new HttpEntity<>(loginBody, loginHeaders),
                     Map.class
@@ -413,7 +387,6 @@ class UserControllerTest extends IntegrationTestBase {
         @Test
         @DisplayName("실패: 존재하지 않는 loginId로 로그인하면 401 Unauthorized를 반환한다")
         void test_실패_존재하지_않는_아이디() {
-            // FastAPI: test_실패_존재하지_않는_이메일
             // 핵심: 비밀번호 틀림(위)과 동일한 401 반환 → 계정 존재 여부를 알 수 없음
 
             // given — DB에 없는 loginId
@@ -422,12 +395,12 @@ class UserControllerTest extends IntegrationTestBase {
 
             Map<String, String> loginBody = Map.of(
                     "loginId", "nonexist1",     // DB에 없는 아이디
-                    "password", "anypassword1!"
+                    "password", "anypassword1"
             );
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/login",
+                    "/api/users/login",
                     HttpMethod.POST,
                     new HttpEntity<>(loginBody, headers),
                     Map.class
@@ -439,11 +412,8 @@ class UserControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // DELETE /api/users/withdraw — 회원 탈퇴 (인증 필요)
-    // =========================================================================
     @Nested
-    @DisplayName("DELETE /api/users/withdraw — 회원 탈퇴")
+    @DisplayName("DELETE /api/users/me — 회원 탈퇴")
     class Withdraw {
 
         private User savedUser;
@@ -465,7 +435,7 @@ class UserControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Void> response = restTemplate.exchange(
-                    "/api/users/withdraw",
+                    "/api/users/me",
                     HttpMethod.DELETE,
                     new HttpEntity<>(headers),
                     Void.class
@@ -486,7 +456,7 @@ class UserControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Void> response = restTemplate.exchange(
-                    "/api/users/withdraw",
+                    "/api/users/me",
                     HttpMethod.DELETE,
                     HttpEntity.EMPTY,
                     Void.class

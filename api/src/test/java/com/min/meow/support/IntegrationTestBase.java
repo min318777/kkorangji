@@ -8,42 +8,31 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 모든 통합 테스트가 상속하는 베이스 클래스.
- *
- * <h3>FastAPI conftest.py 역할</h3>
- * <ul>
- *   <li>@SpringBootTest: 전체 애플리케이션 컨텍스트 로딩 (컨트롤러~DB 레이어 통합)</li>
- *   <li>@ActiveProfiles("test"): H2 + Kafka 제외 설정 활성화</li>
- * </ul>
- *
- * <h3>@Transactional을 사용하지 않는 이유</h3>
- * TestRestTemplate으로 보내는 HTTP 요청은 별도 서버 스레드의 별도 트랜잭션에서 처리된다.
- * 테스트 메서드의 @Transactional은 테스트 스레드의 트랜잭션이므로,
- * 아직 커밋되지 않은 데이터를 서버 요청에서 볼 수 없다.
- * 대신 각 테스트에서 직접 저장/삭제를 관리한다.
- *
- * <h3>FastAPI → Java 매핑</h3>
- * <pre>
- * FastAPI                                 Java
- * dependency_overrides[get_session]   →   @SpringBootTest + H2 + application-test.yml
- * dependency_overrides[get_current_user] → JwtProvider.createAccessToken() + X-Auth-Version: v2
- * test_session.add(user)              →   userRepository.save(user)
- * function scope fixture              →   @AfterEach에서 직접 삭제
- * </pre>
- *
- * <h3>왜 X-Auth-Version: v2인가</h3>
- * JwtAuthenticationFilter v1(기본)은 토큰의 userId로 DB에서 User를 조회한다.
- * 테스트에서 저장한 User는 실제로 H2에 커밋되어 있으므로 v1으로도 동작한다.
- * v2 헤더를 추가하면 DB 조회 없이 JWT Claims만으로 인증하여 더 빠르고 독립적이다.
- */
+@Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 public abstract class IntegrationTestBase {
+
+    /** 로컬 Redis 없이도 통합 테스트가 자체 완결되도록 Docker로 임시 Redis 컨테이너를 띄운다 */
+    @Container
+    static GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:7.0-alpine"))
+            .withExposedPorts(6379);
+
+    @DynamicPropertySource
+    static void redisProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.redis.host", redis::getHost);
+        registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
+    }
 
     /** 실제 HTTP 요청을 보내는 클라이언트 (포트는 랜덤으로 할당됨) */
     @Autowired

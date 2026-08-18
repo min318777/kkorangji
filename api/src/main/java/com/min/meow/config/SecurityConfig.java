@@ -2,6 +2,7 @@ package com.min.meow.config;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.min.meow.common.ApiResponse;
 import com.min.meow.notification.sse.SseEmitterManager;
 import com.min.meow.security.filter.CustomLogoutFilter;
 import com.min.meow.security.jwt.JwtAuthenticationFilter;
@@ -14,9 +15,12 @@ import com.min.meow.security.oauth2.CustomOauth2UserService;
 import com.min.meow.security.service.RefreshTokenService;
 import com.min.meow.user.service.DauService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,6 +34,7 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -78,6 +83,18 @@ public class SecurityConfig {
                 .formLogin((auth) -> auth.disable());
         http
                 .httpBasic((auth) -> auth.disable());
+        // oauth2Login()이 활성화되어 있으면 인증 실패 시 기본적으로 로그인 페이지로 302 리다이렉트되는데,
+        // REST API는 401 JSON을 반환해야 하므로 명시적으로 엔트리포인트를 지정
+        http
+                .exceptionHandling((auth) -> auth.authenticationEntryPoint(
+                        (request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+                            response.getWriter().write(
+                                    objectMapper.writeValueAsString(
+                                            ApiResponse.fail(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "인증이 필요합니다.")));
+                        }));
 
         http.
                 authorizeHttpRequests((auth) -> auth
@@ -118,7 +135,7 @@ public class SecurityConfig {
                                 "/api/meow/lost-cat/*/view",
                                 "/api/meow/lost-cat/v1/*/view",
                                 "/api/meow/lost-cat/v3/*/view",
-                                "/api/meow/boast-cat/v4/*/view") // 추가
+                                "/api/meow/boast-cat/v4/*/view")
                         .permitAll()
                         .requestMatchers(
                                 org.springframework.http.HttpMethod.GET,

@@ -10,7 +10,6 @@ import java.util.List;
 
 public interface UserRoleRepository extends JpaRepository<UserRole, Long> {
 
-    // 특정 User에 연결된 UserRole 목록 조회
     List<UserRole> findByUserId(Long userId);
 
     // 특정 User에 연결된 UserRole 전체 삭제 — findAll() 없이 DB 레벨에서 단건 DELETE

@@ -103,10 +103,9 @@ public class MyPageService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 
-        // 2. 댓글 조회 (페이징)
         Page<Comment> commentPage = commentRepository.findByUserOrderByCreatedAtDesc(user, pageable);
 
-        // 3. 게시글 제목 배치 조회 (N+1 방지)
+        // 게시글 제목 배치 조회 (N+1 방지)
         List<Long> boastIds = commentPage.getContent().stream()
                 .filter(c -> c.getPostType() == PostType.BOAST)
                 .map(Comment::getPostId).distinct().toList();
@@ -118,11 +117,9 @@ public class MyPageService {
         boastCatPostRepository.findAllById(boastIds).forEach(p -> titleMap.put(p.getId(), p.getTitle()));
         lostCatRepository.findAllById(lostIds).forEach(p -> titleMap.put(p.getId(), p.getTitle()));
 
-        // 4. DTO 변환
         Page<MyCommentDto> commentDtoPage = commentPage.map(c ->
                 MyCommentDto.from(c, titleMap.getOrDefault(c.getPostId(), "")));
 
-        // 4. Response 생성
         return PageResponse.from(commentDtoPage);
     }
 

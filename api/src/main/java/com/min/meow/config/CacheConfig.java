@@ -37,7 +37,6 @@ public class CacheConfig implements CachingConfigurer {
             public void handleCacheGetError(RuntimeException exception, org.springframework.cache.Cache cache, Object key) {
                 log.warn("Redis 캐시 조회 실패 - cache: {}, key: {}, error: {}. DB에서 조회합니다.",
                         cache.getName(), key, exception.getMessage());
-                // 예외를 무시하고 메서드 본문 실행 (DB 조회)
             }
 
             /**
@@ -48,7 +47,6 @@ public class CacheConfig implements CachingConfigurer {
             public void handleCachePutError(RuntimeException exception, org.springframework.cache.Cache cache, Object key, Object value) {
                 log.warn("Redis 캐시 저장 실패 - cache: {}, key: {}, error: {}. 다음 요청 시 재시도합니다.",
                         cache.getName(), key, exception.getMessage());
-                // 예외를 무시하고 응답 반환
             }
 
             /**
@@ -59,7 +57,6 @@ public class CacheConfig implements CachingConfigurer {
             public void handleCacheEvictError(RuntimeException exception, org.springframework.cache.Cache cache, Object key) {
                 log.warn("Redis 캐시 삭제 실패 - cache: {}, key: {}, error: {}",
                         cache.getName(), key, exception.getMessage());
-                // 예외를 무시
             }
 
             /**
@@ -70,7 +67,6 @@ public class CacheConfig implements CachingConfigurer {
             public void handleCacheClearError(RuntimeException exception, org.springframework.cache.Cache cache) {
                 log.warn("Redis 캐시 전체 삭제 실패 - cache: {}, error: {}",
                         cache.getName(), exception.getMessage());
-                // 예외를 무시
             }
         };
     }

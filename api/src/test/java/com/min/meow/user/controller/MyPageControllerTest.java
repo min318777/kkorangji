@@ -12,32 +12,6 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * MyPageController 통합 테스트
- *
- * <h3>테스트 전략</h3>
- * <ul>
- *   <li>@SpringBootTest(RANDOM_PORT): 실제 서블릿 컨테이너 + 전체 필터 체인 검증</li>
- *   <li>H2 인메모리 DB: application-test.yml으로 실제 JPA 쿼리 검증</li>
- *   <li>실제 JWT 토큰: JwtProvider로 서명된 토큰 생성 → Bearer 헤더 → JwtAuthenticationFilter 통과</li>
- *   <li>X-Auth-Version: v2 → DB 조회 없이 JWT Claims로 인증 (테스트 격리 보장)</li>
- *   <li>@AfterEach: 저장한 데이터 직접 삭제 → 테스트 간 격리</li>
- * </ul>
- *
- * <h3>슬라이스 테스트(WebMvcTest)와의 차이</h3>
- * <pre>
- * 슬라이스 테스트             통합 테스트
- * MockMvc               → TestRestTemplate (실제 HTTP + 전체 필터 체인)
- * MockitoBean(Service)  → 실제 Service + 실제 Repository + H2
- * SecurityContext 직접 주입 → JWT 토큰 생성 → JwtAuthenticationFilter 처리
- * DB 없음               → H2 인메모리 DB
- * </pre>
- *
- * <h3>인증 없는 요청의 응답 코드</h3>
- * SecurityConfig에 별도 authenticationEntryPoint 설정이 없으므로
- * Spring Security 기본 동작에 따라 인증 없는 요청 시 403(Forbidden)이 반환된다.
- * (Stateless JWT 환경에서 세션/기본인증 비활성화 시 기본값)
- */
 @DisplayName("MyPageController 통합 테스트")
 class MyPageControllerTest extends IntegrationTestBase {
 
@@ -47,11 +21,8 @@ class MyPageControllerTest extends IntegrationTestBase {
     @Autowired
     private CommentRepository commentRepository;
 
-    // =========================================================================
-    // GET /api/users/mypage — 마이페이지 요약 조회
-    // =========================================================================
     @Nested
-    @DisplayName("GET /api/users/mypage — 마이페이지 요약 조회")
+    @DisplayName("GET /api/users/me — 마이페이지 요약 조회")
     class GetMyPageSummary {
 
         private User savedUser;
@@ -75,7 +46,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when — 실제 HTTP GET 요청
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
                     Map.class
@@ -105,7 +76,7 @@ class MyPageControllerTest extends IntegrationTestBase {
             // SecurityConfig에 authenticationEntryPoint 미설정 → 기본 403 응답
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.GET,
                     HttpEntity.EMPTY,
                     Map.class
@@ -124,7 +95,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
                     Map.class
@@ -142,11 +113,8 @@ class MyPageControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // PATCH /api/users/mypage — 프로필 수정
-    // =========================================================================
     @Nested
-    @DisplayName("PATCH /api/users/mypage — 프로필 수정")
+    @DisplayName("PATCH /api/users/me — 프로필 수정")
     class UpdateProfile {
 
         private User savedUser;
@@ -171,7 +139,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.PATCH,
                     new HttpEntity<>(requestBody, headers),
                     Map.class
@@ -197,7 +165,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.PATCH,
                     new HttpEntity<>(requestBody, headers),
                     Map.class
@@ -221,7 +189,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.PATCH,
                     new HttpEntity<>(requestBody, headers),
                     Map.class
@@ -245,7 +213,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.PATCH,
                     new HttpEntity<>(requestBody, headers),
                     Map.class
@@ -256,11 +224,8 @@ class MyPageControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // GET /api/users/mypage/posts — 내가 쓴 글 목록 조회
-    // =========================================================================
     @Nested
-    @DisplayName("GET /api/users/mypage/posts — 내가 쓴 글 목록 조회")
+    @DisplayName("GET /api/users/me/posts — 내가 쓴 글 목록 조회")
     class GetMyPosts {
 
         private User savedUser;
@@ -281,7 +246,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage/posts?page=0&size=10&type=ALL",
+                    "/api/users/me/posts?page=0&size=10&type=ALL",
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
                     Map.class
@@ -302,11 +267,8 @@ class MyPageControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // GET /api/users/mypage/comments — 내가 쓴 댓글 목록 조회
-    // =========================================================================
     @Nested
-    @DisplayName("GET /api/users/mypage/comments — 내가 쓴 댓글 목록 조회")
+    @DisplayName("GET /api/users/me/comments — 내가 쓴 댓글 목록 조회")
     class GetMyComments {
 
         private User savedUser;
@@ -327,7 +289,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage/comments?page=0&size=10",
+                    "/api/users/me/comments?page=0&size=10",
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
                     Map.class
@@ -341,9 +303,6 @@ class MyPageControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // 인증 토큰 불일치 — DB에 없는 loginId
-    // =========================================================================
     @Nested
     @DisplayName("인증 토큰 불일치 — DB에 없는 loginId")
     class TokenMismatch {
@@ -358,7 +317,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
                     Map.class

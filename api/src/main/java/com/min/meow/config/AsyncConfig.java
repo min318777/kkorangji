@@ -46,25 +46,12 @@ public class AsyncConfig implements AsyncConfigurer {
     public Executor notificationExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 
-        // 코어 스레드 풀 크기: 항상 유지되는 스레드 수
         executor.setCorePoolSize(5);
-
-        // 최대 스레드 풀 크기: 트래픽 급증 시 확장 가능한 최대치
         executor.setMaxPoolSize(20);
-
-        // 작업 대기 큐 크기: 스레드가 모두 바쁠 때 대기 가능한 작업 수
         executor.setQueueCapacity(100);
-
-        // 유휴 스레드 유지 시간 (초): 이 시간 이후 초과 스레드 종료
         executor.setKeepAliveSeconds(60);
-
-        // 스레드 이름 접두사: 로그에서 식별
         executor.setThreadNamePrefix("notification-async-");
-
-        // 애플리케이션 종료 시 진행 중인 작업 완료까지 대기
         executor.setWaitForTasksToCompleteOnShutdown(true);
-
-        // 종료 시 최대 대기 시간 (초)
         executor.setAwaitTerminationSeconds(30);
 
         // 큐가 꽉 찼을 때 호출자 스레드에서 직접 실행 (알림 유실 방지)

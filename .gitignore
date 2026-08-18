@@ -81,9 +81,6 @@ AWS.md
 # JVM 힙 덤프
 *.hprof
 
-# 테스트 리포트
-api/src/test/
-
 # Gradle wrapper 바이너리 (선택)
 # gradle/wrapper/gradle-wrapper.jar
 

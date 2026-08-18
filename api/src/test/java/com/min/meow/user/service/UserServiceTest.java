@@ -32,27 +32,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
-/**
- * UserService 유닛 테스트 — 회원가입, 로그인, 회원 탈퇴 비즈니스 로직
- *
- * <h3>FastAPI 매핑</h3>
- * <pre>
- * FastAPI (test_auth.py)                Java (UserServiceTest)
- * ─────────────────────────────────     ──────────────────────────────────────
- * pytest + unittest.mock.patch      →   @ExtendWith(MockitoExtension) + @Mock
- * dependency_overrides[get_session] →   Mock 객체 반환값 설정 (given(...).willReturn())
- * assert response.status_code       →   assertThatThrownBy(...).extracting("errorCode")
- * </pre>
- *
- * <h3>통합 테스트(UserControllerTest)와의 차이</h3>
- * <pre>
- * 통합 테스트                        유닛 테스트
- * 실제 HTTP 요청 + 전체 필터 체인  →  순수 Java 메서드 호출
- * H2 DB                          →  Mock 객체 (DB 없음)
- * 느림 (Spring 컨텍스트 로딩)     →  빠름 (Mockito만 사용)
- * 외부 의존성(@Valid, Filter) 검증 →  비즈니스 로직만 검증
- * </pre>
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService 유닛 테스트")
 class UserServiceTest {
@@ -78,10 +57,6 @@ class UserServiceTest {
 
     @Mock
     private UserRoleRepository userRoleRepository;
-
-    // =========================================================================
-    // 테스트 픽스처 헬퍼 — 반복 생성 공통화
-    // =========================================================================
 
     /** 기본 테스트용 JoinRequest 생성 */
     private JoinRequest createJoinRequest(String loginId, String email, String nickname) {
@@ -112,10 +87,6 @@ class UserServiceTest {
         return new Role("ROLE_USER", "일반 사용자");
     }
 
-    // =========================================================================
-    // join() — 회원가입
-    // FastAPI: class TestRegister
-    // =========================================================================
     @Nested
     @DisplayName("join() — 회원가입")
     class Join {
@@ -123,7 +94,6 @@ class UserServiceTest {
         @Test
         @DisplayName("성공: 유효한 정보로 회원가입하면 JoinResponse를 반환하고 User를 저장한다")
         void test_성공_회원가입() {
-            // FastAPI: test_성공_회원가입
             // given
             JoinRequest request = createJoinRequest("newcat01", "newcat@example.com", "냥이");
 
@@ -160,7 +130,6 @@ class UserServiceTest {
         @Test
         @DisplayName("실패: 이미 존재하는 이메일로 가입하면 CustomException(ALREADY_EXISTING_EMAIL)을 던진다")
         void test_실패_이메일_중복() {
-            // FastAPI: test_실패_이메일_중복
             // given — 이메일 중복
             JoinRequest request = createJoinRequest("newcat01", "dup@example.com", "냥이");
             given(userRepository.existsByEmail("dup@example.com")).willReturn(true);
@@ -211,10 +180,6 @@ class UserServiceTest {
         }
     }
 
-    // =========================================================================
-    // login() — 로그인 (서비스 레이어 — 실제 인증은 Spring Security가 담당)
-    // FastAPI: class TestLogin
-    // =========================================================================
     @Nested
     @DisplayName("login() — 로그인 서비스 레이어")
     class Login {
@@ -222,7 +187,6 @@ class UserServiceTest {
         @Test
         @DisplayName("성공: 존재하는 loginId로 호출하면 LoginResponse를 반환한다")
         void test_성공_로그인_서비스() {
-            // FastAPI: test_성공_로그인
             // 참고: 실제 비밀번호 검증은 Spring Security AuthenticationManager가 담당.
             // UserService.login()은 User 조회 + LoginResponse 생성만 수행한다.
 
@@ -244,7 +208,6 @@ class UserServiceTest {
         @Test
         @DisplayName("실패: 존재하지 않는 loginId로 호출하면 CustomException(UNREGISTERED_USER)을 던진다")
         void test_실패_존재하지_않는_아이디() {
-            // FastAPI: test_실패_존재하지_않는_이메일
             // 핵심: 아이디 없음 = UNREGISTERED_USER(401) 반환 → 계정 존재 여부 비공개
 
             // given — DB에 없는 loginId
@@ -262,9 +225,6 @@ class UserServiceTest {
         }
     }
 
-    // =========================================================================
-    // withdraw() — 회원 탈퇴 (우리 프로젝트 고유 기능)
-    // =========================================================================
     @Nested
     @DisplayName("withdraw() — 회원 탈퇴")
     class Withdraw {

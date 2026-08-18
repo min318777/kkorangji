@@ -13,7 +13,6 @@ import com.min.meow.notification.event.CommentEvent;
 import com.min.meow.comment.entity.Comment;
 import com.min.meow.comment.repository.CommentRepository;
 import com.min.meow.common.PostType;
-import com.min.meow.common.SecurityUtil;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
@@ -135,11 +134,11 @@ public class CommentService {
     // - 원댓글: 활성 대댓글 없으면 즉시 삭제, 있으면 소프트 삭제
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
-    public void deleteComment(Long commentId, Long userId) {
+    public void deleteComment(Long commentId, Long userId, boolean hasDeleteAuthority) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT));
 
-        if (!comment.isAuthor(userId) && !SecurityUtil.hasAuthority("comment:delete")) {
+        if (!comment.isAuthor(userId) && !hasDeleteAuthority) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
 
