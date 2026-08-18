@@ -133,7 +133,7 @@ class PermissionControllerTest extends IntegrationTestBase {
 
         @Test
         @DisplayName("성공: comment:write 권한이 있으면 댓글 작성 요청이 처리된다 (201 또는 4xx — 게시글 없음)")
-        void test_comment_write_권한_있음() {
+        void test_성공_자랑글_댓글_작성_권한_보유() {
 
             // given — comment:write 권한을 가진 사용자 생성
             savedUser = createUserWithPermissions(
@@ -171,7 +171,7 @@ class PermissionControllerTest extends IntegrationTestBase {
 
         @Test
         @DisplayName("실패: comment:write 권한이 없으면 403 Forbidden을 반환한다")
-        void test_comment_write_권한_없음() {
+        void test_실패_자랑글_댓글_작성_권한_없음() {
 
             // given — comment:write 권한 없이 post:read만 가진 사용자
             savedUser = createUserWithPermissions(
@@ -205,7 +205,7 @@ class PermissionControllerTest extends IntegrationTestBase {
 
         @Test
         @DisplayName("실패: 인증 없이 댓글 작성하면 4xx를 반환한다 (401 또는 403)")
-        void test_비인증_댓글_작성_불가() {
+        void test_실패_자랑글_댓글_작성_인증_없음() {
             // given — 헤더 없음 (비인증 요청)
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -244,7 +244,7 @@ class PermissionControllerTest extends IntegrationTestBase {
 
         @Test
         @DisplayName("성공: comment:write 권한이 있으면 403이 반환되지 않는다")
-        void test_실종글_comment_write_권한_있음() {
+        void test_성공_실종글_댓글_작성_권한_보유() {
             // given
             savedUser = createUserWithPermissions(
                     "lostperm01", "lostperm01@test.com",
@@ -272,7 +272,7 @@ class PermissionControllerTest extends IntegrationTestBase {
 
         @Test
         @DisplayName("실패: comment:write 권한이 없으면 403 Forbidden을 반환한다")
-        void test_실종글_comment_write_권한_없음() {
+        void test_실패_실종글_댓글_작성_권한_없음() {
             // given
             savedUser = createUserWithPermissions(
                     "lostnoperm01", "lostnoperm01@test.com",
@@ -319,7 +319,7 @@ class PermissionControllerTest extends IntegrationTestBase {
 
         @Test
         @DisplayName("성공: comment:write 권한이 있으면 댓글 수정 요청이 403 없이 처리된다")
-        void test_댓글_수정_권한_있음() {
+        void test_성공_댓글_수정_권한_보유() {
             // given
             savedUser = createUserWithPermissions(
                     "updateperm01", "updateperm01@test.com",
@@ -347,7 +347,7 @@ class PermissionControllerTest extends IntegrationTestBase {
 
         @Test
         @DisplayName("실패: comment:write 권한이 없으면 댓글 수정 시 403 Forbidden을 반환한다")
-        void test_댓글_수정_권한_없음() {
+        void test_실패_댓글_수정_권한_없음() {
             // given
             savedUser = createUserWithPermissions(
                     "updatenoperm01", "updatenoperm01@test.com",
@@ -400,7 +400,7 @@ class PermissionControllerTest extends IntegrationTestBase {
 
         @Test
         @DisplayName("관리자: comment:write + post:write 권한 모두 보유 → 각 엔드포인트에서 403 반환 안 됨")
-        void test_관리자_모든_권한_보유() {
+        void test_성공_관리자_댓글_작성_전체_권한_보유() {
             // given — ROLE_ADMIN: 모든 권한 보유
             // DataInitializer와 동일한 권한 구성
             List<String> adminPerms = List.of(
@@ -432,7 +432,7 @@ class PermissionControllerTest extends IntegrationTestBase {
 
         @Test
         @DisplayName("일반 사용자: comment:write 없이 요청 → 403 Forbidden")
-        void test_일반_사용자_comment_write_없음() {
+        void test_실패_일반_사용자_댓글_작성_권한_없음() {
             // given — ROLE_USER: post:read만 보유 (DataInitializer 기본값이 아닌 최소 권한 테스트)
             normalUser = createUserWithPermissions(
                     "normaluser01", "normaluser01@test.com",
