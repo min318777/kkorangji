@@ -15,7 +15,6 @@ import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.common.PostType;
 import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.comment.repository.CommentRepository;
-import com.min.meow.common.SecurityUtil;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -252,7 +251,7 @@ public class LostCatPostService {
      */
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
-    public void deleteLostCatPost(Long lostCatPostId, Long userId) {
+    public void deleteLostCatPost(Long lostCatPostId, Long userId, boolean hasDeleteAuthority) {
         countCacheService.evict();
         User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
@@ -260,8 +259,7 @@ public class LostCatPostService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
         // 본인이 아니고 관리자 권한(post:delete)도 없으면 → 403
-        if (!lostCatPost.isAuthor(writer)
-                && !SecurityUtil.hasAuthority("post:delete")) {
+        if (!lostCatPost.isAuthor(writer) && !hasDeleteAuthority) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
 

@@ -4,6 +4,7 @@ package com.min.meow.post.controller;
 import com.min.meow.common.PrincipalUser;
 import com.min.meow.common.PageResponse;
 import com.min.meow.common.ApiResponse;
+import com.min.meow.common.SecurityUtil;
 import com.min.meow.post.dto.request.CreateLostCatPostRequest;
 import com.min.meow.post.dto.request.UpdateLostCatPostRequest;
 import com.min.meow.post.dto.response.CreateLostCatPostResponse;
@@ -108,7 +109,8 @@ public class LostCatPostController {
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
         Long userId = user.getUserId();
-        lostCatPostService.deleteLostCatPost(lostCatPostId, userId);
+        boolean hasDeleteAuthority = SecurityUtil.hasAuthority("post:delete");
+        lostCatPostService.deleteLostCatPost(lostCatPostId, userId, hasDeleteAuthority);
         return ResponseEntity.noContent().build();
     }
 
