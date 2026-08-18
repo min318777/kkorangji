@@ -21,11 +21,8 @@ class MyPageControllerTest extends IntegrationTestBase {
     @Autowired
     private CommentRepository commentRepository;
 
-    // =========================================================================
-    // GET /api/users/mypage — 마이페이지 요약 조회
-    // =========================================================================
     @Nested
-    @DisplayName("GET /api/users/mypage — 마이페이지 요약 조회")
+    @DisplayName("GET /api/users/me — 마이페이지 요약 조회")
     class GetMyPageSummary {
 
         private User savedUser;
@@ -49,7 +46,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when — 실제 HTTP GET 요청
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
                     Map.class
@@ -79,7 +76,7 @@ class MyPageControllerTest extends IntegrationTestBase {
             // SecurityConfig에 authenticationEntryPoint 미설정 → 기본 403 응답
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.GET,
                     HttpEntity.EMPTY,
                     Map.class
@@ -98,7 +95,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
                     Map.class
@@ -116,11 +113,8 @@ class MyPageControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // PATCH /api/users/mypage — 프로필 수정
-    // =========================================================================
     @Nested
-    @DisplayName("PATCH /api/users/mypage — 프로필 수정")
+    @DisplayName("PATCH /api/users/me — 프로필 수정")
     class UpdateProfile {
 
         private User savedUser;
@@ -145,7 +139,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.PATCH,
                     new HttpEntity<>(requestBody, headers),
                     Map.class
@@ -171,7 +165,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.PATCH,
                     new HttpEntity<>(requestBody, headers),
                     Map.class
@@ -195,7 +189,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.PATCH,
                     new HttpEntity<>(requestBody, headers),
                     Map.class
@@ -219,7 +213,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.PATCH,
                     new HttpEntity<>(requestBody, headers),
                     Map.class
@@ -230,11 +224,8 @@ class MyPageControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // GET /api/users/mypage/posts — 내가 쓴 글 목록 조회
-    // =========================================================================
     @Nested
-    @DisplayName("GET /api/users/mypage/posts — 내가 쓴 글 목록 조회")
+    @DisplayName("GET /api/users/me/posts — 내가 쓴 글 목록 조회")
     class GetMyPosts {
 
         private User savedUser;
@@ -255,7 +246,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage/posts?page=0&size=10&type=ALL",
+                    "/api/users/me/posts?page=0&size=10&type=ALL",
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
                     Map.class
@@ -276,11 +267,8 @@ class MyPageControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // GET /api/users/mypage/comments — 내가 쓴 댓글 목록 조회
-    // =========================================================================
     @Nested
-    @DisplayName("GET /api/users/mypage/comments — 내가 쓴 댓글 목록 조회")
+    @DisplayName("GET /api/users/me/comments — 내가 쓴 댓글 목록 조회")
     class GetMyComments {
 
         private User savedUser;
@@ -301,7 +289,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage/comments?page=0&size=10",
+                    "/api/users/me/comments?page=0&size=10",
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
                     Map.class
@@ -315,9 +303,6 @@ class MyPageControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // 인증 토큰 불일치 — DB에 없는 loginId
-    // =========================================================================
     @Nested
     @DisplayName("인증 토큰 불일치 — DB에 없는 loginId")
     class TokenMismatch {
@@ -332,7 +317,7 @@ class MyPageControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/users/mypage",
+                    "/api/users/me",
                     HttpMethod.GET,
                     new HttpEntity<>(headers),
                     Map.class

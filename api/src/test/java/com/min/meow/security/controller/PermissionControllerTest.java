@@ -30,21 +30,16 @@ class PermissionControllerTest extends IntegrationTestBase {
     @Autowired
     private UserRoleRepository userRoleRepository;
 
-    // =========================================================================
-    // 테스트용 픽스처 생성 헬퍼
-    // FastAPI의 @pytest.fixture에 해당
-    // =========================================================================
-
     /**
      * 권한이 있는 사용자를 위한 JWT 헤더를 생성한다.
      *
      * FastAPI의 admin_client fixture와 동일한 역할.
      * JWT Claim에 permissions 목록을 포함시켜
-     * @PreAuthorize("hasAuthority('comment:write')") 통과를 보장한다.
+     * @PreAuthorize("hasAuthority('comment:create')") 통과를 보장한다.
      *
      * @param userId    사용자 PK
      * @param role      역할 (예: "ROLE_USER", "ROLE_ADMIN")
-     * @param perms     권한 코드 목록 (예: ["comment:write", "post:write"])
+     * @param perms     권한 코드 목록 (예: ["comment:create", "post:update"])
      * @return Authorization: Bearer {token} + X-Auth-Version: v2 헤더
      */
     private HttpHeaders createAuthHeaderWithPermissions(Long userId, String role, List<String> perms) {
@@ -111,12 +106,8 @@ class PermissionControllerTest extends IntegrationTestBase {
         return user;
     }
 
-    // =========================================================================
-    // POST /api/meow/boast-cat/comments/{id} — @PreAuthorize("hasAuthority('comment:write')")
-    // FastAPI: class TestPermission
-    // =========================================================================
     @Nested
-    @DisplayName("POST /api/meow/boast-cat/comments/{id} — comment:write 권한 체크")
+    @DisplayName("POST /api/meow/boast-cat/{postId}/comments — comment:create 권한 체크")
     class BoastCatCommentPermission {
 
         private User savedUser;
@@ -132,21 +123,21 @@ class PermissionControllerTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("성공: comment:write 권한이 있으면 댓글 작성 요청이 처리된다 (201 또는 4xx — 게시글 없음)")
-        void test_comment_write_권한_있음() {
+        @DisplayName("성공: comment:create 권한이 있으면 댓글 작성 요청이 처리된다 (201 또는 4xx — 게시글 없음)")
+        void test_성공_자랑글_댓글_작성_권한_보유() {
 
-            // given — comment:write 권한을 가진 사용자 생성
+            // given — comment:create 권한을 가진 사용자 생성
             savedUser = createUserWithPermissions(
                     "permuser01", "permuser01@test.com",
-                    "ROLE_USER", List.of("comment:write", "post:read")
+                    "ROLE_USER", List.of("comment:create", "post:read")
             );
 
-            // given — JWT에 comment:write 권한 포함
-            // 핵심: @PreAuthorize("hasAuthority('comment:write')") 통과를 위해
-            //       JWT claims의 permissions 필드에 "comment:write"를 반드시 포함해야 함
+            // given — JWT에 comment:create 권한 포함
+            // 핵심: @PreAuthorize("hasAuthority('comment:create')") 통과를 위해
+            //       JWT claims의 permissions 필드에 "comment:create"를 반드시 포함해야 함
             HttpHeaders headers = createAuthHeaderWithPermissions(
                     savedUser.getId(), "ROLE_USER",
-                    List.of("comment:write", "post:read")
+                    List.of("comment:create", "post:read")
             );
             headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -154,7 +145,7 @@ class PermissionControllerTest extends IntegrationTestBase {
 
             // when — 존재하지 않는 boastCatPostId=999999로 요청
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/meow/boast-cat/comments/999999",
+                    "/api/meow/boast-cat/999999/comments",
                     HttpMethod.POST,
                     new HttpEntity<>(requestBody, headers),
                     Map.class
@@ -170,22 +161,22 @@ class PermissionControllerTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("실패: comment:write 권한이 없으면 403 Forbidden을 반환한다")
-        void test_comment_write_권한_없음() {
+        @DisplayName("실패: comment:create 권한이 없으면 403 Forbidden을 반환한다")
+        void test_실패_자랑글_댓글_작성_권한_없음() {
 
-            // given — comment:write 권한 없이 post:read만 가진 사용자
+            // given — comment:create 권한 없이 post:read만 가진 사용자
             savedUser = createUserWithPermissions(
                     "nopermuser01", "nopermuser01@test.com",
                     "ROLE_USER", List.of("post:read")
             );
 
-            // given — JWT에 comment:write 미포함
-            // 핵심: permissions에 "comment:write"가 없으면
+            // given — JWT에 comment:create 미포함
+            // 핵심: permissions에 "comment:create"가 없으면
             //       CustomUserDetails.getAuthorities()에 해당 권한이 없고
-            //       @PreAuthorize("hasAuthority('comment:write')")에서 거부됨
+            //       @PreAuthorize("hasAuthority('comment:create')")에서 거부됨
             HttpHeaders headers = createAuthHeaderWithPermissions(
                     savedUser.getId(), "ROLE_USER",
-                    List.of("post:read")   // comment:write 없음
+                    List.of("post:read")   // comment:create 없음
             );
             headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -193,7 +184,7 @@ class PermissionControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/meow/boast-cat/comments/999999",
+                    "/api/meow/boast-cat/999999/comments",
                     HttpMethod.POST,
                     new HttpEntity<>(requestBody, headers),
                     Map.class
@@ -205,18 +196,18 @@ class PermissionControllerTest extends IntegrationTestBase {
 
         @Test
         @DisplayName("실패: 인증 없이 댓글 작성하면 4xx를 반환한다 (401 또는 403)")
-        void test_비인증_댓글_작성_불가() {
+        void test_실패_자랑글_댓글_작성_인증_없음() {
             // given — 헤더 없음 (비인증 요청)
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String, String> requestBody = Map.of("content", "비인증 댓글");
 
-            // when
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/meow/boast-cat/comments/999999",
+            // when — 비인증 403은 Spring Security 기본 처리로 본문이 비어있을 수 있어 String으로 수신
+            ResponseEntity<String> response = restTemplate.exchange(
+                    "/api/meow/boast-cat/999999/comments",
                     HttpMethod.POST,
                     new HttpEntity<>(requestBody, headers),
-                    Map.class
+                    String.class
             );
 
             // then — 4xx (인증 없는 접근 → Spring Security 기본 거부)
@@ -224,11 +215,8 @@ class PermissionControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // POST /api/meow/lost-cat/comments/{id} — @PreAuthorize("hasAuthority('comment:write')")
-    // =========================================================================
     @Nested
-    @DisplayName("POST /api/meow/lost-cat/comments/{id} — comment:write 권한 체크")
+    @DisplayName("POST /api/meow/lost-cat/{postId}/comments — comment:create 권한 체크")
     class LostCatCommentPermission {
 
         private User savedUser;
@@ -243,24 +231,24 @@ class PermissionControllerTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("성공: comment:write 권한이 있으면 403이 반환되지 않는다")
-        void test_실종글_comment_write_권한_있음() {
+        @DisplayName("성공: comment:create 권한이 있으면 403이 반환되지 않는다")
+        void test_성공_실종글_댓글_작성_권한_보유() {
             // given
             savedUser = createUserWithPermissions(
                     "lostperm01", "lostperm01@test.com",
-                    "ROLE_USER", List.of("comment:write")
+                    "ROLE_USER", List.of("comment:create")
             );
 
             HttpHeaders headers = createAuthHeaderWithPermissions(
                     savedUser.getId(), "ROLE_USER",
-                    List.of("comment:write")
+                    List.of("comment:create")
             );
             headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String, String> requestBody = Map.of("content", "실종글 댓글");
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/meow/lost-cat/comments/999999",
+                    "/api/meow/lost-cat/999999/comments",
                     HttpMethod.POST,
                     new HttpEntity<>(requestBody, headers),
                     Map.class
@@ -271,8 +259,8 @@ class PermissionControllerTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("실패: comment:write 권한이 없으면 403 Forbidden을 반환한다")
-        void test_실종글_comment_write_권한_없음() {
+        @DisplayName("실패: comment:create 권한이 없으면 403 Forbidden을 반환한다")
+        void test_실패_실종글_댓글_작성_권한_없음() {
             // given
             savedUser = createUserWithPermissions(
                     "lostnoperm01", "lostnoperm01@test.com",
@@ -281,14 +269,14 @@ class PermissionControllerTest extends IntegrationTestBase {
 
             HttpHeaders headers = createAuthHeaderWithPermissions(
                     savedUser.getId(), "ROLE_USER",
-                    List.of("post:read")   // comment:write 없음
+                    List.of("post:read")   // comment:create 없음
             );
             headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String, String> requestBody = Map.of("content", "권한 없는 댓글");
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/meow/lost-cat/comments/999999",
+                    "/api/meow/lost-cat/999999/comments",
                     HttpMethod.POST,
                     new HttpEntity<>(requestBody, headers),
                     Map.class
@@ -299,11 +287,8 @@ class PermissionControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // PUT /api/meow/comments/{id} — @PreAuthorize("hasAuthority('comment:write')")
-    // =========================================================================
     @Nested
-    @DisplayName("PUT /api/meow/comments/{id} — comment:write 권한 체크 (댓글 수정)")
+    @DisplayName("PUT /api/meow/comments/{id} — comment:update 권한 체크 (댓글 수정)")
     class UpdateCommentPermission {
 
         private User savedUser;
@@ -318,17 +303,17 @@ class PermissionControllerTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("성공: comment:write 권한이 있으면 댓글 수정 요청이 403 없이 처리된다")
-        void test_댓글_수정_권한_있음() {
+        @DisplayName("성공: comment:update 권한이 있으면 댓글 수정 요청이 403 없이 처리된다")
+        void test_성공_댓글_수정_권한_보유() {
             // given
             savedUser = createUserWithPermissions(
                     "updateperm01", "updateperm01@test.com",
-                    "ROLE_USER", List.of("comment:write")
+                    "ROLE_USER", List.of("comment:update")
             );
 
             HttpHeaders headers = createAuthHeaderWithPermissions(
                     savedUser.getId(), "ROLE_USER",
-                    List.of("comment:write")
+                    List.of("comment:update")
             );
             headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String, String> requestBody = Map.of("content", "수정된 댓글");
@@ -346,8 +331,8 @@ class PermissionControllerTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("실패: comment:write 권한이 없으면 댓글 수정 시 403 Forbidden을 반환한다")
-        void test_댓글_수정_권한_없음() {
+        @DisplayName("실패: comment:update 권한이 없으면 댓글 수정 시 403 Forbidden을 반환한다")
+        void test_실패_댓글_수정_권한_없음() {
             // given
             savedUser = createUserWithPermissions(
                     "updatenoperm01", "updatenoperm01@test.com",
@@ -356,7 +341,7 @@ class PermissionControllerTest extends IntegrationTestBase {
 
             HttpHeaders headers = createAuthHeaderWithPermissions(
                     savedUser.getId(), "ROLE_USER",
-                    List.of("post:read")   // comment:write 없음
+                    List.of("post:read")   // comment:update 없음
             );
             headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String, String> requestBody = Map.of("content", "수정 시도");
@@ -374,10 +359,6 @@ class PermissionControllerTest extends IntegrationTestBase {
         }
     }
 
-    // =========================================================================
-    // ROLE_ADMIN vs ROLE_USER 역할 비교
-    // 관리자는 모든 권한을, 일반 사용자는 일부 권한만 가진다
-    // =========================================================================
     @Nested
     @DisplayName("ROLE_ADMIN vs ROLE_USER — 역할별 권한 차이")
     class AdminVsUserPermission {
@@ -399,13 +380,13 @@ class PermissionControllerTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("관리자: comment:write + post:write 권한 모두 보유 → 각 엔드포인트에서 403 반환 안 됨")
-        void test_관리자_모든_권한_보유() {
+        @DisplayName("관리자: comment:create + post:update 권한 모두 보유 → 각 엔드포인트에서 403 반환 안 됨")
+        void test_성공_관리자_댓글_작성_전체_권한_보유() {
             // given — ROLE_ADMIN: 모든 권한 보유
-            // DataInitializer와 동일한 권한 구성
+            // security.md에 명시된 실제 권한 코드 구성
             List<String> adminPerms = List.of(
-                    "post:read", "post:write", "post:delete",
-                    "comment:write", "comment:delete", "user:manage"
+                    "post:read", "post:create", "post:update", "post:delete",
+                    "comment:create", "comment:update", "comment:delete", "user:delete"
             );
             adminUser = createUserWithPermissions(
                     "adminuser01", "adminuser01@test.com",
@@ -418,25 +399,25 @@ class PermissionControllerTest extends IntegrationTestBase {
             headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String, String> requestBody = Map.of("content", "관리자 댓글");
 
-            // when — comment:write 필요 엔드포인트
+            // when — comment:create 필요 엔드포인트
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/meow/boast-cat/comments/999999",
+                    "/api/meow/boast-cat/999999/comments",
                     HttpMethod.POST,
                     new HttpEntity<>(requestBody, headers),
                     Map.class
             );
 
-            // then — @PreAuthorize("hasAuthority('comment:write')") 통과 (403 아님)
+            // then — @PreAuthorize("hasAuthority('comment:create')") 통과 (403 아님)
             assertThat(response.getStatusCode()).isNotEqualTo(HttpStatus.FORBIDDEN);
         }
 
         @Test
-        @DisplayName("일반 사용자: comment:write 없이 요청 → 403 Forbidden")
-        void test_일반_사용자_comment_write_없음() {
+        @DisplayName("일반 사용자: comment:create 없이 요청 → 403 Forbidden")
+        void test_실패_일반_사용자_댓글_작성_권한_없음() {
             // given — ROLE_USER: post:read만 보유 (DataInitializer 기본값이 아닌 최소 권한 테스트)
             normalUser = createUserWithPermissions(
                     "normaluser01", "normaluser01@test.com",
-                    "ROLE_USER_MIN", List.of("post:read")   // comment:write 없음
+                    "ROLE_USER_MIN", List.of("post:read")   // comment:create 없음
             );
 
             HttpHeaders headers = createAuthHeaderWithPermissions(
@@ -448,7 +429,7 @@ class PermissionControllerTest extends IntegrationTestBase {
 
             // when
             ResponseEntity<Map> response = restTemplate.exchange(
-                    "/api/meow/boast-cat/comments/999999",
+                    "/api/meow/boast-cat/999999/comments",
                     HttpMethod.POST,
                     new HttpEntity<>(requestBody, headers),
                     Map.class
