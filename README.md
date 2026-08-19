@@ -18,7 +18,7 @@
 | Framework | Spring Boot 3.4.5 |
 | Database | MySQL + JPA/Hibernate + QueryDSL |
 | Cache | Redis |
-| 인증 | OAuth2 (Google) + JWT |
+| 인증 | OAuth2 (Kakao) + JWT |
 | 파일 스토리지 | AWS S3 (Presigned URL) |
 | 실시간 알림 | SSE (Server-Sent Events) |
 | 비동기 처리 | Spring ApplicationEvent + @Async |
@@ -124,13 +124,13 @@ SSE 연결이 끊긴 동안 발생한 알림은 클라이언트에 전달되지 
 
 ### 사전 요구사항
 - Docker & Docker Compose
-- Google OAuth2 클라이언트 ID/Secret
+- Kakao OAuth2 클라이언트 ID/Secret
 - AWS S3 버킷 및 액세스 키
 
 ### 1. 레포지토리 클론
 ```bash
-git clone https://github.com/min318777/meow.git
-cd meow
+git clone https://github.com/min318777/kkorangji.git
+cd kkorangji
 ```
 
 ### 2. 환경변수 파일 생성
@@ -138,8 +138,9 @@ cd meow
 
 ```
 JWT_SECRET=
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
+KAKAO_CLIENT_ID=
+KAKAO_CLIENT_SECRET=
+KAKAO_ADMIN_KEY=
 AWS_S3_BUCKET=
 AWS_S3_BASE_URL=
 AWS_CLOUDFRONT_DOMAIN=
