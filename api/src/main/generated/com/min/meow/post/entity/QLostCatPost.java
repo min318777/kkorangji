@@ -54,7 +54,7 @@ public class QLostCatPost extends EntityPathBase<LostCatPost> {
 
     public final NumberPath<Double> latitude = createNumber("latitude", Double.class);
 
-    public final NumberPath<Point> location = createNumber("location", Point.class);
+    public final ComparablePath<org.locationtech.jts.geom.Point> location = createComparable("location", org.locationtech.jts.geom.Point.class);
 
     public final NumberPath<Double> longitude = createNumber("longitude", Double.class);
 
