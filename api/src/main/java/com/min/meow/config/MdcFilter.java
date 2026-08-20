@@ -54,11 +54,9 @@ public class MdcFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } finally {
             long duration = System.currentTimeMillis() - start;
-            if (response.getStatus() >= 500) {
-                log.error("5xx {} {} {} {}ms", request.getMethod(), request.getRequestURI(), response.getStatus(), duration);
-            } else {
-                log.info("{} {} {} {}ms", request.getMethod(), request.getRequestURI(), response.getStatus(), duration);
-            }
+            // 5xx 원인은 GlobalExceptionHandler가 스택트레이스와 함께 error로 남기고 Sentry로 전송함.
+            // 여기서 또 error를 찍으면 같은 요청에 대해 Sentry 이벤트가 중복 생성되므로 접근 로그 수준(info)으로만 남긴다.
+            log.info("{} {} {} {}ms", request.getMethod(), request.getRequestURI(), response.getStatus(), duration);
             MDC.clear();
         }
     }

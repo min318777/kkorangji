@@ -13,6 +13,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
@@ -37,6 +39,8 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
     private final DauService dauService;
     private final ObjectMapper objectMapper;
 
+    private static final String LOGIN_ID_ATTRIBUTE = "attemptedLoginId";
+
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         try {
@@ -44,11 +48,15 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
             String loginId = loginRequest.getLoginId();
             String password = loginRequest.getPassword();
+            // unsuccessfulAuthentication은 요청 바디를 다시 읽을 수 없으므로 실패 로그에 쓸 loginId를 attribute로 전달
+            request.setAttribute(LOGIN_ID_ATTRIBUTE, loginId);
 
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(loginId, password);
             return authenticationManager.authenticate(authToken);
 
         } catch (IOException e) {
+            // Spring Security 필터 체인은 DispatcherServlet 이전 단계라 GlobalExceptionHandler를 거치지 않음 — 여기서 남기지 않으면 기록이 남지 않음
+            log.error("로그인 요청 본문 파싱 실패", e);
             throw new RuntimeException(e);
         }
     }
@@ -110,6 +118,9 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         String message = (failed.getCause() instanceof DisabledException || failed instanceof DisabledException)
                 ? "탈퇴한 사용자입니다."
                 : "아이디 또는 비밀번호가 일치하지 않습니다.";
+
+        // 브루트포스 탐지/계정 잠금 정책 근거 자료용 — 비밀번호는 남기지 않음
+        log.warn("로그인 실패 - loginId: {}, 사유: {}", request.getAttribute(LOGIN_ID_ATTRIBUTE), failed.getClass().getSimpleName());
 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
