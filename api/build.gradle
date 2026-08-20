@@ -102,6 +102,9 @@ dependencies {
     testImplementation 'com.h2database:h2:2.3.230'
     // Flyway: DB 스키마 마이그레이션 관리 (MySQL 전용 파서 지원 포함)
     implementation 'org.flywaydb:flyway-mysql'
+
+    // Sentry: 에러 트래킹 (prod에서만 활성화, application-prod.yml 참고)
+    implementation 'io.sentry:sentry-spring-boot-starter-jakarta:8.16.0'
 }
 
 tasks.named('test') {
