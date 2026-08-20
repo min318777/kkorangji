@@ -17,6 +17,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    volumes:
+      - api_logs_prod:/app/logs
     logging:
       driver: "json-file"
       options:
@@ -95,3 +97,4 @@ volumes:
   redis_data_prod:
   prometheus_data_prod:
   grafana_data_prod:
+  api_logs_prod:
