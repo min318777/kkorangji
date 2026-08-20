@@ -121,6 +121,14 @@ cloud:
       access-key: ${AWS_ACCESS_KEY_ID:}
       secret-key: ${AWS_SECRET_ACCESS_KEY:}
 
+sentry:
+  dsn: ${SENTRY_DSN:}
+  enabled: false            # 기본값 off — prod에서만 override (application-prod.yml)
+  environment: ${spring.profiles.active}
+  logging:
+    minimum-event-level: error   # ERROR 로그만 이벤트로 전송 (WARN 이하는 breadcrumb)
+  traces-sample-rate: 0     # APM 트레이싱은 사용 안 함 (에러 트래킹만 필요)
+
 logging:
   level:
     root: INFO
