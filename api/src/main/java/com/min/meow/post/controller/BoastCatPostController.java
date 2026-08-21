@@ -98,8 +98,8 @@ public class BoastCatPostController {
     }
 
     @Operation(summary = "자랑글 삭제",
-            description = "자랑글을 삭제합니다. 본인 게시글만 삭제 가능합니다. 인증 필요.")
-    @PreAuthorize("isAuthenticated()")
+            description = "자랑글을 삭제합니다. 본인 게시글만 삭제 가능합니다(관리자는 타인 게시글도 삭제 가능). 인증 필요.")
+    @PreAuthorize("hasAuthority('post:delete')")
     @DeleteMapping("/{boastCatPostId}")
     public ResponseEntity<Void> deleteBoastCatPost(
             @Parameter(description = "자랑글 ID", example = "1")
@@ -107,7 +107,7 @@ public class BoastCatPostController {
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
         Long userId = user.getUserId();
-        boolean hasDeleteAuthority = SecurityUtil.hasAuthority("post:delete");
+        boolean hasDeleteAuthority = SecurityUtil.hasAuthority("post:delete:any");
         boastCatPostService.deleteBoastCatPost(boastCatPostId, userId, hasDeleteAuthority);
         return ResponseEntity.noContent().build();
     }

@@ -82,15 +82,15 @@ public class CommentController {
     }
 
     @Operation(summary = "댓글 삭제",
-            description = "댓글을 삭제합니다. 게시글 타입에 관계없이 댓글 ID로 삭제합니다. 인증 필요.")
-    @PreAuthorize("isAuthenticated()")
+            description = "댓글을 삭제합니다. 게시글 타입에 관계없이 댓글 ID로 삭제합니다. 본인 댓글만 삭제 가능합니다(관리자는 타인 댓글도 삭제 가능). 인증 필요.")
+    @PreAuthorize("hasAuthority('comment:delete')")
     @DeleteMapping("/api/meow/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(
             @Parameter(description = "댓글 ID", example = "1")
             @PathVariable Long commentId,
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
-        boolean hasDeleteAuthority = SecurityUtil.hasAuthority("comment:delete");
+        boolean hasDeleteAuthority = SecurityUtil.hasAuthority("comment:delete:any");
         commentService.deleteComment(commentId, user.getUserId(), hasDeleteAuthority);
         return ResponseEntity.noContent().build();
     }

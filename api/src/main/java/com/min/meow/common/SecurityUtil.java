@@ -7,8 +7,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * SecurityContext 기반 권한 확인 유틸리티
  * 서비스 레이어에서 DI 없이 현재 사용자의 권한을 체크할 수 있다.
  * 사용 예시:
- * - SecurityUtil.hasAuthority("post:delete") → 관리자의 타인 게시글 삭제 허용
- * - SecurityUtil.hasAuthority("comment:delete") → 관리자의 타인 댓글 삭제 허용
+ * - SecurityUtil.hasAuthority("post:delete:any") → 관리자의 타인 게시글 삭제 허용
+ * - SecurityUtil.hasAuthority("comment:delete:any") → 관리자의 타인 댓글 삭제 허용
  */
 public class SecurityUtil {
 

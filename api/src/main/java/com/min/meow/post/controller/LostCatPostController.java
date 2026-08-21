@@ -97,8 +97,8 @@ public class LostCatPostController {
     }
 
     @Operation(summary = "실종글 삭제",
-            description = "실종글을 삭제합니다. 본인 게시글만 삭제 가능합니다. 인증 필요.")
-    @PreAuthorize("isAuthenticated()")
+            description = "실종글을 삭제합니다. 본인 게시글만 삭제 가능합니다(관리자는 타인 게시글도 삭제 가능). 인증 필요.")
+    @PreAuthorize("hasAuthority('post:delete')")
     @DeleteMapping("/{lostCatPostId}")
     public ResponseEntity<Void> deleteLostCatPost(
             @Parameter(description = "실종글 ID", example = "1")
@@ -106,7 +106,7 @@ public class LostCatPostController {
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user){
 
         Long userId = user.getUserId();
-        boolean hasDeleteAuthority = SecurityUtil.hasAuthority("post:delete");
+        boolean hasDeleteAuthority = SecurityUtil.hasAuthority("post:delete:any");
         lostCatPostService.deleteLostCatPost(lostCatPostId, userId, hasDeleteAuthority);
         return ResponseEntity.noContent().build();
     }

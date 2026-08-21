@@ -44,16 +44,18 @@ public class DataInitializer implements ApplicationRunner {
     private void initializeFromScratch() {
         log.info("RBAC 초기 데이터 생성 시작");
 
-        // ── Permission 생성 (10개) ──────────────────────────────────────
+        // ── Permission 생성 (12개) ──────────────────────────────────────
         // 게시글
         Permission postRead   = permissionRepository.save(new Permission("post:read",   "게시글 조회"));
         Permission postCreate = permissionRepository.save(new Permission("post:create", "게시글 작성"));
         Permission postUpdate = permissionRepository.save(new Permission("post:update", "게시글 수정"));
-        Permission postDelete = permissionRepository.save(new Permission("post:delete", "게시글 삭제 (타인 포함)"));
+        Permission postDelete = permissionRepository.save(new Permission("post:delete", "게시글 삭제 (본인만)"));
+        Permission postDeleteAny = permissionRepository.save(new Permission("post:delete:any", "게시글 삭제 (타인 포함, 관리자용)"));
         // 댓글
         Permission commentCreate = permissionRepository.save(new Permission("comment:create", "댓글 작성"));
         Permission commentUpdate = permissionRepository.save(new Permission("comment:update", "댓글 수정"));
-        Permission commentDelete = permissionRepository.save(new Permission("comment:delete", "댓글 삭제 (타인 포함)"));
+        Permission commentDelete = permissionRepository.save(new Permission("comment:delete", "댓글 삭제 (본인만)"));
+        Permission commentDeleteAny = permissionRepository.save(new Permission("comment:delete:any", "댓글 삭제 (타인 포함, 관리자용)"));
         // 유저 관리 (세분화)
         Permission userRead     = permissionRepository.save(new Permission("user:read",     "유저 목록/통계 조회"));
         Permission userRestrict = permissionRepository.save(new Permission("user:restrict", "유저 계정 제재/복원"));
@@ -65,29 +67,37 @@ public class DataInitializer implements ApplicationRunner {
         Role viewerRole   = roleRepository.save(new Role("ROLE_VIEWER",   "뷰어 (콘텐츠 작성/수정 테스트용, 타인 글 삭제 불가)"));
         Role restrictedRole = roleRepository.save(new Role("ROLE_RESTRICTED", "제한된 사용자"));
 
-        // ── ROLE_USER: 조회, 작성, 수정, 댓글 작성/수정 (삭제는 본인것만 서비스 레이어 isAuthor 체크) ──
+        // ── ROLE_USER: 조회, 작성, 수정, 삭제(본인 것만), 댓글 작성/수정/삭제(본인 것만) ──
         rolePermissionRepository.save(new RolePermission(userRole, postRead));
         rolePermissionRepository.save(new RolePermission(userRole, postCreate));
         rolePermissionRepository.save(new RolePermission(userRole, postUpdate));
+        rolePermissionRepository.save(new RolePermission(userRole, postDelete));
         rolePermissionRepository.save(new RolePermission(userRole, commentCreate));
         rolePermissionRepository.save(new RolePermission(userRole, commentUpdate));
+        rolePermissionRepository.save(new RolePermission(userRole, commentDelete));
 
-        // ── ROLE_VIEWER: 콘텐츠 작성/수정 가능, 삭제는 본인 것만(isAuthor 체크), 타인 글 삭제 불가 ──
+        // ── ROLE_VIEWER: 콘텐츠 작성/수정/삭제(본인 것만) 가능 + 타인 글도 삭제 가능(관리) ──
         rolePermissionRepository.save(new RolePermission(viewerRole, postRead));
         rolePermissionRepository.save(new RolePermission(viewerRole, postCreate));
         rolePermissionRepository.save(new RolePermission(viewerRole, postUpdate));
+        rolePermissionRepository.save(new RolePermission(viewerRole, postDelete));
+        rolePermissionRepository.save(new RolePermission(viewerRole, postDeleteAny));
         rolePermissionRepository.save(new RolePermission(viewerRole, commentCreate));
         rolePermissionRepository.save(new RolePermission(viewerRole, commentUpdate));
+        rolePermissionRepository.save(new RolePermission(viewerRole, commentDelete));
+        rolePermissionRepository.save(new RolePermission(viewerRole, commentDeleteAny));
         rolePermissionRepository.save(new RolePermission(viewerRole, userRead));
 
-        // ── ROLE_ADMIN: 모든 권한 10개 ──
+        // ── ROLE_ADMIN: 모든 권한 12개 ──
         rolePermissionRepository.save(new RolePermission(adminRole, postRead));
         rolePermissionRepository.save(new RolePermission(adminRole, postCreate));
         rolePermissionRepository.save(new RolePermission(adminRole, postUpdate));
         rolePermissionRepository.save(new RolePermission(adminRole, postDelete));
+        rolePermissionRepository.save(new RolePermission(adminRole, postDeleteAny));
         rolePermissionRepository.save(new RolePermission(adminRole, commentCreate));
         rolePermissionRepository.save(new RolePermission(adminRole, commentUpdate));
         rolePermissionRepository.save(new RolePermission(adminRole, commentDelete));
+        rolePermissionRepository.save(new RolePermission(adminRole, commentDeleteAny));
         rolePermissionRepository.save(new RolePermission(adminRole, userRead));
         rolePermissionRepository.save(new RolePermission(adminRole, userRestrict));
         rolePermissionRepository.save(new RolePermission(adminRole, userDelete));
@@ -95,7 +105,7 @@ public class DataInitializer implements ApplicationRunner {
         // ── ROLE_RESTRICTED: 조회만 가능 (제재된 사용자) ──
         rolePermissionRepository.save(new RolePermission(restrictedRole, postRead));
 
-        log.info("RBAC 초기 데이터 생성 완료 - Permission: 10개, Role: 4개");
+        log.info("RBAC 초기 데이터 생성 완료 - Permission: 12개, Role: 4개");
     }
 
     /** 기존 DB에 ROLE_RESTRICTED가 없을 때만 추가 (멱등성 보장) */
