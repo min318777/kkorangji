@@ -20,8 +20,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,12 +44,8 @@ public class CommentController {
             @PathVariable String postType,
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long postId,
-            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
-            @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기", example = "20")
-            @RequestParam(defaultValue = "20") int size) {
+            @PageableDefault(size = 20) Pageable pageable) {
 
-        Pageable pageable = PageRequest.of(page, size);
         PageResponse<GetCommentResponse> comments = commentService.getComments(postId, resolvePostType(postType), pageable);
         return ResponseEntity.ok(ApiResponse.success("댓글 조회 성공", comments));
     }
@@ -74,7 +70,7 @@ public class CommentController {
     @Operation(summary = "댓글 수정",
             description = "댓글을 수정합니다. 게시글 타입에 관계없이 댓글 ID로 수정합니다. 인증 필요.")
     @PreAuthorize("hasAuthority('comment:update')")
-    @PutMapping("/api/meow/comments/{commentId}")
+    @PatchMapping("/api/meow/comments/{commentId}")
     public ResponseEntity<ApiResponse<UpdateCommentResponse>> updateComment(
             @RequestBody @Valid UpdateCommentRequest updateCommentRequest,
             @Parameter(description = "댓글 ID", example = "1")
