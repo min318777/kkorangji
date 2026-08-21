@@ -77,9 +77,8 @@ public class LostCatPostService {
     }
 
     /**
-     * 상세조회 + 조회수 증가 통합 (v3) — Redis INCR 후 최신 상태로 상세조회 반환
-     * getLostCatPost()가 이미 DB view + Redis delta를 더해 반환하므로
-     * 방금 증가시킨 값까지 포함된 정확한 view가 응답에 실림
+     * 상세조회 + 조회수 증가 통합 (v3) — Redis INCR 후 상세조회 반환
+     * 조회수는 배치 동기화(30초 주기) 전까지 DB 값 그대로 응답에 실림
      */
     public GetLostCatPostResponse getLostCatPostV3(Long lostCatPostId, String identifier){
         viewCountService.incrementViewCount(PostType.LOST, lostCatPostId, identifier);
@@ -91,14 +90,11 @@ public class LostCatPostService {
      * findByIdWithUser()로 User를 Fetch Join하여 N+1 문제 해결
      * - User: Fetch Join (N:1 관계 → 카테시안 곱 없음)
      * - imageUrls: @BatchSize(100) 적용 (1:N 관계)
-     * 조회수 = DB view + Redis delta (v3 방식, 항상 정확한 실시간 값)
      */
 
     public GetLostCatPostResponse getLostCatPost(Long lostCatPostId){
         LostCatPost lostCatPost = lostCatRepository.findByIdWithUser(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-
-        long redisDelta = viewCountService.getViewCount(PostType.LOST, lostCatPostId);
 
         return GetLostCatPostResponse.builder()
                 .id(lostCatPost.getId())
@@ -119,7 +115,7 @@ public class LostCatPostService {
                 .latitude(lostCatPost.getLatitude())
                 .longitude(lostCatPost.getLongitude())
                 .commentCount(lostCatPost.getCommentCount())
-                .view((int)(lostCatPost.getView() + redisDelta))
+                .view(lostCatPost.getView())
                 .completed(lostCatPost.isCompleted())
                 .createdAt(lostCatPost.getCreatedAt())
                 .updatedAt(lostCatPost.getUpdatedAt())
