@@ -21,6 +21,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,7 +34,7 @@ import java.util.Map;
 @Tag(name = "실종글", description = "실종 고양이 신고 게시글 CRUD API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/meow/lost-cat")
+@RequestMapping("/api/meow/lost-cat-posts")
 public class LostCatPostController {
 
     private final LostCatPostService lostCatPostService;
@@ -44,12 +45,8 @@ public class LostCatPostController {
     @SecurityRequirements
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<LostCatPostListResponse>>> getAllLostCatPosts(
-            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
-            @RequestParam (defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기", example = "10")
-            @RequestParam (defaultValue = "10") int size) {
+            @PageableDefault(size = 10) Pageable pageable) {
 
-        Pageable pageable = PageRequest.of(page, size);
         PageResponse<LostCatPostListResponse> pageResponse = lostCatPostService.getAllLostCatPosts(pageable);
         return ResponseEntity.ok(ApiResponse.success("모든 글 조회 성공", pageResponse));
     }
@@ -88,7 +85,7 @@ public class LostCatPostController {
     @Operation(summary = "실종글 수정",
             description = "실종글을 수정합니다. 본인 게시글만 수정 가능합니다. 인증 필요.")
     @PreAuthorize("hasAuthority('post:update')")
-    @PutMapping("/{lostCatPostId}")
+    @PatchMapping("/{lostCatPostId}")
     public ResponseEntity<ApiResponse<UpdateLostCatPostResponse>> updateLostCatPost(
             @Parameter(description = "실종글 ID", example = "1")
             @PathVariable Long lostCatPostId,
@@ -193,10 +190,29 @@ public class LostCatPostController {
 
     @Operation(summary = "실종글 상세조회 + 조회수 증가 통합 (v3 Redis INCR)",
             description = "Redis INCR 방식. DB 부하를 줄이고 동시성을 완벽 보장합니다. Redis 장애 시 DB fallback. " +
-                    "방금 증가한 조회수까지 반영된 상세 게시글을 그대로 반환합니다. 인증 불필요.")
+                    "조회수는 배치 동기화(30초 주기) 전까지 DB 값 그대로 응답에 실립니다. 인증 불필요.")
     @SecurityRequirements
     @PostMapping("/v3/{lostCatPostId}/view")
     public ResponseEntity<ApiResponse<GetLostCatPostResponse>> incrementViewCountV3(
+            @Parameter(description = "실종글 ID", example = "1")
+            @PathVariable Long lostCatPostId,
+            HttpServletRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
+
+        String identifier = (user != null)
+                ? "user:" + user.getUserId()
+                : "ip:" + getClientIp(request);
+
+        GetLostCatPostResponse response = lostCatPostService.getLostCatPostV3(lostCatPostId, identifier);
+        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v3)", response));
+    }
+
+    @Operation(summary = "실종글 상세조회 + 조회수 증가 통합 (v3 Redis INCR, GET)",
+            description = "자랑글과 동일한 GET 방식의 상세조회+조회수증가 통합 API입니다. Redis INCR 후 상세조회를 반환합니다. " +
+                    "기존 POST /v3/{lostCatPostId}/view는 하위 호환을 위해 유지됩니다. 인증 불필요.")
+    @SecurityRequirements
+    @GetMapping("/view/v3/{lostCatPostId}")
+    public ResponseEntity<ApiResponse<GetLostCatPostResponse>> getLostCatPostV3(
             @Parameter(description = "실종글 ID", example = "1")
             @PathVariable Long lostCatPostId,
             HttpServletRequest request,

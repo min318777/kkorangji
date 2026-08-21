@@ -20,7 +20,7 @@ import java.util.List;
 @Tag(name = "인기글", description = "인기 게시글 목록 조회 API (Cache Stampede 방지 비교)")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/meow/boast-cat")
+@RequestMapping("/api/meow/boast-cat-posts")
 public class PopularPostController {
 
     private final PopularPostService popularPostService;

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "좋아요", description = "게시글 좋아요 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/meow/boast-cat")
+@RequestMapping("/api/meow/boast-cat-posts")
 public class PostLikeController {
 
     private final PostLikeService postLikeService;

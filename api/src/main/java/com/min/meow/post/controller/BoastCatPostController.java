@@ -17,8 +17,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,7 +30,7 @@ import jakarta.servlet.http.HttpServletRequest;
 @Tag(name = "자랑글", description = "고양이 자랑 게시글 CRUD API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/meow/boast-cat")
+@RequestMapping("/api/meow/boast-cat-posts")
 public class BoastCatPostController {
     private final BoastCatPostService boastCatPostService;
 
@@ -40,12 +40,8 @@ public class BoastCatPostController {
     @SecurityRequirements
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<BoastCatPostListResponse>>> getAllBoastCatPost(
-            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
-            @RequestParam (defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기", example = "10")
-            @RequestParam (defaultValue = "10") int size ){
+            @PageableDefault(size = 10) Pageable pageable){
 
-        Pageable pageable = PageRequest.of(page, size);
         PageResponse<BoastCatPostListResponse> posts = boastCatPostService.getAllBoastCatPosts(pageable);
         return ResponseEntity.ok(ApiResponse.success("모든 글 조회 성공", posts));
     }
@@ -89,7 +85,7 @@ public class BoastCatPostController {
     @Operation(summary = "자랑글 수정",
             description = "자랑글을 수정합니다. 본인 게시글만 수정 가능합니다. 인증 필요.")
     @PreAuthorize("hasAuthority('post:update')")
-    @PutMapping("/{boastCatPostId}")
+    @PatchMapping("/{boastCatPostId}")
     public ResponseEntity<ApiResponse<UpdateBoastCatPostResponse>> updateBoastCatPost(
             @RequestBody @Valid UpdateBoastCatPostRequest updateBoastCatPostRequest,
             @Parameter(description = "자랑글 ID", example = "1")

@@ -14,8 +14,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -62,16 +62,12 @@ public class MyPageController {
     @GetMapping("/posts")
     public ResponseEntity<ApiResponse<PageResponse<MyPostDto>>> getMyPosts(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user,
-            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
-            @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기", example = "10")
-            @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "게시글 타입 필터", example = "BOAST",
                     schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {"BOAST", "LOST"}))
-            @RequestParam PostType type) {
+            @RequestParam PostType type,
+            @PageableDefault(size = 10) Pageable pageable) {
 
         Long userId = user.getUserId();
-        Pageable pageable = PageRequest.of(page, size);
         PageResponse<MyPostDto> response = myPageService.getMyPosts(userId, pageable, type);
 
         return ResponseEntity.ok(
@@ -84,13 +80,9 @@ public class MyPageController {
     @GetMapping("/comments")
     public ResponseEntity<ApiResponse<PageResponse<MyCommentDto>>> getMyComments(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user,
-            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
-            @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기", example = "10")
-            @RequestParam(defaultValue = "10") int size) {
+            @PageableDefault(size = 10) Pageable pageable) {
 
         Long userId = user.getUserId();
-        Pageable pageable = PageRequest.of(page, size);
         PageResponse<MyCommentDto> response = myPageService.getMyComments(userId, pageable);
 
         return ResponseEntity.ok(
@@ -103,12 +95,8 @@ public class MyPageController {
     @GetMapping("/liked-posts")
     public ResponseEntity<ApiResponse<PageResponse<MyPostDto>>> getMyLikedPosts(
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user,
-            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
-            @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기", example = "10")
-            @RequestParam(defaultValue = "10") int size) {
+            @PageableDefault(size = 10) Pageable pageable) {
 
-        Pageable pageable = PageRequest.of(page, size);
         PageResponse<MyPostDto> response = myPageService.getMyLikedPosts(user.getUserId(), pageable);
         return ResponseEntity.ok(ApiResponse.success("좋아요한 글 조회 성공", response));
     }

@@ -12,8 +12,8 @@ import java.util.List;
 /**
  * 자랑글 상세 조회 응답 DTO
  * 캐싱을 위해 정적 데이터만 포함:
- * - 댓글은 별도 API로 조회: GET /api/meow/boast-cat/comments/{postId}
- * - 조회수는 별도 API로 증가: POST /api/meow/boast-cat/{postId}/view
+ * - 댓글은 별도 API로 조회: GET /api/meow/boast-cat-posts/comments/{postId}
+ * - 조회수는 별도 API로 증가: POST /api/meow/boast-cat-posts/{postId}/view
  */
 @Schema(description = "자랑글 상세 조회 응답")
 @Getter
