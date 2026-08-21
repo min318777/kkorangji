@@ -1,6 +1,7 @@
 package com.min.meow.user.controller;
 
 import com.min.meow.common.ApiResponse;
+import com.min.meow.common.PageResponse;
 import com.min.meow.common.PrincipalUser;
 import com.min.meow.user.dto.response.AdminUserResponse;
 import com.min.meow.user.service.AdminUserService;
@@ -38,12 +39,12 @@ public class AdminUserController {
             description = "역할 필터(ROLE_USER / ROLE_RESTRICTED / ROLE_ADMIN)와 페이징을 지원합니다. roleName 미입력 시 전체 조회.")
     @PreAuthorize("hasAuthority('user:read')")
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<AdminUserResponse>>> getUserList(
+    public ResponseEntity<ApiResponse<PageResponse<AdminUserResponse>>> getUserList(
             @Parameter(description = "역할 필터 (없으면 전체)") @RequestParam(required = false) String roleName,
             @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<AdminUserResponse> result = adminUserService.getUserList(roleName, pageable);
-        return ResponseEntity.ok(ApiResponse.success("유저 목록 조회 성공", result));
+        return ResponseEntity.ok(ApiResponse.success("유저 목록 조회 성공", PageResponse.from(result)));
     }
 
     @Operation(summary = "사용자 상태 변경",

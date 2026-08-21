@@ -1,6 +1,7 @@
 package com.min.meow.notification.controller;
 
 import com.min.meow.common.ApiResponse;
+import com.min.meow.common.PageResponse;
 import com.min.meow.notification.dto.request.NotificationRequest;
 import com.min.meow.notification.dto.response.NotificationResponse;
 import com.min.meow.notification.service.NotificationQueryService;
@@ -35,7 +36,7 @@ public class NotificationController {
     @Operation(summary = "알림 목록 조회",
             description = "로그인한 사용자의 알림 목록을 페이징 조회합니다. 인증 필요.")
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getAllNotifications(
+    public ResponseEntity<ApiResponse<PageResponse<NotificationResponse>>> getAllNotifications(
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기", example = "5")
@@ -46,7 +47,7 @@ public class NotificationController {
         Pageable pageable = PageRequest.of(page, size);
         Page<NotificationResponse> notifications = notificationQueryService.getAllNotifications(userId, pageable);
 
-        return ResponseEntity.ok(ApiResponse.success("알림 목록 조회 성공", notifications));
+        return ResponseEntity.ok(ApiResponse.success("알림 목록 조회 성공", PageResponse.from(notifications)));
     }
 
     @Operation(summary = "단일 알림 읽음 처리",
