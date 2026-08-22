@@ -59,7 +59,6 @@ public class BoastCatPost extends BasePost {
     public void updatePost(String title, String contents, List<String> newImageUrls) {
         this.title = title;
         this.contents = contents;
-        // 이미지는 keep/new/delete 조합으로 관리되므로 null이면 변경 없음
         if (newImageUrls != null) {
             this.imageUrls.clear();
             this.imageUrls.addAll(newImageUrls);
