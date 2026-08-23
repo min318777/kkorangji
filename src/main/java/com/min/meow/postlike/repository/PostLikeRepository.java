@@ -11,15 +11,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
 import java.util.Set;
 
 @Repository
 public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
-
-    @Query("SELECT pl FROM PostLike pl " +
-           "WHERE pl.boastCatPost.id = :boastCatPostId AND pl.user.id = :userId")
-    Optional<PostLike> findByBoastCatPostIdAndUserId(@Param("boastCatPostId") Long boastCatPostId, @Param("userId") Long userId);
 
     /**
      * 특정 게시글에 좋아요한 모든 사용자 ID 조회 (캐시 워밍용)

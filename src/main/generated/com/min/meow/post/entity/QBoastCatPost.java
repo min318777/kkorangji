@@ -40,8 +40,6 @@ public class QBoastCatPost extends EntityPathBase<BoastCatPost> {
 
     public final NumberPath<Integer> likeCount = createNumber("likeCount", Integer.class);
 
-    public final ListPath<com.min.meow.postlike.entity.PostLike, com.min.meow.postlike.entity.QPostLike> postLikeList = this.<com.min.meow.postlike.entity.PostLike, com.min.meow.postlike.entity.QPostLike>createList("postLikeList", com.min.meow.postlike.entity.PostLike.class, com.min.meow.postlike.entity.QPostLike.class, PathInits.DIRECT2);
-
     public final StringPath thumbnailUrl = createString("thumbnailUrl");
 
     //inherited
