@@ -91,3 +91,6 @@ __MACOSX/
 *.tmp
 *.swp
 *~
+
+# 개인 로컬 MCP 설정 (절대경로 포함)
+.mcp.json
