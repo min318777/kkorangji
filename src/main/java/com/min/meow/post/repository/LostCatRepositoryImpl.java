@@ -68,7 +68,7 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
         double lngDelta = radiusKm / (111.0 * Math.cos(Math.toRadians(lat)));
 
         String dataSql = """
-                SELECT l.id, l.title, u.login_id, l.cat_name, l.lost_location,
+                SELECT l.id, l.title, u.nickname, l.cat_name, l.lost_location,
                        l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url,
                        ST_Distance_Sphere(POINT(l.longitude, l.latitude), POINT(:lng, :lat)) AS distance
                 FROM lost_cat_post l
@@ -142,7 +142,7 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
         double lngDelta = radiusKm / (111.0 * Math.cos(Math.toRadians(lat)));
 
         String dataSql = """
-                SELECT l.id, l.title, u.login_id, l.cat_name, l.lost_location,
+                SELECT l.id, l.title, u.nickname, l.cat_name, l.lost_location,
                        l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url,
                        ST_Distance_Sphere(l.location, ST_SRID(POINT(:lng, :lat), 4326)) AS distance
                 FROM lost_cat_post l
@@ -253,7 +253,7 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
         String booleanKeyword = sanitizeForBooleanMode(keyword);
 
         String dataSql = """
-                SELECT l.id, l.title, u.login_id, l.cat_name, l.lost_location,
+                SELECT l.id, l.title, u.nickname, l.cat_name, l.lost_location,
                        l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url
                 FROM lost_cat_post l
                 INNER JOIN user u ON u.id = l.user_id
@@ -345,7 +345,7 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
     @Override
     public List<LostCatPostListResponse> findContentWithCoveringIndex(Pageable pageable) {
         String sql = """
-                SELECT l.id, l.title, u.login_id, l.cat_name, l.lost_location,
+                SELECT l.id, l.title, u.nickname, l.cat_name, l.lost_location,
                        l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url
                 FROM lost_cat_post l
                 INNER JOIN user u ON u.id = l.user_id
