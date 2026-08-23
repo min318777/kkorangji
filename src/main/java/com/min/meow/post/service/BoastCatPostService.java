@@ -13,6 +13,7 @@ import com.min.meow.post.dto.request.UpdateBoastCatPostRequest;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
+import com.min.meow.post.event.PostImageDeleteEventPublisher;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.comment.repository.CommentRepository;
 import com.min.meow.user.entity.User;
@@ -42,6 +43,7 @@ public class BoastCatPostService {
     private final BoastCatPostCountCacheService countCacheService;
     private final ViewCountService viewCountService;
     private final PopularRankingService popularRankingService;
+    private final PostImageDeleteEventPublisher postImageDeleteEventPublisher;
 
     // ========== 조회 ==========
 
@@ -163,7 +165,8 @@ public class BoastCatPostService {
         commentRepository.deleteAllByPostIdAndPostType(boastCatPostId, PostType.BOAST);
         boastCatPostRepository.deleteById(boastCatPostId);
         popularRankingService.removeFromRanking(boastCatPostId);
-        s3Service.deleteFiles(keys);
+        // S3 삭제는 트랜잭션 커밋 후 비동기로 처리 (외부 API 호출을 트랜잭션 밖으로 분리)
+        postImageDeleteEventPublisher.publish(keys);
     }
 
     /**
@@ -186,13 +189,12 @@ public class BoastCatPostService {
         }
 
         // 기존 이미지 중 최종 목록에 없는 것은 삭제된 것으로 간주하여 S3에서 제거
+        // S3 삭제는 트랜잭션 커밋 후 비동기로 처리 (외부 API 호출을 트랜잭션 밖으로 분리)
         List<String> keysToDelete = post.getImageUrls().stream()
                 .filter(url -> !finalImageUrls.contains(url))
                 .map(s3Service::extractKeyFromUrl)
                 .toList();
-        if (!keysToDelete.isEmpty()) {
-            s3Service.deleteFiles(keysToDelete);
-        }
+        postImageDeleteEventPublisher.publish(keysToDelete);
 
         return finalImageUrls;
     }

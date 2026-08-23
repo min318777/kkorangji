@@ -13,6 +13,7 @@ import com.min.meow.post.dto.request.ImageItemRequest;
 import com.min.meow.post.dto.request.UpdateLostCatPostRequest;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.common.PostType;
+import com.min.meow.post.event.PostImageDeleteEventPublisher;
 import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.comment.repository.CommentRepository;
 import com.min.meow.user.entity.User;
@@ -54,6 +55,7 @@ public class LostCatPostService {
     private final S3Service s3Service;
     private final ViewCountService viewCountService;
     private final LostCatPostCountCacheService countCacheService;
+    private final PostImageDeleteEventPublisher postImageDeleteEventPublisher;
 
     // ========== 조회 ==========
 
@@ -267,7 +269,8 @@ public class LostCatPostService {
         // 연관 댓글 먼저 삭제 (cascade 제거로 인한 수동 처리)
         commentRepository.deleteAllByPostIdAndPostType(lostCatPostId, PostType.LOST);
         lostCatRepository.deleteById(lostCatPostId);
-        s3Service.deleteFiles(keys);
+        // S3 삭제는 트랜잭션 커밋 후 비동기로 처리 (외부 API 호출을 트랜잭션 밖으로 분리)
+        postImageDeleteEventPublisher.publish(keys);
         log.info("게시글 삭제 완료 - userId: {}, postId: {}", userId, lostCatPostId);
     }
 
@@ -308,13 +311,12 @@ public class LostCatPostService {
         }
 
         // 기존 이미지 중 최종 목록에 없는 것은 삭제된 것으로 간주하여 S3에서 제거
+        // S3 삭제는 트랜잭션 커밋 후 비동기로 처리 (외부 API 호출을 트랜잭션 밖으로 분리)
         List<String> keysToDelete = post.getImageUrls().stream()
                 .filter(url -> !finalImageUrls.contains(url))
                 .map(s3Service::extractKeyFromUrl)
                 .toList();
-        if (!keysToDelete.isEmpty()) {
-            s3Service.deleteFiles(keysToDelete);
-        }
+        postImageDeleteEventPublisher.publish(keysToDelete);
 
         return finalImageUrls;
     }
