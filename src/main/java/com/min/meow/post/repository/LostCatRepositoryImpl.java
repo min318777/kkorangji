@@ -3,7 +3,6 @@ package com.min.meow.post.repository;
 import com.min.meow.post.dto.response.LostCatPostListResponse;
 import com.min.meow.post.dto.response.QLostCatPostListResponse;
 import com.min.meow.post.entity.QLostCatPost;
-import com.min.meow.user.entity.QUser;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -22,13 +21,15 @@ import java.util.List;
 @Repository
 public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
 
+    // ngram_token_size(2) 미만 토큰은 FULLTEXT 인덱스에 없어 매치 불가
+    private static final int MIN_TOKEN_LENGTH = 2;
+
     private final JPAQueryFactory queryFactory;
 
     @PersistenceContext
     private EntityManager entityManager;
 
     private final QLostCatPost lostCatPost = QLostCatPost.lostCatPost;
-    private final QUser user = QUser.user;
 
     @Override
     public Page<LostCatPostListResponse> findAllWithProjection(Pageable pageable) {
@@ -36,7 +37,6 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .select(new QLostCatPostListResponse(
                         lostCatPost.id,
                         lostCatPost.title,
-                        lostCatPost.user.nickname,
                         lostCatPost.catName,
                         lostCatPost.lostLocation,
                         lostCatPost.commentCount,
@@ -46,7 +46,6 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                         lostCatPost.thumbnailUrl
                 ))
                 .from(lostCatPost)
-                .leftJoin(lostCatPost.user, user)
                 .orderBy(lostCatPost.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -68,11 +67,10 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
         double lngDelta = radiusKm / (111.0 * Math.cos(Math.toRadians(lat)));
 
         String dataSql = """
-                SELECT l.id, l.title, u.nickname, l.cat_name, l.lost_location,
+                SELECT l.id, l.title, l.cat_name, l.lost_location,
                        l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url,
                        ST_Distance_Sphere(POINT(l.longitude, l.latitude), POINT(:lng, :lat)) AS distance
                 FROM lost_cat_post l
-                LEFT JOIN user u ON u.id = l.user_id
                 WHERE l.latitude IS NOT NULL AND l.longitude IS NOT NULL
                   AND l.latitude BETWEEN :latMin AND :latMax
                   AND l.longitude BETWEEN :lngMin AND :lngMax
@@ -107,16 +105,15 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .map(row -> LostCatPostListResponse.builder()
                         .id(((Number) row[0]).longValue())
                         .title((String) row[1])
-                        .writer((String) row[2])
-                        .catName((String) row[3])
-                        .lostLocation((String) row[4])
-                        .commentCount(((Number) row[5]).intValue())
-                        .view(((Number) row[6]).intValue())
-                        .completed(toBoolean(row[7]))
-                        .createdAt(row[8] instanceof java.sql.Timestamp ts
+                        .catName((String) row[2])
+                        .lostLocation((String) row[3])
+                        .commentCount(((Number) row[4]).intValue())
+                        .view(((Number) row[5]).intValue())
+                        .completed(toBoolean(row[6]))
+                        .createdAt(row[7] instanceof java.sql.Timestamp ts
                                 ? ts.toLocalDateTime()
-                                : (LocalDateTime) row[8])
-                        .thumbnailUrl((String) row[9])
+                                : (LocalDateTime) row[7])
+                        .thumbnailUrl((String) row[8])
                         .build())
                 .toList();
 
@@ -142,11 +139,10 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
         double lngDelta = radiusKm / (111.0 * Math.cos(Math.toRadians(lat)));
 
         String dataSql = """
-                SELECT l.id, l.title, u.nickname, l.cat_name, l.lost_location,
+                SELECT l.id, l.title, l.cat_name, l.lost_location,
                        l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url,
                        ST_Distance_Sphere(l.location, ST_SRID(POINT(:lng, :lat), 4326)) AS distance
                 FROM lost_cat_post l
-                INNER JOIN user u ON u.id = l.user_id
                 WHERE l.location IS NOT NULL
                   AND MBRContains(
                         ST_SRID(ST_MakeEnvelope(POINT(:lngMin, :latMin), POINT(:lngMax, :latMax)), 4326),
@@ -183,16 +179,15 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .map(row -> LostCatPostListResponse.builder()
                         .id(((Number) row[0]).longValue())
                         .title((String) row[1])
-                        .writer((String) row[2])
-                        .catName((String) row[3])
-                        .lostLocation((String) row[4])
-                        .commentCount(((Number) row[5]).intValue())
-                        .view(((Number) row[6]).intValue())
-                        .completed(toBoolean(row[7]))
-                        .createdAt(row[8] instanceof java.sql.Timestamp ts
+                        .catName((String) row[2])
+                        .lostLocation((String) row[3])
+                        .commentCount(((Number) row[4]).intValue())
+                        .view(((Number) row[5]).intValue())
+                        .completed(toBoolean(row[6]))
+                        .createdAt(row[7] instanceof java.sql.Timestamp ts
                                 ? ts.toLocalDateTime()
-                                : (LocalDateTime) row[8])
-                        .thumbnailUrl((String) row[9])
+                                : (LocalDateTime) row[7])
+                        .thumbnailUrl((String) row[8])
                         .build())
                 .toList();
 
@@ -216,7 +211,6 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .select(new QLostCatPostListResponse(
                         lostCatPost.id,
                         lostCatPost.title,
-                        lostCatPost.user.nickname,
                         lostCatPost.catName,
                         lostCatPost.lostLocation,
                         lostCatPost.commentCount,
@@ -226,7 +220,6 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                         lostCatPost.thumbnailUrl
                 ))
                 .from(lostCatPost)
-                .leftJoin(lostCatPost.user, user)
                 .where(
                         likeTitleOrContents(title, contents),
                         eqUserId(userId))
@@ -253,10 +246,9 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
         String booleanKeyword = sanitizeForBooleanMode(keyword);
 
         String dataSql = """
-                SELECT l.id, l.title, u.nickname, l.cat_name, l.lost_location,
+                SELECT l.id, l.title, l.cat_name, l.lost_location,
                        l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url
                 FROM lost_cat_post l
-                INNER JOIN user u ON u.id = l.user_id
                 WHERE MATCH(l.title, l.contents, l.cat_name, l.lost_location) AGAINST(:keyword IN BOOLEAN MODE)
                   AND (:userId IS NULL OR l.user_id = :userId)
                 ORDER BY l.created_at DESC
@@ -278,22 +270,21 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .setParameter("offset", (int) pageable.getOffset())
                 .getResultList();
 
-        // row 인덱스: id(0), title(1), writer(2), catName(3), lostLocation(4),
-        //             commentCount(5), view(6), isCompleted(7), createdAt(8), thumbnailUrl(9)
+        // row 인덱스: id(0), title(1), catName(2), lostLocation(3),
+        //             commentCount(4), view(5), isCompleted(6), createdAt(7), thumbnailUrl(8)
         List<LostCatPostListResponse> content = rows.stream()
                 .map(row -> LostCatPostListResponse.builder()
                         .id(((Number) row[0]).longValue())
                         .title((String) row[1])
-                        .writer((String) row[2])
-                        .catName((String) row[3])
-                        .lostLocation((String) row[4])
-                        .commentCount(((Number) row[5]).intValue())
-                        .view(((Number) row[6]).intValue())
-                        .completed(toBoolean(row[7]))
-                        .createdAt(row[8] instanceof java.sql.Timestamp ts
+                        .catName((String) row[2])
+                        .lostLocation((String) row[3])
+                        .commentCount(((Number) row[4]).intValue())
+                        .view(((Number) row[5]).intValue())
+                        .completed(toBoolean(row[6]))
+                        .createdAt(row[7] instanceof java.sql.Timestamp ts
                                 ? ts.toLocalDateTime()
-                                : (LocalDateTime) row[8])
-                        .thumbnailUrl((String) row[9])
+                                : (LocalDateTime) row[7])
+                        .thumbnailUrl((String) row[8])
                         .build())
                 .toList();
 
@@ -311,7 +302,6 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .select(new QLostCatPostListResponse(
                         lostCatPost.id,
                         lostCatPost.title,
-                        lostCatPost.user.nickname,
                         lostCatPost.catName,
                         lostCatPost.lostLocation,
                         lostCatPost.commentCount,
@@ -321,7 +311,6 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                         lostCatPost.thumbnailUrl
                 ))
                 .from(lostCatPost)
-                .leftJoin(lostCatPost.user, user)
                 .orderBy(lostCatPost.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -345,10 +334,9 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
     @Override
     public List<LostCatPostListResponse> findContentWithCoveringIndex(Pageable pageable) {
         String sql = """
-                SELECT l.id, l.title, u.nickname, l.cat_name, l.lost_location,
+                SELECT l.id, l.title, l.cat_name, l.lost_location,
                        l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url
                 FROM lost_cat_post l
-                INNER JOIN user u ON u.id = l.user_id
                 INNER JOIN (
                     SELECT id FROM lost_cat_post
                     ORDER BY created_at DESC
@@ -367,16 +355,15 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .map(row -> LostCatPostListResponse.builder()
                         .id(((Number) row[0]).longValue())
                         .title((String) row[1])
-                        .writer((String) row[2])
-                        .catName((String) row[3])
-                        .lostLocation((String) row[4])
-                        .commentCount(((Number) row[5]).intValue())
-                        .view(((Number) row[6]).intValue())
-                        .completed(toBoolean(row[7]))
-                        .createdAt(row[8] instanceof java.sql.Timestamp ts
+                        .catName((String) row[2])
+                        .lostLocation((String) row[3])
+                        .commentCount(((Number) row[4]).intValue())
+                        .view(((Number) row[5]).intValue())
+                        .completed(toBoolean(row[6]))
+                        .createdAt(row[7] instanceof java.sql.Timestamp ts
                                 ? ts.toLocalDateTime()
-                                : (LocalDateTime) row[8])
-                        .thumbnailUrl((String) row[9])
+                                : (LocalDateTime) row[7])
+                        .thumbnailUrl((String) row[8])
                         .build())
                 .toList();
     }
@@ -399,10 +386,11 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
     }
 
     // BOOLEAN MODE 변환: 각 단어를 + (필수 조건)으로 처리
+    // ngram_token_size(2) 미만 토큰은 인덱스에 없어 매치 불가하므로 제외
     private String sanitizeForBooleanMode(String keyword) {
         String cleaned = keyword.replaceAll("[+\\-><()~*\"@]", "");
         return Arrays.stream(cleaned.trim().split("\\s+"))
-                .filter(token -> !token.isEmpty())
+                .filter(token -> token.length() >= MIN_TOKEN_LENGTH)
                 .map(token -> "+" + token)
                 .collect(java.util.stream.Collectors.joining(" "));
     }

@@ -26,9 +26,6 @@ public class LostCatPostListResponse {
     @Schema(description = "게시글 제목", example = "우리 고양이를 찾아주세요")
     private String title;
 
-    @Schema(description = "작성자 로그인 ID", example = "cat_lover")
-    private String writer;
-
     @Schema(description = "고양이 이름", example = "나비")
     private String catName;
 
@@ -51,14 +48,13 @@ public class LostCatPostListResponse {
     private String thumbnailUrl;
 
     @QueryProjection
-    public LostCatPostListResponse(Long id, String title, String writer,
+    public LostCatPostListResponse(Long id, String title,
                                     String catName, String lostLocation,
                                     int commentCount, int view,
                                     boolean completed, LocalDateTime createdAt,
                                     String thumbnailUrl) {
         this.id = id;
         this.title = title;
-        this.writer = writer;
         this.catName = catName;
         this.lostLocation = lostLocation;
         this.commentCount = commentCount;

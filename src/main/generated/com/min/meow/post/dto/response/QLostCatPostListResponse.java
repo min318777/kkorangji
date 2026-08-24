@@ -13,8 +13,8 @@ public class QLostCatPostListResponse extends ConstructorExpression<LostCatPostL
 
     private static final long serialVersionUID = -39319652L;
 
-    public QLostCatPostListResponse(com.querydsl.core.types.Expression<Long> id, com.querydsl.core.types.Expression<String> title, com.querydsl.core.types.Expression<String> writer, com.querydsl.core.types.Expression<String> catName, com.querydsl.core.types.Expression<String> lostLocation, com.querydsl.core.types.Expression<Integer> commentCount, com.querydsl.core.types.Expression<Integer> view, com.querydsl.core.types.Expression<Boolean> completed, com.querydsl.core.types.Expression<java.time.LocalDateTime> createdAt, com.querydsl.core.types.Expression<String> thumbnailUrl) {
-        super(LostCatPostListResponse.class, new Class<?>[]{long.class, String.class, String.class, String.class, String.class, int.class, int.class, boolean.class, java.time.LocalDateTime.class, String.class}, id, title, writer, catName, lostLocation, commentCount, view, completed, createdAt, thumbnailUrl);
+    public QLostCatPostListResponse(com.querydsl.core.types.Expression<Long> id, com.querydsl.core.types.Expression<String> title, com.querydsl.core.types.Expression<String> catName, com.querydsl.core.types.Expression<String> lostLocation, com.querydsl.core.types.Expression<Integer> commentCount, com.querydsl.core.types.Expression<Integer> view, com.querydsl.core.types.Expression<Boolean> completed, com.querydsl.core.types.Expression<java.time.LocalDateTime> createdAt, com.querydsl.core.types.Expression<String> thumbnailUrl) {
+        super(LostCatPostListResponse.class, new Class<?>[]{long.class, String.class, String.class, String.class, int.class, int.class, boolean.class, java.time.LocalDateTime.class, String.class}, id, title, catName, lostLocation, commentCount, view, completed, createdAt, thumbnailUrl);
     }
 
 }
