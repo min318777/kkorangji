@@ -213,17 +213,17 @@ public class BoastCatPostService {
     // v2: 상세조회 + 원자적 UPDATE (동시성 보장)
     @Transactional
     public GetBoastCatPostResponse getBoastCatPostV2(Long id) {
-        boastCatPostRepository.incrementViewCount(id);
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+        boastCatPostRepository.incrementViewCount(id);
         return GetBoastCatPostResponse.from(post);
     }
 
     // v3: 상세조회 + Redis INCR (트랜잭션 없음 — Redis는 2PC 미지원)
     public GetBoastCatPostResponse getBoastCatPostV3(Long id, String clientIp) {
-        viewCountService.incrementViewCount(PostType.BOAST, id, "ip:" + clientIp);
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+        viewCountService.incrementViewCount(PostType.BOAST, id, "ip:" + clientIp);
         return GetBoastCatPostResponse.from(post);
     }
 

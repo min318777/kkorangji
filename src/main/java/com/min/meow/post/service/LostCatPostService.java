@@ -83,15 +83,15 @@ public class LostCatPostService {
      * 조회수는 배치 동기화(30초 주기) 전까지 DB 값 그대로 응답에 실림
      */
     public GetLostCatPostResponse getLostCatPostV3(Long lostCatPostId, String identifier){
+        GetLostCatPostResponse response = getLostCatPost(lostCatPostId);
         viewCountService.incrementViewCount(PostType.LOST, lostCatPostId, identifier);
-        return getLostCatPost(lostCatPostId);
+        return response;
     }
 
     /**
      * 글 상세 조회 (N+1 최적화 적용, 캐싱 없음)
      * findByIdWithUser()로 User를 Fetch Join하여 N+1 문제 해결
      * - User: Fetch Join (N:1 관계 → 카테시안 곱 없음)
-     * - imageUrls: @BatchSize(100) 적용 (1:N 관계)
      */
 
     public GetLostCatPostResponse getLostCatPost(Long lostCatPostId){
