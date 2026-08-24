@@ -7,9 +7,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.validation.BindException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -33,8 +33,10 @@ public class GlobalExceptionHandler {
 
     // Spring 기본 예외 — 클라이언트 실수 (4xx)
     // 클라이언트 실수 — @Valid 검증 실패, 실패한 모든 필드 목록 반환
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<?>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    // @RequestBody는 MethodArgumentNotValidException, @ModelAttribute는 BindException으로 던져지는데
+    // 전자가 후자의 서브타입이라 이 핸들러 하나로 둘 다 처리됨
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ApiResponse<?>> handleBindException(BindException e) {
         List<FieldErrorDetail> fieldErrors = e.getBindingResult().getFieldErrors().stream()
                 .map(fe -> new FieldErrorDetail(fe.getField(), fe.getDefaultMessage()))
                 .toList();

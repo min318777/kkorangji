@@ -10,6 +10,7 @@ import com.min.meow.search.service.PostSearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +32,7 @@ public class PostSearchController {
     @SecurityRequirements
     @GetMapping("/api/meow/boast-cat-posts/search")
     public ResponseEntity<ApiResponse<PageResponse<BoastCatPostListResponse>>> searchByFts(
-            @ModelAttribute PostSearchRequest request,
+            @Valid @ModelAttribute PostSearchRequest request,
             @PageableDefault(size = 10) Pageable pageable) {
         Page<BoastCatPostListResponse> posts = postSearchService.searchByFts(request, pageable);
         return ResponseEntity.ok(ApiResponse.success("FTS 검색 성공", PageResponse.from(posts)));
@@ -51,7 +52,7 @@ public class PostSearchController {
     @SecurityRequirements
     @GetMapping("/api/meow/lost-cat-posts/search")
     public ResponseEntity<ApiResponse<PageResponse<LostCatPostListResponse>>> searchLostByFts(
-            @ModelAttribute PostSearchRequest request,
+            @Valid @ModelAttribute PostSearchRequest request,
             @PageableDefault(size = 10) Pageable pageable) {
         Page<LostCatPostListResponse> posts = postSearchService.searchLostByFts(request, pageable);
         return ResponseEntity.ok(ApiResponse.success("실종글 FTS 검색 성공", PageResponse.from(posts)));
