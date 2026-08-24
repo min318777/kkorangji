@@ -21,6 +21,9 @@ import java.util.List;
 @Repository
 public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom {
 
+    // ngram_token_size(2) 미만 토큰은 FULLTEXT 인덱스에 없어 매치 불가
+    private static final int MIN_TOKEN_LENGTH = 2;
+
     private final JPAQueryFactory queryFactory;
 
     // Native Query 실행용 (MATCH AGAINST는 QueryDSL 미지원)
@@ -223,10 +226,11 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
     // BOOLEAN MODE 변환: 각 단어를 + (필수 조건)으로 처리
     // "고양이 귀여운" → "+고양이 +귀여운"
     // BOOLEAN MODE 특수문자(+,-,*,~,",(,)) 제거 후 각 토큰에 + 붙임
+    // ngram_token_size(2) 미만 토큰은 인덱스에 없어 매치 불가하므로 제외
     private String sanitizeForBooleanMode(String keyword) {
         String cleaned = keyword.replaceAll("[+\\-><()~*\"@]", "");
         return Arrays.stream(cleaned.trim().split("\\s+"))
-                .filter(token -> !token.isEmpty())
+                .filter(token -> token.length() >= MIN_TOKEN_LENGTH)
                 .map(token -> "+" + token)
                 .collect(java.util.stream.Collectors.joining(" "));
     }

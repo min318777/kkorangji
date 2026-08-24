@@ -4,8 +4,8 @@ import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.LostCatPostListResponse;
-import com.min.meow.post.repository.BoastCatPostRepositoryImpl;
-import com.min.meow.post.repository.LostCatRepositoryImpl;
+import com.min.meow.post.repository.BoastCatPostRepository;
+import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.search.dto.request.PostLikeSearchRequest;
 import com.min.meow.search.dto.request.PostSearchRequest;
 import lombok.RequiredArgsConstructor;
@@ -15,30 +15,31 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class PostSearchService {
 
-    private final BoastCatPostRepositoryImpl boastCatPostRepositoryImpl;
-    private final LostCatRepositoryImpl lostCatRepositoryImpl;
+    // ngram_token_size(2) 미만 토큰은 FTS 인덱스에 없어 매치 불가
+    private static final int MIN_TOKEN_LENGTH = 2;
 
-    // FTS 검색 (자랑글): 한글 완성형 없으면 LIKE 자동 폴백
+    private final BoastCatPostRepository boastCatPostRepository;
+    private final LostCatRepository lostCatRepository;
+
+    // FTS 검색 (자랑글): 2글자 이상 토큰이 없으면 LIKE 자동 폴백
     public Page<BoastCatPostListResponse> searchByFts(PostSearchRequest request, Pageable pageable) {
         String keyword = request.getKeyword();
 
-        if (keyword == null || keyword.length() < 2) {
-            throw new CustomException(ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
-        }
-
         if (requiresLikeFallback(keyword)) {
-            log.info("[자랑글 검색] FTS→LIKE 폴백 | keyword=\"{}\" | 이유=한글 완성형 없음", keyword);
-            return boastCatPostRepositoryImpl.search(keyword, keyword, request.getUserId(), pageable);
+            log.info("[자랑글 검색] FTS→LIKE 폴백 | keyword=\"{}\" | 이유=2글자 이상 토큰 없음", keyword);
+            return boastCatPostRepository.search(keyword, keyword, request.getUserId(), pageable);
         }
 
         log.info("[자랑글 검색] FTS | keyword=\"{}\"", keyword);
-        return boastCatPostRepositoryImpl.searchByKeyword(keyword, request.getUserId(), pageable);
+        return boastCatPostRepository.searchByKeyword(keyword, request.getUserId(), pageable);
     }
 
     // LIKE 검색 (자랑글): '%keyword%' 방식 (성능 비교용)
@@ -48,7 +49,7 @@ public class PostSearchService {
             throw new CustomException(ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
         }
         log.info("[자랑글 검색] LIKE | keyword=\"{}\"", keyword);
-        return boastCatPostRepositoryImpl.search(
+        return boastCatPostRepository.search(
                 request.getTitle(),
                 request.getContents(),
                 request.getUserId(),
@@ -56,21 +57,17 @@ public class PostSearchService {
         );
     }
 
-    // FTS 검색 (실종글): 한글 완성형 없으면 LIKE 자동 폴백
+    // FTS 검색 (실종글): 2글자 이상 토큰이 없으면 LIKE 자동 폴백
     public Page<LostCatPostListResponse> searchLostByFts(PostSearchRequest request, Pageable pageable) {
         String keyword = request.getKeyword();
 
-        if (keyword == null || keyword.length() < 2) {
-            throw new CustomException(ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
-        }
-
         if (requiresLikeFallback(keyword)) {
-            log.info("[실종글 검색] FTS→LIKE 폴백 | keyword=\"{}\" | 이유=한글 완성형 없음", keyword);
-            return lostCatRepositoryImpl.search(keyword, keyword, request.getUserId(), pageable);
+            log.info("[실종글 검색] FTS→LIKE 폴백 | keyword=\"{}\" | 이유=2글자 이상 토큰 없음", keyword);
+            return lostCatRepository.search(keyword, keyword, request.getUserId(), pageable);
         }
 
         log.info("[실종글 검색] FTS | keyword=\"{}\"", keyword);
-        return lostCatRepositoryImpl.searchByKeyword(keyword, request.getUserId(), pageable);
+        return lostCatRepository.searchByKeyword(keyword, request.getUserId(), pageable);
     }
 
     // LIKE 검색 (실종글): '%keyword%' 방식 (성능 비교용)
@@ -80,7 +77,7 @@ public class PostSearchService {
             throw new CustomException(ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
         }
         log.info("[실종글 검색] LIKE | keyword=\"{}\"", keyword);
-        return lostCatRepositoryImpl.search(
+        return lostCatRepository.search(
                 request.getTitle(),
                 request.getContents(),
                 request.getUserId(),
@@ -88,8 +85,9 @@ public class PostSearchService {
         );
     }
 
-    // 한글 완성형이 하나도 없으면 ngram FTS 토큰 생성 불가
+    // 2글자 이상 토큰이 하나도 없으면 FTS로 검색할 대상 자체가 없어 LIKE로 폴백
     private boolean requiresLikeFallback(String keyword) {
-        return !keyword.matches(".*[가-힣].*");
+        return Arrays.stream(keyword.trim().split("\\s+"))
+                .noneMatch(token -> token.length() >= MIN_TOKEN_LENGTH);
     }
 }
