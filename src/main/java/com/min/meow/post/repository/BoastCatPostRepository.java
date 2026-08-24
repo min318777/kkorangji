@@ -23,17 +23,13 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
     // ========== 조회 ==========
 
     /**
-     * 단일 게시글 상세 조회 (N+1 문제 해결)
+     * 단일 게시글 상세 조회
      * User는 @ManyToOne (N:1) 관계이므로 Fetch Join 적용
      * - 결과 행이 뻥튀기되지 않아 안전함
      * - 한 번의 쿼리로 게시글 + 작성자 정보 조회
-     * imageUrls, comments는 @OneToMany (1:N) 관계이므로 @BatchSize로 해결
-     * - Fetch Join 시 카테시안 곱 발생 (데이터 중복)
-     * - 두 개 이상 컬렉션 Fetch Join 시 MultipleBagFetchException 발생
-     * - @BatchSize(100)로 IN절 배치 처리하여 추가 쿼리 최소화
-     * 쿼리 최적화 결과: 4개 → 3개
-     * - Before: Post 1 + User 1 + ImageUrls 1 + Comments 1 = 4개
-     * - After: Post+User 1 + ImageUrls 1 + Comments 1 = 3개
+     * imageUrls는 @OneToMany (1:N) 관계라 Fetch Join하지 않음
+     * - User와 함께 Fetch Join 시 카테시안 곱 발생 (데이터 중복)
+     * - 두 개 이상 컬렉션을 동시에 Fetch Join하면 MultipleBagFetchException 발생
      */
     @Query("SELECT p FROM BoastCatPost p " +
             "LEFT JOIN FETCH p.user " +
@@ -64,8 +60,10 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
 
     // 비관적 락 조회수 증가 (v4) — SELECT FOR UPDATE 후 더티 체킹
     // SELECT ... FOR UPDATE → 행 X-Lock → 다른 트랜잭션 차단 → 순차 처리
+    // User는 LEFT JOIN FETCH로 함께 조회 (락은 BoastCatPost 행에만 걸림, N+1 방지)
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT b FROM BoastCatPost b " +
+            "LEFT JOIN FETCH b.user " +
             "WHERE b.id = :id")
     Optional<BoastCatPost> findByIdWithPessimisticLock(@Param("id") Long id);
 
