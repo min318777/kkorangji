@@ -62,6 +62,9 @@ class BoastCatPostServiceTest {
     @Mock
     private PopularRankingService popularRankingService;
 
+    @Mock
+    private com.min.meow.post.event.PostImageDeleteEventPublisher postImageDeleteEventPublisher;
+
     private User createUser(Long id) {
         return User.builder()
                 .id(id)
@@ -180,8 +183,8 @@ class BoastCatPostServiceTest {
 
             // then
             assertThat(response.getTitle()).isEqualTo("수정된 제목");
-            // 기존 이미지가 최종 목록에서 빠졌으므로 S3에서 삭제되어야 함
-            then(s3Service).should().deleteFiles(anyList());
+            // 기존 이미지가 최종 목록에서 빠졌으므로 S3 삭제 이벤트가 발행되어야 함 (트랜잭션 커밋 후 비동기 처리)
+            then(postImageDeleteEventPublisher).should().publish(anyList());
         }
 
         @Test
