@@ -369,11 +369,12 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
     }
 
     // 제목 OR 내용 LIKE 검색 조건
+    // DB collation(utf8mb4_0900_ai_ci)이 이미 대소문자 구분 안 함 -> LOWER() 이중 적용 방지
     private BooleanExpression likeTitleOrContents(String title, String contents) {
         BooleanExpression titleExpr = (title != null && !title.isEmpty())
-                ? lostCatPost.title.containsIgnoreCase(title) : null;
+                ? lostCatPost.title.contains(title) : null;
         BooleanExpression contentsExpr = (contents != null && !contents.isEmpty())
-                ? lostCatPost.contents.containsIgnoreCase(contents) : null;
+                ? lostCatPost.contents.contains(contents) : null;
         if (titleExpr == null) return contentsExpr;
         if (contentsExpr == null) return titleExpr;
         return titleExpr.or(contentsExpr);

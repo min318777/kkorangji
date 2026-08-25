@@ -263,11 +263,12 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
     }
 
     // 제목 OR 내용 LIKE 검색 조건 (하나라도 포함하면 매칭)
+    // DB collation(utf8mb4_0900_ai_ci)이 이미 대소문자 구분 안 함 -> LOWER() 이중 적용 방지
     private BooleanExpression likeTitleOrContents(String title, String contents) {
         BooleanExpression titleExpr = (title != null && !title.isEmpty())
-                ? boastCatPost.title.containsIgnoreCase(title) : null;
+                ? boastCatPost.title.contains(title) : null;
         BooleanExpression contentsExpr = (contents != null && !contents.isEmpty())
-                ? boastCatPost.contents.containsIgnoreCase(contents) : null;
+                ? boastCatPost.contents.contains(contents) : null;
         if (titleExpr == null) return contentsExpr;
         if (contentsExpr == null) return titleExpr;
         return titleExpr.or(contentsExpr);
