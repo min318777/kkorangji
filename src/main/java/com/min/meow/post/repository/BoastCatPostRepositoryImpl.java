@@ -130,8 +130,8 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
     /**
      * Full-Text Search (자연어 모드)
      * - MATCH(title, contents) AGAINST(keyword IN NATURAL LANGUAGE MODE)
-     * - 연산자(+/-) 문법이 없어 키워드를 가공 없이 그대로 전달
-     * - 전체 문서의 50% 이상에 등장하는 단어는 자동으로 매치 대상에서 제외됨
+     * - 연산자(+/-) 문법이 없어 키워드를 가공 없이 그대로 전달, 암묵적 OR + 관련도 점수
+     * - 흔한 단어 자동 제외(50% 임계치) 규칙은 MyISAM 전용이며 이 테이블(InnoDB)에는 적용되지 않음
      */
     @Override
     public Page<BoastCatPostListResponse> searchByNaturalLanguage(String keyword, Long userId, Pageable pageable) {

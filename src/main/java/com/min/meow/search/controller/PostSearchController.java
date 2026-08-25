@@ -38,7 +38,7 @@ public class PostSearchController {
         return ResponseEntity.ok(ApiResponse.success("FTS 검색 성공", PageResponse.from(posts)));
     }
 
-    @Operation(summary = "자랑글 FTS 검색 (자연어 모드)", description = "MySQL FTS NATURAL LANGUAGE MODE. 전체 문서의 50% 이상에 등장하는 단어는 자동으로 매치 대상에서 제외됨. keyword 2글자 이상 필수.")
+    @Operation(summary = "자랑글 FTS 검색 (자연어 모드)", description = "MySQL FTS NATURAL LANGUAGE MODE. 암묵적 OR + 관련도 점수 기반, 연산자 미지원. keyword 2글자 이상 필수.")
     @SecurityRequirements
     @GetMapping("/api/meow/boast-cat-posts/search/natural")
     public ResponseEntity<ApiResponse<PageResponse<BoastCatPostListResponse>>> searchByNaturalLanguage(
