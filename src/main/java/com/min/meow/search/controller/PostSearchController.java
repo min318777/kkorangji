@@ -38,6 +38,16 @@ public class PostSearchController {
         return ResponseEntity.ok(ApiResponse.success("FTS 검색 성공", PageResponse.from(posts)));
     }
 
+    @Operation(summary = "자랑글 FTS 검색 (자연어 모드)", description = "MySQL FTS NATURAL LANGUAGE MODE. 전체 문서의 50% 이상에 등장하는 단어는 자동으로 매치 대상에서 제외됨. keyword 2글자 이상 필수.")
+    @SecurityRequirements
+    @GetMapping("/api/meow/boast-cat-posts/search/natural")
+    public ResponseEntity<ApiResponse<PageResponse<BoastCatPostListResponse>>> searchByNaturalLanguage(
+            @Valid @ModelAttribute PostSearchRequest request,
+            @PageableDefault(size = 10) Pageable pageable) {
+        Page<BoastCatPostListResponse> posts = postSearchService.searchByNaturalLanguage(request, pageable);
+        return ResponseEntity.ok(ApiResponse.success("자연어 모드 검색 성공", PageResponse.from(posts)));
+    }
+
     @Operation(summary = "자랑글 LIKE 검색 (성능 비교용)", description = "LIKE '%keyword%' 방식. Full Table Scan. 예: ?title=고양이&contents=귀여운")
     @SecurityRequirements
     @GetMapping("/api/meow/boast-cat-posts/search/like")

@@ -100,6 +100,23 @@ class PostSearchServiceTest {
     }
 
     @Test
+    @DisplayName("자연어 모드 검색은 짧은 토큰이 있어도 LIKE로 폴백하지 않고 항상 자연어 모드로 검색한다")
+    void 자연어_모드_검색은_폴백_없이_항상_자연어_모드로_검색() {
+        // given
+        PostSearchRequest request = PostSearchRequest.builder().keyword("고양이").build();
+        given(boastCatPostRepository.searchByNaturalLanguage("고양이", null, pageable))
+                .willReturn(new PageImpl<>(java.util.List.of()));
+
+        // when
+        postSearchService.searchByNaturalLanguage(request, pageable);
+
+        // then
+        then(boastCatPostRepository).should().searchByNaturalLanguage("고양이", null, pageable);
+        then(boastCatPostRepository).should(never()).search(any(), any(), any(), any());
+        then(boastCatPostRepository).should(never()).searchByKeyword(any(), any(), any());
+    }
+
+    @Test
     @DisplayName("실종글 검색도 동일한 기준으로 FTS/LIKE를 분기한다")
     void 실종글_검색도_동일한_기준으로_분기() {
         // given

@@ -14,6 +14,9 @@ public interface BoastCatPostRepositoryCustom {
     // Full-Text Search (ngram): MATCH(title, contents) AGAINST(keyword IN BOOLEAN MODE)
     Page<BoastCatPostListResponse> searchByKeyword(String keyword, Long userId, Pageable pageable);
 
+    // Full-Text Search (ngram): MATCH(title, contents) AGAINST(keyword IN NATURAL LANGUAGE MODE)
+    Page<BoastCatPostListResponse> searchByNaturalLanguage(String keyword, Long userId, Pageable pageable);
+
     Page<BoastCatPostListResponse> findAllWithProjection(Pageable pageable);
 
     // count 캐싱용 - content만 조회 (COUNT 쿼리 없음)

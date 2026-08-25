@@ -42,6 +42,13 @@ public class PostSearchService {
         return boastCatPostRepository.searchByKeyword(keyword, request.getUserId(), pageable);
     }
 
+    // FTS 검색 (자랑글, 자연어 모드): LIKE 폴백 없이 항상 NATURAL LANGUAGE MODE로 검색 (50% 규칙 검증용)
+    public Page<BoastCatPostListResponse> searchByNaturalLanguage(PostSearchRequest request, Pageable pageable) {
+        String keyword = request.getKeyword();
+        log.info("[자랑글 검색] FTS(자연어 모드) | keyword=\"{}\"", keyword);
+        return boastCatPostRepository.searchByNaturalLanguage(keyword, request.getUserId(), pageable);
+    }
+
     // LIKE 검색 (자랑글): '%keyword%' 방식 (성능 비교용)
     public Page<BoastCatPostListResponse> searchByLike(PostLikeSearchRequest request, Pageable pageable) {
         String keyword = request.getTitle() != null ? request.getTitle() : request.getContents();

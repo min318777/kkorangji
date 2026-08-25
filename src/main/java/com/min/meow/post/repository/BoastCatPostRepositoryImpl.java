@@ -127,6 +127,62 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
         return new PageImpl<>(content, pageable, total);
     }
 
+    /**
+     * Full-Text Search (자연어 모드)
+     * - MATCH(title, contents) AGAINST(keyword IN NATURAL LANGUAGE MODE)
+     * - 연산자(+/-) 문법이 없어 키워드를 가공 없이 그대로 전달
+     * - 전체 문서의 50% 이상에 등장하는 단어는 자동으로 매치 대상에서 제외됨
+     */
+    @Override
+    public Page<BoastCatPostListResponse> searchByNaturalLanguage(String keyword, Long userId, Pageable pageable) {
+        String dataSql = """
+                SELECT b.id, b.title, b.like_count, b.comment_count,
+                       b.view, b.created_at, b.thumbnail_url
+                FROM boast_cat_post b
+                WHERE MATCH(b.title, b.contents) AGAINST(:keyword IN NATURAL LANGUAGE MODE)
+                  AND (:userId IS NULL OR b.user_id = :userId)
+                ORDER BY b.created_at DESC
+                LIMIT :limit OFFSET :offset
+                """;
+
+        String countSql = """
+                SELECT COUNT(*)
+                FROM boast_cat_post b
+                WHERE MATCH(b.title, b.contents) AGAINST(:keyword IN NATURAL LANGUAGE MODE)
+                  AND (:userId IS NULL OR b.user_id = :userId)
+                """;
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = entityManager.createNativeQuery(dataSql)
+                .setParameter("keyword", keyword)
+                .setParameter("userId", userId)
+                .setParameter("limit", pageable.getPageSize())
+                .setParameter("offset", (int) pageable.getOffset())
+                .getResultList();
+
+        // row 인덱스: id(0), title(1), like_count(2), comment_count(3), view(4), created_at(5), thumbnail_url(6)
+        List<BoastCatPostListResponse> content = rows.stream()
+                .map(row -> BoastCatPostListResponse.builder()
+                        .id(((Number) row[0]).longValue())
+                        .title((String) row[1])
+                        .likeCount(((Number) row[2]).intValue())
+                        .commentCount(((Number) row[3]).intValue())
+                        .view(((Number) row[4]).intValue())
+                        .createdAt(row[5] instanceof java.sql.Timestamp ts
+                                ? ts.toLocalDateTime()
+                                : (LocalDateTime) row[5])
+                        .thumbnailUrl((String) row[6])
+                        .build())
+                .toList();
+
+        long total = ((Number) entityManager.createNativeQuery(countSql)
+                .setParameter("keyword", keyword)
+                .setParameter("userId", userId)
+                .getSingleResult()).longValue();
+
+        return new PageImpl<>(content, pageable, total);
+    }
+
     @Override
     public Page<BoastCatPostListResponse> findAllWithProjection(Pageable pageable) {
         List<BoastCatPostListResponse> content = findContentWithProjection(pageable);
