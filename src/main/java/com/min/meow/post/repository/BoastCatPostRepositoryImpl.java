@@ -73,6 +73,8 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
      * - MATCH(title, contents) AGAINST(keyword IN BOOLEAN MODE)
      * - FULLTEXT INDEX ft_boast_post_title_contents 활용
      * - 한국어 2-gram 토큰화로 인덱스 기반 검색
+     * - 관련도 점수(MATCH...AGAINST) 순 정렬 -> FULLTEXT 인덱스가 이미 관련도순으로 내놓는 결과를
+     *   그대로 소비해 상위 N개만 가져옴 (매치 건수와 무관하게 응답시간 일정, EXPLAIN에서 filesort 제거 확인됨)
      */
     @Override
     public Page<BoastCatPostListResponse> searchByKeyword(String keyword, Long userId, Pageable pageable) {
@@ -85,7 +87,7 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                 FROM boast_cat_post b
                 WHERE MATCH(b.title, b.contents) AGAINST(:keyword IN BOOLEAN MODE)
                   AND (:userId IS NULL OR b.user_id = :userId)
-                ORDER BY b.created_at DESC
+                ORDER BY MATCH(b.title, b.contents) AGAINST(:keyword IN BOOLEAN MODE) DESC
                 LIMIT :limit OFFSET :offset
                 """;
 

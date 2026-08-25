@@ -28,7 +28,7 @@ public class PostSearchController {
 
     private final PostSearchService postSearchService;
 
-    @Operation(summary = "자랑글 FTS 검색", description = "MySQL ngram FTS. keyword 2글자 이상 필수. 예: ?keyword=고양이")
+    @Operation(summary = "자랑글 FTS 검색", description = "MySQL ngram FTS. 관련도순 정렬. keyword 2글자 이상 필수. 예: ?keyword=고양이")
     @SecurityRequirements
     @GetMapping("/api/meow/boast-cat-posts/search")
     public ResponseEntity<ApiResponse<PageResponse<BoastCatPostListResponse>>> searchByFts(
