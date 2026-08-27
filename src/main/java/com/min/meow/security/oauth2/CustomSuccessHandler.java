@@ -1,5 +1,6 @@
 package com.min.meow.security.oauth2;
 
+import com.min.meow.security.RefreshCookieProvider;
 import com.min.meow.security.jwt.JwtProvider;
 import com.min.meow.security.service.PermissionCacheService;
 import com.min.meow.security.service.RefreshTokenService;
@@ -29,6 +30,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final RefreshTokenService refreshTokenService;
     private final PermissionCacheService permissionCacheService;
     private final DauService dauService;
+    private final RefreshCookieProvider refreshCookieProvider;
 
     @Value("${app.frontend-url:http://localhost:3000}")
     private String frontendUrl;
@@ -73,11 +75,6 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private Cookie createRefreshCookie(String value) {
         int refreshTtlSeconds = jwtProvider.getConfig().refreshTtlDays() * 24 * 60 * 60;
-        Cookie cookie = new Cookie("refresh", value);
-        cookie.setMaxAge(refreshTtlSeconds);
-        //cookie.setSecure(true); -> https 통신시 필요
-        cookie.setPath("/");
-        cookie.setHttpOnly(true); // XSS 공격 방어
-        return cookie;
+        return refreshCookieProvider.create(value, refreshTtlSeconds);
     }
 }

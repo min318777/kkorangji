@@ -1,6 +1,7 @@
 package com.min.meow.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.min.meow.security.RefreshCookieProvider;
 import com.min.meow.security.userdetails.CustomUserDetails;
 import com.min.meow.user.dto.request.LoginRequest;
 import com.min.meow.security.jwt.JwtProvider;
@@ -38,6 +39,7 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
     private final PermissionCacheService permissionCacheService;
     private final DauService dauService;
     private final ObjectMapper objectMapper;
+    private final RefreshCookieProvider refreshCookieProvider;
 
     private static final String LOGIN_ID_ATTRIBUTE = "attemptedLoginId";
 
@@ -130,12 +132,6 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private Cookie createRefreshCookie(String value) {
         int refreshTtlSeconds = jwtProvider.getConfig().refreshTtlDays() * 24 * 60 * 60;
-        Cookie cookie = new Cookie("refresh", value);
-        cookie.setMaxAge(refreshTtlSeconds);
-        //cookie.setSecure(true);
-        cookie.setPath("/"); // 쿠키가 적용될 범위
-        cookie.setHttpOnly(true); // XSS 공격 방어: 자바스크립트로 쿠키 접근 불가
-        cookie.setAttribute("SameSite", "Lax"); // CSRF 공격 방어: 다른 사이트에서의 요청 시 쿠키 전송 제한
-        return cookie;
+        return refreshCookieProvider.create(value, refreshTtlSeconds);
     }
 }

@@ -3,6 +3,7 @@ package com.min.meow.security.controller;
 import com.min.meow.common.ApiResponse;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
+import com.min.meow.security.RefreshCookieProvider;
 import com.min.meow.security.dto.TokenResponse;
 import com.min.meow.security.service.ReissueService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReissueController {
 
     private final ReissueService reissueService;
+    private final RefreshCookieProvider refreshCookieProvider;
 
     @Operation(summary = "토큰 재발급",
             description = "Refresh Token(쿠키)으로 새 Access Token을 발급합니다. "
@@ -48,7 +50,7 @@ public class ReissueController {
         TokenResponse tokenResponse = reissueService.reissue(refreshToken);
 
         response.setHeader("Authorization", "Bearer " + tokenResponse.getAccessToken());
-        response.addCookie(createCookie("refresh", tokenResponse.getRefreshToken()));
+        response.addCookie(refreshCookieProvider.create(tokenResponse.getRefreshToken(), 14 * 24 * 60 * 60));
 
         return ResponseEntity.ok(ApiResponse.success("토큰 재발급 성공", null));
     }
@@ -66,12 +68,4 @@ public class ReissueController {
         return null;
     }
 
-    private Cookie createCookie(String key, String value) {
-        Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(14 * 24 * 60 * 60);
-        //cookie.setSecure(true); -> https 통신시 필요
-        cookie.setPath("/");
-        cookie.setHttpOnly(true); // XSS 공격 방어
-        return cookie;
-    }
 }

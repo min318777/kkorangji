@@ -79,6 +79,9 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
 
+cookie:
+  secure: false # HTTP 로컬 개발 환경
+
 cloud:
   aws:
     s3:

@@ -8,7 +8,10 @@ import com.min.meow.user.service.DauService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -23,7 +26,6 @@ import java.util.UUID;
  * - k6 부하 테스트(1,000 VU) 환경에서도 특정 요청 추적 가능
  */
 @Slf4j
-@Component
 @RequiredArgsConstructor
 public class MdcFilter extends OncePerRequestFilter {
 
@@ -71,5 +73,24 @@ public class MdcFilter extends OncePerRequestFilter {
             return xRealIp;
         }
         return request.getRemoteAddr();
+    }
+
+    /**
+     * Spring Security 필터 체인(springSecurityFilterChain)은 order=-100으로 고정 등록됨.
+     * MdcFilter가 requestId/clientIp를 로그인 실패 등 Security 필터 로그에도 남기려면
+     * Security 체인보다 먼저 실행되어야 하므로 이보다 낮은 order를 명시한다.
+     */
+    @Configuration
+    @RequiredArgsConstructor
+    static class MdcFilterConfig {
+
+        private final DauService dauService;
+
+        @Bean
+        public FilterRegistrationBean<MdcFilter> mdcFilterRegistration() {
+            FilterRegistrationBean<MdcFilter> registration = new FilterRegistrationBean<>(new MdcFilter(dauService));
+            registration.setOrder(Ordered.HIGHEST_PRECEDENCE);
+            return registration;
+        }
     }
 }

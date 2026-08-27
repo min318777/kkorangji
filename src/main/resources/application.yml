@@ -127,6 +127,7 @@ sentry:
   environment: ${spring.profiles.active}
   logging:
     minimum-event-level: error   # ERROR 로그만 이벤트로 전송 (WARN 이하는 breadcrumb)
+    context-tags: requestId      # MDC의 requestId를 검색 가능한 태그로 전송 (userId/clientIp는 PII라 제외)
   traces-sample-rate: 0     # APM 트레이싱은 사용 안 함 (에러 트래킹만 필요)
 
 logging:

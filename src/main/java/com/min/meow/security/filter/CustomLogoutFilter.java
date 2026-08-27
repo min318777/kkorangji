@@ -2,6 +2,7 @@ package com.min.meow.security.filter;
 
 import com.min.meow.common.TokenType;
 import com.min.meow.notification.sse.SseEmitterManager;
+import com.min.meow.security.RefreshCookieProvider;
 import com.min.meow.security.jwt.JwtProvider;
 import com.min.meow.security.service.RefreshTokenService;
 import io.jsonwebtoken.Claims;
@@ -27,6 +28,7 @@ public class CustomLogoutFilter extends OncePerRequestFilter {
     private final RefreshTokenService refreshTokenService;
     private final JwtProvider jwtProvider;
     private final SseEmitterManager sseEmitterManager;
+    private final RefreshCookieProvider refreshCookieProvider;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain ) throws ServletException, IOException {
@@ -91,12 +93,7 @@ public class CustomLogoutFilter extends OncePerRequestFilter {
     }
 
     private void expireRefreshCookie(HttpServletResponse response) {
-        Cookie cookie = new Cookie(REFRESH_COOKIE_NAME, null);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setMaxAge(0);
-        cookie.setAttribute("SameSite", "Lax"); // CSRF 공격 방어
-        response.addCookie(cookie);
+        response.addCookie(refreshCookieProvider.expire());
     }
 
     private void writeLogoutResponse(HttpServletResponse response) throws IOException {
