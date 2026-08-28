@@ -33,7 +33,7 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
     private final QBoastCatPost boastCatPost = QBoastCatPost.boastCatPost;
 
     /**
-     * LIKE 검색 (성능 비교 기준선)
+     * LIKE 검색
      * - LIKE '%keyword%' 방식 → 인덱스 미사용, Full Table Scan
      */
     @Override
@@ -254,6 +254,41 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                 .toList();
     }
 
+    /**
+     * 커버링 인덱스 서브쿼리 + IN 절 방식
+     * JOIN 방식(findContentWithCoveringIndex)과 원리는 같으나, PK 조회와 본조회를 쿼리 2번으로 분리
+     * IN 절은 순서를 보장하지 않으므로 본조회에도 ORDER BY를 다시 걸어야 함
+     */
+    @Override
+    public List<BoastCatPostListResponse> findContentWithCoveringIndexUsingIn(Pageable pageable) {
+        List<Long> ids = queryFactory
+                .select(boastCatPost.id)
+                .from(boastCatPost)
+                .orderBy(boastCatPost.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+
+        return queryFactory
+                .select(new QBoastCatPostListResponse(
+                        boastCatPost.id,
+                        boastCatPost.title,
+                        boastCatPost.likeCount,
+                        boastCatPost.commentCount,
+                        boastCatPost.view,
+                        boastCatPost.createdAt,
+                        boastCatPost.thumbnailUrl
+                ))
+                .from(boastCatPost)
+                .where(boastCatPost.id.in(ids))
+                .orderBy(boastCatPost.createdAt.desc())
+                .fetch();
+    }
+
     // 전체 게시글 수만 조회 - BoastCatPostCountCacheService에서 캐싱
     @Override
     public long countAllPosts() {
@@ -265,7 +300,6 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
     }
 
     // 제목 OR 내용 LIKE 검색 조건 (하나라도 포함하면 매칭)
-    // DB collation(utf8mb4_0900_ai_ci)이 이미 대소문자 구분 안 함 -> LOWER() 이중 적용 방지
     private BooleanExpression likeTitleOrContents(String title, String contents) {
         BooleanExpression titleExpr = (title != null && !title.isEmpty())
                 ? boastCatPost.title.contains(title) : null;

@@ -64,6 +64,19 @@ public class BoastCatPostService {
         return PageResponse.from(posts);
     }
 
+    /**
+     * 모든 글 조회 (커버링 인덱스 IN 절 방식 — JOIN 방식과 성능 비교용)
+     */
+    public PageResponse<BoastCatPostListResponse> getAllBoastCatPostsUsingIn(Pageable pageable){
+        long total = countCacheService.countAll();
+        Page<BoastCatPostListResponse> posts = new PageImpl<>(
+                boastCatPostRepository.findContentWithCoveringIndexUsingIn(pageable),
+                pageable,
+                total
+        );
+        return PageResponse.from(posts);
+    }
+
     /** 일반 자랑글 상세 조회 — 캐싱 없음, 단순 DB 조회 */
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(boastCatPostId)

@@ -28,4 +28,7 @@ public interface BoastCatPostRepositoryCustom {
     // 커버링 인덱스 서브쿼리 + JOIN 방식 (OFFSET 대용량 성능 최적화)
     List<BoastCatPostListResponse> findContentWithCoveringIndex(Pageable pageable);
 
+    // 커버링 인덱스 서브쿼리 + IN 절 방식 (JOIN 방식과 성능 비교용)
+    List<BoastCatPostListResponse> findContentWithCoveringIndexUsingIn(Pageable pageable);
+
 }
