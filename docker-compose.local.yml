@@ -51,6 +51,10 @@ services:
       - --ngram-token-size=2
       - --innodb-ft-min-token-size=2
       - --bind-address=0.0.0.0
+      - --slow-query-log=1
+      - --slow-query-log-file=/var/lib/mysql/slow.log
+      - --long-query-time=1
+      - --log-queries-not-using-indexes=1
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
