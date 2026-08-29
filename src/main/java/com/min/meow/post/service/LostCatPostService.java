@@ -71,7 +71,7 @@ public class LostCatPostService {
         // COUNT는 캐시에서, content는 커버링 인덱스 서브쿼리로 조회
         long total = countCacheService.countAll();
         Page<LostCatPostListResponse> posts = new PageImpl<>(
-                lostCatRepository.findContentWithCoveringIndex(pageable),
+                lostCatRepository.findContentWithCoveringIndexUsingIn(pageable),
                 pageable,
                 total
         );

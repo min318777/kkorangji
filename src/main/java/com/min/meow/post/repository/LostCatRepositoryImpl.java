@@ -327,45 +327,41 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
     }
 
     /**
-     * 커버링 인덱스 서브쿼리 + JOIN 방식
-     * 서브쿼리로 idx_lost_created_at(created_at, id) 커버링 인덱스만 스캔해 id 추출
-     * → 추출된 id로 클러스터 인덱스(PK) JOIN → 필요한 행만 접근
+     * 커버링 인덱스 서브쿼리 + IN 절 방식
+     * 커버링 인덱스로 id만 먼저 조회한 뒤, id 목록으로 IN 절 조회하여
+     * LIMIT 개수만큼만 클러스터링 인덱스(PK)에 접근
+     * IN 절은 순서를 보장하지 않으므로 본조회에도 ORDER BY를 다시 걸어야 함
      */
     @Override
-    public List<LostCatPostListResponse> findContentWithCoveringIndex(Pageable pageable) {
-        String sql = """
-                SELECT l.id, l.title, l.cat_name, l.lost_location,
-                       l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url
-                FROM lost_cat_post l
-                INNER JOIN (
-                    SELECT id FROM lost_cat_post
-                    ORDER BY created_at DESC
-                    LIMIT :limit OFFSET :offset
-                ) AS covering ON l.id = covering.id
-                ORDER BY l.created_at DESC
-                """;
+    public List<LostCatPostListResponse> findContentWithCoveringIndexUsingIn(Pageable pageable) {
+        List<Long> ids = queryFactory
+                .select(lostCatPost.id)
+                .from(lostCatPost)
+                .orderBy(lostCatPost.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
 
-        @SuppressWarnings("unchecked")
-        List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("limit", pageable.getPageSize())
-                .setParameter("offset", (int) pageable.getOffset())
-                .getResultList();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
 
-        return rows.stream()
-                .map(row -> LostCatPostListResponse.builder()
-                        .id(((Number) row[0]).longValue())
-                        .title((String) row[1])
-                        .catName((String) row[2])
-                        .lostLocation((String) row[3])
-                        .commentCount(((Number) row[4]).intValue())
-                        .view(((Number) row[5]).intValue())
-                        .completed(toBoolean(row[6]))
-                        .createdAt(row[7] instanceof java.sql.Timestamp ts
-                                ? ts.toLocalDateTime()
-                                : (LocalDateTime) row[7])
-                        .thumbnailUrl((String) row[8])
-                        .build())
-                .toList();
+        return queryFactory
+                .select(new QLostCatPostListResponse(
+                        lostCatPost.id,
+                        lostCatPost.title,
+                        lostCatPost.catName,
+                        lostCatPost.lostLocation,
+                        lostCatPost.commentCount,
+                        lostCatPost.view,
+                        lostCatPost.isCompleted,
+                        lostCatPost.createdAt,
+                        lostCatPost.thumbnailUrl
+                ))
+                .from(lostCatPost)
+                .where(lostCatPost.id.in(ids))
+                .orderBy(lostCatPost.createdAt.desc())
+                .fetch();
     }
 
     // 제목 OR 내용 LIKE 검색 조건

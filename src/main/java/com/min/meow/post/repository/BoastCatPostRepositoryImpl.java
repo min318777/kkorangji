@@ -213,50 +213,11 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
     }
 
     /**
-     * 커버링 인덱스 서브쿼리 + JOIN 방식
+     * 커버링 인덱스 서브쿼리 + IN 절 방식
      * 기존: SELECT 전체컬럼 FROM boast_cat_post ORDER BY created_at DESC LIMIT 10 OFFSET 10000
      *   → OFFSET 10000이면 10000개 행을 모두 읽고 버림 (느림)
-     * 개선: 서브쿼리로 idx_boast_created_at(created_at, id) 커버링 인덱스만 스캔해 id 추출
-     *   → 추출된 id로 클러스터 인덱스(PK) JOIN → 필요한 행만 접근
-     */
-    @Override
-    public List<BoastCatPostListResponse> findContentWithCoveringIndex(Pageable pageable) {
-        String sql = """
-                SELECT b.id, b.title, b.like_count, b.comment_count,
-                       b.view, b.created_at, b.thumbnail_url
-                FROM boast_cat_post b
-                INNER JOIN (
-                    SELECT id FROM boast_cat_post
-                    ORDER BY created_at DESC
-                    LIMIT :limit OFFSET :offset
-                ) AS covering ON b.id = covering.id
-                ORDER BY b.created_at DESC
-                """;
-
-        @SuppressWarnings("unchecked")
-        List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("limit", pageable.getPageSize())
-                .setParameter("offset", (int) pageable.getOffset())
-                .getResultList();
-
-        return rows.stream()
-                .map(row -> BoastCatPostListResponse.builder()
-                        .id(((Number) row[0]).longValue())
-                        .title((String) row[1])
-                        .likeCount(((Number) row[2]).intValue())
-                        .commentCount(((Number) row[3]).intValue())
-                        .view(((Number) row[4]).intValue())
-                        .createdAt(row[5] instanceof java.sql.Timestamp ts
-                                ? ts.toLocalDateTime()
-                                : (LocalDateTime) row[5])
-                        .thumbnailUrl((String) row[6])
-                        .build())
-                .toList();
-    }
-
-    /**
-     * 커버링 인덱스 서브쿼리 + IN 절 방식
-     * JOIN 방식(findContentWithCoveringIndex)과 원리는 같으나, PK 조회와 본조회를 쿼리 2번으로 분리
+     * 개선: 커버링 인덱스로 id만 먼저 조회한 뒤, id 목록으로 IN 절 조회하여
+     *   LIMIT 개수만큼만 클러스터링 인덱스(PK)에 접근
      * IN 절은 순서를 보장하지 않으므로 본조회에도 ORDER BY를 다시 걸어야 함
      */
     @Override

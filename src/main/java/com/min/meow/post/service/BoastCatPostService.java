@@ -52,22 +52,10 @@ public class BoastCatPostService {
      * 성능 개선 내역:
      * - Before: Entity 전체 조회 + DTO 변환 → contents, imageUrls, comments 모두 조회
      * - After: Projection으로 필요한 7개 컬럼만 SELECT (id, title, likeCount, commentCount, view, createdAt, thumbnailUrl)
+     * - 커버링 인덱스로 id만 먼저 조회 후, id 목록으로 IN 절 조회하여 LIMIT 개수만큼만 클러스터링 인덱스에 접근
      */
     public PageResponse<BoastCatPostListResponse> getAllBoastCatPosts(Pageable pageable){
         // COUNT는 캐시에서, content는 DB에서 조회 (COUNT 쿼리 성능 개선)
-        long total = countCacheService.countAll();
-        Page<BoastCatPostListResponse> posts = new PageImpl<>(
-                boastCatPostRepository.findContentWithCoveringIndex(pageable),
-                pageable,
-                total
-        );
-        return PageResponse.from(posts);
-    }
-
-    /**
-     * 모든 글 조회 (커버링 인덱스 IN 절 방식 — JOIN 방식과 성능 비교용)
-     */
-    public PageResponse<BoastCatPostListResponse> getAllBoastCatPostsUsingIn(Pageable pageable){
         long total = countCacheService.countAll();
         Page<BoastCatPostListResponse> posts = new PageImpl<>(
                 boastCatPostRepository.findContentWithCoveringIndexUsingIn(pageable),
