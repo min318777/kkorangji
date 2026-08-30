@@ -40,4 +40,4 @@ COPY --from=builder /app/build/libs/meow-0.0.1-SNAPSHOT.jar app.jar
 RUN adduser --disabled-password --gecos "" appuser && mkdir -p /app/logs && chown -R appuser:appuser /app
 USER appuser
 
-ENTRYPOINT ["java", "-Xms512m", "-Xmx1g", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Xms512m", "-Xmx1g", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=/app/logs/heapdump.hprof", "-jar", "app.jar"]
