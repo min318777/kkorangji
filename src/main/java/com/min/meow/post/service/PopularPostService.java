@@ -46,7 +46,6 @@ public class PopularPostService {
     private final RedissonClient redissonClient;
 
     // v1: 기본 @Cacheable — Stampede 방지 없음 (비교 기준선)
-    @Cacheable(cacheNames = "post:boast:popular")
     public List<BoastCatPostListResponse> getPopularPosts() {
         log.info("[v1 Cache MISS] DB 조회 - thread: {}", Thread.currentThread().getName());
         return popularPostRepository.findTop24ByScore();
