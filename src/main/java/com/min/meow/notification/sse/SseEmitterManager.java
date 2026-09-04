@@ -107,9 +107,8 @@ public class SseEmitterManager {
         return userEmitters != null && !userEmitters.isEmpty();
     }
 
-    /**
-     * 현재 연결된 전체 탭 수 조회
-     */
+
+    // 현재 연결된 전체 탭 수 조회
     public int getConnectedUserCount() {
         return emitters.values().stream().mapToInt(List::size).sum();
     }
