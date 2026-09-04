@@ -83,8 +83,8 @@ public class LostCatPostController {
      * 글 수정 (Presigned URL 기반 이미지 업로드)
      */
     @Operation(summary = "실종글 수정",
-            description = "실종글을 수정합니다. 본인 게시글만 수정 가능합니다. 인증 필요.")
-    @PreAuthorize("hasAuthority('post:update')")
+            description = "실종글을 수정합니다. 본인 게시글만 수정 가능합니다(관리자는 타인 게시글도 수정 가능). 인증 필요.")
+    @PreAuthorize("isAuthenticated()")
     @PatchMapping("/{lostCatPostId}")
     public ResponseEntity<ApiResponse<UpdateLostCatPostResponse>> updateLostCatPost(
             @Parameter(description = "실종글 ID", example = "1")

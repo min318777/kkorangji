@@ -83,8 +83,8 @@ public class BoastCatPostController {
      * - deleteImageUrls: 삭제할 이미지의 CloudFront URL
      */
     @Operation(summary = "자랑글 수정",
-            description = "자랑글을 수정합니다. 본인 게시글만 수정 가능합니다. 인증 필요.")
-    @PreAuthorize("hasAuthority('post:update')")
+            description = "자랑글을 수정합니다. 본인 게시글만 수정 가능합니다(관리자는 타인 게시글도 수정 가능). 인증 필요.")
+    @PreAuthorize("isAuthenticated()")
     @PatchMapping("/{boastCatPostId}")
     public ResponseEntity<ApiResponse<UpdateBoastCatPostResponse>> updateBoastCatPost(
             @RequestBody @Valid UpdateBoastCatPostRequest updateBoastCatPostRequest,

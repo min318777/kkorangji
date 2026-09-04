@@ -200,11 +200,11 @@ docker-compose -f docker-compose.local.yml up -d
 |-----------|------|
 | `post:read` | 게시글 조회 |
 | `post:create` | 게시글 작성 |
-| `post:update` | 게시글 수정 |
+| `post:update` | 게시글 수정 (본인은 소유권 체크로 별도 허용, 이 권한은 타인 게시글 수정용) |
 | `post:delete` | 게시글 삭제 (본인만) |
 | `post:delete:any` | 게시글 삭제 (타인 포함, 관리자용) |
 | `comment:create` | 댓글 작성 |
-| `comment:update` | 댓글 수정 |
+| `comment:update` | 댓글 수정 (본인은 소유권 체크로 별도 허용, 이 권한은 타인 댓글 수정용) |
 | `comment:delete` | 댓글 삭제 (본인만) |
 | `comment:delete:any` | 댓글 삭제 (타인 포함, 관리자용) |
 | `user:read` | 유저 목록/통계 조회 |
@@ -217,11 +217,11 @@ docker-compose -f docker-compose.local.yml up -d
 |------|:---------:|:-----------:|:----------:|:---------------:|
 | post:read | ✓ | ✓ | ✓ | ✓ |
 | post:create | ✓ | ✓ | ✓ | |
-| post:update | ✓ | ✓ | ✓ | |
+| post:update | | | ✓ | |
 | post:delete | ✓ | ✓ | ✓ | |
 | post:delete:any | | ✓ | ✓ | |
 | comment:create | ✓ | ✓ | ✓ | |
-| comment:update | ✓ | ✓ | ✓ | |
+| comment:update | | | ✓ | |
 | comment:delete | ✓ | ✓ | ✓ | |
 | comment:delete:any | | ✓ | ✓ | |
 | user:read | | ✓ | ✓ | |

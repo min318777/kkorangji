@@ -2,6 +2,7 @@ package com.min.meow.post.service;
 
 import com.min.meow.config.S3Service;
 import com.min.meow.common.PageResponse;
+import com.min.meow.common.SecurityUtil;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.post.dto.response.CreateLostCatPostResponse;
@@ -212,8 +213,8 @@ public class LostCatPostService {
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
 
-        // 수정은 본인만 허용 (관리자도 타인 글 수정 불가)
-        if (!lostCatPost.isAuthor(writer)) {
+        // 본인이 아니고 관리자 권한(post:update)도 없으면 → 403
+        if (!lostCatPost.isAuthor(writer) && !SecurityUtil.hasAuthority("post:update")) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
 

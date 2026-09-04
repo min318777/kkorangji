@@ -2,6 +2,7 @@ package com.min.meow.comment.service;
 
 import com.min.meow.notification.event.NotificationEventPublisher;
 import com.min.meow.notification.event.PopularScoreEvent;
+import com.min.meow.common.SecurityUtil;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.comment.dto.request.RegisterCommentRequest;
@@ -98,7 +99,6 @@ public class CommentService {
             }
             // 인기글 Sorted Set 점수 +2
             notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(postId, 2));
-
         } else {
             LostCatPost post = lostCatRepository.findById(postId)
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
@@ -122,7 +122,7 @@ public class CommentService {
         if (comment.isDeleted()) {
             throw new CustomException(ErrorCode.NOT_FOUND_COMMENT);
         }
-        if (!comment.isAuthor(userId)) {
+        if (!comment.isAuthor(userId) && !SecurityUtil.hasAuthority("comment:update")) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
         comment.updateContent(updateCommentRequest.getContent());

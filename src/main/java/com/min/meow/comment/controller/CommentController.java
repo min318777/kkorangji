@@ -68,8 +68,8 @@ public class CommentController {
     }
 
     @Operation(summary = "댓글 수정",
-            description = "댓글을 수정합니다. 게시글 타입에 관계없이 댓글 ID로 수정합니다. 인증 필요.")
-    @PreAuthorize("hasAuthority('comment:update')")
+            description = "댓글을 수정합니다. 게시글 타입에 관계없이 댓글 ID로 수정합니다. 본인 댓글만 수정 가능합니다(관리자는 타인 댓글도 수정 가능). 인증 필요.")
+    @PreAuthorize("isAuthenticated()")
     @PatchMapping("/api/meow/comments/{commentId}")
     public ResponseEntity<ApiResponse<UpdateCommentResponse>> updateComment(
             @RequestBody @Valid UpdateCommentRequest updateCommentRequest,
