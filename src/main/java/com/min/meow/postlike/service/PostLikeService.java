@@ -35,7 +35,7 @@ public class PostLikeService {
         }
 
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + postId));
 
         try {
             // getReferenceById 대신 findById로 탈퇴/미존재 사용자 명시적 검증
@@ -78,7 +78,7 @@ public class PostLikeService {
         }
 
         BoastCatPost post = boastCatPostRepository.findById(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + postId));
 
         postLikeRepository.deleteByBoastCatPostIdAndUserId(postId, userId);
         boastCatPostRepository.updateLikeCount(postId, -1);

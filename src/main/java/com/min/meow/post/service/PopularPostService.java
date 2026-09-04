@@ -241,7 +241,7 @@ public class PopularPostService {
     /** DB 직접 조회 — 캐시 없음 (스케줄러 워밍 / 폴백용) */
     public GetBoastCatPostResponse fetchDetail(Long id) {
         BoastCatPost post = popularPostRepository.findByIdWithUser(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + id));
         long redisDelta = viewCountService.getViewCount(PostType.BOAST, id);
         return GetBoastCatPostResponse.builder()
                 .id(post.getId())
