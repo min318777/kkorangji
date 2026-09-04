@@ -1,31 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <!-- 콘솔 로그 패턴 -->
-    <!-- %X{requestId:-NO_MDC}: MDC에 requestId가 없으면 "NO_MDC" 출력 -->
-    <property name="CONSOLE_LOG_PATTERN"
-              value="[%d{HH:mm:ss.SSS}] [%X{requestId:-NO_MDC}] [%X{userId:-ANONYMOUS}] [%X{clientIp:-NO_IP}] [%thread] %-5level %logger{36} - %msg%n"/>
-
-    <!-- 파일 로그 패턴 (날짜 포함) -->
-    <property name="FILE_LOG_PATTERN"
-              value="[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%X{requestId:-NO_MDC}] [%X{userId:-ANONYMOUS}] [%X{clientIp:-NO_IP}] [%thread] %-5level %logger{36} - %msg%n"/>
-
     <!-- 로그 파일 저장 경로 -->
     <property name="LOG_DIR" value="logs"/>
 
     <!-- ======================== -->
     <!--     콘솔 Appender         -->
+    <!--   JSON 구조화 로깅         -->
     <!-- ======================== -->
+    <!-- MDC(requestId, userId, clientIp)는 LogstashEncoder가 최상위 필드로 자동 포함 -->
+    <!-- 예외 스택트레이스는 stack_trace 필드로 자동 포함 -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
-            <charset>UTF-8</charset>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSXXX</timestampPattern>
+            <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <version>[ignore]</version>
+                <logger>logger</logger>
+                <thread>thread</thread>
+                <message>message</message>
+                <stackTrace>stack_trace</stackTrace>
+            </fieldNames>
         </encoder>
     </appender>
 
     <!-- ======================== -->
     <!--   파일 롤링 Appender       -->
-    <!--   (dev 프로파일 전용)       -->
+    <!--   (dev/prod 프로파일)      -->
     <!-- ======================== -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/meow-api.log</file>
@@ -37,9 +38,16 @@
             <!-- 전체 최대 용량 3GB -->
             <totalSizeCap>3GB</totalSizeCap>
         </rollingPolicy>
-        <encoder>
-            <pattern>${FILE_LOG_PATTERN}</pattern>
-            <charset>UTF-8</charset>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSXXX</timestampPattern>
+            <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <version>[ignore]</version>
+                <logger>logger</logger>
+                <thread>thread</thread>
+                <message>message</message>
+                <stackTrace>stack_trace</stackTrace>
+            </fieldNames>
         </encoder>
     </appender>
 

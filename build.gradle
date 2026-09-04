@@ -104,6 +104,9 @@ dependencies {
 
     // Sentry: 에러 트래킹 (prod에서만 활성화, application-prod.yml 참고)
     implementation 'io.sentry:sentry-spring-boot-starter-jakarta:8.16.0'
+
+    // 구조화 로깅: 콘솔/파일 로그를 JSON으로 출력 (ELK/Loki 등 자동 파싱 대응)
+    implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
 }
 
 tasks.named('test') {
