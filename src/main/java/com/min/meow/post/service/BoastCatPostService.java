@@ -50,10 +50,6 @@ public class BoastCatPostService {
 
     /**
      * 모든 글 조회 (Projection 적용으로 성능 최적화)
-     * 성능 개선 내역:
-     * - Before: Entity 전체 조회 + DTO 변환 → contents, imageUrls, comments 모두 조회
-     * - After: Projection으로 필요한 7개 컬럼만 SELECT (id, title, likeCount, commentCount, view, createdAt, thumbnailUrl)
-     * - 커버링 인덱스로 id만 먼저 조회 후, id 목록으로 IN 절 조회하여 LIMIT 개수만큼만 클러스터링 인덱스에 접근
      */
     public PageResponse<BoastCatPostListResponse> getAllBoastCatPosts(Pageable pageable){
         // COUNT는 캐시에서, content는 DB에서 조회 (COUNT 쿼리 성능 개선)
@@ -69,11 +65,10 @@ public class BoastCatPostService {
     /** 일반 자랑글 상세 조회 — 캐싱 없음, 단순 DB 조회 */
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(boastCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + boastCatPostId));
         return GetBoastCatPostResponse.from(post);
     }
 
-    // ========== CRUD ==========
 
     /**
      * 글 작성 (Presigned URL 기반 이미지 업로드)
@@ -123,13 +118,11 @@ public class BoastCatPostService {
     @Transactional
     public UpdateBoastCatPostResponse updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId, Long userId){
 
-        User writer = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + boastCatPostId));
 
         // 본인이 아니고 관리자 권한(post:update)도 없으면 → 403
-        if (!boastCatPost.isAuthor(writer) && !SecurityUtil.hasAuthority("post:update")) {
+        if (!boastCatPost.isAuthor(userId) && !SecurityUtil.hasAuthority("post:update")) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
 
@@ -143,19 +136,14 @@ public class BoastCatPostService {
         return UpdateBoastCatPostResponse.from(boastCatPost);
     }
 
-    /**
-     * 글 삭제
-     */
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public void deleteBoastCatPost(Long boastCatPostId, Long userId, boolean hasDeleteAuthority){
         countCacheService.evict();
-        User writer = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + boastCatPostId));
         // 본인이 아니고 관리자 권한(post:delete)도 없으면 → 403
-        if (!boastCatPost.isAuthor(writer) && !hasDeleteAuthority) {
+        if (!boastCatPost.isAuthor(userId) && !hasDeleteAuthority) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
         // S3 이미지 삭제 (DB 삭제 전에 URL 추출)
@@ -207,7 +195,7 @@ public class BoastCatPostService {
     @Transactional
     public GetBoastCatPostResponse getBoastCatPostV1(Long id) {
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + id));
         post.incrementView();
         return GetBoastCatPostResponse.from(post);
     }
@@ -216,7 +204,7 @@ public class BoastCatPostService {
     @Transactional
     public GetBoastCatPostResponse getBoastCatPostV2(Long id) {
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + id));
         boastCatPostRepository.incrementViewCount(id);
         return GetBoastCatPostResponse.from(post);
     }
@@ -224,7 +212,7 @@ public class BoastCatPostService {
     // v3: 상세조회 + Redis INCR (트랜잭션 없음 — Redis는 2PC 미지원)
     public GetBoastCatPostResponse getBoastCatPostV3(Long id, String clientIp) {
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + id));
         viewCountService.incrementViewCount(PostType.BOAST, id, "ip:" + clientIp);
         return GetBoastCatPostResponse.from(post);
     }
@@ -233,7 +221,7 @@ public class BoastCatPostService {
     @Transactional
     public GetBoastCatPostResponse getBoastCatPostV4(Long id) {
         BoastCatPost post = boastCatPostRepository.findByIdWithPessimisticLock(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + id));
         post.incrementView();
         return GetBoastCatPostResponse.from(post);
     }

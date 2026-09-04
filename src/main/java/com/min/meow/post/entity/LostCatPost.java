@@ -1,7 +1,6 @@
 package com.min.meow.post.entity;
 
 import com.min.meow.common.BasePost;
-import com.min.meow.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
@@ -97,9 +96,8 @@ public class LostCatPost extends BasePost {
         }
     }
 
-    // 작성자 확인 (ID 기반 비교로 영속성 컨텍스트에 의존하지 않음)
-    public boolean isAuthor(User user) {
-        return this.user.getId().equals(user.getId());
+    public boolean isAuthor(Long userId) {
+        return this.user.getId().equals(userId);
     }
 
     // 완료 상태 변경

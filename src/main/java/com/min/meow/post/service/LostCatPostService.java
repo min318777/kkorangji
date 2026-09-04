@@ -97,7 +97,7 @@ public class LostCatPostService {
 
     public GetLostCatPostResponse getLostCatPost(Long lostCatPostId){
         LostCatPost lostCatPost = lostCatRepository.findByIdWithUser(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + lostCatPostId));
 
         return GetLostCatPostResponse.builder()
                 .id(lostCatPost.getId())
@@ -208,13 +208,11 @@ public class LostCatPostService {
      */
     @Transactional
     public UpdateLostCatPostResponse updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest, Long userId){
-        User writer = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + lostCatPostId));
 
         // 본인이 아니고 관리자 권한(post:update)도 없으면 → 403
-        if (!lostCatPost.isAuthor(writer) && !SecurityUtil.hasAuthority("post:update")) {
+        if (!lostCatPost.isAuthor(userId) && !SecurityUtil.hasAuthority("post:update")) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
 
@@ -252,13 +250,11 @@ public class LostCatPostService {
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public void deleteLostCatPost(Long lostCatPostId, Long userId, boolean hasDeleteAuthority) {
         countCacheService.evict();
-        User writer = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + lostCatPostId));
 
         // 본인이 아니고 관리자 권한(post:delete)도 없으면 → 403
-        if (!lostCatPost.isAuthor(writer) && !hasDeleteAuthority) {
+        if (!lostCatPost.isAuthor(userId) && !hasDeleteAuthority) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
 
@@ -281,11 +277,9 @@ public class LostCatPostService {
      */
     @Transactional
     public void updateCompletedStatus(Long lostCatPostId, boolean isCompleted, Long userId) {
-        User writer = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
         LostCatPost post = lostCatRepository.findById(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
-        if (!post.isAuthor(writer)) {
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + lostCatPostId));
+        if (!post.isAuthor(userId)) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
         post.setCompletedStatus(isCompleted);
@@ -343,7 +337,7 @@ public class LostCatPostService {
     @Transactional
     public void incrementViewCountWithDirtyChecking(Long lostCatPostId) {
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + lostCatPostId));
 
         lostCatPost.incrementView();
         // 트랜잭션 종료 시 JPA가 변경 감지하여 UPDATE 쿼리 실행
@@ -366,7 +360,7 @@ public class LostCatPostService {
     public void incrementViewCount(Long lostCatPostId) {
         int updatedCount = lostCatRepository.incrementViewCount(lostCatPostId);
         if (updatedCount == 0) {
-            throw new CustomException(ErrorCode.NOT_FOUND_POST);
+            throw new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + lostCatPostId);
         }
     }
 }

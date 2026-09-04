@@ -90,7 +90,7 @@ public class CommentService {
         // postType에 따라 댓글 수 증가 및 알림 발행
         if (postType == PostType.BOAST) {
             BoastCatPost post = boastCatPostRepository.findById(postId)
-                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + postId));
             boastCatPostRepository.incrementCommentCount(postId);
 
             if (!post.getUser().isWithdrawn() && !user.getId().equals(post.getUser().getId())) {
@@ -101,7 +101,7 @@ public class CommentService {
             notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(postId, 2));
         } else {
             LostCatPost post = lostCatRepository.findById(postId)
-                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST));
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + postId));
             lostCatRepository.incrementCommentCount(postId);
 
             if (!post.getUser().isWithdrawn() && !user.getId().equals(post.getUser().getId())) {
@@ -117,10 +117,10 @@ public class CommentService {
     @Transactional
     public UpdateCommentResponse updateComment(UpdateCommentRequest updateCommentRequest, Long commentId, Long userId) {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT, "commentId=" + commentId));
 
         if (comment.isDeleted()) {
-            throw new CustomException(ErrorCode.NOT_FOUND_COMMENT);
+            throw new CustomException(ErrorCode.NOT_FOUND_COMMENT, "commentId=" + commentId + " (deleted)");
         }
         if (!comment.isAuthor(userId) && !SecurityUtil.hasAuthority("comment:update")) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
@@ -136,7 +136,7 @@ public class CommentService {
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public void deleteComment(Long commentId, Long userId, boolean hasDeleteAuthority) {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT, "commentId=" + commentId));
 
         if (!comment.isAuthor(userId) && !hasDeleteAuthority) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
@@ -188,17 +188,18 @@ public class CommentService {
         if (parentCommentId == null) return null;
 
         Comment parent = commentRepository.findById(parentCommentId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT, "parentCommentId=" + parentCommentId));
 
         if (parent.getParentComment() != null) {
-            throw new CustomException(ErrorCode.COMMENT_DEPTH_EXCEEDED);
+            throw new CustomException(ErrorCode.COMMENT_DEPTH_EXCEEDED, "parentCommentId=" + parentCommentId);
         }
         if (parent.isDeleted()) {
-            throw new CustomException(ErrorCode.NOT_FOUND_COMMENT);
+            throw new CustomException(ErrorCode.NOT_FOUND_COMMENT, "parentCommentId=" + parentCommentId + " (deleted)");
         }
         // 같은 게시글의 댓글인지 확인
         if (!parent.getPostId().equals(postId) || parent.getPostType() != postType) {
-            throw new CustomException(ErrorCode.NOT_FOUND_COMMENT);
+            throw new CustomException(ErrorCode.NOT_FOUND_COMMENT,
+                    "parentCommentId=" + parentCommentId + " postId=" + postId + " postType=" + postType);
         }
         return parent;
     }

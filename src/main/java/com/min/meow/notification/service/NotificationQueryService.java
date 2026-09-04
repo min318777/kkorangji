@@ -47,7 +47,7 @@ public class NotificationQueryService {
 
         // 1단계: 알림 존재 여부 확인
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_NOTIFICATION));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_NOTIFICATION, "notificationId=" + notificationId));
 
         // 2단계: 본인의 알림인지 권한 검증
         if (!notification.getReceiverUserId().equals(userId)) {
