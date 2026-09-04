@@ -175,7 +175,6 @@ class BoastCatPostServiceTest {
                     .images(List.of())
                     .build();
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(writer));
             given(boastCatPostRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when
@@ -195,11 +194,9 @@ class BoastCatPostServiceTest {
             Long otherUserId = 2L;
             Long postId = 10L;
             User writer = createUser(writerId);
-            User other = createUser(otherUserId);
             BoastCatPost post = createPost(postId, writer);
             UpdateBoastCatPostRequest request = UpdateBoastCatPostRequest.builder().title("수정 시도").build();
 
-            given(userRepository.findById(otherUserId)).willReturn(Optional.of(other));
             given(boastCatPostRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when & then — 수정은 post:delete 권한과 무관하게 본인만 가능
@@ -225,7 +222,6 @@ class BoastCatPostServiceTest {
                             .build()))
                     .build();
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(writer));
             given(boastCatPostRepository.findById(postId)).willReturn(Optional.of(post));
             given(s3Service.toCloudFrontUrl("meow/new.jpg")).willReturn("https://cdn.example.com/new.jpg");
 
@@ -250,7 +246,6 @@ class BoastCatPostServiceTest {
             User writer = createUser(userId);
             BoastCatPost post = createPost(postId, writer);
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(writer));
             given(boastCatPostRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when
@@ -270,10 +265,8 @@ class BoastCatPostServiceTest {
             Long adminId = 2L;
             Long postId = 10L;
             User writer = createUser(writerId);
-            User admin = createUser(adminId);
             BoastCatPost post = createPost(postId, writer);
 
-            given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
             given(boastCatPostRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when
@@ -291,10 +284,8 @@ class BoastCatPostServiceTest {
             Long otherUserId = 2L;
             Long postId = 10L;
             User writer = createUser(writerId);
-            User other = createUser(otherUserId);
             BoastCatPost post = createPost(postId, writer);
 
-            given(userRepository.findById(otherUserId)).willReturn(Optional.of(other));
             given(boastCatPostRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when & then

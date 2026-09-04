@@ -170,7 +170,6 @@ class LostCatPostServiceTest {
                     .images(List.of())
                     .build();
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(writer));
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when
@@ -190,11 +189,9 @@ class LostCatPostServiceTest {
             Long otherUserId = 2L;
             Long postId = 10L;
             User writer = createUser(writerId);
-            User other = createUser(otherUserId);
             LostCatPost post = createPost(postId, writer);
             UpdateLostCatPostRequest request = UpdateLostCatPostRequest.builder().title("수정 시도").build();
 
-            given(userRepository.findById(otherUserId)).willReturn(Optional.of(other));
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when & then
@@ -222,7 +219,6 @@ class LostCatPostServiceTest {
                             .build()))
                     .build();
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(writer));
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
             given(s3Service.toCloudFrontUrl("meow/new.jpg")).willReturn("https://cdn.example.com/new.jpg");
 
@@ -247,7 +243,6 @@ class LostCatPostServiceTest {
             User writer = createUser(userId);
             LostCatPost post = createPost(postId, writer);
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(writer));
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when
@@ -266,10 +261,8 @@ class LostCatPostServiceTest {
             Long adminId = 2L;
             Long postId = 10L;
             User writer = createUser(writerId);
-            User admin = createUser(adminId);
             LostCatPost post = createPost(postId, writer);
 
-            given(userRepository.findById(adminId)).willReturn(Optional.of(admin));
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when
@@ -287,10 +280,8 @@ class LostCatPostServiceTest {
             Long otherUserId = 2L;
             Long postId = 10L;
             User writer = createUser(writerId);
-            User other = createUser(otherUserId);
             LostCatPost post = createPost(postId, writer);
 
-            given(userRepository.findById(otherUserId)).willReturn(Optional.of(other));
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when & then
@@ -316,7 +307,6 @@ class LostCatPostServiceTest {
             User writer = createUser(userId);
             LostCatPost post = createPost(postId, writer);
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(writer));
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when
@@ -335,10 +325,8 @@ class LostCatPostServiceTest {
             Long otherUserId = 2L;
             Long postId = 10L;
             User writer = createUser(writerId);
-            User other = createUser(otherUserId);
             LostCatPost post = createPost(postId, writer);
 
-            given(userRepository.findById(otherUserId)).willReturn(Optional.of(other));
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
 
             // when & then
