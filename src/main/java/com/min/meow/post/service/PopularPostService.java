@@ -1,6 +1,5 @@
 package com.min.meow.post.service;
 
-import com.min.meow.common.PostType;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
@@ -27,11 +26,6 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-/**
- * 인기글 서비스
- * [목록] v1~v5: @Cacheable / 분산 락 / Cache Warming / Redisson / Sorted Set
- * [상세] v1~v4: @Cacheable / 분산 락 / Cache Warming / 비관적 락 (스탬피드 방지 비교)
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -40,7 +34,6 @@ public class PopularPostService {
 
     private final PopularPostRepository popularPostRepository;
     private final PopularRankingService popularRankingService;
-    private final ViewCountService viewCountService;
     private final CacheManager cacheManager;
     private final RedisTemplate<String, String> redisTemplate;
     private final RedissonClient redissonClient;
@@ -125,10 +118,8 @@ public class PopularPostService {
     }
 
     /**
-     * v5: Redis Sorted Set 실시간 집계 + 캐시 워밍
+     * v5: Redis Sorted Set 실시간 집계
      * 좋아요/댓글/조회수 이벤트 → ZINCRBY 실시간 점수 누적
-     * 캐시 HIT → 즉시 반환 / MISS → Sorted Set → findByIds(DB) → 캐시 저장
-     * PopularPostV5CacheWarmingScheduler가 25초마다 선제 갱신 → Stampede 방지 (현재 스케줄러 비활성 상태, 설계 의도만 반영)
      */
     @Cacheable(cacheNames = "post:boast:popular:v5")
     public List<BoastCatPostListResponse> getPopularPostsV5() {
@@ -242,14 +233,13 @@ public class PopularPostService {
     public GetBoastCatPostResponse fetchDetail(Long id) {
         BoastCatPost post = popularPostRepository.findByIdWithUser(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + id));
-        long redisDelta = viewCountService.getViewCount(PostType.BOAST, id);
         return GetBoastCatPostResponse.builder()
                 .id(post.getId())
                 .writer(post.getUser().getNickname())
                 .userId(post.getUser().getId())
                 .title(post.getTitle())
                 .contents(post.getContents())
-                .view((int)(post.getView() + redisDelta))
+                .view(post.getView())
                 .imageUrls(new ArrayList<>(post.getImageUrls()))
                 .likeCount(post.getLikeCount())
                 .commentCount(post.getCommentCount())

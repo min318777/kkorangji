@@ -16,7 +16,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -159,13 +158,12 @@ public class LostCatPostController {
         return ResponseEntity.ok(ApiResponse.success("내 주변 실종글 조회 성공 (ST)", pageResponse));
     }
 
-    // ========== 조회수 ==========
 
     /**
      * @deprecated 동시성 이슈로 인해 POST /{lostCatPostId}/view 사용 권장
      */
     @Deprecated
-    @Operation(summary = "조회수 증가 (v1 더티체킹)",
+    @Operation(summary = "조회수 증가 (v1 더티체킹, 비교군)",
             description = "JPA 더티 체킹 방식. 동시성 이슈(Lost Update)가 있으므로 v2 사용을 권장합니다.",
             deprecated = true)
     @SecurityRequirements
@@ -177,7 +175,7 @@ public class LostCatPostController {
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (더티 체킹 방식)", null));
     }
 
-    @Operation(summary = "조회수 증가 (v2 원자적)",
+    @Operation(summary = "조회수 증가 (v2 원자적, 채택)",
             description = "DB 원자적 쿼리로 조회수를 증가시킵니다. 인증 불필요.")
     @SecurityRequirements
     @PostMapping("/{lostCatPostId}/view")
@@ -186,52 +184,5 @@ public class LostCatPostController {
             @PathVariable Long lostCatPostId) {
         lostCatPostService.incrementViewCount(lostCatPostId);
         return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공", null));
-    }
-
-    @Operation(summary = "실종글 상세조회 + 조회수 증가 통합 (v3 Redis INCR)",
-            description = "Redis INCR 방식. DB 부하를 줄이고 동시성을 완벽 보장합니다. Redis 장애 시 DB fallback. " +
-                    "조회수는 배치 동기화(30초 주기) 전까지 DB 값 그대로 응답에 실립니다. 인증 불필요.")
-    @SecurityRequirements
-    @PostMapping("/v3/{lostCatPostId}/view")
-    public ResponseEntity<ApiResponse<GetLostCatPostResponse>> incrementViewCountV3(
-            @Parameter(description = "실종글 ID", example = "1")
-            @PathVariable Long lostCatPostId,
-            HttpServletRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
-
-        String identifier = (user != null)
-                ? "user:" + user.getUserId()
-                : "ip:" + getClientIp(request);
-
-        GetLostCatPostResponse response = lostCatPostService.getLostCatPostV3(lostCatPostId, identifier);
-        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v3)", response));
-    }
-
-    @Operation(summary = "실종글 상세조회 + 조회수 증가 통합 (v3 Redis INCR, GET)",
-            description = "자랑글과 동일한 GET 방식의 상세조회+조회수증가 통합 API입니다. Redis INCR 후 상세조회를 반환합니다. " +
-                    "기존 POST /v3/{lostCatPostId}/view는 하위 호환을 위해 유지됩니다. 인증 불필요.")
-    @SecurityRequirements
-    @GetMapping("/view/v3/{lostCatPostId}")
-    public ResponseEntity<ApiResponse<GetLostCatPostResponse>> getLostCatPostV3(
-            @Parameter(description = "실종글 ID", example = "1")
-            @PathVariable Long lostCatPostId,
-            HttpServletRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
-
-        String identifier = (user != null)
-                ? "user:" + user.getUserId()
-                : "ip:" + getClientIp(request);
-
-        GetLostCatPostResponse response = lostCatPostService.getLostCatPostV3(lostCatPostId, identifier);
-        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v3)", response));
-    }
-
-    // X-Forwarded-For 헤더 우선, 없으면 RemoteAddr
-    private String getClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
     }
 }

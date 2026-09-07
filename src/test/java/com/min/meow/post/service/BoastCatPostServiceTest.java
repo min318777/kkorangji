@@ -57,13 +57,13 @@ class BoastCatPostServiceTest {
     private BoastCatPostCountCacheService countCacheService;
 
     @Mock
-    private ViewCountService viewCountService;
-
-    @Mock
     private PopularRankingService popularRankingService;
 
     @Mock
     private com.min.meow.post.event.PostImageDeleteEventPublisher postImageDeleteEventPublisher;
+
+    @Mock
+    private com.min.meow.notification.event.NotificationEventPublisher notificationEventPublisher;
 
     private User createUser(Long id) {
         return User.builder()

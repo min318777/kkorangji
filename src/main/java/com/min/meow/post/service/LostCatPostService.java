@@ -54,20 +54,12 @@ public class LostCatPostService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
-    private final ViewCountService viewCountService;
     private final LostCatPostCountCacheService countCacheService;
     private final PostImageDeleteEventPublisher postImageDeleteEventPublisher;
 
     // ========== 조회 ==========
 
-    /**
-     * 모든 실종 고양이 게시글 목록 조회 (Projection 적용으로 성능 최적화)
-     * 성능 개선 내역:
-     * - Before: Entity 전체 조회 + DTO 변환 → contents, imageUrls, comments 모두 조회
-     *           → LazyInitializationException 발생 가능
-     * - After: Projection으로 필요한 10개 컬럼만 SELECT
-     *          (id, title, writer(nickname), catName, lostLocation, commentCount, view, isCompleted, createdAt, thumbnailUrl)
-     */
+
     public PageResponse<LostCatPostListResponse> getAllLostCatPosts(Pageable pageable){
         // COUNT는 캐시에서, content는 커버링 인덱스 서브쿼리로 조회
         long total = countCacheService.countAll();
@@ -78,22 +70,6 @@ public class LostCatPostService {
         );
         return PageResponse.from(posts);
     }
-
-    /**
-     * 상세조회 + 조회수 증가 통합 (v3) — Redis INCR 후 상세조회 반환
-     * 조회수는 배치 동기화(30초 주기) 전까지 DB 값 그대로 응답에 실림
-     */
-    public GetLostCatPostResponse getLostCatPostV3(Long lostCatPostId, String identifier){
-        GetLostCatPostResponse response = getLostCatPost(lostCatPostId);
-        viewCountService.incrementViewCount(PostType.LOST, lostCatPostId, identifier);
-        return response;
-    }
-
-    /**
-     * 글 상세 조회 (N+1 최적화 적용, 캐싱 없음)
-     * findByIdWithUser()로 User를 Fetch Join하여 N+1 문제 해결
-     * - User: Fetch Join (N:1 관계 → 카테시안 곱 없음)
-     */
 
     public GetLostCatPostResponse getLostCatPost(Long lostCatPostId){
         LostCatPost lostCatPost = lostCatRepository.findByIdWithUser(lostCatPostId)
@@ -318,21 +294,7 @@ public class LostCatPostService {
 
     // ========== 조회수 ==========
 
-    /**
-     * 조회수 증가 - 더티 체킹 방식 (v1 - 동시성 이슈 있음)
-     * 동시성 문제 (Lost Update):
-     * 이 방식은 아래와 같은 Read-Modify-Write 패턴으로 동작합니다:
-     * 1. SELECT * FROM lost_cat_post WHERE id = ? (조회)
-     * 2. Java에서 view++ 연산 수행
-     * 3. UPDATE lost_cat_post SET view = 101 WHERE id = ? (절대값으로 UPDATE)
-     * 문제 시나리오 (현재 view = 100, 동시 2개 요청):
-     * - Thread A: view 읽기 (100) → view++ → 101로 UPDATE
-     * - Thread B: view 읽기 (100) → view++ → 101로 UPDATE (동시에!)
-     * - 결과: 2번 증가 요청 → 실제 1만 증가 (Lost Update)
-     * K6 동시성 테스트로 이 문제를 발견하여
-     * incrementViewCount() 원자적 쿼리 방식으로 개선하였습니다.
-     * @deprecated 동시성 이슈로 인해 incrementViewCount() 사용 권장
-     */
+
     @Deprecated
     @Transactional
     public void incrementViewCountWithDirtyChecking(Long lostCatPostId) {
@@ -343,19 +305,7 @@ public class LostCatPostService {
         // 트랜잭션 종료 시 JPA가 변경 감지하여 UPDATE 쿼리 실행
     }
 
-    /**
-     * 조회수 증가 - 원자적 쿼리 방식 (v2 - 개선된 버전)
-     * DB 레벨에서 view = view + 1을 수행하여 Race Condition을 방지합니다.
-     * 여러 스레드가 동시에 호출해도 정확한 조회수가 보장됩니다.
-     * 실행되는 쿼리:
-     * UPDATE lost_cat_post SET view = view + 1 WHERE id = ?
-     * 이 쿼리는 DB 레벨에서 원자적으로 실행되므로:
-     * - Read-Modify-Write 패턴이 아님
-     * - 동시 요청 시에도 모든 증가가 정확히 반영됨
-     * K6 동시성 테스트 결과:
-     * - 더티 체킹 방식: 1000 VU 동시 요청 → 약 800~900 증가 (Lost Update)
-     * - 원자적 쿼리: 1000 VU 동시 요청 → 정확히 1000 증가 ✅
-     */
+
     @Transactional
     public void incrementViewCount(Long lostCatPostId) {
         int updatedCount = lostCatRepository.incrementViewCount(lostCatPostId);

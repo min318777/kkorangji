@@ -13,7 +13,6 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -21,19 +20,10 @@ import java.util.Set;
  * 키: post:boast:popular:ranking
  * MEMBER: postId (String)
  * SCORE:  likeCount×3 + commentCount×2 + view×1 (누적)
- *
  * 점수 갱신 시점:
  *  - 좋아요 추가/취소 → PopularScoreEvent(±3)
  *  - 댓글 추가/삭제  → PopularScoreEvent(±2)
- *  - 조회수 동기화   → ViewCountSyncScheduler → updateViewScores (30초 배치)
- *
- * 랭킹 키 전략: 현재는 트래픽이 적어 "전체 누적 순위"(키 하나, 만료 없음) 방식.
- * 트래픽이 늘어 "최근 인기글"만 보여주고 싶어지면 날짜별 키 로테이션으로 전환:
- *   1. getRankingKey()가 RANKING_KEY_PREFIX + LocalDate.now(ZoneId.of("Asia/Seoul"))를 반환하도록 변경
- *   2. 날짜가 바뀌면 새 키가 빈 Sorted Set으로 시작하므로, 자정마다 initRanking()과 같은 로직을
- *      실행하는 스케줄러(@Scheduled(cron = "0 0 0 * * *"))를 추가해 DB 기준으로 새 키를 재초기화해야 함
- *      (안 하면 어제까지의 인기글이 새 날짜 랭킹에서 사라지는 버그 재발 — 과거 실제로 겪음)
- *   3. 키 만료가 필요하면 예전처럼 setTtlIfAbsent()로 TTL을 다시 부여
+ *  - 조회수 증가     → PopularScoreEvent(+1), 원자적 UPDATE 직후 발행
  */
 @Slf4j
 @Service
@@ -123,24 +113,4 @@ public class PopularRankingService {
         }
     }
 
-    /**
-     * 조회수 배치 동기화 시 Sorted Set 점수 갱신
-     * ViewCountSyncScheduler가 DB 반영 후 호출
-     * key 형식: "view:count:boast:{postId}"
-     */
-    public void updateViewScores(Map<String, Long> deltas) {
-        if (deltas == null || deltas.isEmpty()) return;
-        String rankingKey = getRankingKey();
-        String prefix = "view:count:";
-        for (Map.Entry<String, Long> entry : deltas.entrySet()) {
-            String key = entry.getKey();
-            String[] parts = key.substring(prefix.length()).split(":");
-            if (parts.length != 2 || !"boast".equalsIgnoreCase(parts[0])) continue;
-            try {
-                redisTemplate.opsForZSet().incrementScore(rankingKey, parts[1], entry.getValue());
-            } catch (Exception e) {
-                log.warn("[PopularRanking] 조회수 점수 갱신 실패 - key: {}", key, e);
-            }
-        }
-    }
 }
