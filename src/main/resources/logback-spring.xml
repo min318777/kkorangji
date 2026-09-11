@@ -24,6 +24,13 @@
         </encoder>
     </appender>
 
+    <!-- local 전용: 사람이 읽기 편한 텍스트 콘솔 -->
+    <appender name="CONSOLE_LOCAL" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) - %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <!-- ======================== -->
     <!--   파일 롤링 Appender       -->
     <!--   (dev/prod 프로파일)      -->
@@ -55,14 +62,14 @@
     <!--     프로파일별 설정         -->
     <!-- ======================== -->
 
-    <!-- local 프로파일: 콘솔만 출력, INFO 레벨 -->
+    <!-- local 프로파일: 콘솔만 출력, INFO 레벨, 텍스트 포맷 -->
     <springProfile name="local">
         <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="CONSOLE_LOCAL"/>
         </root>
         <!-- 애플리케이션 패키지는 DEBUG 레벨로 상세 출력 -->
         <logger name="com.min.meow" level="DEBUG" additivity="false">
-            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="CONSOLE_LOCAL"/>
         </logger>
         <!-- SQL 로그: p6spy가 처리하므로 JPA 중복 출력 방지 -->
         <logger name="org.hibernate.SQL" level="OFF"/>

@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * Presigned URL 기반 이미지 업로드 아키텍처:
  * 1. 클라이언트가 서버에 Presigned URL 요청
  * 2. 서버가 S3 Presigned URL 생성하여 반환
- * 3. 클라이언트가 Presigned URL로 S3에 직접 업로드 (서버 트래픽 없음!)
+ * 3. 클라이언트가 Presigned URL로 S3에 직접 업로드 (서버 트래픽 없음)
  * 4. 업로드 완료 후 클라이언트가 S3 key를 서버에 전달
  * 5. 서버가 key를 CloudFront URL로 변환하여 DB 저장
  * 장점:

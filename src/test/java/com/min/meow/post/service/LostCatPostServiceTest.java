@@ -53,9 +53,6 @@ class LostCatPostServiceTest {
     private S3Service s3Service;
 
     @Mock
-    private ViewCountService viewCountService;
-
-    @Mock
     private LostCatPostCountCacheService countCacheService;
 
     @Mock

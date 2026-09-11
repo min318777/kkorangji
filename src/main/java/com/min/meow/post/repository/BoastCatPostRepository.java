@@ -5,13 +5,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import jakarta.persistence.LockModeType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -57,29 +55,6 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
             "SET b.view = b.view + 1 " +
             "WHERE b.id = :id")
     int incrementViewCount(@Param("id") Long id);
-
-    // 비관적 락 조회수 증가 (v4) — SELECT FOR UPDATE 후 더티 체킹
-    // SELECT ... FOR UPDATE → 행 X-Lock → 다른 트랜잭션 차단 → 순차 처리
-    // User는 LEFT JOIN FETCH로 함께 조회 (락은 BoastCatPost 행에만 걸림, N+1 방지)
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT b FROM BoastCatPost b " +
-            "LEFT JOIN FETCH b.user " +
-            "WHERE b.id = :id")
-    Optional<BoastCatPost> findByIdWithPessimisticLock(@Param("id") Long id);
-
-    /**
-     * 조회수 델타값 일괄 증가 (Redis → DB 동기화용)
-     * Redis에 누적된 조회수를 DB에 한 번에 반영합니다.
-     * 스케줄러에 의해 주기적으로 호출됩니다.
-     * @param id 게시글 ID
-     * @param delta 증가시킬 조회수
-     * @return 업데이트된 행의 수
-     */
-    @Modifying
-    @Query("UPDATE BoastCatPost b " +
-            "SET b.view = b.view + :delta " +
-            "WHERE b.id = :id")
-    int incrementViewCountByDelta(@Param("id") Long id, @Param("delta") int delta);
 
     // ========== 댓글 수 ==========
 

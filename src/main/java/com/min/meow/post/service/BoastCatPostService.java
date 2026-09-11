@@ -14,6 +14,8 @@ import com.min.meow.post.dto.request.UpdateBoastCatPostRequest;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
+import com.min.meow.notification.event.NotificationEventPublisher;
+import com.min.meow.notification.event.PopularScoreEvent;
 import com.min.meow.post.event.PostImageDeleteEventPublisher;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.comment.repository.CommentRepository;
@@ -42,9 +44,9 @@ public class BoastCatPostService {
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final BoastCatPostCountCacheService countCacheService;
-    private final ViewCountService viewCountService;
     private final PopularRankingService popularRankingService;
     private final PostImageDeleteEventPublisher postImageDeleteEventPublisher;
+    private final NotificationEventPublisher notificationEventPublisher;
 
     // ========== 조회 ==========
 
@@ -189,9 +191,9 @@ public class BoastCatPostService {
         return finalImageUrls;
     }
 
-    // ========== 상세조회 + 조회수 통합 API (v1~v4) ==========
+    // ========== 상세조회 + 조회수 통합 API (v1: 비교군 / v2: 채택) ==========
 
-    // v1: 상세조회 + 더티 체킹 (Lost Update 발생)
+    // v1: 상세조회 + 더티 체킹 (Lost Update 발생, 비교군)
     @Transactional
     public GetBoastCatPostResponse getBoastCatPostV1(Long id) {
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
@@ -200,29 +202,14 @@ public class BoastCatPostService {
         return GetBoastCatPostResponse.from(post);
     }
 
-    // v2: 상세조회 + 원자적 UPDATE (동시성 보장)
+    // v2: 상세조회 + 원자적 UPDATE (동시성 보장, 채택)
     @Transactional
     public GetBoastCatPostResponse getBoastCatPostV2(Long id) {
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + id));
         boastCatPostRepository.incrementViewCount(id);
-        return GetBoastCatPostResponse.from(post);
-    }
-
-    // v3: 상세조회 + Redis INCR (트랜잭션 없음 — Redis는 2PC 미지원)
-    public GetBoastCatPostResponse getBoastCatPostV3(Long id, String clientIp) {
-        BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + id));
-        viewCountService.incrementViewCount(PostType.BOAST, id, "ip:" + clientIp);
-        return GetBoastCatPostResponse.from(post);
-    }
-
-    // v4: 상세조회 + 비관적 락 (SELECT FOR UPDATE, 처리량 낮음)
-    @Transactional
-    public GetBoastCatPostResponse getBoastCatPostV4(Long id) {
-        BoastCatPost post = boastCatPostRepository.findByIdWithPessimisticLock(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + id));
-        post.incrementView();
+        // 인기글 Sorted Set 점수 +1 (AFTER_COMMIT 비동기 처리)
+        notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(id, 1));
         return GetBoastCatPostResponse.from(post);
     }
 

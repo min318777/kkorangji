@@ -24,7 +24,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletRequest;
 
 
 @Tag(name = "자랑글", description = "고양이 자랑 게시글 CRUD API")
@@ -112,9 +111,9 @@ public class BoastCatPostController {
         return ResponseEntity.noContent().build();
     }
 
-    // ========== 상세조회 + 조회수 통합 API (v1~v4) ==========
+    // ========== 상세조회 + 조회수 통합 API (v1: 비교군 / v2: 채택) ==========
 
-    @Operation(summary = "자랑글 상세조회 + 조회수 증가 (v1 더티체킹)")
+    @Operation(summary = "자랑글 상세조회 + 조회수 증가 (v1 더티체킹, 비교군)")
     @SecurityRequirements
     @GetMapping("/view/v1/{boastCatPostId}")
     public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastCatPostV1(
@@ -122,32 +121,12 @@ public class BoastCatPostController {
         return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v1)", boastCatPostService.getBoastCatPostV1(boastCatPostId)));
     }
 
-    @Operation(summary = "자랑글 상세조회 + 조회수 증가 (v2 원자적 UPDATE)")
+    @Operation(summary = "자랑글 상세조회 + 조회수 증가 (v2 원자적 UPDATE, 채택)")
     @SecurityRequirements
     @GetMapping("/view/v2/{boastCatPostId}")
     public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastCatPostV2(
             @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId) {
         return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v2)", boastCatPostService.getBoastCatPostV2(boastCatPostId)));
-    }
-
-    @Operation(summary = "자랑글 상세조회 + 조회수 증가 (v3 Redis INCR)")
-    @SecurityRequirements
-    @GetMapping("/view/v3/{boastCatPostId}")
-    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastCatPostV3(
-            @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId,
-            HttpServletRequest request) {
-        String clientIp = request.getHeader("X-Real-IP") != null
-                ? request.getHeader("X-Real-IP")
-                : request.getRemoteAddr();
-        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v3)", boastCatPostService.getBoastCatPostV3(boastCatPostId, clientIp)));
-    }
-
-    @Operation(summary = "자랑글 상세조회 + 조회수 증가 (v4 비관적 락)")
-    @SecurityRequirements
-    @GetMapping("/view/v4/{boastCatPostId}")
-    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastCatPostV4(
-            @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId) {
-        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v4)", boastCatPostService.getBoastCatPostV4(boastCatPostId)));
     }
 
 }
