@@ -1,7 +1,9 @@
 package com.min.meow.common.exception;
 
 import com.min.meow.common.ApiResponse;
+import io.sentry.Sentry;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,23 +20,25 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 커스텀 예외 — 비즈니스 규칙 위반 (의도된 예외 → warn)
+    // 커스텀 예외 — 비즈니스 규칙 위반
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ApiResponse<?>> handleCustomException(CustomException e) {
         ErrorCode errorCode = e.getErrorCode();
         log.warn("비즈니스 예외 발생 [{}]: {}", errorCode.name(), e.getMessage());
-        return createErrorResponse(errorCode.getStatus(), errorCode.name(), errorCode.getMessage());
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(ApiResponse.fail(errorCode.getStatus(), errorCode.name(), errorCode.getMessage(),
+                        MDC.get("requestId"), e.getDetails()));
     }
 
     // Spring 기본 예외 — 클라이언트 실수 (4xx)
     // 클라이언트 실수 — @Valid 검증 실패, 실패한 모든 필드 목록 반환
-    // @RequestBody는 MethodArgumentNotValidException, @ModelAttribute는 BindException으로 던져지는데
-    // 전자가 후자의 서브타입이라 이 핸들러 하나로 둘 다 처리됨
     @ExceptionHandler(BindException.class)
     public ResponseEntity<ApiResponse<?>> handleBindException(BindException e) {
         List<FieldErrorDetail> fieldErrors = e.getBindingResult().getFieldErrors().stream()
@@ -131,6 +135,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<?>> handleException(Exception e) {
         log.error("예상치 못한 오류 발생", e);
+        Sentry.captureException(e);
         return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR",
                 "알 수 없는 오류가 발생했습니다.");
     }
@@ -138,6 +143,6 @@ public class GlobalExceptionHandler {
     private ResponseEntity<ApiResponse<?>> createErrorResponse(HttpStatus status, String errorCode, String message) {
         return ResponseEntity
                 .status(status)
-                .body(ApiResponse.fail(status, errorCode, message));
+                .body(ApiResponse.fail(status, errorCode, message, MDC.get("requestId"), null));
     }
 }

@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -67,7 +68,7 @@ public class BoastCatPostService {
     /** 일반 자랑글 상세 조회 — 캐싱 없음, 단순 DB 조회 */
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(boastCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + boastCatPostId));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", boastCatPostId)));
         return GetBoastCatPostResponse.from(post);
     }
 
@@ -121,7 +122,7 @@ public class BoastCatPostService {
     public UpdateBoastCatPostResponse updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId, Long userId){
 
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + boastCatPostId));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", boastCatPostId)));
 
         // 본인이 아니고 관리자 권한(post:update)도 없으면 → 403
         if (!boastCatPost.isAuthor(userId) && !SecurityUtil.hasAuthority("post:update")) {
@@ -143,7 +144,7 @@ public class BoastCatPostService {
     public void deleteBoastCatPost(Long boastCatPostId, Long userId, boolean hasDeleteAuthority){
         countCacheService.evict();
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + boastCatPostId));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", boastCatPostId)));
         // 본인이 아니고 관리자 권한(post:delete)도 없으면 → 403
         if (!boastCatPost.isAuthor(userId) && !hasDeleteAuthority) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
@@ -197,7 +198,7 @@ public class BoastCatPostService {
     @Transactional
     public GetBoastCatPostResponse getBoastCatPostV1(Long id) {
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + id));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", id)));
         post.incrementView();
         return GetBoastCatPostResponse.from(post);
     }
@@ -206,7 +207,7 @@ public class BoastCatPostService {
     @Transactional
     public GetBoastCatPostResponse getBoastCatPostV2(Long id) {
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + id));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", id)));
         boastCatPostRepository.incrementViewCount(id);
         // 인기글 Sorted Set 점수 +1 (AFTER_COMMIT 비동기 처리)
         notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(id, 1));

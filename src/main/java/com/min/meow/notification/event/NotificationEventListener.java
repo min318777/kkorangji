@@ -6,6 +6,7 @@ import com.min.meow.common.NotificationType;
 import com.min.meow.notification.dto.response.NotificationResponse;
 import com.min.meow.notification.entity.Notification;
 import com.min.meow.notification.service.NotificationSaveService;
+import io.sentry.Sentry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -76,6 +77,7 @@ public class NotificationEventListener {
     public void recoverCommentEvent(Exception e, CommentEvent event) {
         log.error("댓글 알림 최종 실패 (3회 재시도 소진) - commentId: {}, error: {}",
                 event.commentId(), e.getMessage());
+        Sentry.captureException(e);
     }
 
     /**
@@ -111,6 +113,7 @@ public class NotificationEventListener {
     public void recoverLikeEvent(Exception e, LikeEvent event) {
         log.error("좋아요 알림 최종 실패 (3회 재시도 소진) - likeId: {}, error: {}",
                 event.likeId(), e.getMessage());
+        Sentry.captureException(e);
     }
 
     /**

@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "인기글", description = "인기 게시글 목록 조회 API (Cache Stampede 방지 비교)")
+@Tag(name = "인기글", description = "인기 게시글 목록/상세 조회 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/meow/boast-cat-posts")
@@ -34,40 +34,13 @@ public class PopularPostController {
         return ResponseEntity.ok(ApiResponse.success("인기 게시물 조회 성공 (v1)", popularPostService.getPopularPosts()));
     }
 
-    // v2: Lettuce SETNX 분산 락 — Stampede 방지
-    @Operation(summary = "인기 게시물 TOP 24 (v2 - 분산 락)",
-            description = "Redis SETNX 분산 락. MISS 시 첫 스레드만 DB 조회, 나머지 대기.")
-    @SecurityRequirements
-    @GetMapping("/popular/v2")
-    public ResponseEntity<ApiResponse<List<BoastCatPostListResponse>>> getPopularPostsV2() {
-        return ResponseEntity.ok(ApiResponse.success("인기 게시물 조회 성공 (v2)", popularPostService.getPopularPostsV2()));
-    }
-
-    // v3: Cache Warming (스케줄러 현재 비활성 상태 — 설계 의도만 반영)
-    @Operation(summary = "인기 게시물 TOP 24 (v3 - Cache Warming)",
-            description = "설계상 스케줄러가 25초마다 미리 갱신해 MISS를 방지하나, 현재 워밍 스케줄러가 비활성 상태라 TTL 만료 시 MISS 발생.")
-    @SecurityRequirements
-    @GetMapping("/popular/v3")
-    public ResponseEntity<ApiResponse<List<BoastCatPostListResponse>>> getPopularPostsV3() {
-        return ResponseEntity.ok(ApiResponse.success("인기 게시물 조회 성공 (v3)", popularPostService.getPopularPostsV3()));
-    }
-
-    // v4: Redisson RLock — Stampede 방지
-    @Operation(summary = "인기 게시물 TOP 24 (v4 - Redisson RLock)",
-            description = "Redisson RLock 기반 분산 락. 소유자 검증 + Lua 스크립트 원자적 해제.")
-    @SecurityRequirements
-    @GetMapping("/popular/v4")
-    public ResponseEntity<ApiResponse<List<BoastCatPostListResponse>>> getPopularPostsV4() {
-        return ResponseEntity.ok(ApiResponse.success("인기 게시물 조회 성공 (v4)", popularPostService.getPopularPostsV4()));
-    }
-
     /**
      * v5: Redis Sorted Set 실시간 집계
      * 좋아요/댓글/조회수 이벤트 → ZINCRBY → 조회 시 ZRANGE (O(log N))
-     * DB 집계 쿼리 없이 실시간 랭킹 반환
+     * 캐시 없이 매 요청마다 Sorted Set → DB IN 조회로 최신 순위 반환
      */
     @Operation(summary = "인기 게시물 TOP 24 (v5 - Sorted Set)",
-            description = "Redis Sorted Set 실시간 집계. 이벤트 기반 ZINCRBY. DB 집계 쿼리 없음.")
+            description = "Redis Sorted Set 실시간 집계. 이벤트 기반 ZINCRBY. 캐시 없이 매 요청마다 Sorted Set 조회 후 DB IN 쿼리로 상세 조합.")
     @SecurityRequirements
     @GetMapping("/popular/v5")
     public ResponseEntity<ApiResponse<List<BoastCatPostListResponse>>> getPopularPostsV5() {

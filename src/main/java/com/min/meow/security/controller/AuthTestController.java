@@ -23,4 +23,10 @@ public class AuthTestController {
         return ResponseEntity.ok(
                 ApiResponse.success("인증 성공", String.valueOf(user.getUserId())));
     }
+
+    // Sentry 연동 확인용 임시 엔드포인트 — 검증 후 제거
+    @GetMapping("/test/error")
+    public ResponseEntity<Void> triggerError() {
+        throw new RuntimeException("Sentry 연동 테스트용 강제 예외");
+    }
 }

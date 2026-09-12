@@ -79,6 +79,10 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
 
+sentry:
+  enabled: true
+  dsn: ${SENTRY_DSN:}
+
 cookie:
   secure: false # HTTP 로컬 개발 환경
 
