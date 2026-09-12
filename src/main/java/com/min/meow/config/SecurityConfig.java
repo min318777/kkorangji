@@ -108,6 +108,7 @@ public class SecurityConfig {
                                 "/api/users/check-nickname",
                                 "/api/auth/token/refresh",
                                 "/api/auth/kakao/webhook/unlink",
+                                "/api/auth/test/error", // Sentry 연동 확인용 임시 — 검증 후 제거
                                 "/api/logout",
                                 "/error",
                                 "/oauth2/**",

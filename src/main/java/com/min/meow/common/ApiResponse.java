@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+import java.util.Map;
+
 
 @JsonInclude(JsonInclude.Include.NON_NULL) // null 필드는 JSON 직렬화에서 제외 (성공 시 errorCode:null 미노출)
 @Schema(description = "공통 API 응답 래퍼")
@@ -33,6 +35,14 @@ public class ApiResponse<T> {
 
     @Schema(description = "응답 데이터 (실패 시 null)")
     private T data;
+
+    // 실패 시 요청 추적 ID (MdcFilter의 requestId) — 문의 시 서버 로그와 매칭용, 성공 시 null
+    @Schema(description = "요청 추적 ID (실패 시, 디버깅용)", example = "abc12345")
+    private String traceId;
+
+    // 실패 시 추가 상세 정보 (예: {"postId": 5}) — 성공 시 null
+    @Schema(description = "추가 상세 정보 (실패 시, 선택적)")
+    private Map<String, Object> details;
 
     /** 200 OK 성공 응답 */
     public static <T> ApiResponse<T> success(String message, T data) {
@@ -75,6 +85,19 @@ public class ApiResponse<T> {
                 .errorCode(errorCode)
                 .message(message)
                 .data(data)
+                .build();
+    }
+
+    /** 실패 응답 — errorCode + traceId + details 포함 */
+    public static <T> ApiResponse<T> fail(HttpStatus status, String errorCode, String message,
+                                           String traceId, Map<String, Object> details) {
+        return ApiResponse.<T>builder()
+                .status(status.value())
+                .success(false)
+                .errorCode(errorCode)
+                .message(message)
+                .traceId(traceId)
+                .details(details)
                 .build();
     }
 }

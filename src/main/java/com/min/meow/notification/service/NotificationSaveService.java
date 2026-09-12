@@ -2,6 +2,7 @@ package com.min.meow.notification.service;
 
 import com.min.meow.notification.entity.Notification;
 import com.min.meow.notification.repository.NotificationRepository;
+import io.sentry.Sentry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -46,6 +47,7 @@ public class NotificationSaveService {
     public Notification recover(DataAccessException e, Notification notification) {
         log.error("알림 저장 최종 실패 (3회 재시도 소진) - type: {}, receiverUserId: {}, error: {}",
                 notification.getType(), notification.getReceiverUserId(), e.getMessage());
+        Sentry.captureException(e);
         return null;
     }
 }

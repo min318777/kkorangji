@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -73,7 +74,7 @@ public class LostCatPostService {
 
     public GetLostCatPostResponse getLostCatPost(Long lostCatPostId){
         LostCatPost lostCatPost = lostCatRepository.findByIdWithUser(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + lostCatPostId));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", lostCatPostId)));
 
         return GetLostCatPostResponse.builder()
                 .id(lostCatPost.getId())
@@ -185,7 +186,7 @@ public class LostCatPostService {
     @Transactional
     public UpdateLostCatPostResponse updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest, Long userId){
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + lostCatPostId));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", lostCatPostId)));
 
         // 본인이 아니고 관리자 권한(post:update)도 없으면 → 403
         if (!lostCatPost.isAuthor(userId) && !SecurityUtil.hasAuthority("post:update")) {
@@ -227,7 +228,7 @@ public class LostCatPostService {
     public void deleteLostCatPost(Long lostCatPostId, Long userId, boolean hasDeleteAuthority) {
         countCacheService.evict();
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + lostCatPostId));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", lostCatPostId)));
 
         // 본인이 아니고 관리자 권한(post:delete)도 없으면 → 403
         if (!lostCatPost.isAuthor(userId) && !hasDeleteAuthority) {
@@ -254,7 +255,7 @@ public class LostCatPostService {
     @Transactional
     public void updateCompletedStatus(Long lostCatPostId, boolean isCompleted, Long userId) {
         LostCatPost post = lostCatRepository.findById(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + lostCatPostId));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", lostCatPostId)));
         if (!post.isAuthor(userId)) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
@@ -299,7 +300,7 @@ public class LostCatPostService {
     @Transactional
     public void incrementViewCountWithDirtyChecking(Long lostCatPostId) {
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + lostCatPostId));
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", lostCatPostId)));
 
         lostCatPost.incrementView();
         // 트랜잭션 종료 시 JPA가 변경 감지하여 UPDATE 쿼리 실행
@@ -310,7 +311,7 @@ public class LostCatPostService {
     public void incrementViewCount(Long lostCatPostId) {
         int updatedCount = lostCatRepository.incrementViewCount(lostCatPostId);
         if (updatedCount == 0) {
-            throw new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + lostCatPostId);
+            throw new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", lostCatPostId));
         }
     }
 }

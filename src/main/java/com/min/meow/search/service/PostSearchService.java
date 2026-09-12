@@ -34,18 +34,18 @@ public class PostSearchService {
         String keyword = request.getKeyword();
 
         if (requiresLikeFallback(keyword)) {
-            log.info("[자랑글 검색] FTS→LIKE 폴백 | keyword=\"{}\" | 이유=2글자 이상 토큰 없음", keyword);
+            log.debug("[자랑글 검색] FTS→LIKE 폴백 | keyword=\"{}\" | 이유=2글자 이상 토큰 없음", keyword);
             return boastCatPostRepository.search(keyword, keyword, request.getUserId(), pageable);
         }
 
-        log.info("[자랑글 검색] FTS | keyword=\"{}\"", keyword);
+        log.debug("[자랑글 검색] FTS | keyword=\"{}\"", keyword);
         return boastCatPostRepository.searchByKeyword(keyword, request.getUserId(), pageable);
     }
 
     // FTS 검색 (자랑글, 자연어 모드): LIKE 폴백 없이 항상 NATURAL LANGUAGE MODE로 검색 (50% 규칙 검증용)
     public Page<BoastCatPostListResponse> searchByNaturalLanguage(PostSearchRequest request, Pageable pageable) {
         String keyword = request.getKeyword();
-        log.info("[자랑글 검색] FTS(자연어 모드) | keyword=\"{}\"", keyword);
+        log.debug("[자랑글 검색] FTS(자연어 모드) | keyword=\"{}\"", keyword);
         return boastCatPostRepository.searchByNaturalLanguage(keyword, request.getUserId(), pageable);
     }
 
@@ -55,7 +55,7 @@ public class PostSearchService {
         if (keyword == null || keyword.length() < 2) {
             throw new CustomException(ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
         }
-        log.info("[자랑글 검색] LIKE | keyword=\"{}\"", keyword);
+        log.debug("[자랑글 검색] LIKE | keyword=\"{}\"", keyword);
         return boastCatPostRepository.search(
                 request.getTitle(),
                 request.getContents(),
@@ -69,11 +69,11 @@ public class PostSearchService {
         String keyword = request.getKeyword();
 
         if (requiresLikeFallback(keyword)) {
-            log.info("[실종글 검색] FTS→LIKE 폴백 | keyword=\"{}\" | 이유=2글자 이상 토큰 없음", keyword);
+            log.debug("[실종글 검색] FTS→LIKE 폴백 | keyword=\"{}\" | 이유=2글자 이상 토큰 없음", keyword);
             return lostCatRepository.search(keyword, keyword, request.getUserId(), pageable);
         }
 
-        log.info("[실종글 검색] FTS | keyword=\"{}\"", keyword);
+        log.debug("[실종글 검색] FTS | keyword=\"{}\"", keyword);
         return lostCatRepository.searchByKeyword(keyword, request.getUserId(), pageable);
     }
 
@@ -83,7 +83,7 @@ public class PostSearchService {
         if (keyword == null || keyword.length() < 2) {
             throw new CustomException(ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
         }
-        log.info("[실종글 검색] LIKE | keyword=\"{}\"", keyword);
+        log.debug("[실종글 검색] LIKE | keyword=\"{}\"", keyword);
         return lostCatRepository.search(
                 request.getTitle(),
                 request.getContents(),
