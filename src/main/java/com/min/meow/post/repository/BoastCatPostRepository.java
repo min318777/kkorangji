@@ -84,9 +84,4 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
             "SET b.likeCount = CASE WHEN b.likeCount + :delta < 0 THEN 0 ELSE b.likeCount + :delta END " +
             "WHERE b.id = :id")
     int updateLikeCount(@Param("id") Long id, @Param("delta") int delta);
-
-    // ========== LIKE 검색 ==========
-
-    // LIKE 검색: 제목 또는 내용에 keyword 포함
-    Page<BoastCatPost> findByTitleContainingOrContentsContaining(String title, String contents, Pageable pageable);
 }

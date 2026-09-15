@@ -2,10 +2,10 @@ package com.min.meow.search.service;
 
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.LostCatPostListResponse;
-import com.min.meow.post.repository.BoastCatPostRepository;
-import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.search.dto.request.PostLikeSearchRequest;
 import com.min.meow.search.dto.request.PostSearchRequest;
+import com.min.meow.search.repository.BoastCatPostSearchRepository;
+import com.min.meow.search.repository.LostCatPostSearchRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -24,8 +24,8 @@ public class PostSearchService {
     // ngram_token_size(2) 미만 토큰은 FTS 인덱스에 없어 매치 불가
     private static final int MIN_TOKEN_LENGTH = 2;
 
-    private final BoastCatPostRepository boastCatPostRepository;
-    private final LostCatRepository lostCatRepository;
+    private final BoastCatPostSearchRepository boastCatPostRepository;
+    private final LostCatPostSearchRepository lostCatRepository;
 
     // FTS 검색 (자랑글): 2글자 이상 토큰이 없으면 LIKE 자동 폴백
     public Page<BoastCatPostListResponse> searchByFts(PostSearchRequest request, Pageable pageable) {

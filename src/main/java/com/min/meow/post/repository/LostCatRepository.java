@@ -41,7 +41,7 @@ public interface LostCatRepository extends JpaRepository<LostCatPost, Long>, Los
     // ========== 조회수 ==========
 
     /**
-     * 조회수 원자적 증가 (v2 — 동시성 문제 해결)
+     * 조회수 원자적 증가
      * DB 레벨에서 view = view + 1을 수행하여 Race Condition을 방지합니다.
      * 여러 스레드가 동시에 호출해도 정확한 조회수가 보장됩니다.
      * @param id 게시글 ID
@@ -68,9 +68,4 @@ public interface LostCatRepository extends JpaRepository<LostCatPost, Long>, Los
            "SET l.commentCount = CASE WHEN l.commentCount > 0 THEN l.commentCount - 1 ELSE 0 END " +
            "WHERE l.id = :id")
     void decrementCommentCount(@Param("id") Long id);
-
-    // ========== LIKE 검색 ==========
-
-    // LIKE 검색: 제목 또는 내용에 keyword 포함 ('%keyword%' 방식, JPA 메서드 이름 쿼리)
-    Page<LostCatPost> findByTitleContainingOrContentsContaining(String title, String contents, Pageable pageable);
 }

@@ -2,10 +2,10 @@ package com.min.meow.search.service;
 
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.LostCatPost;
-import com.min.meow.post.repository.BoastCatPostRepository;
-import com.min.meow.post.repository.LostCatRepository;
 import com.min.meow.search.dto.request.PostLikeSearchRequest;
 import com.min.meow.search.dto.request.PostSearchRequest;
+import com.min.meow.search.repository.BoastCatPostSearchRepository;
+import com.min.meow.search.repository.LostCatPostSearchRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,10 +29,10 @@ class PostSearchServiceTest {
     private PostSearchService postSearchService;
 
     @Mock
-    private BoastCatPostRepository boastCatPostRepository;
+    private BoastCatPostSearchRepository boastCatPostRepository;
 
     @Mock
-    private LostCatRepository lostCatRepository;
+    private LostCatPostSearchRepository lostCatRepository;
 
     private final Pageable pageable = PageRequest.of(0, 10);
 
