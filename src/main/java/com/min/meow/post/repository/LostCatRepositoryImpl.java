@@ -206,7 +206,7 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
 
     // LIKE 검색: '%keyword%' 방식
     @Override
-    public Page<LostCatPostListResponse> search(String title, String contents, Long userId, Pageable pageable) {
+    public Page<LostCatPostListResponse> search(String keyword, Long userId, Pageable pageable) {
         List<LostCatPostListResponse> results = queryFactory
                 .select(new QLostCatPostListResponse(
                         lostCatPost.id,
@@ -221,7 +221,7 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 ))
                 .from(lostCatPost)
                 .where(
-                        likeTitleOrContents(title, contents),
+                        likeTitleOrContents(keyword),
                         eqUserId(userId))
                 .orderBy(lostCatPost.createdAt.desc())
                 .offset(pageable.getOffset())
@@ -232,7 +232,7 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .select(lostCatPost.count())
                 .from(lostCatPost)
                 .where(
-                        likeTitleOrContents(title, contents),
+                        likeTitleOrContents(keyword),
                         eqUserId(userId))
                 .fetchOne();
 
@@ -364,16 +364,11 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .fetch();
     }
 
-    // 제목 OR 내용 LIKE 검색 조건
+    // 제목 OR 내용 LIKE 검색 조건 (동일 키워드로 둘 중 하나라도 포함하면 매칭)
     // DB collation(utf8mb4_0900_ai_ci)이 이미 대소문자 구분 안 함 -> LOWER() 이중 적용 방지
-    private BooleanExpression likeTitleOrContents(String title, String contents) {
-        BooleanExpression titleExpr = (title != null && !title.isEmpty())
-                ? lostCatPost.title.contains(title) : null;
-        BooleanExpression contentsExpr = (contents != null && !contents.isEmpty())
-                ? lostCatPost.contents.contains(contents) : null;
-        if (titleExpr == null) return contentsExpr;
-        if (contentsExpr == null) return titleExpr;
-        return titleExpr.or(contentsExpr);
+    private BooleanExpression likeTitleOrContents(String keyword) {
+        if (keyword == null || keyword.isEmpty()) return null;
+        return lostCatPost.title.contains(keyword).or(lostCatPost.contents.contains(keyword));
     }
 
     // userId 일치 조건 (null이면 전체 검색)

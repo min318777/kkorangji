@@ -39,7 +39,7 @@ public interface LostCatRepositoryCustom {
     Page<LostCatPostListResponse> findNearbyWithST(double lat, double lng, double radiusKm, Pageable pageable);
 
     // LIKE 검색: '%keyword%' 방식
-    Page<LostCatPostListResponse> search(String title, String contents, Long userId, Pageable pageable);
+    Page<LostCatPostListResponse> search(String keyword, Long userId, Pageable pageable);
 
     // FTS 검색: MATCH AGAINST (ngram)
     Page<LostCatPostListResponse> searchByKeyword(String keyword, Long userId, Pageable pageable);

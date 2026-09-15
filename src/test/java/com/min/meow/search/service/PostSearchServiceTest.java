@@ -1,9 +1,12 @@
 package com.min.meow.search.service;
 
+import com.min.meow.common.exception.CustomException;
+import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.LostCatPostListResponse;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.post.repository.LostCatRepository;
+import com.min.meow.search.dto.request.PostLikeSearchRequest;
 import com.min.meow.search.dto.request.PostSearchRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +18,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
@@ -49,7 +53,7 @@ class PostSearchServiceTest {
 
         // then
         then(boastCatPostRepository).should().searchByKeyword("고양이", null, pageable);
-        then(boastCatPostRepository).should(never()).search(any(), any(), any(), any());
+        then(boastCatPostRepository).should(never()).search(any(), any(), any());
     }
 
     @Test
@@ -80,7 +84,7 @@ class PostSearchServiceTest {
 
         // then
         then(boastCatPostRepository).should().searchByKeyword("a 고양이", null, pageable);
-        then(boastCatPostRepository).should(never()).search(any(), any(), any(), any());
+        then(boastCatPostRepository).should(never()).search(any(), any(), any());
     }
 
     @Test
@@ -88,14 +92,14 @@ class PostSearchServiceTest {
     void 모든_토큰이_1글자면_LIKE_폴백() {
         // given
         PostSearchRequest request = PostSearchRequest.builder().keyword("a b").build();
-        given(boastCatPostRepository.search("a b", "a b", null, pageable))
+        given(boastCatPostRepository.search("a b", null, pageable))
                 .willReturn(new PageImpl<>(java.util.List.of()));
 
         // when
         postSearchService.searchByFts(request, pageable);
 
         // then
-        then(boastCatPostRepository).should().search("a b", "a b", null, pageable);
+        then(boastCatPostRepository).should().search("a b", null, pageable);
         then(boastCatPostRepository).should(never()).searchByKeyword(any(), any(), any());
     }
 
@@ -112,7 +116,7 @@ class PostSearchServiceTest {
 
         // then
         then(boastCatPostRepository).should().searchByNaturalLanguage("고양이", null, pageable);
-        then(boastCatPostRepository).should(never()).search(any(), any(), any(), any());
+        then(boastCatPostRepository).should(never()).search(any(), any(), any());
         then(boastCatPostRepository).should(never()).searchByKeyword(any(), any(), any());
     }
 
@@ -129,5 +133,73 @@ class PostSearchServiceTest {
 
         // then
         then(lostCatRepository).should().searchByKeyword("나비", null, pageable);
+    }
+
+    @Test
+    @DisplayName("LIKE 검색은 keyword로 제목/내용을 함께 조회하도록 위임한다")
+    void LIKE_검색은_keyword로_위임() {
+        // given
+        PostLikeSearchRequest request = PostLikeSearchRequest.builder().keyword("고양이").build();
+        given(boastCatPostRepository.search("고양이", null, pageable))
+                .willReturn(new PageImpl<>(java.util.List.of()));
+
+        // when
+        postSearchService.searchByLike(request, pageable);
+
+        // then
+        then(boastCatPostRepository).should().search("고양이", null, pageable);
+    }
+
+    @Test
+    @DisplayName("LIKE 검색어가 2글자 미만이면 예외가 발생한다")
+    void LIKE_검색어가_2글자_미만이면_예외() {
+        // given
+        PostLikeSearchRequest request = PostLikeSearchRequest.builder().keyword("a").build();
+
+        // when & then
+        assertThatThrownBy(() -> postSearchService.searchByLike(request, pageable))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
+        then(boastCatPostRepository).should(never()).search(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("LIKE 검색어가 없으면 예외가 발생한다")
+    void LIKE_검색어가_없으면_예외() {
+        // given
+        PostLikeSearchRequest request = PostLikeSearchRequest.builder().build();
+
+        // when & then
+        assertThatThrownBy(() -> postSearchService.searchByLike(request, pageable))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
+    }
+
+    @Test
+    @DisplayName("실종글 LIKE 검색도 keyword로 제목/내용을 함께 조회하도록 위임한다")
+    void 실종글_LIKE_검색은_keyword로_위임() {
+        // given
+        PostLikeSearchRequest request = PostLikeSearchRequest.builder().keyword("나비").build();
+        given(lostCatRepository.search("나비", null, pageable))
+                .willReturn(new PageImpl<>(java.util.List.of()));
+
+        // when
+        postSearchService.searchLostByLike(request, pageable);
+
+        // then
+        then(lostCatRepository).should().search("나비", null, pageable);
+    }
+
+    @Test
+    @DisplayName("실종글 LIKE 검색어가 2글자 미만이면 예외가 발생한다")
+    void 실종글_LIKE_검색어가_2글자_미만이면_예외() {
+        // given
+        PostLikeSearchRequest request = PostLikeSearchRequest.builder().keyword("나").build();
+
+        // when & then
+        assertThatThrownBy(() -> postSearchService.searchLostByLike(request, pageable))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
+        then(lostCatRepository).should(never()).search(any(), any(), any());
     }
 }

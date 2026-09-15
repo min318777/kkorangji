@@ -48,7 +48,7 @@ public class PostSearchController {
         return ResponseEntity.ok(ApiResponse.success("자연어 모드 검색 성공", PageResponse.from(posts)));
     }
 
-    @Operation(summary = "자랑글 LIKE 검색 (성능 비교용)", description = "LIKE '%keyword%' 방식. Full Table Scan. 예: ?title=고양이&contents=귀여운")
+    @Operation(summary = "자랑글 LIKE 검색", description = "LIKE '%keyword%' 방식. Full Table Scan. 예: ?keyword=고양이")
     @SecurityRequirements
     @GetMapping("/api/meow/boast-cat-posts/search/like")
     public ResponseEntity<ApiResponse<PageResponse<BoastCatPostListResponse>>> searchByLike(
@@ -68,7 +68,7 @@ public class PostSearchController {
         return ResponseEntity.ok(ApiResponse.success("실종글 FTS 검색 성공", PageResponse.from(posts)));
     }
 
-    @Operation(summary = "실종글 LIKE 검색 (성능 비교용)", description = "LIKE '%keyword%' 방식. Full Table Scan.")
+    @Operation(summary = "실종글 LIKE 검색)", description = "LIKE '%keyword%' 방식. Full Table Scan.")
     @SecurityRequirements
     @GetMapping("/api/meow/lost-cat-posts/search/like")
     public ResponseEntity<ApiResponse<PageResponse<LostCatPostListResponse>>> searchLostByLike(

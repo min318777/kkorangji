@@ -35,7 +35,7 @@ public class PostSearchService {
 
         if (requiresLikeFallback(keyword)) {
             log.debug("[자랑글 검색] FTS→LIKE 폴백 | keyword=\"{}\" | 이유=2글자 이상 토큰 없음", keyword);
-            return boastCatPostRepository.search(keyword, keyword, request.getUserId(), pageable);
+            return boastCatPostRepository.search(keyword, request.getUserId(), pageable);
         }
 
         log.debug("[자랑글 검색] FTS | keyword=\"{}\"", keyword);
@@ -49,19 +49,14 @@ public class PostSearchService {
         return boastCatPostRepository.searchByNaturalLanguage(keyword, request.getUserId(), pageable);
     }
 
-    // LIKE 검색 (자랑글): '%keyword%' 방식 (성능 비교용)
+    // LIKE 검색 (자랑글): '%keyword%' 방식
     public Page<BoastCatPostListResponse> searchByLike(PostLikeSearchRequest request, Pageable pageable) {
-        String keyword = request.getTitle() != null ? request.getTitle() : request.getContents();
+        String keyword = request.getKeyword();
         if (keyword == null || keyword.length() < 2) {
             throw new CustomException(ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
         }
         log.debug("[자랑글 검색] LIKE | keyword=\"{}\"", keyword);
-        return boastCatPostRepository.search(
-                request.getTitle(),
-                request.getContents(),
-                request.getUserId(),
-                pageable
-        );
+        return boastCatPostRepository.search(keyword, request.getUserId(), pageable);
     }
 
     // FTS 검색 (실종글): 2글자 이상 토큰이 없으면 LIKE 자동 폴백
@@ -70,7 +65,7 @@ public class PostSearchService {
 
         if (requiresLikeFallback(keyword)) {
             log.debug("[실종글 검색] FTS→LIKE 폴백 | keyword=\"{}\" | 이유=2글자 이상 토큰 없음", keyword);
-            return lostCatRepository.search(keyword, keyword, request.getUserId(), pageable);
+            return lostCatRepository.search(keyword, request.getUserId(), pageable);
         }
 
         log.debug("[실종글 검색] FTS | keyword=\"{}\"", keyword);
@@ -79,17 +74,12 @@ public class PostSearchService {
 
     // LIKE 검색 (실종글): '%keyword%' 방식 (성능 비교용)
     public Page<LostCatPostListResponse> searchLostByLike(PostLikeSearchRequest request, Pageable pageable) {
-        String keyword = request.getTitle() != null ? request.getTitle() : request.getContents();
+        String keyword = request.getKeyword();
         if (keyword == null || keyword.length() < 2) {
             throw new CustomException(ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
         }
         log.debug("[실종글 검색] LIKE | keyword=\"{}\"", keyword);
-        return lostCatRepository.search(
-                request.getTitle(),
-                request.getContents(),
-                request.getUserId(),
-                pageable
-        );
+        return lostCatRepository.search(keyword, request.getUserId(), pageable);
     }
 
     // 2글자 이상 토큰이 하나도 없으면 FTS로 검색할 대상 자체가 없어 LIKE로 폴백
