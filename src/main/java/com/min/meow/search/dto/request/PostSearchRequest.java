@@ -17,15 +17,8 @@ public class PostSearchRequest {
     @Size(min = 2, message = "검색어는 2글자 이상이어야 합니다.")
     private String keyword;
 
-    @Schema(description = "작성자 ID (특정 유저 글만 검색)", example = "1")
-    private Long userId;
-
     // 검색어 앞뒤 공백 제거
     public void setKeyword(String keyword) {
         this.keyword = keyword != null ? keyword.trim() : null;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
     }
 }

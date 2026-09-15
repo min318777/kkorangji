@@ -1,7 +1,5 @@
 package com.min.meow.search.service;
 
-import com.min.meow.common.exception.CustomException;
-import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.LostCatPostListResponse;
 import com.min.meow.post.repository.BoastCatPostRepository;
@@ -35,28 +33,27 @@ public class PostSearchService {
 
         if (requiresLikeFallback(keyword)) {
             log.debug("[자랑글 검색] FTS→LIKE 폴백 | keyword=\"{}\" | 이유=2글자 이상 토큰 없음", keyword);
-            return boastCatPostRepository.search(keyword, request.getUserId(), pageable);
+            return boastCatPostRepository.findByTitleContainingOrContentsContaining(keyword, keyword, pageable)
+                    .map(BoastCatPostListResponse::from);
         }
 
         log.debug("[자랑글 검색] FTS | keyword=\"{}\"", keyword);
-        return boastCatPostRepository.searchByKeyword(keyword, request.getUserId(), pageable);
+        return boastCatPostRepository.searchByKeyword(keyword, pageable);
     }
 
     // FTS 검색 (자랑글, 자연어 모드): LIKE 폴백 없이 항상 NATURAL LANGUAGE MODE로 검색 (50% 규칙 검증용)
     public Page<BoastCatPostListResponse> searchByNaturalLanguage(PostSearchRequest request, Pageable pageable) {
         String keyword = request.getKeyword();
         log.debug("[자랑글 검색] FTS(자연어 모드) | keyword=\"{}\"", keyword);
-        return boastCatPostRepository.searchByNaturalLanguage(keyword, request.getUserId(), pageable);
+        return boastCatPostRepository.searchByNaturalLanguage(keyword, pageable);
     }
 
-    // LIKE 검색 (자랑글): '%keyword%' 방식
+    // LIKE 검색 (자랑글): '%keyword%' 방식 (JPA 메서드 이름 쿼리)
     public Page<BoastCatPostListResponse> searchByLike(PostLikeSearchRequest request, Pageable pageable) {
         String keyword = request.getKeyword();
-        if (keyword == null || keyword.length() < 2) {
-            throw new CustomException(ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
-        }
         log.debug("[자랑글 검색] LIKE | keyword=\"{}\"", keyword);
-        return boastCatPostRepository.search(keyword, request.getUserId(), pageable);
+        return boastCatPostRepository.findByTitleContainingOrContentsContaining(keyword, keyword, pageable)
+                .map(BoastCatPostListResponse::from);
     }
 
     // FTS 검색 (실종글): 2글자 이상 토큰이 없으면 LIKE 자동 폴백
@@ -65,21 +62,20 @@ public class PostSearchService {
 
         if (requiresLikeFallback(keyword)) {
             log.debug("[실종글 검색] FTS→LIKE 폴백 | keyword=\"{}\" | 이유=2글자 이상 토큰 없음", keyword);
-            return lostCatRepository.search(keyword, request.getUserId(), pageable);
+            return lostCatRepository.findByTitleContainingOrContentsContaining(keyword, keyword, pageable)
+                    .map(LostCatPostListResponse::from);
         }
 
         log.debug("[실종글 검색] FTS | keyword=\"{}\"", keyword);
-        return lostCatRepository.searchByKeyword(keyword, request.getUserId(), pageable);
+        return lostCatRepository.searchByKeyword(keyword, pageable);
     }
 
-    // LIKE 검색 (실종글): '%keyword%' 방식 (성능 비교용)
+    // LIKE 검색 (실종글): '%keyword%' 방식 (JPA 메서드 이름 쿼리)
     public Page<LostCatPostListResponse> searchLostByLike(PostLikeSearchRequest request, Pageable pageable) {
         String keyword = request.getKeyword();
-        if (keyword == null || keyword.length() < 2) {
-            throw new CustomException(ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
-        }
         log.debug("[실종글 검색] LIKE | keyword=\"{}\"", keyword);
-        return lostCatRepository.search(keyword, request.getUserId(), pageable);
+        return lostCatRepository.findByTitleContainingOrContentsContaining(keyword, keyword, pageable)
+                .map(LostCatPostListResponse::from);
     }
 
     // 2글자 이상 토큰이 하나도 없으면 FTS로 검색할 대상 자체가 없어 LIKE로 폴백

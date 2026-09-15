@@ -68,4 +68,9 @@ public interface LostCatRepository extends JpaRepository<LostCatPost, Long>, Los
            "SET l.commentCount = CASE WHEN l.commentCount > 0 THEN l.commentCount - 1 ELSE 0 END " +
            "WHERE l.id = :id")
     void decrementCommentCount(@Param("id") Long id);
+
+    // ========== LIKE 검색 ==========
+
+    // LIKE 검색: 제목 또는 내용에 keyword 포함 ('%keyword%' 방식, JPA 메서드 이름 쿼리)
+    Page<LostCatPost> findByTitleContainingOrContentsContaining(String title, String contents, Pageable pageable);
 }

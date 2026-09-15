@@ -1,5 +1,6 @@
 package com.min.meow.post.dto.response;
 
+import com.min.meow.post.entity.LostCatPost;
 import com.querydsl.core.annotations.QueryProjection;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -62,5 +63,20 @@ public class LostCatPostListResponse {
         this.completed = completed;
         this.createdAt = createdAt;
         this.thumbnailUrl = thumbnailUrl;
+    }
+
+    // JPA 메서드 이름 쿼리(LIKE 검색)로 조회한 엔티티를 DTO로 변환
+    public static LostCatPostListResponse from(LostCatPost post) {
+        return LostCatPostListResponse.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .catName(post.getCatName())
+                .lostLocation(post.getLostLocation())
+                .commentCount(post.getCommentCount())
+                .view(post.getView())
+                .completed(post.isCompleted())
+                .createdAt(post.getCreatedAt())
+                .thumbnailUrl(post.getThumbnailUrl())
+                .build();
     }
 }

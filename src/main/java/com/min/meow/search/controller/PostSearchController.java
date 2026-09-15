@@ -48,11 +48,11 @@ public class PostSearchController {
         return ResponseEntity.ok(ApiResponse.success("자연어 모드 검색 성공", PageResponse.from(posts)));
     }
 
-    @Operation(summary = "자랑글 LIKE 검색", description = "LIKE '%keyword%' 방식. Full Table Scan. 예: ?keyword=고양이")
+    @Operation(summary = "자랑글 LIKE 검색", description = "LIKE '%keyword%' 방식. Full Table Scan. keyword 2글자 이상 필수. 예: ?keyword=고양이")
     @SecurityRequirements
     @GetMapping("/api/meow/boast-cat-posts/search/like")
     public ResponseEntity<ApiResponse<PageResponse<BoastCatPostListResponse>>> searchByLike(
-            @ModelAttribute PostLikeSearchRequest request,
+            @Valid @ModelAttribute PostLikeSearchRequest request,
             @PageableDefault(size = 10) Pageable pageable) {
         Page<BoastCatPostListResponse> posts = postSearchService.searchByLike(request, pageable);
         return ResponseEntity.ok(ApiResponse.success("LIKE 검색 성공", PageResponse.from(posts)));
@@ -68,11 +68,11 @@ public class PostSearchController {
         return ResponseEntity.ok(ApiResponse.success("실종글 FTS 검색 성공", PageResponse.from(posts)));
     }
 
-    @Operation(summary = "실종글 LIKE 검색)", description = "LIKE '%keyword%' 방식. Full Table Scan.")
+    @Operation(summary = "실종글 LIKE 검색", description = "LIKE '%keyword%' 방식. Full Table Scan. keyword 2글자 이상 필수.")
     @SecurityRequirements
     @GetMapping("/api/meow/lost-cat-posts/search/like")
     public ResponseEntity<ApiResponse<PageResponse<LostCatPostListResponse>>> searchLostByLike(
-            @ModelAttribute PostLikeSearchRequest request,
+            @Valid @ModelAttribute PostLikeSearchRequest request,
             @PageableDefault(size = 10) Pageable pageable) {
         Page<LostCatPostListResponse> posts = postSearchService.searchLostByLike(request, pageable);
         return ResponseEntity.ok(ApiResponse.success("실종글 LIKE 검색 성공", PageResponse.from(posts)));

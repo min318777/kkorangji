@@ -1,5 +1,6 @@
 package com.min.meow.post.dto.response;
 
+import com.min.meow.post.entity.BoastCatPost;
 import com.querydsl.core.annotations.QueryProjection;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -54,5 +55,18 @@ public class BoastCatPostListResponse {
         this.view = view;
         this.createdAt = createdAt;
         this.thumbnailUrl = thumbnailUrl;
+    }
+
+    // JPA 메서드 이름 쿼리(LIKE 검색)로 조회한 엔티티를 DTO로 변환
+    public static BoastCatPostListResponse from(BoastCatPost post) {
+        return BoastCatPostListResponse.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .likeCount(post.getLikeCount())
+                .commentCount(post.getCommentCount())
+                .view(post.getView())
+                .createdAt(post.getCreatedAt())
+                .thumbnailUrl(post.getThumbnailUrl())
+                .build();
     }
 }

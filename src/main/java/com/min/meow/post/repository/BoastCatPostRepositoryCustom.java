@@ -8,14 +8,11 @@ import java.util.List;
 
 public interface BoastCatPostRepositoryCustom {
 
-    // LIKE 검색: '%keyword%' 방식 (성능 비교 기준선)
-    Page<BoastCatPostListResponse> search(String keyword, Long userId, Pageable pageable);
-
     // Full-Text Search (ngram): MATCH(title, contents) AGAINST(keyword IN BOOLEAN MODE)
-    Page<BoastCatPostListResponse> searchByKeyword(String keyword, Long userId, Pageable pageable);
+    Page<BoastCatPostListResponse> searchByKeyword(String keyword, Pageable pageable);
 
     // Full-Text Search (ngram): MATCH(title, contents) AGAINST(keyword IN NATURAL LANGUAGE MODE)
-    Page<BoastCatPostListResponse> searchByNaturalLanguage(String keyword, Long userId, Pageable pageable);
+    Page<BoastCatPostListResponse> searchByNaturalLanguage(String keyword, Pageable pageable);
 
     Page<BoastCatPostListResponse> findAllWithProjection(Pageable pageable);
 

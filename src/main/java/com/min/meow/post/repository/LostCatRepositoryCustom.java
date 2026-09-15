@@ -38,11 +38,8 @@ public interface LostCatRepositoryCustom {
     // 내 주변 실종글 조회 (ST_Distance_Sphere 방식) — 정확한 원형 반경 + 거리순 정렬
     Page<LostCatPostListResponse> findNearbyWithST(double lat, double lng, double radiusKm, Pageable pageable);
 
-    // LIKE 검색: '%keyword%' 방식
-    Page<LostCatPostListResponse> search(String keyword, Long userId, Pageable pageable);
-
     // FTS 검색: MATCH AGAINST (ngram)
-    Page<LostCatPostListResponse> searchByKeyword(String keyword, Long userId, Pageable pageable);
+    Page<LostCatPostListResponse> searchByKeyword(String keyword, Pageable pageable);
 
     // count 캐싱용 - content만 조회 (COUNT 쿼리 없음)
     List<LostCatPostListResponse> findContentWithProjection(Pageable pageable);

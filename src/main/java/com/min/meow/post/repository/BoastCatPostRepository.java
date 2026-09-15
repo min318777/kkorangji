@@ -22,9 +22,6 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
 
     /**
      * 단일 게시글 상세 조회
-     * User는 @ManyToOne (N:1) 관계이므로 Fetch Join 적용
-     * - 결과 행이 뻥튀기되지 않아 안전함
-     * - 한 번의 쿼리로 게시글 + 작성자 정보 조회
      * imageUrls는 @OneToMany (1:N) 관계라 Fetch Join하지 않음
      * - User와 함께 Fetch Join 시 카테시안 곱 발생 (데이터 중복)
      * - 두 개 이상 컬렉션을 동시에 Fetch Join하면 MultipleBagFetchException 발생
@@ -44,7 +41,7 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
     // ========== 조회수 ==========
 
     /**
-     * 조회수 원자적 증가 (v2 — 동시성 문제 해결)
+     * 조회수 원자적 증가
      * DB 레벨에서 view = view + 1을 수행하여 Race Condition을 방지합니다.
      * 여러 스레드가 동시에 호출해도 정확한 조회수가 보장됩니다.
      * @param id 게시글 ID
@@ -79,7 +76,7 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
      * delta: 양수(좋아요 등록 +1), 음수(좋아요 취소 -1)
      * likeCount가 음수가 되지 않도록 최솟값 0 보장
      * @param id 게시글 ID
-     * @param delta 증가/감소시킬 좋아요 수 (음수 가능)
+     * @param delta 증가/감소시킬 좋아요 수
      * @return 업데이트된 행의 수
      */
     @Modifying
@@ -87,4 +84,9 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
             "SET b.likeCount = CASE WHEN b.likeCount + :delta < 0 THEN 0 ELSE b.likeCount + :delta END " +
             "WHERE b.id = :id")
     int updateLikeCount(@Param("id") Long id, @Param("delta") int delta);
+
+    // ========== LIKE 검색 ==========
+
+    // LIKE 검색: 제목 또는 내용에 keyword 포함
+    Page<BoastCatPost> findByTitleContainingOrContentsContaining(String title, String contents, Pageable pageable);
 }

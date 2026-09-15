@@ -3,7 +3,6 @@ package com.min.meow.post.repository;
 import com.min.meow.post.dto.response.LostCatPostListResponse;
 import com.min.meow.post.dto.response.QLostCatPostListResponse;
 import com.min.meow.post.entity.QLostCatPost;
-import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -204,44 +203,9 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
         return new PageImpl<>(content, pageable, total);
     }
 
-    // LIKE 검색: '%keyword%' 방식
-    @Override
-    public Page<LostCatPostListResponse> search(String keyword, Long userId, Pageable pageable) {
-        List<LostCatPostListResponse> results = queryFactory
-                .select(new QLostCatPostListResponse(
-                        lostCatPost.id,
-                        lostCatPost.title,
-                        lostCatPost.catName,
-                        lostCatPost.lostLocation,
-                        lostCatPost.commentCount,
-                        lostCatPost.view,
-                        lostCatPost.isCompleted,
-                        lostCatPost.createdAt,
-                        lostCatPost.thumbnailUrl
-                ))
-                .from(lostCatPost)
-                .where(
-                        likeTitleOrContents(keyword),
-                        eqUserId(userId))
-                .orderBy(lostCatPost.createdAt.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        Long total = queryFactory
-                .select(lostCatPost.count())
-                .from(lostCatPost)
-                .where(
-                        likeTitleOrContents(keyword),
-                        eqUserId(userId))
-                .fetchOne();
-
-        return new PageImpl<>(results, pageable, total != null ? total : 0L);
-    }
-
     // FTS 검색: MATCH AGAINST (ngram 파서)
     @Override
-    public Page<LostCatPostListResponse> searchByKeyword(String keyword, Long userId, Pageable pageable) {
+    public Page<LostCatPostListResponse> searchByKeyword(String keyword, Pageable pageable) {
         // BOOLEAN MODE: 고빈도 단어 50% 규칙 없음, 단순 포함 여부만 체크
         String booleanKeyword = sanitizeForBooleanMode(keyword);
 
@@ -250,7 +214,6 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                        l.comment_count, l.view, l.is_completed, l.created_at, l.thumbnail_url
                 FROM lost_cat_post l
                 WHERE MATCH(l.title, l.contents, l.cat_name, l.lost_location) AGAINST(:keyword IN BOOLEAN MODE)
-                  AND (:userId IS NULL OR l.user_id = :userId)
                 ORDER BY l.created_at DESC
                 LIMIT :limit OFFSET :offset
                 """;
@@ -259,13 +222,11 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 SELECT COUNT(*)
                 FROM lost_cat_post l
                 WHERE MATCH(l.title, l.contents, l.cat_name, l.lost_location) AGAINST(:keyword IN BOOLEAN MODE)
-                  AND (:userId IS NULL OR l.user_id = :userId)
                 """;
 
         @SuppressWarnings("unchecked")
         List<Object[]> rows = entityManager.createNativeQuery(dataSql)
                 .setParameter("keyword", booleanKeyword)
-                .setParameter("userId", userId)
                 .setParameter("limit", pageable.getPageSize())
                 .setParameter("offset", (int) pageable.getOffset())
                 .getResultList();
@@ -290,7 +251,6 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
 
         long total = ((Number) entityManager.createNativeQuery(countSql)
                 .setParameter("keyword", booleanKeyword)
-                .setParameter("userId", userId)
                 .getSingleResult()).longValue();
 
         return new PageImpl<>(content, pageable, total);
@@ -362,19 +322,6 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
                 .where(lostCatPost.id.in(ids))
                 .orderBy(lostCatPost.createdAt.desc())
                 .fetch();
-    }
-
-    // 제목 OR 내용 LIKE 검색 조건 (동일 키워드로 둘 중 하나라도 포함하면 매칭)
-    // DB collation(utf8mb4_0900_ai_ci)이 이미 대소문자 구분 안 함 -> LOWER() 이중 적용 방지
-    private BooleanExpression likeTitleOrContents(String keyword) {
-        if (keyword == null || keyword.isEmpty()) return null;
-        return lostCatPost.title.contains(keyword).or(lostCatPost.contents.contains(keyword));
-    }
-
-    // userId 일치 조건 (null이면 전체 검색)
-    private BooleanExpression eqUserId(Long userId) {
-        if (userId == null) return null;
-        return lostCatPost.user.id.eq(userId);
     }
 
     // BOOLEAN MODE 변환: 각 단어를 + (필수 조건)으로 처리

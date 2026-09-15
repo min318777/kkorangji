@@ -3,7 +3,6 @@ package com.min.meow.post.repository;
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.QBoastCatPostListResponse;
 import com.min.meow.post.entity.QBoastCatPost;
-import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -33,42 +32,6 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
     private final QBoastCatPost boastCatPost = QBoastCatPost.boastCatPost;
 
     /**
-     * LIKE 검색
-     * - LIKE '%keyword%' 방식 → 인덱스 미사용, Full Table Scan
-     */
-    @Override
-    public Page<BoastCatPostListResponse> search(String keyword, Long userId, Pageable pageable) {
-        List<BoastCatPostListResponse> results = queryFactory
-                .select(new QBoastCatPostListResponse(
-                        boastCatPost.id,
-                        boastCatPost.title,
-                        boastCatPost.likeCount,
-                        boastCatPost.commentCount,
-                        boastCatPost.view,
-                        boastCatPost.createdAt,
-                        boastCatPost.thumbnailUrl
-                ))
-                .from(boastCatPost)
-                .where(
-                        likeTitleOrContents(keyword),
-                        eqUserId(userId))
-                .orderBy(boastCatPost.createdAt.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        Long total = queryFactory
-                .select(boastCatPost.count())
-                .from(boastCatPost)
-                .where(
-                        likeTitleOrContents(keyword),
-                        eqUserId(userId))
-                .fetchOne();
-
-        return new PageImpl<>(results, pageable, total != null ? total : 0L);
-    }
-
-    /**
      * Full-Text Search (ngram 파서)
      * - MATCH(title, contents) AGAINST(keyword IN BOOLEAN MODE)
      * - FULLTEXT INDEX ft_boast_post_title_contents 활용
@@ -77,7 +40,7 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
      *   그대로 소비해 상위 N개만 가져옴 (매치 건수와 무관하게 응답시간 일정, EXPLAIN에서 filesort 제거 확인됨)
      */
     @Override
-    public Page<BoastCatPostListResponse> searchByKeyword(String keyword, Long userId, Pageable pageable) {
+    public Page<BoastCatPostListResponse> searchByKeyword(String keyword, Pageable pageable) {
         // BOOLEAN MODE: 고빈도 단어 50% 규칙 없음, 단순 포함 여부만 체크
         String booleanKeyword = sanitizeForBooleanMode(keyword);
 
@@ -86,7 +49,6 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                        b.view, b.created_at, b.thumbnail_url
                 FROM boast_cat_post b
                 WHERE MATCH(b.title, b.contents) AGAINST(:keyword IN BOOLEAN MODE)
-                  AND (:userId IS NULL OR b.user_id = :userId)
                 ORDER BY MATCH(b.title, b.contents) AGAINST(:keyword IN BOOLEAN MODE) DESC
                 LIMIT :limit OFFSET :offset
                 """;
@@ -95,13 +57,11 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                 SELECT COUNT(*)
                 FROM boast_cat_post b
                 WHERE MATCH(b.title, b.contents) AGAINST(:keyword IN BOOLEAN MODE)
-                  AND (:userId IS NULL OR b.user_id = :userId)
                 """;
 
         @SuppressWarnings("unchecked")
         List<Object[]> rows = entityManager.createNativeQuery(dataSql)
                 .setParameter("keyword", booleanKeyword)
-                .setParameter("userId", userId)
                 .setParameter("limit", pageable.getPageSize())
                 .setParameter("offset", (int) pageable.getOffset())
                 .getResultList();
@@ -123,7 +83,6 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
 
         long total = ((Number) entityManager.createNativeQuery(countSql)
                 .setParameter("keyword", booleanKeyword)
-                .setParameter("userId", userId)
                 .getSingleResult()).longValue();
 
         return new PageImpl<>(content, pageable, total);
@@ -136,13 +95,12 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
      * - 흔한 단어 자동 제외(50% 임계치) 규칙은 MyISAM 전용이며 이 테이블(InnoDB)에는 적용되지 않음
      */
     @Override
-    public Page<BoastCatPostListResponse> searchByNaturalLanguage(String keyword, Long userId, Pageable pageable) {
+    public Page<BoastCatPostListResponse> searchByNaturalLanguage(String keyword, Pageable pageable) {
         String dataSql = """
                 SELECT b.id, b.title, b.like_count, b.comment_count,
                        b.view, b.created_at, b.thumbnail_url
                 FROM boast_cat_post b
                 WHERE MATCH(b.title, b.contents) AGAINST(:keyword IN NATURAL LANGUAGE MODE)
-                  AND (:userId IS NULL OR b.user_id = :userId)
                 ORDER BY b.created_at DESC
                 LIMIT :limit OFFSET :offset
                 """;
@@ -151,13 +109,11 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                 SELECT COUNT(*)
                 FROM boast_cat_post b
                 WHERE MATCH(b.title, b.contents) AGAINST(:keyword IN NATURAL LANGUAGE MODE)
-                  AND (:userId IS NULL OR b.user_id = :userId)
                 """;
 
         @SuppressWarnings("unchecked")
         List<Object[]> rows = entityManager.createNativeQuery(dataSql)
                 .setParameter("keyword", keyword)
-                .setParameter("userId", userId)
                 .setParameter("limit", pageable.getPageSize())
                 .setParameter("offset", (int) pageable.getOffset())
                 .getResultList();
@@ -179,7 +135,6 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
 
         long total = ((Number) entityManager.createNativeQuery(countSql)
                 .setParameter("keyword", keyword)
-                .setParameter("userId", userId)
                 .getSingleResult()).longValue();
 
         return new PageImpl<>(content, pageable, total);
@@ -258,18 +213,6 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                 .from(boastCatPost)
                 .fetchOne();
         return total != null ? total : 0L;
-    }
-
-    // 제목 OR 내용 LIKE 검색 조건 (동일 키워드로 둘 중 하나라도 포함하면 매칭)
-    private BooleanExpression likeTitleOrContents(String keyword) {
-        if (keyword == null || keyword.isEmpty()) return null;
-        return boastCatPost.title.contains(keyword).or(boastCatPost.contents.contains(keyword));
-    }
-
-    // userId 일치 조건 (null이면 전체 검색)
-    private BooleanExpression eqUserId(Long userId) {
-        if (userId == null) return null;
-        return boastCatPost.user.id.eq(userId);
     }
 
     // BOOLEAN MODE 변환: 각 단어를 + (필수 조건)으로 처리
