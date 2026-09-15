@@ -49,7 +49,7 @@ class PostSearchServiceTest {
 
         // then
         then(boastCatPostRepository).should().searchByKeyword("고양이", pageable);
-        then(boastCatPostRepository).should(never()).findByTitleContainingOrContentsContaining(any(), any(), any());
+        then(boastCatPostRepository).should(never()).findByTitleContainingOrContentsContainingOrderByCreatedAtDesc(any(), any(), any());
     }
 
     @Test
@@ -80,7 +80,7 @@ class PostSearchServiceTest {
 
         // then
         then(boastCatPostRepository).should().searchByKeyword("a 고양이", pageable);
-        then(boastCatPostRepository).should(never()).findByTitleContainingOrContentsContaining(any(), any(), any());
+        then(boastCatPostRepository).should(never()).findByTitleContainingOrContentsContainingOrderByCreatedAtDesc(any(), any(), any());
     }
 
     @Test
@@ -88,14 +88,14 @@ class PostSearchServiceTest {
     void 모든_토큰이_1글자면_LIKE_폴백() {
         // given
         PostSearchRequest request = PostSearchRequest.builder().keyword("a b").build();
-        given(boastCatPostRepository.findByTitleContainingOrContentsContaining("a b", "a b", pageable))
+        given(boastCatPostRepository.findByTitleContainingOrContentsContainingOrderByCreatedAtDesc("a b", "a b", pageable))
                 .willReturn(new PageImpl<>(java.util.List.of()));
 
         // when
         postSearchService.searchByFts(request, pageable);
 
         // then
-        then(boastCatPostRepository).should().findByTitleContainingOrContentsContaining("a b", "a b", pageable);
+        then(boastCatPostRepository).should().findByTitleContainingOrContentsContainingOrderByCreatedAtDesc("a b", "a b", pageable);
         then(boastCatPostRepository).should(never()).searchByKeyword(any(), any());
     }
 
@@ -112,7 +112,7 @@ class PostSearchServiceTest {
 
         // then
         then(boastCatPostRepository).should().searchByNaturalLanguage("고양이", pageable);
-        then(boastCatPostRepository).should(never()).findByTitleContainingOrContentsContaining(any(), any(), any());
+        then(boastCatPostRepository).should(never()).findByTitleContainingOrContentsContainingOrderByCreatedAtDesc(any(), any(), any());
         then(boastCatPostRepository).should(never()).searchByKeyword(any(), any());
     }
 
@@ -137,14 +137,14 @@ class PostSearchServiceTest {
         // given
         PostLikeSearchRequest request = PostLikeSearchRequest.builder().keyword("고양이").build();
         BoastCatPost post = BoastCatPost.builder().title("우리 고양이").contents("귀여워요").build();
-        given(boastCatPostRepository.findByTitleContainingOrContentsContaining("고양이", "고양이", pageable))
+        given(boastCatPostRepository.findByTitleContainingOrContentsContainingOrderByCreatedAtDesc("고양이", "고양이", pageable))
                 .willReturn(new PageImpl<>(java.util.List.of(post)));
 
         // when
         postSearchService.searchByLike(request, pageable);
 
         // then
-        then(boastCatPostRepository).should().findByTitleContainingOrContentsContaining("고양이", "고양이", pageable);
+        then(boastCatPostRepository).should().findByTitleContainingOrContentsContainingOrderByCreatedAtDesc("고양이", "고양이", pageable);
     }
 
     @Test
@@ -153,14 +153,14 @@ class PostSearchServiceTest {
         // given
         PostLikeSearchRequest request = PostLikeSearchRequest.builder().keyword("나비").build();
         LostCatPost post = LostCatPost.builder().title("나비를 찾아요").contents("실종되었습니다").build();
-        given(lostCatRepository.findByTitleContainingOrContentsContaining("나비", "나비", pageable))
+        given(lostCatRepository.findByTitleContainingOrContentsContainingOrderByCreatedAtDesc("나비", "나비", pageable))
                 .willReturn(new PageImpl<>(java.util.List.of(post)));
 
         // when
         postSearchService.searchLostByLike(request, pageable);
 
         // then
-        then(lostCatRepository).should().findByTitleContainingOrContentsContaining("나비", "나비", pageable);
+        then(lostCatRepository).should().findByTitleContainingOrContentsContainingOrderByCreatedAtDesc("나비", "나비", pageable);
     }
 
 }

@@ -33,7 +33,7 @@ public class PostSearchService {
 
         if (requiresLikeFallback(keyword)) {
             log.debug("[자랑글 검색] FTS→LIKE 폴백 | keyword=\"{}\" | 이유=2글자 이상 토큰 없음", keyword);
-            return boastCatPostRepository.findByTitleContainingOrContentsContaining(keyword, keyword, pageable)
+            return boastCatPostRepository.findByTitleContainingOrContentsContainingOrderByCreatedAtDesc(keyword, keyword, pageable)
                     .map(BoastCatPostListResponse::from);
         }
 
@@ -52,7 +52,7 @@ public class PostSearchService {
     public Page<BoastCatPostListResponse> searchByLike(PostLikeSearchRequest request, Pageable pageable) {
         String keyword = request.getKeyword();
         log.debug("[자랑글 검색] LIKE | keyword=\"{}\"", keyword);
-        return boastCatPostRepository.findByTitleContainingOrContentsContaining(keyword, keyword, pageable)
+        return boastCatPostRepository.findByTitleContainingOrContentsContainingOrderByCreatedAtDesc(keyword, keyword, pageable)
                 .map(BoastCatPostListResponse::from);
     }
 
@@ -62,7 +62,7 @@ public class PostSearchService {
 
         if (requiresLikeFallback(keyword)) {
             log.debug("[실종글 검색] FTS→LIKE 폴백 | keyword=\"{}\" | 이유=2글자 이상 토큰 없음", keyword);
-            return lostCatRepository.findByTitleContainingOrContentsContaining(keyword, keyword, pageable)
+            return lostCatRepository.findByTitleContainingOrContentsContainingOrderByCreatedAtDesc(keyword, keyword, pageable)
                     .map(LostCatPostListResponse::from);
         }
 
@@ -74,7 +74,7 @@ public class PostSearchService {
     public Page<LostCatPostListResponse> searchLostByLike(PostLikeSearchRequest request, Pageable pageable) {
         String keyword = request.getKeyword();
         log.debug("[실종글 검색] LIKE | keyword=\"{}\"", keyword);
-        return lostCatRepository.findByTitleContainingOrContentsContaining(keyword, keyword, pageable)
+        return lostCatRepository.findByTitleContainingOrContentsContainingOrderByCreatedAtDesc(keyword, keyword, pageable)
                 .map(LostCatPostListResponse::from);
     }
 

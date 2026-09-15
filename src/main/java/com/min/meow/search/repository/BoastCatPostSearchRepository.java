@@ -9,6 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface BoastCatPostSearchRepository extends JpaRepository<BoastCatPost, Long>, BoastCatPostSearchRepositoryCustom {
 
-    // LIKE 검색: 제목 또는 내용에 keyword 포함
-    Page<BoastCatPost> findByTitleContainingOrContentsContaining(String title, String contents, Pageable pageable);
+    // LIKE 검색: 제목 또는 내용에 keyword 포함, 최신순 정렬
+    Page<BoastCatPost> findByTitleContainingOrContentsContainingOrderByCreatedAtDesc(String title, String contents, Pageable pageable);
 }
