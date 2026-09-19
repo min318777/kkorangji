@@ -34,11 +34,14 @@ public class BoastCatPost extends BasePost {
     @ElementCollection
     private List<String> imageUrls = new ArrayList<>();
 
+    @Column(length = 500)
+    private String videoUrl;
+
     @Builder.Default
     @ColumnDefault("0")
     private int likeCount = 0;
 
-    public void updatePost(String title, String contents, List<String> newImageUrls) {
+    public void updatePost(String title, String contents, List<String> newImageUrls, String newVideoUrl) {
         this.title = title;
         this.contents = contents;
         if (newImageUrls != null) {
@@ -47,6 +50,7 @@ public class BoastCatPost extends BasePost {
             // 목록 썸네일도 첫 번째 이미지로 갱신 (없으면 null)
             this.thumbnailUrl = newImageUrls.isEmpty() ? null : newImageUrls.get(0);
         }
+        this.videoUrl = newVideoUrl;
     }
     public boolean isAuthor(Long userId) {
         return this.user.getId().equals(userId);

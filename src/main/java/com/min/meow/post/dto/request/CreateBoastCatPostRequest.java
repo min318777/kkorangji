@@ -42,6 +42,13 @@ public class CreateBoastCatPostRequest {
     @Size(max = 10, message = "이미지는 최대 10장까지 업로드 가능합니다.")
     private List<String> imageKeys;
 
+    /**
+     * S3에 업로드된 동영상의 key (선택, 최대 1개)
+     * Presigned URL로 업로드 완료 후 받은 key를 전달
+     */
+    @Schema(description = "S3 업로드 후 받은 동영상 key (선택)", example = "meow/video/uuid-1.mp4")
+    private String videoKey;
+
     // 제목: 앞뒤 공백 제거
     public void setTitle(String title) {
         this.title = title != null ? title.trim() : null;

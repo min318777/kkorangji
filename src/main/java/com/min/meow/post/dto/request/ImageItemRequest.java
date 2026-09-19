@@ -26,13 +26,13 @@ public class ImageItemRequest {
     @NotNull(message = "이미지 종류(type)는 필수입니다.")
     private ImageType type;
 
-    @Schema(description = "EXISTING이면 CloudFront URL, NEW면 S3 key",
+    @Schema(description = "EXISTING이면 CloudFront URL, NEW면 S3 key. REMOVE면 생략 가능",
             example = "meow/uuid-new-1.jpg")
-    @NotBlank(message = "이미지 값(value)은 비어있을 수 없습니다.")
     private String value;
 
     public enum ImageType {
         EXISTING,
-        NEW
+        NEW,
+        REMOVE
     }
 }

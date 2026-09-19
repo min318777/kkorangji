@@ -51,6 +51,8 @@ public class QBoastCatPost extends EntityPathBase<BoastCatPost> {
     // inherited
     public final com.min.meow.user.entity.QUser user;
 
+    public final StringPath videoUrl = createString("videoUrl");
+
     //inherited
     public final NumberPath<Integer> view;
 

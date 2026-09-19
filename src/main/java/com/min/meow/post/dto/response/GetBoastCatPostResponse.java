@@ -40,6 +40,9 @@ public class GetBoastCatPostResponse {
     @Schema(description = "이미지 URL 목록")
     private List<String> imageUrls;
 
+    @Schema(description = "동영상 URL (없으면 null)")
+    private String videoUrl;
+
     @Schema(description = "좋아요 수", example = "42")
     private int likeCount;
 
@@ -64,6 +67,7 @@ public class GetBoastCatPostResponse {
                 .contents(boastCatPost.getContents())
                 .view(boastCatPost.getView())
                 .imageUrls(new ArrayList<>(boastCatPost.getImageUrls()))
+                .videoUrl(boastCatPost.getVideoUrl())
                 .likeCount(boastCatPost.getLikeCount())
                 .commentCount(boastCatPost.getCommentCount())
                 .createdAt(boastCatPost.getCreatedAt())

@@ -33,6 +33,9 @@ public class CreateBoastCatPostResponse {
     @Builder.Default
     private List<String> imageUrls = new ArrayList<>();
 
+    @Schema(description = "동영상 URL (없으면 null)")
+    private String videoUrl;
+
     @Schema(description = "작성일시", example = "2025-01-15T10:30:00")
     private LocalDateTime createdAt;
 
@@ -47,6 +50,7 @@ public class CreateBoastCatPostResponse {
                 .writer(boastCatPost.getUser().getNickname())
                 .content(boastCatPost.getContents())
                 .imageUrls(boastCatPost.getImageUrls())
+                .videoUrl(boastCatPost.getVideoUrl())
                 .createdAt(boastCatPost.getCreatedAt())
                 .updatedAt(boastCatPost.getUpdatedAt())
                 .build();

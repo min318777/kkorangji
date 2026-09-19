@@ -225,6 +225,7 @@ public class S3Service {
             case "image/gif" -> ".gif";
             case "image/webp" -> ".webp";
             case "image/svg+xml" -> ".svg";
+            case "video/mp4" -> ".mp4";
             default -> "";
         };
     }

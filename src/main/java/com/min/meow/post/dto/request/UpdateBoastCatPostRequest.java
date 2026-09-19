@@ -37,6 +37,16 @@ public class UpdateBoastCatPostRequest {
     @Size(max = 10, message = "이미지는 최대 10장까지 업로드 가능합니다.")
     private List<ImageItemRequest> images;
 
+    /**
+     * 최종 동영상 상태 (선택, 최대 1개)
+     * - null: 기존 동영상 유지
+     * - EXISTING: 기존 동영상 유지 (value = 기존 CloudFront URL)
+     * - NEW: 새로 업로드한 동영상으로 교체 (value = S3 key)
+     * - REMOVE: 동영상 삭제
+     */
+    @Schema(description = "최종 동영상 상태 (미포함 시 기존 동영상 유지)")
+    private ImageItemRequest video;
+
     // 제목: 앞뒤 공백 제거
     public void setTitle(String title) {
         this.title = title != null ? title.trim() : null;

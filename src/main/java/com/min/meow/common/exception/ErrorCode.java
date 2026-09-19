@@ -53,8 +53,9 @@ public enum ErrorCode {
     S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),
 
     // 이미지 예외
-    INVALID_IMAGE_FORMAT(HttpStatus.BAD_REQUEST, "지원하지 않는 이미지 형식입니다. 허용 형식: image/jpeg, image/png, image/gif, image/webp"),
-    IMAGE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "파일 크기가 허용 범위를 초과했습니다."),
+    INVALID_IMAGE_FORMAT(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다. 허용 형식: image/jpeg, image/png, image/gif, image/webp, video/mp4"),
+    IMAGE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "파일 크기가 허용 범위를 초과했습니다. (이미지 최대 10MB, 동영상 최대 200MB)"),
+    IMAGE_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "업로드 가능 개수를 초과했습니다. (이미지 최대 10장, 동영상 최대 1개)"),
 
     // 검색 예외
     SEARCH_KEYWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "검색어는 2글자 이상이어야 합니다."),

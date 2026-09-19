@@ -95,6 +95,10 @@ public class BoastCatPostService {
             imageUrls = s3Service.toCloudFrontUrls(createBoastCatPostRequest.getImageKeys());
         }
 
+        String videoUrl = createBoastCatPostRequest.getVideoKey() != null
+                ? s3Service.toCloudFrontUrl(createBoastCatPostRequest.getVideoKey())
+                : null;
+
         // 첫 번째 이미지를 썸네일로 저장 (목록 조회 시 JOIN 없이 사용)
         String thumbnailUrl = imageUrls.isEmpty() ? null : imageUrls.get(0);
 
@@ -103,6 +107,7 @@ public class BoastCatPostService {
                 .title(createBoastCatPostRequest.getTitle())
                 .contents(createBoastCatPostRequest.getContent())
                 .imageUrls(imageUrls)
+                .videoUrl(videoUrl)
                 .thumbnailUrl(thumbnailUrl)
                 .user(writer)
                 .build();
@@ -130,10 +135,12 @@ public class BoastCatPostService {
         }
 
         List<String> finalImageUrls = updateImage(updateBoastCatPostRequest, boastCatPost);
+        String finalVideoUrl = updateVideo(updateBoastCatPostRequest, boastCatPost);
         boastCatPost.updatePost(
                 updateBoastCatPostRequest.getTitle(),
                 updateBoastCatPostRequest.getContent(),
-                finalImageUrls
+                finalImageUrls,
+                finalVideoUrl
         );
 
         return UpdateBoastCatPostResponse.from(boastCatPost);
@@ -149,11 +156,14 @@ public class BoastCatPostService {
         if (!boastCatPost.isAuthor(userId) && !hasDeleteAuthority) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
-        // S3 이미지 삭제 (DB 삭제 전에 URL 추출)
-        List<String> keys = boastCatPost.getImageUrls().stream()
+        // S3 이미지/동영상 삭제 (DB 삭제 전에 URL 추출)
+        List<String> keys = new ArrayList<>(boastCatPost.getImageUrls().stream()
                 .map(s3Service::extractKeyFromUrl)
                 .filter(key -> key != null && !key.isEmpty())
-                .toList();
+                .toList());
+        if (boastCatPost.getVideoUrl() != null) {
+            keys.add(s3Service.extractKeyFromUrl(boastCatPost.getVideoUrl()));
+        }
         // 연관 댓글 먼저 삭제 (cascade 제거로 인한 수동 처리)
         commentRepository.deleteAllByPostIdAndPostType(boastCatPostId, PostType.BOAST);
         boastCatPostRepository.deleteById(boastCatPostId);
@@ -190,6 +200,35 @@ public class BoastCatPostService {
         postImageDeleteEventPublisher.publish(keysToDelete);
 
         return finalImageUrls;
+    }
+
+    /**
+     * 동영상 업데이트 처리 (Presigned URL 방식)
+     * request.getVideo()가 없으면(null) 기존 동영상을 그대로 유지한다.
+     * - EXISTING: 기존 동영상 유지
+     * - NEW: 새로 업로드한 동영상으로 교체 (기존 동영상은 S3에서 삭제)
+     * - REMOVE: 동영상 삭제
+     * @return 최종 동영상 URL (CloudFront URL, 없으면 null)
+     */
+    private String updateVideo(UpdateBoastCatPostRequest request, BoastCatPost post) {
+        ImageItemRequest video = request.getVideo();
+        String existingVideoUrl = post.getVideoUrl();
+
+        if (video == null) {
+            return existingVideoUrl;
+        }
+
+        String finalVideoUrl = switch (video.getType()) {
+            case EXISTING -> existingVideoUrl;
+            case NEW -> s3Service.toCloudFrontUrl(video.getValue());
+            case REMOVE -> null;
+        };
+
+        if (existingVideoUrl != null && !existingVideoUrl.equals(finalVideoUrl)) {
+            postImageDeleteEventPublisher.publish(List.of(s3Service.extractKeyFromUrl(existingVideoUrl)));
+        }
+
+        return finalVideoUrl;
     }
 
     // ========== 상세조회 + 조회수 통합 API (v1: 비교군 / v2: 채택) ==========
