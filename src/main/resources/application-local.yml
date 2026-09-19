@@ -1,8 +1,10 @@
 spring:
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 30MB
+      # 250MB: /api/test/boast-posts/legacy-upload(서버 경유 업로드 비교 측정용, local 프로필 전용) 대응
+      # 실서비스는 Presigned URL 방식이라 서버가 파일을 직접 받지 않으므로 이 값의 영향을 받지 않음
+      max-file-size: 250MB
+      max-request-size: 250MB
   application:
     name: meow
 
