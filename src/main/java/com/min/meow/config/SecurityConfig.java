@@ -126,7 +126,9 @@ public class SecurityConfig {
                                 "/api/meow/boast-cat-posts",
                                 "/api/meow/boast-cat-posts/**",
                                 "/api/meow/lost-cat-posts",
-                                "/api/meow/lost-cat-posts/**").permitAll()
+                                "/api/meow/lost-cat-posts/**",
+                                "/api/meow/boast-cat/*/comments",
+                                "/api/meow/lost-cat/*/comments").permitAll()
                         // 조회수 증가 API는 인증 없이 가능 (POST 요청)
                         // v2: /api/meow/boast-cat-posts/{id}/view (원자적 업데이트)
                         // v1: /api/meow/boast-cat-posts/v1/{id}/view (더티체킹 - 동시성 테스트용)
