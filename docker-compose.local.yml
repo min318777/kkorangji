@@ -109,7 +109,7 @@ services:
     ports:
       - "9090:9090"  # Prometheus UI 접속 포트
     volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml  # 설정 파일 마운트
+      - ./monitoring/prometheus/prometheus-dev.yml:/etc/prometheus/prometheus.yml  # 설정 파일 마운트 (로컬 전용, host.docker.internal 사용)
       - prometheus_data:/prometheus  # 메트릭 데이터 영속화
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'        # 설정 파일 경로
