@@ -19,12 +19,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 서버 경유 업로드(Before) vs Presigned URL(After) 응답 시간 비교 측정 전용 컨트롤러.
- * local 프로필에서만 활성화되며 실서비스에는 반영되지 않는다.
+ * local/prod 프로필에서만 활성화된다.
+ * prod에서의 활성화는 실사용자 없이 배포만 해둔 테스트 EC2에서 t3.small(2GB) 등
+ * 실제 배포 환경 리소스 제약 하에 성능을 측정하기 위한 것으로, 실사용자가 있는
+ * 서비스 환경에 배포할 경우 반드시 이 컨트롤러를 제거하거나 프로필 조건을 되돌릴 것.
  * S3Uploader(현재 @Deprecated)를 그대로 재사용해 동영상을 서버가 직접 받아 S3로 재전송한다.
  */
-@Tag(name = "[TEST] 서버 경유 업로드 비교", description = "Presigned 방식과의 응답 시간 비교 측정 전용 — local 프로필에서만 활성화")
+@Tag(name = "[TEST] 서버 경유 업로드 비교", description = "Presigned 방식과의 응답 시간 비교 측정 전용 — local/prod(테스트 EC2)에서만 활성화")
 @Slf4j
-@Profile("local")
+@Profile({"local", "prod"})
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/test/boast-posts")
