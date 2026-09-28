@@ -1,6 +1,8 @@
 package com.min.meow.config;
 
 
+import com.min.meow.common.exception.CustomException;
+import com.min.meow.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -61,7 +63,7 @@ public class S3Uploader {
      */
     @Deprecated
     public String uploadFile(MultipartFile file) {
-        String key = "meow/" + UUID.randomUUID() + "-" + file.getOriginalFilename();
+        String key = "kkorangji/" + UUID.randomUUID() + "-" + file.getOriginalFilename();
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucket)
@@ -72,7 +74,7 @@ public class S3Uploader {
                     RequestBody.fromBytes(file.getBytes()));
             return baseUrl + "/" + key;
         } catch (IOException e) {
-            throw new RuntimeException("파일 업로드 실패", e);
+            throw new CustomException(ErrorCode.S3_UPLOAD_FAILED, e);
         }
     }
 }
