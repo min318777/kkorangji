@@ -1,10 +1,12 @@
 package com.min.meow.post.repository;
 
 import com.min.meow.post.entity.BoastCatPost;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,6 +32,15 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
             "LEFT JOIN FETCH p.user " +
             "WHERE p.id = :id")
     Optional<BoastCatPost> findByIdWithUser(@Param("id") Long id);
+
+    /**
+     * v3(비교군): 비관적 락으로 row에 배타 락을 걸고 조회
+     * SELECT FOR UPDATE — 동시 요청 시 락 해제까지 대기, 조회수처럼 트래픽이 집중되는
+     * 컬럼에는 불필요하게 무거운 방식이라 검토 후 기각(원자적 UPDATE 채택)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM BoastCatPost p LEFT JOIN FETCH p.user WHERE p.id = :id")
+    Optional<BoastCatPost> findByIdForUpdate(@Param("id") Long id);
 
     // 마이페이지: 사용자가 작성한 고양이 자랑글 목록 조회 (페이징)
     // 참고: comments와 postLikeList는 지연 로딩되지만, DTO 변환 시 size()로 개수만 조회하므로 문제없음

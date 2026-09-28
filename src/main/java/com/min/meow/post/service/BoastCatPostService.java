@@ -253,4 +253,13 @@ public class BoastCatPostService {
         return GetBoastCatPostResponse.from(post);
     }
 
+    // v3: 상세조회 + 비관적 락 (SELECT FOR UPDATE, 동시성 보장되지만 락 대기 비용 있음, 비교군)
+    @Transactional
+    public GetBoastCatPostResponse getBoastCatPostV3(Long id) {
+        BoastCatPost post = boastCatPostRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", id)));
+        post.incrementView();
+        return GetBoastCatPostResponse.from(post);
+    }
+
 }
