@@ -85,7 +85,6 @@ public class SseEmitterManager {
                         .data(data));
             } catch (IOException e) {
                 removeOne(userId, emitter, "알림 전송 실패");
-                emitter.completeWithError(e);
                 log.error("알림 전송 실패: userId={}", userId, e);
             }
         }
@@ -122,7 +121,6 @@ public class SseEmitterManager {
                         emitter.send(SseEmitter.event().name("heartbeat").data("ping"));
                     } catch (IOException e) {
                         removeOne(userId, emitter, "heartbeat 실패");
-                        emitter.completeWithError(e);
                         log.info("좀비 커넥션 제거: userId={}", userId);
                     }
                 })
