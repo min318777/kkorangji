@@ -87,6 +87,13 @@ public class PopularRankingService {
         }
     }
 
+    // onScoreEvent와 동일한 ZINCRBY 로직을 호출자 트랜잭션 안에서 동기로 실행 (댓글 작성 v1 비교군 전용)
+    public void incrementScoreSync(Long postId, int scoreDelta) {
+        String key = getRankingKey();
+        redisTemplate.opsForZSet().incrementScore(key, String.valueOf(postId), scoreDelta);
+        log.debug("[PopularRanking][v1 동기] ZINCRBY - postId: {}, delta: {}", postId, scoreDelta);
+    }
+
     /**
      * 상위 24개 게시글 ID 반환 (score 내림차순)
      */
