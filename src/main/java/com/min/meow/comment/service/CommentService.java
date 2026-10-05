@@ -2,6 +2,7 @@ package com.min.meow.comment.service;
 
 import com.min.meow.notification.event.NotificationEventPublisher;
 import com.min.meow.notification.event.PopularScoreEvent;
+import com.min.meow.common.NotificationType;
 import com.min.meow.common.SecurityUtil;
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
@@ -14,17 +15,24 @@ import com.min.meow.notification.event.CommentEvent;
 import com.min.meow.comment.entity.Comment;
 import com.min.meow.comment.repository.CommentRepository;
 import com.min.meow.common.PostType;
+import com.min.meow.notification.dto.response.NotificationResponse;
+import com.min.meow.notification.entity.Notification;
+import com.min.meow.notification.repository.NotificationRepository;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.post.repository.LostCatRepository;
+import com.min.meow.post.service.PopularRankingService;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import com.min.meow.common.PageResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +53,10 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final NotificationEventPublisher notificationEventPublisher;
     private final UserRepository userRepository;
+    private final NotificationRepository notificationRepository;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final ObjectMapper objectMapper;
+    private final PopularRankingService popularRankingService;
 
     // 댓글 조회 (자랑글·실종글 공통, 원댓글 + 대댓글 2뎁스, 쿼리 2번으로 N+1 방지)
     public PageResponse<GetCommentResponse> getComments(Long postId, PostType postType, Pageable pageable) {
@@ -69,7 +81,7 @@ public class CommentService {
         return PageResponse.from(new PageImpl<>(responses, pageable, rootComments.getTotalElements()));
     }
 
-    // 댓글 작성 (자랑글·실종글 공통, 원댓글·대댓글 공통 처리)
+    // 댓글 작성
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public RegisterCommentResponse registerComment(RegisterCommentRequest request, Long postId, PostType postType, Long userId) {
@@ -111,6 +123,75 @@ public class CommentService {
         }
 
         return RegisterCommentResponse.toResponse(comment);
+    }
+
+    // ========== 댓글 작성 + 알림 처리 통합 비교 (v1: 비교군 / v2: registerComment, 채택) ==========
+
+    // v1: 댓글 저장 + 알림 저장 + SSE 발행을 하나의 트랜잭션 안에서 동기로 처리 (비교군)
+    // registerComment(v2)와 달리 이벤트 발행(AFTER_COMMIT + @Async) 없이 즉시 처리하므로
+    // 알림 저장 쿼리와 Redis Pub/Sub 호출이 끝날 때까지 DB 커넥션을 붙잡고 있는다.
+    @Transactional
+    @CacheEvict(cacheNames = "user:stats", key = "#userId")
+    public RegisterCommentResponse registerCommentV1(RegisterCommentRequest request, Long postId, PostType postType, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
+
+        Comment parentComment = resolveParentComment(request.getParentCommentId(), postId, postType);
+
+        Comment comment = Comment.builder()
+                .contents(request.getContent())
+                .user(user)
+                .postId(postId)
+                .postType(postType)
+                .parentComment(parentComment)
+                .build();
+        commentRepository.save(comment);
+
+        if (postType == PostType.BOAST) {
+            BoastCatPost post = boastCatPostRepository.findById(postId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", postId)));
+            boastCatPostRepository.incrementCommentCount(postId);
+
+            if (!post.getUser().isWithdrawn() && !user.getId().equals(post.getUser().getId())) {
+                saveAndSendNotificationSync(comment.getId(), postId, PostType.BOAST, user.getNickname(), post.getUser().getId());
+            }
+            // 인기글 Sorted Set 점수 +2 (v2는 이벤트로 비동기 반영, v1은 동기로 직접 반영)
+            popularRankingService.incrementScoreSync(postId, 2);
+        } else {
+            LostCatPost post = lostCatRepository.findById(postId)
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", postId)));
+            lostCatRepository.incrementCommentCount(postId);
+
+            if (!post.getUser().isWithdrawn() && !user.getId().equals(post.getUser().getId())) {
+                saveAndSendNotificationSync(comment.getId(), postId, PostType.LOST, user.getNickname(), post.getUser().getId());
+            }
+        }
+
+        return RegisterCommentResponse.toResponse(comment);
+    }
+
+    // v1 비교군 전용: NotificationEventListener가 AFTER_COMMIT + @Async로 하던 일을
+    // 같은 트랜잭션 안에서 동기로 수행 (알림 DB 저장 + Redis Pub/Sub 발행)
+    private void saveAndSendNotificationSync(Long commentId, Long postId, PostType postType, String writer, Long receiverUserId) {
+        Notification notification = Notification.builder()
+                .sourceId(commentId)
+                .postId(postId)
+                .postType(postType)
+                .receiverUserId(receiverUserId)
+                .type(NotificationType.COMMENT)
+                .message(String.format("%s님이 댓글을 남겼습니다.", writer))
+                .isRead(false)
+                .build();
+
+        Notification saved = notificationRepository.save(notification);
+
+        try {
+            String channel = "sse:notify:" + saved.getReceiverUserId();
+            String payload = objectMapper.writeValueAsString(NotificationResponse.from(saved));
+            redisTemplate.convertAndSend(channel, payload);
+        } catch (JsonProcessingException e) {
+            log.error("[v1 비교군] 알림 직렬화 실패 - receiverUserId: {}", receiverUserId, e);
+        }
     }
 
     // 댓글 수정 (삭제된 댓글은 수정 불가)

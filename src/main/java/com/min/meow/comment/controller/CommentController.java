@@ -67,6 +67,24 @@ public class CommentController {
                 .body(ApiResponse.created("댓글 작성 성공", response));
     }
 
+    @Operation(summary = "댓글 작성 v1",
+            description = "댓글 저장+알림 저장+SSE 발행을 하나의 트랜잭션에서 동기 처리하는 비교군. " +
+                    "성능 비교 실험 전용, 실제 서비스에서는 registerComment(v2)를 사용. 인증 필요.")
+    @PreAuthorize("hasAuthority('comment:create')")
+    @PostMapping("/api/meow/{postType}/{postId}/comments/v1")
+    public ResponseEntity<ApiResponse<RegisterCommentResponse>> registerCommentV1(
+            @RequestBody @Valid RegisterCommentRequest request,
+            @Parameter(description = "게시글 타입 (boast-cat | lost-cat)", example = "boast-cat")
+            @PathVariable String postType,
+            @Parameter(description = "게시글 ID", example = "1")
+            @PathVariable Long postId,
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
+
+        RegisterCommentResponse response = commentService.registerCommentV1(request, postId, resolvePostType(postType), user.getUserId());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("댓글 작성 성공", response));
+    }
+
     @Operation(summary = "댓글 수정",
             description = "댓글을 수정합니다. 게시글 타입에 관계없이 댓글 ID로 수정합니다. 본인 댓글만 수정 가능합니다(관리자는 타인 댓글도 수정 가능). 인증 필요.")
     @PreAuthorize("isAuthenticated()")

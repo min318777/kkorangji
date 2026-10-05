@@ -293,25 +293,12 @@ public class LostCatPostService {
         return finalImageUrls;
     }
 
-    // ========== 조회수 ==========
-
-
-    @Deprecated
-    @Transactional
-    public void incrementViewCountWithDirtyChecking(Long lostCatPostId) {
-        LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", lostCatPostId)));
-
-        lostCatPost.incrementView();
-        // 트랜잭션 종료 시 JPA가 변경 감지하여 UPDATE 쿼리 실행
-    }
-
+    // ========== 상세조회 + 조회수 통합 API (v2 원자적 UPDATE, 채택 — 자랑글과 동일 패턴) ==========
 
     @Transactional
-    public void incrementViewCount(Long lostCatPostId) {
-        int updatedCount = lostCatRepository.incrementViewCount(lostCatPostId);
-        if (updatedCount == 0) {
-            throw new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", lostCatPostId));
-        }
+    public GetLostCatPostResponse getLostCatPostV2(Long lostCatPostId) {
+        GetLostCatPostResponse response = getLostCatPost(lostCatPostId);
+        lostCatRepository.incrementViewCount(lostCatPostId);
+        return response;
     }
 }

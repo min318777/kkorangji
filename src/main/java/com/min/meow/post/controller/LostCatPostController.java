@@ -61,6 +61,15 @@ public class LostCatPostController {
         return ResponseEntity.ok(ApiResponse.success("글 조회 성공", lostCatPostDto));
     }
 
+    @Operation(summary = "실종글 상세조회")
+    @SecurityRequirements
+    @GetMapping("/view/v2/{lostCatPostId}")
+    public ResponseEntity<ApiResponse<GetLostCatPostResponse>> getLostCatPostV2(
+            @Parameter(description = "실종글 ID", example = "1")
+            @PathVariable Long lostCatPostId) {
+        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v2)", lostCatPostService.getLostCatPostV2(lostCatPostId)));
+    }
+
     /**
      * 글 생성 (Presigned URL 기반 이미지 업로드)
      */
@@ -156,33 +165,5 @@ public class LostCatPostController {
         Pageable pageable = PageRequest.of(page, size);
         PageResponse<LostCatPostListResponse> pageResponse = lostCatPostService.getNearbyLostCatPostsST(lat, lng, radius, pageable);
         return ResponseEntity.ok(ApiResponse.success("내 주변 실종글 조회 성공 (ST)", pageResponse));
-    }
-
-
-    /**
-     * @deprecated 동시성 이슈로 인해 POST /{lostCatPostId}/view 사용 권장
-     */
-    @Deprecated
-    @Operation(summary = "조회수 증가 (v1 더티체킹, 비교군)",
-            description = "JPA 더티 체킹 방식. 동시성 이슈(Lost Update)가 있으므로 v2 사용을 권장합니다.",
-            deprecated = true)
-    @SecurityRequirements
-    @PostMapping("/v1/{lostCatPostId}/view")
-    public ResponseEntity<ApiResponse<Void>> incrementViewCountV1(
-            @Parameter(description = "실종글 ID", example = "1")
-            @PathVariable Long lostCatPostId) {
-        lostCatPostService.incrementViewCountWithDirtyChecking(lostCatPostId);
-        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공 (더티 체킹 방식)", null));
-    }
-
-    @Operation(summary = "조회수 증가 (v2 원자적, 채택)",
-            description = "DB 원자적 쿼리로 조회수를 증가시킵니다. 인증 불필요.")
-    @SecurityRequirements
-    @PostMapping("/{lostCatPostId}/view")
-    public ResponseEntity<ApiResponse<Void>> incrementViewCount(
-            @Parameter(description = "실종글 ID", example = "1")
-            @PathVariable Long lostCatPostId) {
-        lostCatPostService.incrementViewCount(lostCatPostId);
-        return ResponseEntity.ok(ApiResponse.success("조회수 증가 성공", null));
     }
 }
