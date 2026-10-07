@@ -71,11 +71,7 @@ public class AsyncConfig implements AsyncConfigurer {
         return executor;
     }
 
-    /**
-     * 기본 비동기 Executor 설정
-     * @Async 어노테이션에서 executor를 지정하지 않을 경우 사용됩니다.
-     * 알림 외 다른 비동기 작업에도 사용할 수 있습니다.
-     */
+     // 기본 비동기 Executor 설정
     @Override
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();

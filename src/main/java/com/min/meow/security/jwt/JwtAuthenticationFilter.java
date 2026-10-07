@@ -34,13 +34,9 @@ import java.util.Optional;
 
 
 /**
- * JWT 인증 필터
- * 역할: Authorization 헤더에서 JWT 토큰을 추출하고 검증하여 SecurityContext에 인증 정보를 설정
- * 동작 방식:
  * 1. 토큰이 있으면 → 검증 후 인증 설정, 다음 필터로 진행
  * 2. 토큰이 없으면 → 인증 없이 다음 필터로 진행 (SecurityConfig의 AuthorizationFilter가 접근 제어)
  * 3. 토큰이 유효하지 않으면 → 에러 응답 반환 (필터 체인 중단)
- * 주의: 접근 제어(permitAll, authenticated)는 SecurityConfig에서만 관리
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -56,7 +52,6 @@ public class    JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authorization = request.getHeader("Authorization");
 
-        // 토큰이 없으면 인증 없이 다음 필터로 진행
         // SecurityConfig의 AuthorizationFilter가 접근 권한을 체크함
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);

@@ -33,8 +33,6 @@ import org.springframework.web.bind.annotation.*;
 public class BoastCatPostController {
     private final BoastCatPostService boastCatPostService;
 
-    // ========== CRUD ==========
-
     @Operation(summary = "자랑글 목록 조회", description = "페이징된 자랑글 목록을 조회합니다. 인증 불필요.")
     @SecurityRequirements
     @GetMapping

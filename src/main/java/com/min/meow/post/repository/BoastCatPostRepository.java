@@ -20,8 +20,6 @@ import java.util.Optional;
 @Repository
 public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long>, BoastCatPostRepositoryCustom {
 
-    // ========== 조회 ==========
-
     /**
      * 단일 게시글 상세 조회
      * imageUrls는 @OneToMany (1:N) 관계라 Fetch Join하지 않음

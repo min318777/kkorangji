@@ -11,7 +11,6 @@ import java.time.LocalDate;
 /**
  * DAU(Daily Active Users) 측정 서비스
  * Redis SET 자료구조로 하루 단위 고유 로그인 유저 수를 관리합니다.
- * SET은 중복을 자동 제거하므로 같은 유저가 여러 번 로그인해도 1명으로 카운트됩니다.
  * 키 구조:
  *   dau:{날짜} → SET { "1", "5", "42", ... }  TTL 7일
  */

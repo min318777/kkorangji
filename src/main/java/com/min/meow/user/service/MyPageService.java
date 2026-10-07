@@ -27,9 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 마이페이지 서비스
- */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -53,7 +50,6 @@ public class MyPageService {
 
     /**
      * 마이페이지 통계 조회 (캐싱 적용)
-     * 캐시 설정:
      * - 캐시명: user:stats
      * - 키: userId (예: user:stats::1)
      * - TTL: 10분
@@ -61,7 +57,6 @@ public class MyPageService {
      * - 자랑글 작성/삭제 → BoastCatPostService
      * - 실종글 작성/삭제 → LostCatPostService
      * - 댓글 작성/삭제   → CommentService
-     * @return [자랑글 수, 실종글 수, 댓글 수]
      */
     @Cacheable(cacheNames = "user:stats", key = "#userId")
     public long[] getMyPageStats(Long userId) {

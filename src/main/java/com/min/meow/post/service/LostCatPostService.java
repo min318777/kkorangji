@@ -58,9 +58,6 @@ public class LostCatPostService {
     private final LostCatPostCountCacheService countCacheService;
     private final PostImageDeleteEventPublisher postImageDeleteEventPublisher;
 
-    // ========== 조회 ==========
-
-
     public PageResponse<LostCatPostListResponse> getAllLostCatPosts(Pageable pageable){
         // COUNT는 캐시에서, content는 커버링 인덱스 서브쿼리로 조회
         long total = countCacheService.countAll();
@@ -119,16 +116,7 @@ public class LostCatPostService {
         return PageResponse.from(posts);
     }
 
-    // ========== CRUD ==========
 
-    /**
-     * 글 작성 (Presigned URL 기반 이미지 업로드)
-     * 이미지 업로드 플로우:
-     * 1. 클라이언트가 /api/images/presigned-urls 로 Presigned URL 요청
-     * 2. 클라이언트가 Presigned URL로 S3에 이미지 직접 업로드
-     * 3. 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 이 API 호출
-     * 4. 서버는 key를 CloudFront URL로 변환하여 DB 저장
-     */
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public CreateLostCatPostResponse createLostCatPost(CreateLostCatPostRequest createLostCatPostRequest, Long userId){
@@ -151,7 +139,6 @@ public class LostCatPostService {
         Point location = (latitude != null && longitude != null)
                 ? GEO_FACTORY.createPoint(new Coordinate(longitude, latitude)) : null;
 
-        // 엔티티 생성
         LostCatPost lostCatPost = LostCatPost.builder()
                 .title(createLostCatPostRequest.getTitle())
                 .contents(createLostCatPostRequest.getContent())
@@ -177,12 +164,6 @@ public class LostCatPostService {
         return CreateLostCatPostResponse.from(lostCatPost);
     }
 
-    /**
-     * 글 수정 (Presigned URL 기반 이미지 업로드)
-     * 이미지 처리:
-     * - images 리스트 순서 그대로 최종 이미지 목록 구성 (기존 URL + 새 S3 key 혼합 가능)
-     * - images에 없는 기존 이미지는 삭제된 것으로 간주하여 S3에서 제거
-     */
     @Transactional
     public UpdateLostCatPostResponse updateLostCatPost(Long lostCatPostId, UpdateLostCatPostRequest updateLostCatPostRequest, Long userId){
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
@@ -220,9 +201,6 @@ public class LostCatPostService {
         return UpdateLostCatPostResponse.from(lostCatPost);
     }
 
-    /**
-     * 글 삭제
-     */
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public void deleteLostCatPost(Long lostCatPostId, Long userId, boolean hasDeleteAuthority) {

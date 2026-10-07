@@ -4,7 +4,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * JWT 관련 설정을 중앙에서 관리하는 Record.
- * application.yml의 jwt.* 프로퍼티와 바인딩됨.
  * @param secret           JWT 서명에 사용할 비밀 키
  * @param accessTtlMinutes Access Token 만료 시간 (30분)
  * @param refreshTtlDays   Refresh Token 만료 시간 (14일)

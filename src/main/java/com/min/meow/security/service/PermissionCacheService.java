@@ -12,19 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/**
- * 권한(Permission) Redis 캐시 서비스 — v3 패턴
- * <p>키: "auth:permissions:{userId}" → JSON 직렬화된 권한 코드 목록
- * <p>TTL: Access Token 만료 시간과 동일하게 설정
- * <p>동작 원리:
- * <ul>
- *   <li>로그인 시 권한 캐싱</li>
- *   <li>API 요청 시 Redis에서 조회 (DB 조회 없음)</li>
- *   <li>캐시 미스 or Redis 장애 시 null 반환 → 호출자가 DB fallback 처리</li>
- *   <li>권한 변경 / 탈퇴 시 캐시 무효화 → 다음 요청에서 DB 재조회</li>
- *   <li>토큰 재발급 시 최신 권한으로 재캐싱</li>
- * </ul>
- */
+
 @Slf4j
 @Service
 @RequiredArgsConstructor

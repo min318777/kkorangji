@@ -30,8 +30,8 @@ public class OpenApiConfig {
     private Info apiInfo() {
         return new Info()
                 .title("Meow API")
-                .description("고양이 테마 소셜 플랫폼 REST API. "
-                        + "자랑글·실종글 CRUD, 댓글, 좋아요, 알림(SSE), 이미지 업로드(S3 Presigned URL)를 제공합니다.")
+                .description("반려동물 테마 소셜 플랫폼 REST API. "
+                        + "자랑글, 실종글 CRUD, 댓글, 좋아요, 알림(SSE), 이미지 업로드(S3 Presigned URL)를 제공합니다.")
                 .version("v1.0.0");
     }
 

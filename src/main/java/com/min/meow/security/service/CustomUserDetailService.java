@@ -13,8 +13,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Spring Security UserDetailsService 구현체
- * 로그인 시 사용자 정보를 조회하고 인증에 필요한 UserDetails 객체를 반환합니다.
- * 탈퇴한 사용자는 로그인이 차단됩니다.
+ * 로그인 시 사용자 정보를 조회하고 인증에 필요한 UserDetails 객체를 반환
  */
 @Slf4j
 @Service
@@ -23,12 +22,6 @@ public class CustomUserDetailService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-    /**
-     * loginId로 사용자 정보를 조회하여 UserDetails 반환
-     * @param loginId 로그인 시도하는 사용자의 loginId
-     * @return UserDetails 객체 (CustomUserDetails)
-     * @throws UsernameNotFoundException 사용자를 찾을 수 없거나 탈퇴한 사용자인 경우
-     */
     @Override
     public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
         // UsernameNotFoundException을 던져야 Spring Security가 InternalAuthenticationServiceException으로 래핑하지 않음

@@ -26,7 +26,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
  * 2. Notification 엔티티 생성
  * 3. DB에 알림 저장
  * 4. SSE를 통해 실시간 알림 전송
- * @TransactionalEventListener(AFTER_COMMIT) 설명:
+ * @TransactionalEventListener(AFTER_COMMIT)
  * - 발행자(댓글/좋아요 등록) 트랜잭션이 정상 커밋된 후에만 리스너 실행
  * - 트랜잭션 롤백 시 리스너 미실행 → 댓글/좋아요와 알림 간 정합성 보장
  * - 일반 @EventListener는 publishEvent 호출 즉시 실행되어 롤백 시 알림이 잘못 발송될 위험이 있음

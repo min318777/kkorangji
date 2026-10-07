@@ -16,12 +16,6 @@ import java.util.UUID;
 
 /**
  * JWT 토큰 생성 및 검증 유틸리티.
- * <p>주요 개선점:
- * <ul>
- *   <li>{@link JwtConfig}로 TTL·issuer·audience를 중앙 관리 (하드코딩 제거)</li>
- *   <li>{@link #decodeAndVerify}로 1회 파싱 + 서명·만료·타입·issuer·audience 검증</li>
- *   <li>Access Token에 role, permissions 유지 (DB 조회 없이 권한 확인 가능)</li>
- * </ul>
  */
 @Component
 public class JwtProvider {
@@ -38,8 +32,6 @@ public class JwtProvider {
     /**
      * Access Token 생성 (subject: userId, payload: role, permissions, token 타입)
      * TTL은 JwtConfig에서 중앙 관리 — 호출자가 지정할 필요 없음.
-     * userId(PK)를 subject로 사용하여 불변 식별자로 사용자를 식별함.
-     * permissions를 포함하여 DB 조회 없이 권한 확인이 가능하도록 함.
      */
     public String createAccessToken(Long userId, String role, List<String> permissions) {
         return Jwts.builder()
@@ -87,22 +79,6 @@ public class JwtProvider {
 
     // ============ 토큰 검증 ============
 
-    /**
-     * JWT 토큰을 1회 파싱하여 서명·만료·issuer·audience·타입을 모두 검증하고 Claims를 반환.
-     * <p>{@code parseSignedClaims()}가 내부적으로 수행하는 검증:
-     * <ul>
-     *   <li>서명 위조 → {@link io.jsonwebtoken.security.SignatureException}</li>
-     *   <li>토큰 만료 → {@link io.jsonwebtoken.ExpiredJwtException}</li>
-     *   <li>형식 오류 → {@link io.jsonwebtoken.MalformedJwtException}</li>
-     *   <li>issuer 불일치 → {@link io.jsonwebtoken.IncorrectClaimException}</li>
-     *   <li>audience 불일치 → {@link io.jsonwebtoken.IncorrectClaimException}</li>
-     * </ul>
-     * <p>추가로 토큰 타입(ACCESS/REFRESH)을 검증하여 타입 불일치 시
-     * {@link CustomException}({@link ErrorCode#INVALID_TOKEN_TYPE})을 던짐.
-     * @param token        원본 JWT 문자열
-     * @param expectedType 기대하는 토큰 타입 (TokenType.ACCESS_TOKEN 또는 TokenType.REFRESH_TOKEN)
-     * @return Claims      검증 완료된 payload (subject, role 등을 꺼내 쓸 수 있음)
-     */
     public Claims decodeAndVerify(String token, TokenType expectedType) {
         // 1회 파싱: 서명 + 만료 + issuer + audience 검증을 한 번에 수행
         Claims claims = Jwts.parser()

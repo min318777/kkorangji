@@ -38,8 +38,6 @@ public class LostCatPostController {
 
     private final LostCatPostService lostCatPostService;
 
-    // ========== CRUD ==========
-
     @Operation(summary = "실종글 목록 조회", description = "페이징된 실종글 목록을 조회합니다. 인증 불필요.")
     @SecurityRequirements
     @GetMapping

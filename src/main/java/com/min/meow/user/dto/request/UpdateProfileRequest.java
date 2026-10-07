@@ -8,8 +8,7 @@ import lombok.Getter;
 
 /**
  * 프로필 수정 요청 DTO
- * DTO 수준에서 수정 가능 필드를 원천 차단 — nickname만 정의
- * email, password 등 민감 필드는 별도 API로 처리
+ * DTO 수준에서 수정 가능 필드를 차단 — nickname만 정의
  */
 @Schema(description = "프로필 수정 요청")
 @Getter

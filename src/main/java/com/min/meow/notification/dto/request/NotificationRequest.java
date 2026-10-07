@@ -8,9 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/**
- * 여러 개의 알림을 읽음 처리하기 위한 요청 DTO
- */
 @Schema(description = "다건 알림 읽음 처리 요청")
 @Getter
 @NoArgsConstructor

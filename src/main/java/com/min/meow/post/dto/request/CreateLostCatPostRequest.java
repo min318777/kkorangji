@@ -8,11 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * 실종 고양이 게시글 생성 요청 DTO
- * Presigned URL 기반 이미지 업로드 방식:
- * 1. 클라이언트가 먼저 /api/images/presigned-urls 로 Presigned URL 요청
- * 2. Presigned URL로 S3에 이미지 직접 업로드
- * 3. 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 게시글 생성 요청
+ * 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 게시글 생성 요청
  */
 @Schema(description = "실종글 생성 요청")
 @Getter

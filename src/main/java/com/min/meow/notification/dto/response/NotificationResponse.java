@@ -12,9 +12,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * 알림 조회 응답 DTO
- */
 @Schema(description = "알림 조회 응답")
 @Getter
 @NoArgsConstructor

@@ -9,12 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * 실종 고양이 게시글 목록 조회용 경량 응답 DTO
- * - 목록 페이지에서 필요한 필드만 포함
- * - contents, imageUrls, comments 등 불필요한 데이터 제외
- * - QueryDSL Projection으로 DB에서 필요한 컬럼만 SELECT
- */
+
 @Schema(description = "실종글 목록 조회 응답 (경량)")
 @Getter
 @Builder

@@ -125,7 +125,6 @@ public class CommentService {
         return RegisterCommentResponse.toResponse(comment);
     }
 
-    // ========== 댓글 작성 + 알림 처리 통합 비교 (v1: 비교군 / v2: registerComment, 채택) ==========
 
     // v1: 댓글 저장 + 알림 저장 + SSE 발행을 하나의 트랜잭션 안에서 동기로 처리 (비교군)
     // registerComment(v2)와 달리 이벤트 발행(AFTER_COMMIT + @Async) 없이 즉시 처리하므로

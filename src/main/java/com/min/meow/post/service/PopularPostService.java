@@ -25,11 +25,6 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-/**
- * 인기글 서비스
- * [목록] v1(기본 @Cacheable, 비교 기준선) / v5(Sorted Set 실시간 집계, 캐시 없음)
- * [상세] v1~v4: @Cacheable / 분산 락 / Cache Warming / 비관적 락 (스탬피드 방지 비교)
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor

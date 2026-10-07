@@ -9,12 +9,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 실종글 상세 조회 응답 DTO
- * 캐싱을 위해 정적 데이터만 포함:
- * - 댓글은 별도 API로 조회: GET /api/meow/lost-cat-posts/comments/{postId}
- * - 조회수는 별도 API로 증가: POST /api/meow/lost-cat-posts/{postId}/view
- */
+
 @Schema(description = "실종글 상세 조회 응답")
 @Getter
 @NoArgsConstructor

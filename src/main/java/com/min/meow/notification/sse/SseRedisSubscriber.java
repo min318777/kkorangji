@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 /**
  * Redis Pub/Sub 구독자 — SSE 알림 전달
  * 채널 패턴: sse:notify:{userId}
- * 모든 서버 인스턴스가 동일 패턴을 구독하며,
+ * 모든 서버 인스턴스가 동일 패턴을 구독하며
  * 자신의 ConcurrentHashMap에 해당 userId 연결이 있을 때만 SSE 전송
  */
 @Slf4j

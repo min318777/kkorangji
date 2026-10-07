@@ -8,7 +8,6 @@ import lombok.*;
 import java.util.List;
 
 /**
- * 고양이 자랑글 수정 요청 DTO
  * Presigned URL 기반 이미지 업로드 방식:
  * - images 리스트 하나로 최종 이미지 순서를 그대로 전달 (기존 이미지 + 새 이미지 혼합 가능)
  * - EXISTING 타입: value = 기존 CloudFront URL

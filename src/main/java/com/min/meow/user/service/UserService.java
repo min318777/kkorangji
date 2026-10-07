@@ -96,8 +96,6 @@ public class UserService {
      * 소프트 삭제 방식을 사용하여:
      * - 게시글, 댓글 등 기존 데이터의 외래키 참조 무결성 유지
      * - 탈퇴 후에도 게시글은 "탈퇴한 사용자"로 표시되어 조회 가능
-     * - 개인정보는 비식별화되어 개인정보보호법 준수
-     * @param userId 탈퇴할 사용자의 ID (PK)
      */
     @Transactional
     public void withdraw(Long userId) {

@@ -27,7 +27,6 @@ public class PopularPostRepository {
 
     /**
      * 인기글 상세 조회 — User JOIN FETCH (N+1 방지)
-     * fetchDetail / 워밍 스케줄러에서 사용
      */
     public Optional<BoastCatPost> findByIdWithUser(Long id) {
         return Optional.ofNullable(

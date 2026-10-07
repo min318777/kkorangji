@@ -9,8 +9,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 /**
- * 알림 이벤트 발행자 (Spring Event 기반)
- * 흐름:
+ * 알림 이벤트 발행자
  * 1. 서비스에서 댓글/좋아요 생성 시 이 클래스의 publish 메서드 호출
  * 2. ApplicationEventPublisher를 통해 Spring Event 발행
  * 3. NotificationEventListener가 이벤트 수신 (비동기)

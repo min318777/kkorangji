@@ -147,15 +147,9 @@ public class RedisConfig {
 
     /**
      * 조회수 캐싱 및 기타 Redis 작업을 위한 RedisTemplate
-     * 용도:
-     * - 조회수 증가 (INCR 명령어로 원자적 증가)
-     * - 중복 조회 방지 (SETNX로 클라이언트별 debounce)
-     * - 배치 플러시를 위한 조회수 집계
      * Serializer 설정:
      * - Key: StringRedisSerializer (읽기 쉬운 문자열 키)
      * - Value: StringRedisSerializer (숫자를 문자열로 저장, INCR 호환)
-     */
-    /**
      * Redisson 클라이언트 (분산 락용)
      * redisson-spring-boot-starter가 빈 문자열 password를 AUTH로 보내는 문제 방지
      * password가 없으면 setPassword 호출 생략

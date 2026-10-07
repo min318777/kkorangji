@@ -49,7 +49,6 @@ public class BoastCatPostService {
     private final PostImageDeleteEventPublisher postImageDeleteEventPublisher;
     private final NotificationEventPublisher notificationEventPublisher;
 
-    // ========== 조회 ==========
 
     /**
      * 모든 글 조회 (Projection 적용으로 성능 최적화)
@@ -72,15 +71,6 @@ public class BoastCatPostService {
         return GetBoastCatPostResponse.from(post);
     }
 
-
-    /**
-     * 글 작성 (Presigned URL 기반 이미지 업로드)
-     * 이미지 업로드 플로우:
-     * 1. 클라이언트가 /api/images/presigned-urls 로 Presigned URL 요청
-     * 2. 클라이언트가 Presigned URL로 S3에 이미지 직접 업로드
-     * 3. 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 이 API 호출
-     * 4. 서버는 key를 CloudFront URL로 변환하여 DB 저장
-     */
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public CreateBoastCatPostResponse createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest, Long userId){
