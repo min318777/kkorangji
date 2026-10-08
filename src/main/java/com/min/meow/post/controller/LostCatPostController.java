@@ -5,6 +5,7 @@ import com.min.meow.common.PrincipalUser;
 import com.min.meow.common.PageResponse;
 import com.min.meow.common.ApiResponse;
 import com.min.meow.common.SecurityUtil;
+import com.min.meow.common.idempotency.Idempotent;
 import com.min.meow.post.dto.request.CreateLostCatPostRequest;
 import com.min.meow.post.dto.request.UpdateLostCatPostRequest;
 import com.min.meow.post.dto.response.CreateLostCatPostResponse;
@@ -72,8 +73,10 @@ public class LostCatPostController {
      * 글 생성 (Presigned URL 기반 이미지 업로드)
      */
     @Operation(summary = "실종글 생성",
-            description = "새 실종글을 작성합니다. 이미지는 Presigned URL로 S3에 먼저 업로드 후 key를 전달합니다. 인증 필요.")
+            description = "새 실종글을 작성합니다. 이미지는 Presigned URL로 S3에 먼저 업로드 후 key를 전달합니다. 인증 필요. " +
+                    "더블클릭/재시도로 인한 중복 등록 방지를 위해 Idempotency-Key 헤더가 필요합니다.")
     @PreAuthorize("hasAuthority('post:create')")
+    @Idempotent
     @PostMapping
     public ResponseEntity<ApiResponse<CreateLostCatPostResponse>> createLostCatPost(
             @RequestBody @Valid CreateLostCatPostRequest createLostCatPostRequest,

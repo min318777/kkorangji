@@ -11,6 +11,7 @@ import com.min.meow.post.dto.response.BoastCatPostListResponse;
 import com.min.meow.post.dto.response.GetBoastCatPostResponse;
 import com.min.meow.post.dto.response.UpdateBoastCatPostResponse;
 import com.min.meow.post.service.BoastCatPostService;
+import com.min.meow.common.idempotency.Idempotent;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -61,8 +62,10 @@ public class BoastCatPostController {
      * 3. 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 이 API 호출
      */
     @Operation(summary = "자랑글 생성",
-            description = "새 자랑글을 작성합니다. 이미지는 Presigned URL로 S3에 먼저 업로드 후 key를 전달합니다. 인증 필요.")
+            description = "새 자랑글을 작성합니다. 이미지는 Presigned URL로 S3에 먼저 업로드 후 key를 전달합니다. 인증 필요. " +
+                    "더블클릭/재시도로 인한 중복 등록 방지를 위해 Idempotency-Key 헤더가 필요합니다.")
     @PreAuthorize("hasAuthority('post:create')")
+    @Idempotent
     @PostMapping
     public ResponseEntity<ApiResponse<CreateBoastCatPostResponse>> createBoastCatPost(
             @RequestBody @Valid CreateBoastCatPostRequest createBoastCatPostRequest,

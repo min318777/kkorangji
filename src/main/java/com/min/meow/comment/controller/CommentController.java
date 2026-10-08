@@ -14,6 +14,7 @@ import com.min.meow.comment.dto.response.GetCommentResponse;
 import com.min.meow.comment.dto.response.RegisterCommentResponse;
 import com.min.meow.comment.dto.response.UpdateCommentResponse;
 import com.min.meow.comment.service.CommentService;
+import com.min.meow.common.idempotency.Idempotent;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -51,8 +52,10 @@ public class CommentController {
     }
 
     @Operation(summary = "댓글 작성",
-            description = "게시글에 댓글을 작성합니다. postType: boast-cat | lost-cat. 인증 필요.")
+            description = "게시글에 댓글을 작성합니다. postType: boast-cat | lost-cat. 인증 필요. " +
+                    "더블클릭/재시도로 인한 중복 등록 방지를 위해 Idempotency-Key 헤더가 필요합니다.")
     @PreAuthorize("hasAuthority('comment:create')")
+    @Idempotent
     @PostMapping("/api/meow/{postType}/{postId}/comments")
     public ResponseEntity<ApiResponse<RegisterCommentResponse>> registerComment(
             @RequestBody @Valid RegisterCommentRequest request,
@@ -69,8 +72,10 @@ public class CommentController {
 
     @Operation(summary = "댓글 작성 v1",
             description = "댓글 저장+알림 저장+SSE 발행을 하나의 트랜잭션에서 동기 처리하는 비교군. " +
-                    "성능 비교 실험 전용, 실제 서비스에서는 registerComment(v2)를 사용. 인증 필요.")
+                    "성능 비교 실험 전용, 실제 서비스에서는 registerComment(v2)를 사용. 인증 필요. " +
+                    "더블클릭/재시도로 인한 중복 등록 방지를 위해 Idempotency-Key 헤더가 필요합니다.")
     @PreAuthorize("hasAuthority('comment:create')")
+    @Idempotent
     @PostMapping("/api/meow/{postType}/{postId}/comments/v1")
     public ResponseEntity<ApiResponse<RegisterCommentResponse>> registerCommentV1(
             @RequestBody @Valid RegisterCommentRequest request,

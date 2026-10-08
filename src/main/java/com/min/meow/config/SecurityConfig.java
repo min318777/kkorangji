@@ -72,7 +72,7 @@ public class SecurityConfig {
                         corsConfiguration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "https://kkorangji-vercel-web.vercel.app", "https://kkorangji.com", "https://www.kkorangji.com"));
                         corsConfiguration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                         corsConfiguration.setAllowCredentials(true);
-                        corsConfiguration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-Auth-Version", "Last-Event-ID"));
+                        corsConfiguration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "X-Auth-Version", "Last-Event-ID", "Idempotency-Key"));
                         corsConfiguration.setMaxAge(3600L);
                         corsConfiguration.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
 
