@@ -14,10 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 소셜 로그인 provider가 호출하는 웹훅 전용 컨트롤러
- * 사용자 인증 없이 provider 서버가 직접 호출하므로 인증 불필요 (SecurityConfig permitAll)
- */
+// 소셜 로그인 provider가 호출하는 웹훅 전용 컨트롤러
 @Tag(name = "인증 웹훅", description = "소셜 로그인 provider가 호출하는 웹훅")
 @Slf4j
 @RestController

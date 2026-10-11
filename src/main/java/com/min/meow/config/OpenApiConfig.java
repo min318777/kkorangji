@@ -8,11 +8,7 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * OpenAPI(Swagger) 전역 설정
- * - API 제목, 설명, 버전 정의
- * - JWT Bearer 인증 스키마 전역 등록 (Swagger UI "Authorize" 버튼)
- */
+// OpenAPI(Swagger) 전역 설정 — API 정보 정의 + JWT Bearer 인증 스키마 등록(Swagger UI "Authorize" 버튼)
 @Configuration
 public class OpenApiConfig {
 

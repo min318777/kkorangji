@@ -9,12 +9,7 @@ import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
 
-/**
- * Redis Pub/Sub 구독자 — SSE 알림 전달
- * 채널 패턴: sse:notify:{userId}
- * 모든 서버 인스턴스가 동일 패턴을 구독하며
- * 자신의 ConcurrentHashMap에 해당 userId 연결이 있을 때만 SSE 전송
- */
+// Redis Pub/Sub 구독자 — sse:notify:{userId} 채널을 모든 서버가 구독, 자신에게 연결된 userId면 SSE로 전송
 @Slf4j
 @Component
 public class SseRedisSubscriber implements MessageListener {

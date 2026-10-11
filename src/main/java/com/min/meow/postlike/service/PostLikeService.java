@@ -38,7 +38,6 @@ public class PostLikeService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + postId));
 
         try {
-            // getReferenceById 대신 findById로 탈퇴/미존재 사용자 명시적 검증
             var user = userRepository.findById(userId)
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
             if (user.isWithdrawn()) {
@@ -51,17 +50,12 @@ public class PostLikeService {
                     .build();
             postLikeRepository.save(like);
             boastCatPostRepository.updateLikeCount(postId, 1);
-
             // 본인 게시글이거나 탈퇴 회원이면 알림 생략
             if (!post.getUser().isWithdrawn() && !userId.equals(post.getUser().getId())) {
                 notificationEventPublisher.publishLikeEvent(
                         new LikeEvent(like.getId(), postId, PostType.BOAST, post.getUser().getId()));
             }
-
-            // 인기글 Sorted Set 점수 +3 (AFTER_COMMIT 비동기 처리)
             notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(postId, 3));
-
-            // JPQL UPDATE는 1차 캐시를 우회하므로 계산으로 반환
             return post.getLikeCount() + 1L;
 
         } catch (DataIntegrityViolationException e) {
@@ -79,14 +73,9 @@ public class PostLikeService {
 
         BoastCatPost post = boastCatPostRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + postId));
-
         postLikeRepository.deleteByBoastCatPostIdAndUserId(postId, userId);
         boastCatPostRepository.updateLikeCount(postId, -1);
-
-        // 인기글 Sorted Set 점수 -3 (AFTER_COMMIT 비동기 처리)
         notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(postId, -3));
-
-        // JPQL UPDATE는 1차 캐시를 우회하므로 계산으로 반환, 최소 0 보장
         return Math.max(0L, post.getLikeCount() - 1);
     }
 

@@ -145,15 +145,7 @@ public class RedisConfig {
     }
 
 
-    /**
-     * 조회수 캐싱 및 기타 Redis 작업을 위한 RedisTemplate
-     * Serializer 설정:
-     * - Key: StringRedisSerializer (읽기 쉬운 문자열 키)
-     * - Value: StringRedisSerializer (숫자를 문자열로 저장, INCR 호환)
-     * Redisson 클라이언트 (분산 락용)
-     * redisson-spring-boot-starter가 빈 문자열 password를 AUTH로 보내는 문제 방지
-     * password가 없으면 setPassword 호출 생략
-     */
+    // Redisson 클라이언트(분산 락용) — redisson-spring-boot-starter가 빈 문자열 password를 AUTH로 보내는 문제를 막기 위해 password 없을 때 setPassword 생략
     @Bean(destroyMethod = "shutdown")
     public RedissonClient redissonClient() {
         Config config = new Config();
@@ -176,6 +168,7 @@ public class RedisConfig {
         return container;
     }
 
+    // 조회수 캐싱 등 Redis 작업용 RedisTemplate — Key/Value 모두 String 직렬화(INCR 명령어 호환)
     @Bean
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();

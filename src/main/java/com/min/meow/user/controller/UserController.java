@@ -76,12 +76,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("로그인 성공", loginResponse));
     }
 
-    /**
-     * - 현재 로그인한 사용자만 자신의 계정을 탈퇴할 수 있음
-     * - 소프트 삭제 방식으로 데이터 무결성 유지
-     * - 개인정보 비식별화 처리
-     * - 탈퇴 후에도 기존 게시글은 "탈퇴한 사용자"로 표시됨
-     */
+    // 본인만 탈퇴 가능, 소프트 삭제+개인정보 비식별화 처리(기존 게시글은 "탈퇴한 사용자"로 표시)
     @Operation(summary = "회원 탈퇴",
             description = "현재 로그인한 사용자의 계정을 탈퇴합니다. 소프트 삭제 방식으로 개인정보는 비식별화됩니다. 인증 필요.")
     @DeleteMapping("/me")

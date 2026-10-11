@@ -17,9 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-/**
- * S3Uploader(현재 @Deprecated)를 그대로 재사용해 동영상을 서버가 직접 받아 S3로 재전송한다.
- */
+// S3Uploader(Deprecated)를 재사용해 동영상을 서버가 직접 받아 S3로 재전송(Presigned 방식과 성능 비교용)
 @Tag(name = "서버 경유 업로드 비교", description = "Presigned 방식과의 응답 시간 비교 측정 ")
 @Slf4j
 @Profile({"local", "prod"})

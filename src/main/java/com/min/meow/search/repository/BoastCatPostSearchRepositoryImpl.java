@@ -22,14 +22,7 @@ public class BoastCatPostSearchRepositoryImpl implements BoastCatPostSearchRepos
     @PersistenceContext
     private EntityManager entityManager;
 
-    /**
-     * Full-Text Search (ngram 파서)
-     * - MATCH(title, contents) AGAINST(keyword IN BOOLEAN MODE)
-     * - FULLTEXT INDEX ft_boast_post_title_contents 활용
-     * - 한국어 2-gram 토큰화로 인덱스 기반 검색
-     * - 최신순 정렬 -> 관련도순(MATCH...AGAINST DESC)은 매치 건수가 많을수록 정렬 비용이 커져
-     *   응답시간이 급증하는 문제가 있어, created_at 인덱스를 활용하는 최신순으로 변경
-     */
+    // Full-Text Search (ngram 파서, BOOLEAN MODE) — 한국어 2-gram 토큰화 + created_at 인덱스 기반 최신순 정렬
     @Override
     public Page<BoastCatPostListResponse> searchByKeyword(String keyword, Pageable pageable) {
         // BOOLEAN MODE: 고빈도 단어 50% 규칙 없음, 단순 포함 여부만 체크
@@ -79,12 +72,7 @@ public class BoastCatPostSearchRepositoryImpl implements BoastCatPostSearchRepos
         return new PageImpl<>(content, pageable, total);
     }
 
-    /**
-     * Full-Text Search (자연어 모드)
-     * - MATCH(title, contents) AGAINST(keyword IN NATURAL LANGUAGE MODE)
-     * - 연산자(+/-) 문법이 없어 키워드를 가공 없이 그대로 전달, 암묵적 OR + 관련도 점수
-     * - 흔한 단어 자동 제외(50% 임계치) 규칙은 MyISAM 전용이며 이 테이블(InnoDB)에는 적용되지 않음
-     */
+    // Full-Text Search (자연어 모드) — 연산자 없이 키워드 그대로 전달, 암묵적 OR + 관련도 점수
     @Override
     public Page<BoastCatPostListResponse> searchByNaturalLanguage(String keyword, Pageable pageable) {
         String dataSql = """
@@ -132,9 +120,7 @@ public class BoastCatPostSearchRepositoryImpl implements BoastCatPostSearchRepos
     }
 
     // BOOLEAN MODE 변환: 각 단어를 + (필수 조건)으로 처리
-    // "고양이 귀여운" → "+고양이 +귀여운"
     // BOOLEAN MODE 특수문자(+,-,*,~,",(,)) 제거 후 각 토큰에 + 붙임
-    // ngram_token_size(2) 미만 토큰은 인덱스에 없어 매치 불가하므로 제외
     private String sanitizeForBooleanMode(String keyword) {
         String cleaned = keyword.replaceAll("[+\\-><()~*\"@]", "");
         return Arrays.stream(cleaned.trim().split("\\s+"))

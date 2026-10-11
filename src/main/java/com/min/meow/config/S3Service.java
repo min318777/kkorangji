@@ -22,20 +22,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * S3 서비스
- * Presigned URL 기반 이미지 업로드 아키텍처:
- * 1. 클라이언트가 서버에 Presigned URL 요청
- * 2. 서버가 S3 Presigned URL 생성하여 반환
- * 3. 클라이언트가 Presigned URL로 S3에 직접 업로드 (서버 트래픽 없음)
- * 4. 업로드 완료 후 클라이언트가 S3 key를 서버에 전달
- * 5. 서버가 key를 CloudFront URL로 변환하여 DB 저장
- * 장점:
- * - 서버 트래픽 비용 절감 (이미지가 서버를 거치지 않음)
- * - 서버 메모리 부담 감소
- * - CloudFront CDN으로 빠른 이미지 로딩 + 캐싱
- * - S3 직접 접근 차단으로 보안 강화
- */
+// S3 서비스 — 클라이언트가 Presigned URL로 S3에 직접 업로드하고, 서버는 key를 CloudFront URL로 변환해 저장
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -56,11 +43,7 @@ public class S3Service {
     // S3 저장 경로 prefix
     private static final String KEY_PREFIX = "meow/";
 
-    /**
-     * 업로드용 Presigned URL 생성
-     * @param contentType 업로드할 파일의 Content-Type (예: image/jpeg)
-     * @return Presigned URL 정보 (url, key)
-     */
+    // 업로드용 Presigned URL 생성
     public PresignedUrlInfo generatePresignedUrl(String contentType) {
         // 고유한 S3 key 생성 (UUID + 확장자)
         String extension = getExtensionFromContentType(contentType);
@@ -86,22 +69,14 @@ public class S3Service {
         return new PresignedUrlInfo(presignedUrl, key);
     }
 
-    /**
-     * 여러 개의 Presigned URL 생성
-     * @param contentTypes Content-Type 목록
-     * @return Presigned URL 정보 목록
-     */
+    // 여러 개의 Presigned URL 생성
     public List<PresignedUrlInfo> generatePresignedUrls(List<String> contentTypes) {
         return contentTypes.stream()
                 .map(this::generatePresignedUrl)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * S3 key를 CloudFront URL로 변환
-     * @param key S3 object key (예: meow/uuid-xxx.jpg)
-     * @return CloudFront URL (예: https://d1234.cloudfront.net/meow/uuid-xxx.jpg)
-     */
+    // S3 key를 CloudFront URL로 변환
     public String toCloudFrontUrl(String key) {
         if (key == null || key.isEmpty()) {
             return null;
@@ -113,11 +88,7 @@ public class S3Service {
         return domain + "/" + key;
     }
 
-    /**
-     * 여러 S3 key를 CloudFront URL 목록으로 변환
-     * @param keys S3 key 목록
-     * @return CloudFront URL 목록
-     */
+    // 여러 S3 key를 CloudFront URL 목록으로 변환
     public List<String> toCloudFrontUrls(List<String> keys) {
         if (keys == null || keys.isEmpty()) {
             return List.of();
@@ -127,11 +98,7 @@ public class S3Service {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * S3 파일 존재 여부 확인
-     * @param key S3 object key
-     * @return 존재 여부
-     */
+    // S3 파일 존재 여부 확인
     public boolean doesObjectExist(String key) {
         try {
             HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
@@ -145,10 +112,7 @@ public class S3Service {
         }
     }
 
-    /**
-     * S3 파일 삭제
-     * @param key S3 object key
-     */
+    // S3 파일 삭제
     public void deleteFile(String key) {
         try {
             DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
@@ -165,10 +129,7 @@ public class S3Service {
         }
     }
 
-    /**
-     * 여러 S3 파일 삭제 — 일부 실패해도 나머지 계속 진행
-     * 첫 번째 실패 시 중단되던 문제 수정: 모든 파일 삭제 시도 후 실패 목록을 한 번에 예외로 전파
-     */
+    // 여러 S3 파일 삭제 — 일부 실패해도 나머지 계속 진행, 실패 목록은 모두 시도 후 한 번에 예외로 전파
     public void deleteFiles(List<String> keys) {
         if (keys == null || keys.isEmpty()) {
             return;
@@ -192,11 +153,7 @@ public class S3Service {
         }
     }
 
-    /**
-     * CloudFront URL에서 S3 key 추출
-     * @param cloudFrontUrl CloudFront URL
-     * @return S3 key
-     */
+    // CloudFront URL에서 S3 key 추출
     public String extractKeyFromUrl(String cloudFrontUrl) {
         if (cloudFrontUrl == null || cloudFrontUrl.isEmpty()) {
             return null;
@@ -212,9 +169,7 @@ public class S3Service {
         return cloudFrontUrl;
     }
 
-    /**
-     * Content-Type에서 파일 확장자 추출
-     */
+    // Content-Type에서 파일 확장자 추출
     private String getExtensionFromContentType(String contentType) {
         if (contentType == null) {
             return "";
@@ -230,9 +185,7 @@ public class S3Service {
         };
     }
 
-    /**
-     * Presigned URL 정보를 담는 내부 클래스
-     */
+    // Presigned URL 정보를 담는 내부 클래스
     public record PresignedUrlInfo(
             String presignedUrl,  // S3 Presigned PUT URL
             String key            // S3 object key

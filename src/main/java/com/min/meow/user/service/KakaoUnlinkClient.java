@@ -11,12 +11,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-/**
- * 카카오 연결 해제(Unlink) Admin API 호출
- * 유저가 우리 서비스에서 탈퇴할 때 카카오 쪽 앱 연결도 함께 끊어야
- * "탈퇴했는데 카카오 계정엔 여전히 연결되어 있음" 문제가 없음.
- * Admin 키는 카카오 개발자 콘솔 > 앱 설정 > 앱 키 > Admin 키에서 발급.
- */
+// 카카오 연결 해제(Unlink) Admin API 호출 — 탈퇴 시 카카오 쪽 앱 연결도 함께 해제
 @Slf4j
 @Component
 public class KakaoUnlinkClient {
@@ -28,11 +23,7 @@ public class KakaoUnlinkClient {
     @Value("${kakao.admin-key:}")
     private String adminKey;
 
-    /**
-     * 카카오 연결 해제 요청 (best-effort)
-     * 카카오 API 실패가 우리 서비스 탈퇴 자체를 막으면 안 되므로 예외를 던지지 않고 로그만 남김.
-     * @param socialId 카카오 고유 사용자 ID
-     */
+    // 카카오 연결 해제 요청 (best-effort) — 실패해도 탈퇴 자체는 막지 않고 로그만 남김
     public void unlink(String socialId) {
         if (adminKey == null || adminKey.isBlank()) {
             log.warn("카카오 Admin 키가 설정되지 않아 연결 해제 API 호출을 건너뜀 - socialId: {}", socialId);

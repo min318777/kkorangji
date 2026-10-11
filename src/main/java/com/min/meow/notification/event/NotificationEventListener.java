@@ -1,15 +1,11 @@
 package com.min.meow.notification.event;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.min.meow.common.NotificationType;
-import com.min.meow.notification.dto.response.NotificationResponse;
 import com.min.meow.notification.entity.Notification;
 import com.min.meow.notification.service.NotificationSaveService;
+import com.min.meow.notification.sse.NotificationSender;
 import io.sentry.Sentry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
@@ -18,124 +14,44 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-/**
- * 알림 이벤트 리스너 (비동기 처리)
- * Spring Event를 수신하여 알림을 처리하는 리스너입니다.
- * 처리 흐름:
- * 1. CommentEvent 또는 LikeEvent를 트랜잭션 커밋 후(AFTER_COMMIT) 수신
- * 2. Notification 엔티티 생성
- * 3. DB에 알림 저장
- * 4. SSE를 통해 실시간 알림 전송
- * @TransactionalEventListener(AFTER_COMMIT)
- * - 발행자(댓글/좋아요 등록) 트랜잭션이 정상 커밋된 후에만 리스너 실행
- * - 트랜잭션 롤백 시 리스너 미실행 → 댓글/좋아요와 알림 간 정합성 보장
- * - 일반 @EventListener는 publishEvent 호출 즉시 실행되어 롤백 시 알림이 잘못 발송될 위험이 있음
- * @Async 설명:
- * - "notificationExecutor": AsyncConfig에서 정의한 스레드 풀 사용
- * - 이벤트 발행자(Service)는 블로킹 없이 즉시 반환
- * - 알림 처리는 별도 스레드에서 비동기로 실행
- */
+// 알림 이벤트 리스너 — 댓글/좋아요 트랜잭션이 AFTER_COMMIT된 후에만 notificationExecutor 스레드에서 비동기로 알림 저장+SSE 전송
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class NotificationEventListener {
 
     private final NotificationSaveService notificationSaveService;
-    private final RedisTemplate<String, String> redisTemplate;
-    private final ObjectMapper objectMapper;
+    private final NotificationSender notificationSender;
 
-    /**
-     * 댓글 이벤트 처리
-     * @param event 댓글 이벤트 정보
-     */
     @Async("notificationExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
-    public void handleCommentEvent(CommentEvent event) {
-        log.debug("댓글 이벤트 수신 - commentId: {}, postId: {}, receiverUserId: {}",
-                event.commentId(), event.postId(), event.receiverUserId());
+    public void handle(NotificationEvent event) {
+        log.debug("알림 이벤트 수신 - type: {}, sourceId: {}, postId: {}, receiverUserId: {}",
+                event.type(), event.sourceId(), event.postId(), event.receiverUserId());
 
         Notification notification = Notification.builder()
-                .sourceId(event.commentId())
+                .sourceId(event.sourceId())
                 .postId(event.postId())
                 .postType(event.postType())
                 .receiverUserId(event.receiverUserId())
-                .type(NotificationType.COMMENT)
-                .message(createCommentNotificationMessage(event.writer()))
+                .type(event.type())
+                .message(event.message())
                 .isRead(false)
                 .build();
 
         Notification saved = notificationSaveService.save(notification);
         if (saved == null) return;
-        log.debug("DB 알림 저장 완료 - ID: {}, Type: COMMENT, ReceiverUserId: {}",
-                saved.getId(), saved.getReceiverUserId());
+        log.debug("DB 알림 저장 완료 - ID: {}, Type: {}, ReceiverUserId: {}",
+                saved.getId(), event.type(), saved.getReceiverUserId());
 
-        sendSseNotification(saved);
+        notificationSender.send(saved);
     }
 
     @Recover
-    public void recoverCommentEvent(Exception e, CommentEvent event) {
-        log.error("댓글 알림 최종 실패 (3회 재시도 소진) - commentId: {}, error: {}",
-                event.commentId(), e.getMessage());
+    public void recover(Exception e, NotificationEvent event) {
+        log.error("알림 최종 실패 (3회 재시도 소진) - type: {}, sourceId: {}, error: {}",
+                event.type(), event.sourceId(), e.getMessage());
         Sentry.captureException(e);
-    }
-
-    /**
-     * 좋아요 이벤트 처리
-     * @param event 좋아요 이벤트 정보
-     */
-    @Async("notificationExecutor")
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2))
-    public void handleLikeEvent(LikeEvent event) {
-        log.debug("좋아요 이벤트 수신 - likeId: {}, postId: {}, receiverUserId: {}",
-                event.likeId(), event.postId(), event.receiverUserId());
-
-        Notification notification = Notification.builder()
-                .sourceId(event.likeId())
-                .postId(event.postId())
-                .postType(event.postType())
-                .receiverUserId(event.receiverUserId())
-                .type(NotificationType.LIKE)
-                .message("게시글에 좋아요가 추가되었습니다.")
-                .isRead(false)
-                .build();
-
-        Notification saved = notificationSaveService.save(notification);
-        if (saved == null) return;
-        log.debug("DB 알림 저장 완료 - ID: {}, Type: LIKE, ReceiverUserId: {}",
-                saved.getId(), saved.getReceiverUserId());
-
-        sendSseNotification(saved);
-    }
-
-    @Recover
-    public void recoverLikeEvent(Exception e, LikeEvent event) {
-        log.error("좋아요 알림 최종 실패 (3회 재시도 소진) - likeId: {}, error: {}",
-                event.likeId(), e.getMessage());
-        Sentry.captureException(e);
-    }
-
-    /**
-     * SSE 실시간 알림 전송
-     * @param notification 저장된 알림 엔티티
-     */
-    // Redis 채널에 알림 발행 — 모든 서버 인스턴스가 수신하여 연결된 사용자에게 SSE 전송
-    private void sendSseNotification(Notification notification) {
-        try {
-            String channel = "sse:notify:" + notification.getReceiverUserId();
-            String payload = objectMapper.writeValueAsString(NotificationResponse.from(notification));
-            redisTemplate.convertAndSend(channel, payload);
-            log.debug("[Redis Pub/Sub] 알림 발행 완료 - receiverUserId: {}", notification.getReceiverUserId());
-        } catch (JsonProcessingException e) {
-            log.error("[Redis Pub/Sub] 알림 직렬화 실패 - receiverUserId: {}", notification.getReceiverUserId(), e);
-        }
-    }
-
-    /**
-     * 댓글 알림 메시지 생성
-     */
-    private String createCommentNotificationMessage(String writer) {
-        return String.format("%s님이 댓글을 남겼습니다.", writer);
     }
 }

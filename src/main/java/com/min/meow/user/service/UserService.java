@@ -87,16 +87,7 @@ public class UserService {
         return JoinResponse.from(user);
     }
 
-    /**
-     * 회원 탈퇴 처리
-     * 1. 사용자 존재 여부 확인
-     * 2. 이미 탈퇴한 사용자인지 확인
-     * 3. 리프레시 토큰 삭제 (로그인 세션 무효화)
-     * 4. 개인정보 비식별화 및 소프트 삭제 처리
-     * 소프트 삭제 방식을 사용하여:
-     * - 게시글, 댓글 등 기존 데이터의 외래키 참조 무결성 유지
-     * - 탈퇴 후에도 게시글은 "탈퇴한 사용자"로 표시되어 조회 가능
-     */
+    // 회원 탈퇴 처리 — 리프레시 토큰 삭제 + 권한 캐시 무효화 + 개인정보 비식별화(소프트 삭제)
     @Transactional
     public void withdraw(Long userId) {
         // 1. 사용자 조회
@@ -129,13 +120,7 @@ public class UserService {
         log.info("회원 탈퇴 완료 - userId: {}, 비식별화된 loginId: {}", user.getId(), user.getLoginId());
     }
 
-    /**
-     * 카카오 연결 해제(Unlink) 웹훅 처리
-     * 사용자가 카카오 쪽에서 서비스 연결을 끊으면 카카오가 이 정보를 알려주는데,
-     * 해당 계정을 찾아 일반 탈퇴와 동일하게 비식별화 처리한다 (개인정보보호법 준수).
-     * 이미 탈퇴했거나 존재하지 않는 계정이면 조용히 종료 (카카오 쪽 재시도 대응, 웹훅은 실패해도 안 됨)
-     * @param socialId 카카오 고유 사용자 ID
-     */
+    // 카카오 연결 해제(Unlink) 웹훅 처리 — 해당 계정을 찾아 일반 탈퇴와 동일하게 비식별화 처리
     @Transactional
     public void withdrawByKakaoUnlink(String socialId) {
         userRepository.findByProviderAndSocialId("kakao", socialId)

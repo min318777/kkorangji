@@ -13,10 +13,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * 인기글 전용 Repository
- * BoastCatPostRepositoryCustom에서 분리 — 인기글 조회/랭킹 초기화 전용
- */
 @Repository
 @RequiredArgsConstructor
 public class PopularPostRepository {
@@ -25,9 +21,7 @@ public class PopularPostRepository {
     private final QBoastCatPost boastCatPost = QBoastCatPost.boastCatPost;
     private final QUser user = QUser.user;
 
-    /**
-     * 인기글 상세 조회 — User JOIN FETCH (N+1 방지)
-     */
+    // 인기글 상세 조회
     public Optional<BoastCatPost> findByIdWithUser(Long id) {
         return Optional.ofNullable(
                 queryFactory
@@ -38,10 +32,7 @@ public class PopularPostRepository {
         );
     }
 
-    /**
-     * 가중치 점수(좋아요×3 + 댓글×2 + 조회수×1) 기준 TOP 24 인기 게시물 조회
-     * Sorted Set이 비어있을 때 fallback으로 사용
-     */
+    // 가중치 점수(좋아요×3 + 댓글×2 + 조회수×1) 기준 TOP 24 인기 게시물 조회 (Sorted Set 비어있을 때 fallback)
     public List<BoastCatPostListResponse> findTop24ByScore() {
         return queryFactory
                 .select(new QBoastCatPostListResponse(
@@ -64,9 +55,7 @@ public class PopularPostRepository {
                 .fetch();
     }
 
-    /**
-     * ID 목록으로 게시글 조회 — Sorted Set ID 확보 후 데이터 조회 시 사용
-     */
+    // ID 목록으로 게시글 조회
     public List<BoastCatPostListResponse> findByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) return List.of();
         return queryFactory
@@ -84,10 +73,7 @@ public class PopularPostRepository {
                 .fetch();
     }
 
-    /**
-     * 랭킹 초기화용 상위 N개 게시글 (id, likeCount, commentCount, view) 조회
-     * @PostConstruct에서 Sorted Set 초기값 계산에 사용 (전체 로드 → 기동 지연 방지)
-     */
+    // 랭킹 초기화용 상위 N개 게시글(id, likeCount, commentCount, view) 조회
     public List<Tuple> findTopForRankingInit(int limit) {
         return queryFactory
                 .select(boastCatPost.id, boastCatPost.likeCount, boastCatPost.commentCount, boastCatPost.view)

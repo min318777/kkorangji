@@ -26,13 +26,7 @@ public class ReissueService {
     private final UserRepository userRepository;
     private final PermissionCacheService permissionCacheService;
 
-    /**
-     * 토큰 재발급
-     * 1. Refresh Token 유효성 검증 (decodeAndVerify로 1회 파싱)
-     * 2. Redis에 저장된 토큰과 일치하는지 확인
-     * 3. 새로운 Access Token, Refresh Token 발급 (토큰 로테이션)
-     * 4. Redis에 새 Refresh Token 저장
-     */
+    // 토큰 재발급 - Refresh Token 검증 후 로테이션하여 새 Access/Refresh Token 발급
     public TokenResponse reissue(String refreshToken) {
         if (refreshToken == null) {
             throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);

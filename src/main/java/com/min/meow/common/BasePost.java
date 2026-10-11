@@ -9,6 +9,8 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @MappedSuperclass
 @Getter
@@ -46,6 +48,14 @@ public abstract class BasePost {
     protected LocalDateTime createdAt;
     protected LocalDateTime updatedAt;
 
+    // 목록 썸네일 URL (첫 번째 이미지, 없으면 null) — JOIN 없이 SELECT 가능
+    @Column(length = 500)
+    protected String thumbnailUrl;
+
+    @Builder.Default
+    @ElementCollection
+    protected List<String> imageUrls = new ArrayList<>();
+
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
@@ -59,5 +69,17 @@ public abstract class BasePost {
 
     public void incrementView() {
         this.view++;
+    }
+
+    public boolean isAuthor(Long userId) {
+        return this.user.getId().equals(userId);
+    }
+
+    // 이미지는 keep/new/delete 조합으로 관리되므로 null이면 변경 없음
+    protected void replaceImages(List<String> newImageUrls) {
+        if (newImageUrls == null) return;
+        this.imageUrls.clear();
+        this.imageUrls.addAll(newImageUrls);
+        this.thumbnailUrl = newImageUrls.isEmpty() ? null : newImageUrls.get(0);
     }
 }

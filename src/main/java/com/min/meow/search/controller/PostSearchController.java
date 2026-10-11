@@ -18,9 +18,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-// 검색은 조회 액션 → GET + 쿼리 파라미터가 RESTful 원칙
-// GET이면 브라우저/CDN 캐싱 가능, URL 공유·북마크 가능
-
 @Tag(name = "검색", description = "게시글 검색 API (FTS vs LIKE 성능 비교)")
 @RestController
 @RequiredArgsConstructor

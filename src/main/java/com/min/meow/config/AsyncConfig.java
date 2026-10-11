@@ -15,33 +15,13 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
-/**
- * 비동기 처리 설정 클래스
- * Spring의 @Async 어노테이션을 사용한 비동기 메서드 실행을 위한 설정입니다.
- * ThreadPoolTaskExecutor를 사용하여 스레드 풀을 관리합니다.
- * 왜 ThreadPoolTaskExecutor를 사용하는가?
- * 1. 스레드 풀 관리: 스레드를 미리 생성해두고 재사용하여 오버헤드 감소
- * 2. 자원 제한: 동시에 실행되는 스레드 수를 제한하여 시스템 안정성 확보
- * 3. 큐잉: 요청이 많을 때 큐에 대기시켜 순차적 처리 가능
- * 4. 모니터링: 스레드 풀 상태 모니터링 가능
- * @EnableAsync: Spring의 비동기 처리 기능을 활성화합니다.
- */
+// @Async 비동기 메서드 실행을 위한 스레드 풀 설정 (재사용/자원 제한/큐잉을 위해 ThreadPoolTaskExecutor 사용)
 @Slf4j
 @Configuration
 @EnableAsync
 public class AsyncConfig implements AsyncConfigurer {
 
-    /**
-     * 알림 처리 전용 비동기 Executor
-     * 설정값 설명:
-     * - corePoolSize: 기본적으로 유지되는 스레드 수 (5개) -> 평상시 알림 처리에 필요한 최소 스레드
-     * - maxPoolSize: 최대 스레드 수 (20개) -> 트래픽 급증 시 확장 가능한 최대 스레드
-     * - queueCapacity: 대기 큐 크기 (100개) -> 모든 스레드가 바쁠 때 대기할 수 있는 작업 수
-     * - keepAliveSeconds: 유휴 스레드 유지 시간 (60초) -> corePoolSize 초과 스레드가 유휴 상태일 때 종료까지 대기 시간
-     * - threadNamePrefix: 스레드 이름 접두사 -> 로그에서 알림 처리 스레드를 쉽게 식별
-     * - waitForTasksToCompleteOnShutdown: 종료 시 작업 완료 대기 -> 애플리케이션 종료 시 진행 중인 알림 처리 완료 보장
-     * - awaitTerminationSeconds: 종료 대기 시간 (30초) -> 최대 30초까지 작업 완료를 기다림
-     */
+    // 알림 처리 전용 비동기 Executor (core 5 / max 20 / queue 100)
     @Bean(name = "notificationExecutor")
     public Executor notificationExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -88,29 +68,13 @@ public class AsyncConfig implements AsyncConfigurer {
         return executor;
     }
 
-    /**
-     * 비동기 예외 처리기
-     * @Async 메서드에서 발생한 예외를 처리합니다.
-     * 비동기 메서드는 호출자에게 예외를 전파하지 않으므로,
-     * 여기서 로깅하여 문제를 추적할 수 있습니다.
-     */
+    // 비동기 예외 처리기 — @Async는 호출자에게 예외를 전파하지 않으므로 여기서 로깅
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return new AsyncExceptionHandler();
     }
 
-    /**
-     * MDC 컨텍스트를 비동기 스레드로 전파하는 TaskDecorator
-     * 왜 필요한가?
-     * - @Async 메서드는 새 스레드(ThreadPool)에서 실행됨
-     * - 새 스레드는 부모 스레드의 MDC 컨텍스트(requestId 등)를 자동으로 상속하지 않음
-     * - TaskDecorator로 부모 MDC를 복사하면 비동기 로그에도 동일한 requestId 출력 가능
-     * 동작 흐름:
-     * HTTP 요청 스레드(MDC: requestId=abc) → @Async 실행
-     * → TaskDecorator: 부모 MDC 복사 → 자식 스레드에 setContextMap
-     * → NotificationEventListener 로그에 [abc] 출력
-     * → 작업 완료 후 MDC.clear()
-     */
+    // MDC 컨텍스트를 비동기 스레드로 전파 — 새 스레드는 부모의 requestId를 자동 상속하지 않으므로 직접 복사
     private static class MdcTaskDecorator implements TaskDecorator {
 
         @Override
@@ -135,10 +99,7 @@ public class AsyncConfig implements AsyncConfigurer {
         }
     }
 
-    /**
-     * 비동기 예외 핸들러 내부 클래스
-     * 비동기 메서드에서 발생한 예외를 로깅합니다.
-     */
+    // 비동기 메서드에서 발생한 예외를 로깅하는 핸들러
     private static class AsyncExceptionHandler implements AsyncUncaughtExceptionHandler {
 
         private static final org.slf4j.Logger log =

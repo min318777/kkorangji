@@ -138,8 +138,6 @@ public class NotificationController {
         return ResponseEntity.ok(ApiResponse.success("연결 상태 조회 성공", statusMessage));
     }
 
-    /**
-     * 읽음 처리 결과 응답 DTO
-     */
+    // 읽음 처리 결과 응답 DTO
     public record ReadCountResponse(int readCount, int requestedCount) {}
 }

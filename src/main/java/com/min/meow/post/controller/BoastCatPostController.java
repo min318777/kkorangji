@@ -54,13 +54,7 @@ public class BoastCatPostController {
         return ResponseEntity.ok(ApiResponse.success("글 조회 성공", getBoastCatPostResponse));
     }
 
-    /**
-     * 글 생성 (Presigned URL 기반 이미지 업로드)
-     * 이미지 업로드 플로우:
-     * 1. 클라이언트가 /api/images/presigned-urls 로 Presigned URL 요청
-     * 2. 클라이언트가 Presigned URL로 S3에 이미지 직접 업로드
-     * 3. 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 이 API 호출
-     */
+    // 글 생성
     @Operation(summary = "자랑글 생성",
             description = "새 자랑글을 작성합니다. 이미지는 Presigned URL로 S3에 먼저 업로드 후 key를 전달합니다. 인증 필요. " +
                     "더블클릭/재시도로 인한 중복 등록 방지를 위해 Idempotency-Key 헤더가 필요합니다.")
@@ -75,13 +69,7 @@ public class BoastCatPostController {
                 .body(ApiResponse.created("글 생성 성공", post));
     }
 
-    /**
-     * 글 수정 (Presigned URL 기반 이미지 업로드)
-     * 이미지 처리:
-     * - newImageKeys: 새로 업로드된 이미지의 S3 key
-     * - keepImageUrls: 유지할 기존 이미지의 CloudFront URL
-     * - deleteImageUrls: 삭제할 이미지의 CloudFront URL
-     */
+    // 글 수정
     @Operation(summary = "자랑글 수정",
             description = "자랑글을 수정합니다. 본인 게시글만 수정 가능합니다(관리자는 타인 게시글도 수정 가능). 인증 필요.")
     @PreAuthorize("isAuthenticated()")

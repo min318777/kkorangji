@@ -15,16 +15,6 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import java.util.List;
 import java.util.Set;
 
-/**
- * 인기글 Sorted Set 관리 서비스
- * 키: post:boast:popular:ranking
- * MEMBER: postId (String)
- * SCORE:  likeCount×3 + commentCount×2 + view×1 (누적)
- * 점수 갱신 시점:
- *  - 좋아요 추가/취소 → PopularScoreEvent(±3)
- *  - 댓글 추가/삭제  → PopularScoreEvent(±2)
- *  - 조회수 증가     → PopularScoreEvent(+1), 원자적 UPDATE 직후 발행
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,17 +23,14 @@ public class PopularRankingService {
     private final RedisTemplate<String, String> redisTemplate;
     private final PopularPostRepository popularPostRepository;
 
-    // 누적 순위 방식: 날짜 접미사 없이 키 하나로 계속 쌓음 (만료 없음)
+    // 누적 순위 방식: 날짜 접미사 없이 키 하나로 계속 쌓음
     private static final String RANKING_KEY = "post:boast:popular:ranking";
 
     private String getRankingKey() {
         return RANKING_KEY;
     }
 
-    /**
-     * 서버 시작 시 Sorted Set 초기화
-     * 이미 키가 존재하면 생략 (재시작 시 기존 데이터 유지)
-     */
+    // 서버 시작 시 Sorted Set 초기화 — 이미 키가 존재하면 생략 (재시작 시 기존 데이터 유지)
     @PostConstruct
     public void initRanking() {
         try {
@@ -71,10 +58,7 @@ public class PopularRankingService {
         }
     }
 
-    /**
-     * 좋아요/댓글 이벤트 수신 → ZINCRBY
-     * 트랜잭션 커밋 후 비동기 처리 (Redis는 2PC 미지원)
-     */
+    // 좋아요/댓글 이벤트 수신 → ZINCRBY, 트랜잭션 커밋 후 비동기 처리
     @Async("notificationExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onScoreEvent(PopularScoreEvent event) {
@@ -87,16 +71,14 @@ public class PopularRankingService {
         }
     }
 
-    // onScoreEvent와 동일한 ZINCRBY 로직을 호출자 트랜잭션 안에서 동기로 실행 (댓글 작성 v1 비교군 전용)
+    // onScoreEvent와 동일한 ZINCRBY 로직을 호출자 트랜잭션 안에서 동기로 실행
     public void incrementScoreSync(Long postId, int scoreDelta) {
         String key = getRankingKey();
         redisTemplate.opsForZSet().incrementScore(key, String.valueOf(postId), scoreDelta);
         log.debug("[PopularRanking][v1 동기] ZINCRBY - postId: {}, delta: {}", postId, scoreDelta);
     }
 
-    /**
-     * 상위 24개 게시글 ID 반환 (score 내림차순)
-     */
+    // 상위 24개 게시글 ID 반환
     public List<Long> getTop24PostIds() {
         try {
             Set<String> members = redisTemplate.opsForZSet().reverseRange(getRankingKey(), 0, 23);
@@ -108,10 +90,7 @@ public class PopularRankingService {
         }
     }
 
-    /**
-     * 게시글 삭제 시 Sorted Set에서도 제거
-     * 안 지우면 삭제된 글이 인기글 순위에 계속 남아 상세조회 시 404가 남
-     */
+    // 게시글 삭제 시 Sorted Set에서도 제거
     public void removeFromRanking(Long postId) {
         try {
             redisTemplate.opsForZSet().remove(getRankingKey(), String.valueOf(postId));

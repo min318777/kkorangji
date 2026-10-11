@@ -7,13 +7,7 @@ import lombok.*;
 
 import java.util.List;
 
-/**
- * Presigned URL 기반 이미지 업로드 방식:
- * - images 리스트 하나로 최종 이미지 순서를 그대로 전달 (기존 이미지 + 새 이미지 혼합 가능)
- * - EXISTING 타입: value = 기존 CloudFront URL
- * - NEW 타입: value = 새로 업로드한 S3 key
- * - images에 포함되지 않은 기존 이미지는 자동으로 삭제 처리됨
- */
+// 자랑글 수정 요청 — images 리스트 하나로 최종 순서를 전달(기존+신규 혼합), 리스트에 없는 기존 이미지는 자동 삭제
 @Schema(description = "자랑글 수정 요청")
 @Getter
 @Builder
@@ -36,13 +30,7 @@ public class UpdateBoastCatPostRequest {
     @Size(max = 10, message = "이미지는 최대 10장까지 업로드 가능합니다.")
     private List<ImageItemRequest> images;
 
-    /**
-     * 최종 동영상 상태 (선택, 최대 1개)
-     * - null: 기존 동영상 유지
-     * - EXISTING: 기존 동영상 유지 (value = 기존 CloudFront URL)
-     * - NEW: 새로 업로드한 동영상으로 교체 (value = S3 key)
-     * - REMOVE: 동영상 삭제
-     */
+    // 최종 동영상 상태 (선택) — null/EXISTING은 유지, NEW는 교체, REMOVE는 삭제
     @Schema(description = "최종 동영상 상태 (미포함 시 기존 동영상 유지)")
     private ImageItemRequest video;
 

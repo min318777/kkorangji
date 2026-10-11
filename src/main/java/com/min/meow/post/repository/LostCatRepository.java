@@ -15,24 +15,12 @@ import java.util.Optional;
 @Repository
 public interface LostCatRepository extends JpaRepository<LostCatPost, Long>, LostCatRepositoryCustom {
 
-    // ========== 조회 ==========
-
-    /**
-     * 단일 게시글 상세 조회
-     * User는 @ManyToOne (N:1) 관계이므로 Fetch Join 적용
-     * - 결과 행이 뻥튀기되지 않아 안전함
-     * - 한 번의 쿼리로 게시글 + 작성자 정보 조회
-     * imageUrls는 @OneToMany (1:N) 관계라 Fetch Join하지 않음
-     * - User와 함께 Fetch Join 시 카테시안 곱 발생 (데이터 중복)
-     * - 두 개 이상 컬렉션을 동시에 Fetch Join하면 MultipleBagFetchException 발생
-     */
+    // 단일 게시글 상세 조회 — User(N:1)는 Fetch Join, imageUrls(1:N)는 카테시안 곱/MultipleBagFetchException 위험이 있어 제외
     @Query("SELECT l FROM LostCatPost l " +
             "LEFT JOIN FETCH l.user " +
             "WHERE l.id = :id")
     Optional<LostCatPost> findByIdWithUser(@Param("id") Long id);
 
-    // 마이페이지: 사용자가 작성한 실종 고양이글 목록 조회 (페이징)
-    // 참고: comments는 지연 로딩되지만, DTO 변환 시 size()로 개수만 조회하므로 문제없음
     @Query("SELECT l FROM LostCatPost l " +
            "WHERE l.user.id = :userId " +
            "ORDER BY l.createdAt DESC")
@@ -40,13 +28,7 @@ public interface LostCatRepository extends JpaRepository<LostCatPost, Long>, Los
 
     // ========== 조회수 ==========
 
-    /**
-     * 조회수 원자적 증가
-     * DB 레벨에서 view = view + 1을 수행하여 Race Condition을 방지합니다.
-     * 여러 스레드가 동시에 호출해도 정확한 조회수가 보장됩니다.
-     * @param id 게시글 ID
-     * @return 업데이트된 행의 수 (정상: 1, 게시글 없음: 0)
-     */
+    // 조회수 원자적 증가
     @Modifying
     @Query("UPDATE LostCatPost l " +
            "SET l.view = l.view + 1 " +
@@ -55,14 +37,14 @@ public interface LostCatRepository extends JpaRepository<LostCatPost, Long>, Los
 
     // ========== 댓글 수 ==========
 
-    // 댓글 수 증가 — Post 전체 조회 없이 UPDATE만 실행
+    // 댓글 수 증가
     @Modifying
     @Query("UPDATE LostCatPost l " +
            "SET l.commentCount = l.commentCount + 1 " +
            "WHERE l.id = :id")
     void incrementCommentCount(@Param("id") Long id);
 
-    // 댓글 수 감소 — 0 미만으로 내려가지 않도록 보호
+    // 댓글 수 감소
     @Modifying
     @Query("UPDATE LostCatPost l " +
            "SET l.commentCount = CASE WHEN l.commentCount > 0 THEN l.commentCount - 1 ELSE 0 END " +

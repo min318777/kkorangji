@@ -17,14 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.UUID;
 
-/**
- * MDC(Mapped Diagnostic Context) 필터
- * 모든 HTTP 요청에 고유한 requestId를 부여하여 로그 추적을 가능하게 합니다.
- * 왜 MDC를 사용하는가?
- * - 동시 요청이 많을 때 로그가 뒤섞여 특정 요청의 흐름 추적이 불가능해짐
- * - MDC는 스레드 로컬 기반으로 요청별 컨텍스트 정보를 로그에 자동 포함시킴
- * - k6 부하 테스트(1,000 VU) 환경에서도 특정 요청 추적 가능
- */
+// 모든 HTTP 요청에 고유 requestId를 부여해 동시 요청 환경에서도 로그 추적이 가능하게 하는 MDC 필터
 @Slf4j
 @RequiredArgsConstructor
 public class MdcFilter extends OncePerRequestFilter {
@@ -74,11 +67,7 @@ public class MdcFilter extends OncePerRequestFilter {
         return request.getRemoteAddr();
     }
 
-    /**
-     * Spring Security 필터 체인(springSecurityFilterChain)은 order=-100으로 고정 등록됨.
-     * MdcFilter가 requestId/clientIp를 로그인 실패 등 Security 필터 로그에도 남기려면
-     * Security 체인보다 먼저 실행되어야 하므로 이보다 낮은 order를 명시한다.
-     */
+    // Security 필터 체인(order=-100)보다 먼저 실행되어야 로그인 실패 로그에도 requestId가 남으므로 최우선 순위로 등록
     @Configuration
     @RequiredArgsConstructor
     static class MdcFilterConfig {

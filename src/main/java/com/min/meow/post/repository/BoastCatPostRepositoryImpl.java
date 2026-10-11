@@ -47,14 +47,7 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                 .fetch();
     }
 
-    /**
-     * 커버링 인덱스 서브쿼리 + IN 절 방식
-     * 기존: SELECT 전체컬럼 FROM boast_cat_post ORDER BY created_at DESC LIMIT 10 OFFSET 10000
-     *   → OFFSET 10000이면 10000개 행을 모두 읽고 버림 (느림)
-     * 개선: 커버링 인덱스로 id만 먼저 조회한 뒤, id 목록으로 IN 절 조회하여
-     *   LIMIT 개수만큼만 클러스터링 인덱스(PK)에 접근
-     * IN 절은 순서를 보장하지 않으므로 본조회에도 ORDER BY를 다시 걸어야 함
-     */
+    // 커버링 인덱스로 id만 먼저 조회 후 IN 절로 본조회 — OFFSET이 통짜 row 대신 id만 건너뛰게 해 느린 뒷페이지 문제 개선
     @Override
     public List<BoastCatPostListResponse> findContentWithCoveringIndexUsingIn(Pageable pageable) {
         List<Long> ids = queryFactory

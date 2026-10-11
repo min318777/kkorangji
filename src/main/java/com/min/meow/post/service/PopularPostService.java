@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,17 +36,13 @@ public class PopularPostService {
     private final RedisTemplate<String, String> redisTemplate;
     private final RedissonClient redissonClient;
 
-    // v1: 기본 @Cacheable — Stampede 방지 없음 (비교 기준선)
+    // v1: 기본 @Cacheable
     public List<BoastCatPostListResponse> getPopularPosts() {
         log.debug("[v1 Cache MISS] DB 조회 - thread: {}", Thread.currentThread().getName());
         return popularPostRepository.findTop24ByScore();
     }
 
-    /**
-     * v5: Redis Sorted Set 실시간 집계
-     * 좋아요/댓글/조회수 이벤트 → ZINCRBY 실시간 점수 누적
-     * 캐시 없이 매 요청마다 Sorted Set → findByIds(DB)로 최신 순위 반환
-     */
+    // v5: Redis Sorted Set 실시간 집계 — 캐시 없이 매 요청마다 Sorted Set → DB 조회로 최신 순위 반환
     public List<BoastCatPostListResponse> getPopularPostsV5() {
         List<Long> ids = popularRankingService.getTop24PostIds();
 
@@ -76,10 +71,7 @@ public class PopularPostService {
         return fetchDetail(id);
     }
 
-    /**
-     * v2: Lettuce SETNX 분산 락 — Stampede 방지
-     * MISS 시 첫 스레드만 DB 조회, 나머지는 캐시 채워질 때까지 100ms 간격 대기 (최대 3초)
-     */
+    // v2: Lettuce SETNX 분산 락 — Stampede 방지, MISS 시 첫 스레드만 DB 조회하고 나머지는 대기
     public GetBoastCatPostResponse getDetailV2(Long id) {
         String lockKey = "lock:post:boast:detail:" + id;
         Cache cache = cacheManager.getCache("post:boast:detail");
@@ -122,10 +114,7 @@ public class PopularPostService {
         return fetchDetail(id);
     }
 
-    /**
-     * v4: Redisson RLock — Stampede 방지
-     * v2(Lettuce SETNX 100ms 폴링)와 달리 Pub/Sub 기반 대기 + Lua 스크립트 원자적 해제
-     */
+    // v4: Redisson RLock — Stampede 방지, Pub/Sub 기반 대기 + Lua 스크립트 원자적 해제
     public GetBoastCatPostResponse getDetailV4(Long id) {
         Cache cache = cacheManager.getCache("post:boast:detail");
 
@@ -155,22 +144,10 @@ public class PopularPostService {
         }
     }
 
-    /** DB 직접 조회 — 캐시 없음 (스케줄러 워밍 / 폴백용) */
+    // DB 직접 조회 — 캐시 없음 (스케줄러 워밍 / 폴백용)
     public GetBoastCatPostResponse fetchDetail(Long id) {
         BoastCatPost post = popularPostRepository.findByIdWithUser(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + id));
-        return GetBoastCatPostResponse.builder()
-                .id(post.getId())
-                .writer(post.getUser().getNickname())
-                .userId(post.getUser().getId())
-                .title(post.getTitle())
-                .contents(post.getContents())
-                .view(post.getView())
-                .imageUrls(new ArrayList<>(post.getImageUrls()))
-                .likeCount(post.getLikeCount())
-                .commentCount(post.getCommentCount())
-                .createdAt(post.getCreatedAt())
-                .updatedAt(post.getUpdatedAt())
-                .build();
+        return GetBoastCatPostResponse.from(post);
     }
 }

@@ -48,7 +48,8 @@ public class QLostCatPost extends EntityPathBase<LostCatPost> {
     //inherited
     public final NumberPath<Long> id;
 
-    public final ListPath<String, StringPath> imageUrls = this.<String, StringPath>createList("imageUrls", String.class, StringPath.class, PathInits.DIRECT2);
+    //inherited
+    public final ListPath<String, StringPath> imageUrls;
 
     public final BooleanPath isCompleted = createBoolean("isCompleted");
 
@@ -64,7 +65,8 @@ public class QLostCatPost extends EntityPathBase<LostCatPost> {
 
     public final NumberPath<Integer> reward = createNumber("reward", Integer.class);
 
-    public final StringPath thumbnailUrl = createString("thumbnailUrl");
+    //inherited
+    public final StringPath thumbnailUrl;
 
     //inherited
     public final StringPath title;
@@ -101,6 +103,8 @@ public class QLostCatPost extends EntityPathBase<LostCatPost> {
         this.contents = _super.contents;
         this.createdAt = _super.createdAt;
         this.id = _super.id;
+        this.imageUrls = _super.imageUrls;
+        this.thumbnailUrl = _super.thumbnailUrl;
         this.title = _super.title;
         this.updatedAt = _super.updatedAt;
         this.user = _super.user;

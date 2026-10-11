@@ -76,9 +76,7 @@ public class ImageController {
         return ResponseEntity.ok(ApiResponse.success("Presigned URL 발급 성공", response));
     }
 
-    /**
-     * 파일 목록 검증 — 타입/크기(개별) + 이미지/동영상 개수(전체)
-     */
+    // 파일 목록 검증 — 타입/크기(개별) + 이미지/동영상 개수(전체)
     private void validateFiles(List<PresignedFileRequest> files) {
         long imageCount = files.stream().filter(f -> isImageType(f.getContentType())).count();
         long videoCount = files.stream().filter(f -> isVideoType(f.getContentType())).count();
@@ -95,10 +93,7 @@ public class ImageController {
         }
     }
 
-    /**
-     * 파일 1개 검증 — Content-Type 허용 여부 + 크기 제한
-     * 크기 검증은 클라이언트가 신고한 fileSize를 서버가 신뢰하여 비교하는 방식.
-     */
+    // 파일 1개 검증 — Content-Type 허용 여부 + 크기 제한 (클라이언트가 신고한 fileSize 기준)
     private void validateFile(PresignedFileRequest file) {
         String contentType = file.getContentType();
 

@@ -69,9 +69,7 @@ public class LostCatPostController {
         return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v2)", lostCatPostService.getLostCatPostV2(lostCatPostId)));
     }
 
-    /**
-     * 글 생성 (Presigned URL 기반 이미지 업로드)
-     */
+    // 글 생성 (Presigned URL 기반 이미지 업로드)
     @Operation(summary = "실종글 생성",
             description = "새 실종글을 작성합니다. 이미지는 Presigned URL로 S3에 먼저 업로드 후 key를 전달합니다. 인증 필요. " +
                     "더블클릭/재시도로 인한 중복 등록 방지를 위해 Idempotency-Key 헤더가 필요합니다.")
@@ -88,9 +86,7 @@ public class LostCatPostController {
                 .body(ApiResponse.created("글 생성 성공", lostCatPostDto));
     }
 
-    /**
-     * 글 수정 (Presigned URL 기반 이미지 업로드)
-     */
+    // 글 수정 (Presigned URL 기반 이미지 업로드)
     @Operation(summary = "실종글 수정",
             description = "실종글을 수정합니다. 본인 게시글만 수정 가능합니다(관리자는 타인 게시글도 수정 가능). 인증 필요.")
     @PreAuthorize("isAuthenticated()")

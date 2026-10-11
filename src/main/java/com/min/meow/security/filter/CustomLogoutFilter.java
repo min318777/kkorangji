@@ -87,7 +87,7 @@ public class CustomLogoutFilter extends OncePerRequestFilter {
             }
 
         } catch (Exception e) {
-            // 로그아웃은 항상 성공해야 하므로 예외는 삼키되 로그는 남김
+            // 로그아웃은 항상 성공해야 하므로 로그는 남김
             log.warn("로그아웃 처리 중 예외 발생", e);
         }
     }

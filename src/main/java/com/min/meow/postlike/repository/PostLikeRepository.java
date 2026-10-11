@@ -16,22 +16,13 @@ import java.util.Set;
 @Repository
 public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
 
-    /**
-     * 좋아요 삭제 (userId + postId 기반)
-     * 좋아요 취소 시 사용됩니다.
-     */
+    // 좋아요 삭제
     @Modifying
     @Query("DELETE FROM PostLike pl " +
            "WHERE pl.boastCatPost.id = :postId AND pl.user.id = :userId")
     void deleteByBoastCatPostIdAndUserId(@Param("postId") Long postId, @Param("userId") Long userId);
 
-    /**
-     * 특정 사용자의 특정 게시글 좋아요 여부 확인 (userId 기반)
-     * Redis 장애 시 fallback으로 사용됩니다.
-     * @param boastCatPostId 게시글 ID
-     * @param userId 사용자 ID (PK)
-     * @return 좋아요 존재 여부
-     */
+    // 특정 사용자의 특정 게시글 좋아요 여부 확인 (userId 기반)
     @Query("SELECT CASE WHEN COUNT(pl) > 0 THEN true ELSE false END " +
            "FROM PostLike pl " +
            "WHERE pl.boastCatPost.id = :boastCatPostId AND pl.user.id = :userId")

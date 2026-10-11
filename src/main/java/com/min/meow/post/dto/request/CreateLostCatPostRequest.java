@@ -7,9 +7,7 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 게시글 생성 요청
- */
+// 실종글 생성 요청 — 업로드 완료 후 받은 S3 key를 imageKeys에 담아 전달
 @Schema(description = "실종글 생성 요청")
 @Getter
 @Builder

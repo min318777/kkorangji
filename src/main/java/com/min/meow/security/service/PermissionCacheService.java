@@ -24,10 +24,7 @@ public class PermissionCacheService {
 
     private static final String KEY_PREFIX = "auth:permissions:";
 
-    /**
-     * 권한 목록을 Redis에 저장
-     * TTL은 Access Token 만료 시간과 동일 (분 단위)
-     */
+    // 권한 목록을 Redis에 저장 — TTL은 Access Token 만료 시간과 동일
     public void cachePermissions(Long userId, List<String> permissions) {
         try {
             String key = KEY_PREFIX + userId;
@@ -40,10 +37,7 @@ public class PermissionCacheService {
         }
     }
 
-    /**
-     * Redis에서 권한 목록 조회
-     * @return 권한 목록. 캐시 미스이거나 Redis 장애 시 null 반환 → DB fallback 처리
-     */
+    // Redis에서 권한 목록 조회 — 캐시 미스/Redis 장애 시 null 반환하여 DB fallback 유도
     public List<String> getPermissions(Long userId) {
         try {
             String key = KEY_PREFIX + userId;
@@ -67,10 +61,7 @@ public class PermissionCacheService {
         }
     }
 
-    /**
-     * 권한 캐시 무효화
-     * 권한 변경, 탈퇴 처리 시 호출 → 다음 요청에서 DB 재조회 후 재캐싱
-     */
+    // 권한 캐시 무효화 — 권한 변경, 탈퇴 처리 시 호출하면 다음 요청에서 DB 재조회 후 재캐싱
     public void evictPermissions(Long userId) {
         try {
             String key = KEY_PREFIX + userId;

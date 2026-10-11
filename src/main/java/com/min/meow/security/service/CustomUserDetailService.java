@@ -11,10 +11,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-/**
- * Spring Security UserDetailsService 구현체
- * 로그인 시 사용자 정보를 조회하고 인증에 필요한 UserDetails 객체를 반환
- */
+// Spring Security UserDetailsService 구현체 — 로그인 시 사용자 조회 후 UserDetails 반환
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -24,7 +21,6 @@ public class CustomUserDetailService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
-        // UsernameNotFoundException을 던져야 Spring Security가 InternalAuthenticationServiceException으로 래핑하지 않음
         User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + loginId));
 

@@ -8,14 +8,7 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * 실종 고양이 게시글 수정 요청 DTO
- * Presigned URL 기반 이미지 업로드 방식:
- * - images 리스트 하나로 최종 이미지 순서를 그대로 전달 (기존 이미지 + 새 이미지 혼합 가능)
- * - EXISTING 타입: value = 기존 CloudFront URL
- * - NEW 타입: value = 새로 업로드한 S3 key
- * - images에 포함되지 않은 기존 이미지는 자동으로 삭제 처리됨
- */
+// 실종글 수정 요청 — images 리스트 하나로 최종 순서를 전달(기존+신규 혼합), 리스트에 없는 기존 이미지는 자동 삭제
 @Schema(description = "실종글 수정 요청")
 @Getter
 @Builder

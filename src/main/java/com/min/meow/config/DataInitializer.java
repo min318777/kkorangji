@@ -14,11 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * RBAC 초기 데이터 생성기.
- * 로컬 환경에서 애플리케이션 시작 시 Role, Permission, RolePermission 데이터를 자동 생성한다.
- * 이미 데이터가 존재하면 스킵한다.
- */
+// RBAC 초기 데이터 생성기 — 로컬 환경 시작 시 Role/Permission/RolePermission 자동 생성, 이미 있으면 스킵
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -108,7 +104,7 @@ public class DataInitializer implements ApplicationRunner {
         log.info("RBAC 초기 데이터 생성 완료 - Permission: 12개, Role: 4개");
     }
 
-    /** 기존 DB에 ROLE_RESTRICTED가 없을 때만 추가 (멱등성 보장) */
+    // 기존 DB에 ROLE_RESTRICTED가 없을 때만 추가 (멱등성 보장)
     private void addRestrictedRoleIfMissing() {
         if (roleRepository.findByName("ROLE_RESTRICTED").isPresent()) {
             log.info("RBAC 초기 데이터가 이미 존재합니다. 스킵합니다.");

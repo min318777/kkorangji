@@ -14,9 +14,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * JWT 토큰 생성 및 검증 유틸리티.
- */
 @Component
 public class JwtProvider {
 
@@ -29,10 +26,7 @@ public class JwtProvider {
     }
 
 
-    /**
-     * Access Token 생성 (subject: userId, payload: role, permissions, token 타입)
-     * TTL은 JwtConfig에서 중앙 관리 — 호출자가 지정할 필요 없음.
-     */
+    // Access Token 생성 (subject: userId, payload: role, permissions, token 타입)
     public String createAccessToken(Long userId, String role, List<String> permissions) {
         return Jwts.builder()
                 .claims()
@@ -49,17 +43,10 @@ public class JwtProvider {
                 .compact();
     }
 
-    /**
-     * Refresh Token 생성 결과를 담는 record.
-     * token: 클라이언트에 전달할 JWT 문자열, jti: Redis에 저장할 짧은 UUID
-     */
+    // Refresh Token 생성 결과 — token: 클라이언트 전달용 JWT, jti: Redis 저장용 짧은 UUID
     public record RefreshTokenInfo(String token, String jti) {}
 
-    /**
-     * Refresh Token 생성 (subject: userId, token 타입, jti: UUID)
-     * TTL은 JwtConfig에서 중앙 관리.
-     * jti(JWT ID)를 포함하여 Redis에 전체 JWT 대신 짧은 UUID만 저장할 수 있도록 함.
-     */
+    // Refresh Token 생성 (subject: userId, token 타입, jti: UUID) — jti만 Redis에 저장해 용량 절약
     public RefreshTokenInfo createRefreshToken(Long userId) {
         String jti = UUID.randomUUID().toString();
         String token = Jwts.builder()
@@ -77,8 +64,6 @@ public class JwtProvider {
         return new RefreshTokenInfo(token, jti);
     }
 
-    // ============ 토큰 검증 ============
-
     public Claims decodeAndVerify(String token, TokenType expectedType) {
         // 1회 파싱: 서명 + 만료 + issuer + audience 검증을 한 번에 수행
         Claims claims = Jwts.parser()
@@ -94,14 +79,10 @@ public class JwtProvider {
         if (!expectedType.name().equals(tokenType)) {
             throw new CustomException(ErrorCode.INVALID_TOKEN_TYPE);
         }
-
         return claims;
     }
 
-    /**
-     * JwtConfig를 외부에서 참조할 수 있도록 제공.
-     * RefreshTokenService 등에서 TTL 값이 필요할 때 사용.
-     */
+    // JwtConfig 외부 참조용 — RefreshTokenService 등에서 TTL 값 필요할 때 사용
     public JwtConfig getConfig() {
         return config;
     }

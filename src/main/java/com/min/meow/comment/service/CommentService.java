@@ -15,9 +15,9 @@ import com.min.meow.notification.event.CommentEvent;
 import com.min.meow.comment.entity.Comment;
 import com.min.meow.comment.repository.CommentRepository;
 import com.min.meow.common.PostType;
-import com.min.meow.notification.dto.response.NotificationResponse;
 import com.min.meow.notification.entity.Notification;
 import com.min.meow.notification.repository.NotificationRepository;
+import com.min.meow.notification.sse.NotificationSender;
 import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
@@ -26,13 +26,10 @@ import com.min.meow.post.service.PopularRankingService;
 import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import com.min.meow.common.PageResponse;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,8 +51,7 @@ public class CommentService {
     private final NotificationEventPublisher notificationEventPublisher;
     private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
-    private final RedisTemplate<String, String> redisTemplate;
-    private final ObjectMapper objectMapper;
+    private final NotificationSender notificationSender;
     private final PopularRankingService popularRankingService;
 
     // 댓글 조회 (자랑글·실종글 공통, 원댓글 + 대댓글 2뎁스, 쿼리 2번으로 N+1 방지)
@@ -126,9 +122,6 @@ public class CommentService {
     }
 
 
-    // v1: 댓글 저장 + 알림 저장 + SSE 발행을 하나의 트랜잭션 안에서 동기로 처리 (비교군)
-    // registerComment(v2)와 달리 이벤트 발행(AFTER_COMMIT + @Async) 없이 즉시 처리하므로
-    // 알림 저장 쿼리와 Redis Pub/Sub 호출이 끝날 때까지 DB 커넥션을 붙잡고 있는다.
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public RegisterCommentResponse registerCommentV1(RegisterCommentRequest request, Long postId, PostType postType, Long userId) {
@@ -169,8 +162,6 @@ public class CommentService {
         return RegisterCommentResponse.toResponse(comment);
     }
 
-    // v1 비교군 전용: NotificationEventListener가 AFTER_COMMIT + @Async로 하던 일을
-    // 같은 트랜잭션 안에서 동기로 수행 (알림 DB 저장 + Redis Pub/Sub 발행)
     private void saveAndSendNotificationSync(Long commentId, Long postId, PostType postType, String writer, Long receiverUserId) {
         Notification notification = Notification.builder()
                 .sourceId(commentId)
@@ -183,14 +174,7 @@ public class CommentService {
                 .build();
 
         Notification saved = notificationRepository.save(notification);
-
-        try {
-            String channel = "sse:notify:" + saved.getReceiverUserId();
-            String payload = objectMapper.writeValueAsString(NotificationResponse.from(saved));
-            redisTemplate.convertAndSend(channel, payload);
-        } catch (JsonProcessingException e) {
-            log.error("[v1 비교군] 알림 직렬화 실패 - receiverUserId: {}", receiverUserId, e);
-        }
+        notificationSender.send(saved);
     }
 
     // 댓글 수정 (삭제된 댓글은 수정 불가)
@@ -210,8 +194,8 @@ public class CommentService {
     }
 
     // 댓글 삭제
-    // - 대댓글: 항상 즉시 삭제 → 부모가 소프트삭제 + 활성 대댓글 0개면 부모도 삭제
-    // - 원댓글: 활성 대댓글 없으면 즉시 삭제, 있으면 소프트 삭제
+    // 대댓글: 항상 즉시 삭제 → 부모가 소프트삭제 + 활성 대댓글 0개면 부모도 삭제
+    // 원댓글: 활성 대댓글 없으면 즉시 삭제, 있으면 소프트 삭제
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public void deleteComment(Long commentId, Long userId, boolean hasDeleteAuthority) {

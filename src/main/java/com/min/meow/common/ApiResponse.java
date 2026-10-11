@@ -40,11 +40,11 @@ public class ApiResponse<T> {
     @Schema(description = "요청 추적 ID (실패 시, 디버깅용)", example = "abc12345")
     private String traceId;
 
-    // 실패 시 추가 상세 정보 (예: {"postId": 5}) — 성공 시 null
+    // 실패 시 추가 상세 정보 (예: {"postId": 5})
     @Schema(description = "추가 상세 정보 (실패 시, 선택적)")
     private Map<String, Object> details;
 
-    /** 200 OK 성공 응답 */
+    // 200 OK 성공 응답
     public static <T> ApiResponse<T> success(String message, T data) {
         return ApiResponse.<T>builder()
                 .status(HttpStatus.OK.value())
@@ -55,7 +55,7 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    /** 201 Created 성공 응답 */
+    // 201 Created 성공 응답
     public static <T> ApiResponse<T> created(String message, T data) {
         return ApiResponse.<T>builder()
                 .status(HttpStatus.CREATED.value())
@@ -66,7 +66,7 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    /** 실패 응답 — errorCode 포함 */
+    // 실패 응답 — errorCode 포함
     public static <T> ApiResponse<T> fail(HttpStatus status, String errorCode, String message) {
         return ApiResponse.<T>builder()
                 .status(status.value())
@@ -77,7 +77,7 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    /** 실패 응답 — errorCode + data 포함 (검증 에러 목록 등) */
+    // 실패 응답 — errorCode + data 포함 (검증 에러 목록 등)
     public static <T> ApiResponse<T> fail(HttpStatus status, String errorCode, String message, T data) {
         return ApiResponse.<T>builder()
                 .status(status.value())
@@ -88,7 +88,7 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    /** 실패 응답 — errorCode + traceId + details 포함 */
+    // 실패 응답 — errorCode + traceId + details 포함
     public static <T> ApiResponse<T> fail(HttpStatus status, String errorCode, String message,
                                            String traceId, Map<String, Object> details) {
         return ApiResponse.<T>builder()

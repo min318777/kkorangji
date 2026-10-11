@@ -8,12 +8,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.LocalDate;
 
-/**
- * DAU(Daily Active Users) 측정 서비스
- * Redis SET 자료구조로 하루 단위 고유 로그인 유저 수를 관리합니다.
- * 키 구조:
- *   dau:{날짜} → SET { "1", "5", "42", ... }  TTL 7일
- */
+// DAU(Daily Active Users) 측정 서비스 — Redis SET으로 하루 단위 고유 로그인 유저 수 관리
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -22,7 +17,7 @@ public class DauService {
     private final RedisTemplate<String, String> redisTemplate;
     private static final String DAU_KEY_PREFIX = "dau:";
 
-    /** 로그인 시 호출 — 오늘 DAU SET에 userId 추가 */
+    // 로그인 시 호출 — 오늘 DAU SET에 userId 추가
     public void record(Long userId) {
         try {
             String key = DAU_KEY_PREFIX + LocalDate.now();
@@ -33,7 +28,7 @@ public class DauService {
         }
     }
 
-    /** 모든 요청 시 호출 — IP 기반 DAU SET에 추가 (비로그인 포함) */
+    // 모든 요청 시 호출 — IP 기반 DAU SET에 추가 (비로그인 포함)
     public void recordByIp(String ip) {
         try {
             String key = DAU_KEY_PREFIX + "ip:" + LocalDate.now();
@@ -44,7 +39,7 @@ public class DauService {
         }
     }
 
-    /** 특정 날짜의 로그인 유저 DAU 조회 */
+    // 특정 날짜의 로그인 유저 DAU 조회
     public Long getCount(LocalDate date) {
         try {
             Long count = redisTemplate.opsForSet().size(DAU_KEY_PREFIX + date);
@@ -55,7 +50,7 @@ public class DauService {
         }
     }
 
-    /** 특정 날짜의 IP 기반 DAU 조회 (비로그인 포함 전체 방문자) */
+    // 특정 날짜의 IP 기반 DAU 조회 (비로그인 포함 전체 방문자)
     public Long getIpCount(LocalDate date) {
         try {
             Long count = redisTemplate.opsForSet().size(DAU_KEY_PREFIX + "ip:" + date);

@@ -22,25 +22,14 @@ public class NotificationQueryService {
 
     private final NotificationRepository notificationRepository;
 
-    /**
-     * 모든 알림을 최신 순으로 조회
-     * @param pageable 페이징 정보
-     * @return 최신 순으로 정렬된 알림 목록
-     */
+    // 모든 알림을 최신 순으로 조회
     public Page<NotificationResponse> getAllNotifications(Long userId, Pageable pageable) {
         // 본인 알림만 조회
         return notificationRepository.findAllByReceiverUserIdOrderByCreatedAtDesc(userId, pageable)
                 .map(NotificationResponse::from);
     }
 
-    /**
-     * 단일 알림을 읽음 처리
-     * - 1단계: 알림 존재 여부 확인 (없으면 404)
-     * - 2단계: 본인 알림인지 권한 검증 (아니면 403)
-     * @param notificationId 읽음 처리할 알림 ID
-     * @param userId 요청한 사용자의 ID (PK)
-     * @return 읽음 처리된 알림 정보
-     */
+    // 단일 알림 읽음 처리 — 존재 확인(없으면 404) 후 본인 알림인지 권한 검증(아니면 403)
     @Transactional
     public NotificationResponse readSingleNotification(Long notificationId, Long userId) {
         log.debug("단일 알림 읽음 처리 - NotificationId: {}, UserId: {}", notificationId, userId);
@@ -68,12 +57,7 @@ public class NotificationQueryService {
         return NotificationResponse.from(notification);
     }
 
-    /**
-     * 여러 개의 알림을 읽음 처리
-     * @param notificationIds 읽음 처리할 알림 ID 목록
-     * @param userId 요청한 사용자의 ID (PK)
-     * @return 읽음 처리된 알림 개수
-     */
+    // 여러 개의 알림을 읽음 처리
     @Transactional
     public int readMultipleNotifications(List<Long> notificationIds, Long userId) {
         log.debug("여러 개 알림 읽음 처리 - Count: {}, UserId: {}", notificationIds.size(), userId);
@@ -100,19 +84,14 @@ public class NotificationQueryService {
         return readCount;
     }
 
-    /**
-     * SSE 최초 연결 시 해당 사용자의 최신 알림 ID 조회
-     * connect 이벤트 id로 사용 → 재연결 시 Last-Event-ID 기준점 역할
-     */
+    // SSE 최초 연결 시 최신 알림 ID 조회 — connect 이벤트 id로 사용, 재연결 시 Last-Event-ID 기준점 역할
     public Long getLatestNotificationId(Long userId) {
         return notificationRepository.findTopByReceiverUserIdOrderByIdDesc(userId)
                 .map(Notification::getId)
                 .orElse(null);
     }
 
-    /**
-     * SSE 재연결 시 lastEventId 이후 누락된 알림 조회
-     */
+    // SSE 재연결 시 lastEventId 이후 누락된 알림 조회
     public List<NotificationResponse> getMissedNotifications(Long userId, Long lastEventId) {
         return notificationRepository
                 .findByReceiverUserIdAndIdGreaterThanOrderByIdAsc(userId, lastEventId)
@@ -121,11 +100,7 @@ public class NotificationQueryService {
                 .toList();
     }
 
-    /**
-     * 특정 사용자의 모든 읽지 않은 알림을 읽음 처리
-     * @param userId 요청한 사용자의 ID (PK)
-     * @return 읽음 처리된 알림 개수
-     */
+    // 특정 사용자의 모든 읽지 않은 알림을 읽음 처리
     @Transactional
     public int readAllNotifications(Long userId) {
         log.debug("전체 알림 읽음 처리 - UserId: {}", userId);

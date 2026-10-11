@@ -18,10 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * 토큰 재발급 컨트롤러
- * 책임: HTTP 요청/응답 처리 (쿠키 추출, 헤더/쿠키 설정)
- */
 @Tag(name = "인증", description = "JWT 토큰 재발급 API")
 @RestController
 @RequiredArgsConstructor
@@ -42,16 +38,12 @@ public class ReissueController {
 
         String refreshToken = extractRefreshToken(request);
 
-        // refreshToken이 없으면 조기 검증하여 서비스 레이어 도달 전에 차단
         if (refreshToken == null) {
             throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
         }
-
         TokenResponse tokenResponse = reissueService.reissue(refreshToken);
-
         response.setHeader("Authorization", "Bearer " + tokenResponse.getAccessToken());
         response.addCookie(refreshCookieProvider.create(tokenResponse.getRefreshToken(), 14 * 24 * 60 * 60));
-
         return ResponseEntity.ok(ApiResponse.success("토큰 재발급 성공", null));
     }
 

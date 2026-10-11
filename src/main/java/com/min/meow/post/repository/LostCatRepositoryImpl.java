@@ -229,12 +229,7 @@ public class LostCatRepositoryImpl implements LostCatRepositoryCustom {
         return total != null ? total : 0L;
     }
 
-    /**
-     * 커버링 인덱스 서브쿼리 + IN 절 방식
-     * 커버링 인덱스로 id만 먼저 조회한 뒤, id 목록으로 IN 절 조회하여
-     * LIMIT 개수만큼만 클러스터링 인덱스(PK)에 접근
-     * IN 절은 순서를 보장하지 않으므로 본조회에도 ORDER BY를 다시 걸어야 함
-     */
+    // 커버링 인덱스로 id만 먼저 조회 후 IN 절로 재조회 (OFFSET 대용량 성능 최적화, IN은 순서 미보장이라 본조회에도 ORDER BY 재적용)
     @Override
     public List<LostCatPostListResponse> findContentWithCoveringIndexUsingIn(Pageable pageable) {
         List<Long> ids = queryFactory

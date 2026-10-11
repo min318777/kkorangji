@@ -8,10 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-/**
- * 트랜잭션 커밋 후(AFTER_COMMIT) 비동기로 S3 이미지를 삭제한다.
- * DB 삭제/수정 트랜잭션이 S3 API 응답을 기다리지 않도록 분리 — 실패해도 DB 정합성에는 영향 없음(고아 파일만 남음).
- */
+// 트랜잭션 커밋 후(AFTER_COMMIT) 비동기로 S3 이미지 삭제 — DB 트랜잭션이 S3 응답을 안 기다리도록 분리(실패해도 고아 파일만 남고 DB 정합성엔 무영향)
 @Slf4j
 @Component
 @RequiredArgsConstructor

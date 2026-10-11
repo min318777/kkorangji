@@ -33,11 +33,6 @@ import java.util.List;
 import java.util.Optional;
 
 
-/**
- * 1. 토큰이 있으면 → 검증 후 인증 설정, 다음 필터로 진행
- * 2. 토큰이 없으면 → 인증 없이 다음 필터로 진행 (SecurityConfig의 AuthorizationFilter가 접근 제어)
- * 3. 토큰이 유효하지 않으면 → 에러 응답 반환 (필터 체인 중단)
- */
 @Slf4j
 @RequiredArgsConstructor
 public class    JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -52,7 +47,6 @@ public class    JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authorization = request.getHeader("Authorization");
 
-        // SecurityConfig의 AuthorizationFilter가 접근 권한을 체크함
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -141,7 +135,6 @@ public class    JwtAuthenticationFilter extends OncePerRequestFilter {
             principal = CustomUserDetails.from(user);
         }
 
-        // SecurityContext에 인증 정보 설정
         Authentication authToken = new UsernamePasswordAuthenticationToken(
                 principal, null, principal.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authToken);
@@ -151,11 +144,7 @@ public class    JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * 에러 응답을 직접 작성하여 반환
-     * - 필터에서는 예외를 throw하면 안 되므로 response에 직접 에러를 작성
-     * - ApiResponse.fail()을 사용하여 전체 API와 동일한 {status, success, message, data} 포맷 반환
-     */
+    // 에러 응답 직접 작성 — 필터에서는 예외 throw 불가하므로 ApiResponse.fail() 포맷으로 직접 반환
     private void sendErrorResponse(HttpServletResponse response, int status, String errorCode, String message) throws IOException {
         response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);

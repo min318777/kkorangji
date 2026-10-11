@@ -5,11 +5,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 권한(Permission) 엔티티.
- * RBAC 모델에서 가장 세분화된 권한 단위를 표현한다.
- * 예: "post:create", "post:update", "post:delete", "user:restrict", "user:delete"
- */
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

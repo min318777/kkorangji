@@ -6,10 +6,6 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-/**
- * 마이페이지 요약 정보 응답 DTO
- * 사용자 기본 정보와 작성한 글/댓글 통계를 포함
- */
 @Schema(description = "마이페이지 요약 응답")
 @Getter
 @Setter

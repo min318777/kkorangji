@@ -65,11 +65,8 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
-        // 유저정보
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-
         Long userId = userDetails.getUserId();
-
         // authorities에서 Role과 Permission을 분리
         // ROLE_ 접두사가 있으면 Role, 없으면 Permission
         Set<String> allAuthorities = userDetails.getAuthorities().stream()
@@ -94,7 +91,6 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         // jti(JWT ID)만 Redis에 저장 (전체 JWT 대신 짧은 UUID로 메모리 절약)
         refreshTokenService.save(userId, refreshInfo.jti());
 
-        // v3 권한 캐싱 — 로그인 시 점에서 permissions를 Redis에 저장
         // 이후 요청에서 DB 조회 없이 Redis에서 권한 확인 가능
         permissionCacheService.cachePermissions(userId, permissions);
         dauService.record(userId);
@@ -121,9 +117,7 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
                 ? "탈퇴한 사용자입니다."
                 : "아이디 또는 비밀번호가 일치하지 않습니다.";
 
-        // 브루트포스 탐지/계정 잠금 정책 근거 자료용 — 비밀번호는 남기지 않음
         log.warn("로그인 실패 - loginId: {}, 사유: {}", request.getAttribute(LOGIN_ID_ATTRIBUTE), failed.getClass().getSimpleName());
-
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");

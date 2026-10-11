@@ -6,11 +6,6 @@ import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
 
-/**
- * 소셜 로그인 최초 가입 시 사용할 임시 닉네임 자동 생성
- * JoinRequest 닉네임 검증 규칙(^[가-힣a-zA-Z0-9]+$, 2~10자)을 만족하는 형식으로 생성
- * 사용자는 나중에 마이페이지에서 자유롭게 변경 가능 (온보딩 강제 관문 없음)
- */
 @Component
 @RequiredArgsConstructor
 public class NicknameGenerator {

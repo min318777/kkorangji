@@ -2,7 +2,6 @@ package com.min.meow.post.entity;
 
 import com.min.meow.common.BasePost;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -12,7 +11,6 @@ import org.hibernate.annotations.Check;
 // 위치 기반 조회용 JTS Point 타입 (Hibernate Spatial과 함께 동작)
 import org.locationtech.jts.geom.Point;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -28,10 +26,6 @@ import java.util.List;
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @Getter
 public class LostCatPost extends BasePost {
-
-    // 목록 썸네일 URL (첫 번째 이미지, 없으면 null) — JOIN 없이 SELECT 가능
-    @Column(length = 500)
-    private String thumbnailUrl;
 
     @Column(nullable = false, length = 20)
     private String catName;
@@ -63,10 +57,6 @@ public class LostCatPost extends BasePost {
     private Integer reward;
     private boolean isCompleted;
 
-    @Builder.Default
-    @ElementCollection
-    private List<String> imageUrls = new ArrayList<>();
-
     // 엔티티 업데이트 메서드
     public void updatePost(String title, String contents, String catName, String catType,
                           String catColor, Integer catAge, Integer catWeight,
@@ -87,17 +77,7 @@ public class LostCatPost extends BasePost {
         this.longitude = longitude;
         this.location = location;
         this.reward = reward;
-        // 이미지는 keep/new/delete 조합으로 관리되므로 null이면 변경 없음
-        if (newImageUrls != null) {
-            this.imageUrls.clear();
-            this.imageUrls.addAll(newImageUrls);
-            // 목록 썸네일도 첫 번째 이미지로 갱신 (없으면 null)
-            this.thumbnailUrl = newImageUrls.isEmpty() ? null : newImageUrls.get(0);
-        }
-    }
-
-    public boolean isAuthor(Long userId) {
-        return this.user.getId().equals(userId);
+        replaceImages(newImageUrls);
     }
 
     // 완료 상태 변경

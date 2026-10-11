@@ -8,9 +8,7 @@ import lombok.*;
 
 import java.util.List;
 
-/**
- * 업로드 완료 후 받은 S3 key를 imageKeys에 담아서 게시글 생성 요청
- */
+// 자랑글 생성 요청 — 업로드 완료 후 받은 S3 key를 imageKeys에 담아 전달
 @Schema(description = "자랑글 생성 요청")
 @Getter
 @Builder
@@ -29,19 +27,13 @@ public class CreateBoastCatPostRequest {
     @Size(max = 2000, message = "내용은 2000자 이하로 입력해주세요.")
     private String content;
 
-    /**
-     * S3에 업로드된 이미지의 key 목록
-     * Presigned URL로 업로드 완료 후 받은 key를 전달
-     */
+    // S3에 업로드된 이미지의 key 목록 — Presigned URL 업로드 완료 후 받은 key
     @Schema(description = "S3 업로드 후 받은 이미지 key 목록 (최대 10장)",
             example = "[\"meow/uuid-1.jpg\", \"meow/uuid-2.png\"]")
     @Size(max = 10, message = "이미지는 최대 10장까지 업로드 가능합니다.")
     private List<String> imageKeys;
 
-    /**
-     * S3에 업로드된 동영상의 key (선택, 최대 1개)
-     * Presigned URL로 업로드 완료 후 받은 key를 전달
-     */
+    // S3에 업로드된 동영상의 key (선택, 최대 1개)
     @Schema(description = "S3 업로드 후 받은 동영상 key (선택)", example = "meow/video/uuid-1.mp4")
     private String videoKey;
 

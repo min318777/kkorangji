@@ -76,17 +76,7 @@ public class User{
         this.deletedAt = LocalDateTime.now();
     }
 
-    /**
-     * 회원 탈퇴 및 개인정보 비식별화 처리
-     * 소프트 삭제 방식으로 데이터 무결성을 유지하면서
-     * 개인정보를 비식별화하여 개인정보보호법을 준수합니다.
-     * 비식별화 항목:
-     * - loginId: "deleted_" + UUID (유니크 제약조건 유지)
-     * - email: UUID + "@deleted.meow.com" (유니크 제약조건 유지)
-     * - nickname: "탈퇴한 사용자"
-     * - password: null
-     * - provider/socialId: null (같은 소셜 계정으로 재가입 시 새 계정 생성 가능하도록 유니크 제약 해제)
-     */
+    // 회원 탈퇴 및 개인정보 비식별화 처리 — 소프트 삭제 유지하면서 loginId/email/nickname 등을 익명화
     public void withdraw() {
         // 소프트 삭제 처리
         this.isDelete = true;
@@ -118,52 +108,33 @@ public class User{
 
     // ===== RBAC 편의 메서드 =====
 
-    /**
-     * 사용자가 가진 모든 역할 이름 반환
-     * 예: {"ROLE_USER", "ROLE_ADMIN"}
-     */
+    // 사용자가 가진 모든 역할 이름 반환 (예: {"ROLE_USER", "ROLE_ADMIN"})
     public Set<String> getRoleNames() {
         return userRoles.stream()
                 .map(ur -> ur.getRole().getName())
                 .collect(Collectors.toSet());
     }
 
-    /**
-     * 사용자가 가진 모든 권한 코드 반환 (모든 역할의 권한 합집합)
-     * 예: {"post:read", "post:write", "comment:write"}
-     */
+    // 사용자가 가진 모든 권한 코드 반환 (모든 역할의 권한 합집합)
     public Set<String> getAllPermissionCodes() {
         return userRoles.stream()
                 .flatMap(ur -> ur.getRole().getPermissionCodes().stream())
                 .collect(Collectors.toSet());
     }
 
-    /**
-     * 특정 권한을 가지고 있는지 확인
-     * Python: has_permission(user, permission_code)
-     */
+    // 특정 권한을 가지고 있는지 확인
     public boolean hasPermission(String code) {
         return userRoles.stream()
                 .anyMatch(ur -> ur.getRole().hasPermission(code));
     }
 
-    /**
-     * 주어진 권한 중 하나라도 가지고 있는지 확인 (OR 조건)
-     * Python: has_any_permission(user, permission_codes)
-     * 사용 예: user.hasAnyPermission(List.of("post:write", "post:delete"))
-     * → 둘 중 하나만 있어도 true
-     */
+    // 주어진 권한 중 하나라도 가지고 있는지 확인 (OR 조건)
     public boolean hasAnyPermission(List<String> codes) {
         Set<String> userPerms = getAllPermissionCodes();
         return codes.stream().anyMatch(userPerms::contains);
     }
 
-    /**
-     * 주어진 권한을 모두 가지고 있는지 확인 (AND 조건)
-     * Python: has_all_permissions(user, permission_codes)
-     * 사용 예: user.hasAllPermissions(List.of("post:write", "post:delete"))
-     * → 둘 다 있어야 true
-     */
+    // 주어진 권한을 모두 가지고 있는지 확인 (AND 조건)
     public boolean hasAllPermissions(List<String> codes) {
         Set<String> userPerms = getAllPermissionCodes();
         return userPerms.containsAll(codes);

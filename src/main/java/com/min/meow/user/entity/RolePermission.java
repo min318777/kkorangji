@@ -5,11 +5,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * Role ↔ Permission 중간 엔티티.
- * 한 역할이 여러 권한을 가질 수 있고, 한 권한이 여러 역할에 부여될 수 있다.
- * (role_id, permission_id) 복합 유니크 제약으로 중복 부여 방지.
- */
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

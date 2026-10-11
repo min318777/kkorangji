@@ -38,13 +38,11 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
         // 어느 소셜 provider에서 온 응답인지 구분
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
-        OAuth2Response oAuth2Response;
-        if (registrationId.equals("kakao")) {
-            oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
-        } else {
-            // 카카오 외 provider는 현재 범위 밖 (google/naver 응답 파서는 남겨뒀지만 아직 미연결)
+        // 카카오만 지원
+        if (!registrationId.equals("kakao")) {
             throw new OAuth2AuthenticationException("지원하지 않는 로그인 provider입니다: " + registrationId);
         }
+        OAuth2Response oAuth2Response = new KakaoResponse(oAuth2User.getAttributes());
 
         String provider = oAuth2Response.getProvider();
         String socialId = oAuth2Response.getProviderId();

@@ -48,16 +48,7 @@ public class MyPageService {
         return MyPageSummaryResponse.from(user, stats[0], stats[1], stats[2]);
     }
 
-    /**
-     * 마이페이지 통계 조회 (캐싱 적용)
-     * - 캐시명: user:stats
-     * - 키: userId (예: user:stats::1)
-     * - TTL: 10분
-     * 무효화 트리거:
-     * - 자랑글 작성/삭제 → BoastCatPostService
-     * - 실종글 작성/삭제 → LostCatPostService
-     * - 댓글 작성/삭제   → CommentService
-     */
+    // 마이페이지 통계 조회 (캐싱 적용, user:stats, TTL 10분) — 게시글/댓글 작성·삭제 시 각 서비스에서 무효화
     @Cacheable(cacheNames = "user:stats", key = "#userId")
     public long[] getMyPageStats(Long userId) {
         // 캐시 미스 시에만 COUNT 쿼리 3개 실행
@@ -67,10 +58,7 @@ public class MyPageService {
         return new long[]{boastCatPostCount, lostCatPostCount, commentCount};
     }
 
-    /**
-     * 내가 쓴 게시글 목록 조회
-     * - BOAST: 자랑글만, LOST: 실종글만 조회 (ALL 타입 미지원 — OOM 위험)
-     */
+    // 내가 쓴 게시글 목록 조회 — BOAST/LOST 타입별 조회만 지원 (ALL 타입은 OOM 위험으로 미지원)
     public PageResponse<MyPostDto> getMyPosts(Long userId, Pageable pageable, PostType type) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
@@ -91,9 +79,7 @@ public class MyPageService {
         return PageResponse.from(postPage);
     }
 
-    /**
-     * 내가 쓴 댓글 목록 조회
-     */
+    // 내가 쓴 댓글 목록 조회
     public PageResponse<MyCommentDto> getMyComments(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
@@ -118,9 +104,7 @@ public class MyPageService {
         return PageResponse.from(commentDtoPage);
     }
 
-    /**
-     * 내가 좋아요한 게시글 목록 조회 (BOAST 전용, 최근 좋아요 순)
-     */
+    // 내가 좋아요한 게시글 목록 조회 (BOAST 전용, 최근 좋아요 순)
     public PageResponse<MyPostDto> getMyLikedPosts(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
@@ -131,9 +115,7 @@ public class MyPageService {
         return PageResponse.from(likedPosts.map(MyPostDto::from));
     }
 
-    /**
-     * 프로필 수정 — 현재는 닉네임만 변경 가능
-     */
+    // 프로필 수정 — 현재는 닉네임만 변경 가능
     @Transactional
     public MyPageSummaryResponse updateProfile(Long userId, UpdateProfileRequest request) {
         User user = userRepository.findById(userId)

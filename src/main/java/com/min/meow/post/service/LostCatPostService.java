@@ -36,13 +36,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * 실종 고양이 게시글 서비스
- * Presigned URL 기반 이미지 업로드 방식 적용:
- * - 클라이언트가 S3에 직접 업로드 후 key 전달
- * - 서버는 key를 CloudFront URL로 변환하여 저장
- * - 서버 트래픽 비용 절감 및 보안 강화
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -73,38 +66,10 @@ public class LostCatPostService {
         LostCatPost lostCatPost = lostCatRepository.findByIdWithUser(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", lostCatPostId)));
 
-        return GetLostCatPostResponse.builder()
-                .id(lostCatPost.getId())
-                .title(lostCatPost.getTitle())
-                .content(lostCatPost.getContents())
-                .writer(lostCatPost.getUser().getNickname())
-                .userId(lostCatPost.getUser().getId())
-                .catName(lostCatPost.getCatName())
-                .catType(lostCatPost.getCatType())
-                .catColor(lostCatPost.getCatColor())
-                .catAge(lostCatPost.getCatAge())
-                .catWeight(lostCatPost.getCatWeight())
-                .catGender(lostCatPost.getCatGender())
-                .lostDate(lostCatPost.getLostDate())
-                .imageUrls(new ArrayList<>(lostCatPost.getImageUrls()))
-                .lostLocation(lostCatPost.getLostLocation())
-                .reward(lostCatPost.getReward())
-                .latitude(lostCatPost.getLatitude())
-                .longitude(lostCatPost.getLongitude())
-                .commentCount(lostCatPost.getCommentCount())
-                .view(lostCatPost.getView())
-                .completed(lostCatPost.isCompleted())
-                .createdAt(lostCatPost.getCreatedAt())
-                .updatedAt(lostCatPost.getUpdatedAt())
-                .build();
+        return GetLostCatPostResponse.from(lostCatPost);
     }
 
-    /**
-     * 내 주변 실종글 조회 (Bounding Box 필터)
-     * 프론트에서 전달한 현재 위치(lat, lng)를 기준으로
-     * radiusKm 반경 내 실종글만 페이징 조회합니다.
-     * latitude/longitude가 없는 게시글은 자동으로 제외됩니다.
-     */
+    // 내 주변 실종글 조회(Bounding Box 필터) — 현재 위치 기준 radiusKm 반경 내 실종글만 페이징 조회, 좌표 없는 글은 자동 제외
     public PageResponse<LostCatPostListResponse> getNearbyLostCatPosts(double lat, double lng, double radiusKm, Pageable pageable) {
         Page<LostCatPostListResponse> posts = lostCatRepository.findNearbyWithProjection(lat, lng, radiusKm, pageable);
         return PageResponse.from(posts);
@@ -226,10 +191,7 @@ public class LostCatPostService {
         log.info("게시글 삭제 완료 - userId: {}, postId: {}", userId, lostCatPostId);
     }
 
-    /**
-     * 실종 상태 변경 (찾는 중 ↔ 귀가 완료)
-     * 본인 게시글만 변경 가능. 목록 캐시 무효화.
-     */
+    // 실종 상태 변경 (찾는 중 ↔ 귀가 완료) — 본인 게시글만 변경 가능
     @Transactional
     public void updateCompletedStatus(Long lostCatPostId, boolean isCompleted, Long userId) {
         LostCatPost post = lostCatRepository.findById(lostCatPostId)
@@ -241,14 +203,7 @@ public class LostCatPostService {
         lostCatRepository.save(post);
     }
 
-    /**
-     * 이미지 업데이트 처리 (Presigned URL 방식)
-     * images 리스트 순서 그대로 최종 이미지 목록을 구성하고,
-     * 기존 이미지 중 최종 목록에서 빠진 것은 S3에서 삭제한다.
-     * @param request 수정 요청 DTO
-     * @param post 수정 대상 게시글 (삭제 대상 판별용)
-     * @return 최종 이미지 URL 목록 (CloudFront URL)
-     */
+    // 이미지 업데이트 처리
     private List<String> updateImage(UpdateLostCatPostRequest request, LostCatPost post){
         List<String> finalImageUrls = new ArrayList<>();
 
@@ -260,8 +215,6 @@ public class LostCatPostService {
             }
         }
 
-        // 기존 이미지 중 최종 목록에 없는 것은 삭제된 것으로 간주하여 S3에서 제거
-        // S3 삭제는 트랜잭션 커밋 후 비동기로 처리 (외부 API 호출을 트랜잭션 밖으로 분리)
         List<String> keysToDelete = post.getImageUrls().stream()
                 .filter(url -> !finalImageUrls.contains(url))
                 .map(s3Service::extractKeyFromUrl)
@@ -271,7 +224,7 @@ public class LostCatPostService {
         return finalImageUrls;
     }
 
-    // ========== 상세조회 + 조회수 통합 API (v2 원자적 UPDATE, 채택 — 자랑글과 동일 패턴) ==========
+    // ========== 상세조회 + 조회수 통합 API ==========
 
     @Transactional
     public GetLostCatPostResponse getLostCatPostV2(Long lostCatPostId) {

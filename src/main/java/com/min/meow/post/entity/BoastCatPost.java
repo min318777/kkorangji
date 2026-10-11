@@ -2,7 +2,6 @@ package com.min.meow.post.entity;
 
 import com.min.meow.common.BasePost;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -10,7 +9,6 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Check;
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -26,14 +24,6 @@ import java.util.List;
 @Getter
 public class BoastCatPost extends BasePost {
 
-    // 목록 썸네일 URL (첫 번째 이미지, 없으면 null) — JOIN 없이 SELECT 가능
-    @Column(length = 500)
-    private String thumbnailUrl;
-
-    @Builder.Default
-    @ElementCollection
-    private List<String> imageUrls = new ArrayList<>();
-
     @Column(length = 500)
     private String videoUrl;
 
@@ -44,15 +34,7 @@ public class BoastCatPost extends BasePost {
     public void updatePost(String title, String contents, List<String> newImageUrls, String newVideoUrl) {
         this.title = title;
         this.contents = contents;
-        if (newImageUrls != null) {
-            this.imageUrls.clear();
-            this.imageUrls.addAll(newImageUrls);
-            // 목록 썸네일도 첫 번째 이미지로 갱신 (없으면 null)
-            this.thumbnailUrl = newImageUrls.isEmpty() ? null : newImageUrls.get(0);
-        }
+        replaceImages(newImageUrls);
         this.videoUrl = newVideoUrl;
-    }
-    public boolean isAuthor(Long userId) {
-        return this.user.getId().equals(userId);
     }
 }

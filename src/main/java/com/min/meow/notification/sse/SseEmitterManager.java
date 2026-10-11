@@ -12,15 +12,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * SSE 연결 관리자
- * - 한 사용자가 여러 탭을 열 경우 탭마다 SseEmitter를 별도로 관리
- * - CopyOnWriteArrayList: 읽기가 많고 쓰기가 적은 SSE 특성에 적합한 스레드 안전 리스트
- * - complete() 호출 금지 (연결 추가/제거 시)
- *   이유: Tomcat Async Dispatch가 Security Filter Chain을 재실행하면서
- *         새 스레드에 SecurityContext가 없어 AuthorizationDeniedException 발생
- *   해결: 리스트에서 remove()만 수행, 소켓은 heartbeat 실패 시 자연 정리
- */
+// SSE 연결 관리자 — 탭별 Emitter를 사용자 단위로 관리. complete() 호출 금지(Async Dispatch가 보안 필터를 재실행해 예외 발생) → remove()만 수행
 @Slf4j
 @Component
 public class SseEmitterManager {
@@ -30,10 +22,7 @@ public class SseEmitterManager {
 
     private static final Long TIMEOUT = 30 * 60 * 1000L;
 
-    /**
-     * SSE 연결 생성 및 저장
-     * 동일 사용자의 새 탭 연결은 리스트에 추가 (기존 연결 유지)
-     */
+    // SSE 연결 생성 및 저장 — 동일 사용자의 새 탭 연결은 리스트에 추가(기존 연결 유지)
     public SseEmitter createEmitter(Long userId, Long latestNotificationId) {
         SseEmitter emitter = new SseEmitter(TIMEOUT);
 
@@ -67,9 +56,7 @@ public class SseEmitterManager {
         return emitter;
     }
 
-    /**
-     * 특정 사용자의 모든 탭에 알림 전송
-     */
+    // 특정 사용자의 모든 탭에 알림 전송
     public void sendToUser(Long userId, NotificationResponse data) {
         List<SseEmitter> userEmitters = emitters.get(userId);
         if (userEmitters == null || userEmitters.isEmpty()) {
@@ -91,9 +78,7 @@ public class SseEmitterManager {
         log.debug("알림 전송 완료: userId={} ({}개 탭)", userId, userEmitters.size());
     }
 
-    /**
-     * 로그아웃 시 해당 사용자의 모든 탭 연결 제거
-     */
+    // 로그아웃 시 해당 사용자의 모든 탭 연결 제거
     public void removeEmitter(Long userId) {
         List<SseEmitter> userEmitters = emitters.remove(userId);
         if (userEmitters != null) {

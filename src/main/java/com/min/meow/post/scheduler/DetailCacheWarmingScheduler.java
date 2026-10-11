@@ -12,11 +12,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * 인기글 TOP 24 상세 캐시 워밍 스케줄러 — Cache Stampede 방지 (v3)
- * 현재 @Scheduled 주석 처리로 비활성 상태 (v1 Stampede 테스트 시 비교 기준선 유지 목적).
- * 활성화 시 Sorted Set에서 상위 24개 ID를 가져와 post:boast:detail 캐시(TTL 30초)를 선제 갱신 → MISS 방지가 설계 의도.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -26,11 +21,7 @@ public class DetailCacheWarmingScheduler {
     private final PopularPostService popularPostService;
     private final CacheManager cacheManager;
 
-    /**
-     * 인기글 상세 캐시 워밍 (25초마다)
-     * 1. Sorted Set에서 TOP 24 postId 조회
-     * 2. 각 게시글 DB 조회 후 캐시 put (clear 없음 → 갱신 중 기존 데이터 유지)
-     */
+    // 인기글 상세 캐시 워밍(25초마다) — Sorted Set TOP 24 조회 후 캐시 put (clear 없이 덮어써서 갱신 중 기존 데이터 유지)
     // @Scheduled(fixedRate = 25_000, initialDelay = 5_000) // v1 Stampede 테스트 시 비활성화
     public void warmDetailCaches() {
         List<Long> topIds = popularRankingService.getTop24PostIds();

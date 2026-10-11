@@ -11,11 +11,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * 역할(Role) 엔티티.
- * 기존 enum Role을 대체하며, RolePermission을 통해 Permission과 N:M 관계를 가진다.
- * name 예시: "ROLE_USER", "ROLE_ADMIN"
- */
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -44,17 +39,13 @@ public class Role {
         this.description = description;
     }
 
-    /**
-     * 이 역할이 특정 권한 코드를 가지고 있는지 확인
-     */
+    // 이 역할이 특정 권한 코드를 가지고 있는지 확인
     public boolean hasPermission(String code) {
         return rolePermissions.stream()
                 .anyMatch(rp -> rp.getPermission().getCode().equals(code));
     }
 
-    /**
-     * 이 역할이 가진 모든 권한 코드를 반환
-     */
+    // 이 역할이 가진 모든 권한 코드를 반환
     public Set<String> getPermissionCodes() {
         return rolePermissions.stream()
                 .map(rp -> rp.getPermission().getCode())

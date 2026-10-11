@@ -32,10 +32,7 @@ public class AdminUserService {
     private final RefreshTokenService refreshTokenService;
     private final PermissionCacheService permissionCacheService;
 
-    /**
-     * 사용자 제한: ROLE_USER → ROLE_RESTRICTED
-     * 이후 요청부터 post:create/update, comment:create/update 권한 없음 → 작성/수정/댓글 불가
-     */
+    // 사용자 제한: ROLE_USER → ROLE_RESTRICTED (작성/수정/댓글 권한 박탈)
     @Transactional
     public AdminUserResponse restrictUser(Long adminId, Long targetUserId) {
         if (adminId.equals(targetUserId)) {
@@ -73,10 +70,7 @@ public class AdminUserService {
         return AdminUserResponse.from(target);
     }
 
-    /**
-     * 사용자 복원: ROLE_RESTRICTED → ROLE_USER
-     * 이후 요청부터 post:create/update, comment:create/update 권한 복구
-     */
+    // 사용자 복원: ROLE_RESTRICTED → ROLE_USER (작성/수정/댓글 권한 복구)
     @Transactional
     public AdminUserResponse restoreUser(Long adminId, Long targetUserId) {
         if (adminId.equals(targetUserId)) {
@@ -109,10 +103,7 @@ public class AdminUserService {
         return AdminUserResponse.from(target);
     }
 
-    /**
-     * 강제 탈퇴: 관리자가 특정 사용자를 소프트 삭제
-     * 리프레시 토큰 삭제 + 권한 캐시 무효화 + 개인정보 비식별화
-     */
+    // 강제 탈퇴: 관리자가 특정 사용자를 소프트 삭제 — 리프레시 토큰 삭제 + 권한 캐시 무효화 + 개인정보 비식별화
     @Transactional
     public void forceWithdraw(Long adminId, Long targetUserId) {
         if (adminId.equals(targetUserId)) {
@@ -139,10 +130,7 @@ public class AdminUserService {
         log.info("강제 탈퇴 처리 완료 - adminId: {}, targetUserId: {}", adminId, targetUserId);
     }
 
-    /**
-     * 유저 목록 조회 (역할 필터 옵션, 페이징)
-     * roleName이 null이면 전체 유저 반환
-     */
+    // 유저 목록 조회 (역할 필터 옵션, 페이징) — roleName이 null이면 전체 유저 반환
     public Page<AdminUserResponse> getUserList(String roleName, Pageable pageable) {
         Page<User> users = userRepository.findAllByOptionalRole(roleName, pageable);
         return users.map(AdminUserResponse::from);

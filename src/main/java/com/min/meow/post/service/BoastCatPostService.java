@@ -50,9 +50,7 @@ public class BoastCatPostService {
     private final NotificationEventPublisher notificationEventPublisher;
 
 
-    /**
-     * 모든 글 조회 (Projection 적용으로 성능 최적화)
-     */
+    // 모든 글 조회 (Projection 적용으로 성능 최적화)
     public PageResponse<BoastCatPostListResponse> getAllBoastCatPosts(Pageable pageable){
         // COUNT는 캐시에서, content는 DB에서 조회 (COUNT 쿼리 성능 개선)
         long total = countCacheService.countAll();
@@ -64,7 +62,7 @@ public class BoastCatPostService {
         return PageResponse.from(posts);
     }
 
-    /** 일반 자랑글 상세 조회 — 캐싱 없음, 단순 DB 조회 */
+    // 자랑글 상세 조회
     public GetBoastCatPostResponse getBoastCatPost(Long boastCatPostId){
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", boastCatPostId)));
@@ -107,12 +105,7 @@ public class BoastCatPostService {
         return CreateBoastCatPostResponse.from(boastCatPost);
     }
 
-    /**
-     * 글 수정 (Presigned URL 기반 이미지 업로드)
-     * 이미지 처리:
-     * - images 리스트 순서 그대로 최종 이미지 목록 구성 (기존 URL + 새 S3 key 혼합 가능)
-     * - images에 없는 기존 이미지는 삭제된 것으로 간주하여 S3에서 제거
-     */
+    // 글 수정
     @Transactional
     public UpdateBoastCatPostResponse updateBoastCatPost(UpdateBoastCatPostRequest updateBoastCatPostRequest, Long boastCatPostId, Long userId){
 
@@ -162,14 +155,7 @@ public class BoastCatPostService {
         postImageDeleteEventPublisher.publish(keys);
     }
 
-    /**
-     * 이미지 업데이트 처리 (Presigned URL 방식)
-     * images 리스트 순서 그대로 최종 이미지 목록을 구성하고,
-     * 기존 이미지 중 최종 목록에서 빠진 것은 S3에서 삭제한다.
-     * @param request 수정 요청 DTO
-     * @param post 수정 대상 게시글 (삭제 대상 판별용)
-     * @return 최종 이미지 URL 목록 (CloudFront URL)
-     */
+    // 이미지 업데이트 처리 — images 순서대로 최종 목록 구성, 빠진 기존 이미지는 S3에서 삭제
     private List<String> updateImage(UpdateBoastCatPostRequest request, BoastCatPost post){
         List<String> finalImageUrls = new ArrayList<>();
 
@@ -180,9 +166,7 @@ public class BoastCatPostService {
                         : image.getValue());
             }
         }
-
-        // 기존 이미지 중 최종 목록에 없는 것은 삭제된 것으로 간주하여 S3에서 제거
-        // S3 삭제는 트랜잭션 커밋 후 비동기로 처리 (외부 API 호출을 트랜잭션 밖으로 분리)
+        // S3 삭제는 트랜잭션 커밋 후 비동기로 처리
         List<String> keysToDelete = post.getImageUrls().stream()
                 .filter(url -> !finalImageUrls.contains(url))
                 .map(s3Service::extractKeyFromUrl)
@@ -192,14 +176,7 @@ public class BoastCatPostService {
         return finalImageUrls;
     }
 
-    /**
-     * 동영상 업데이트 처리 (Presigned URL 방식)
-     * request.getVideo()가 없으면(null) 기존 동영상을 그대로 유지한다.
-     * - EXISTING: 기존 동영상 유지
-     * - NEW: 새로 업로드한 동영상으로 교체 (기존 동영상은 S3에서 삭제)
-     * - REMOVE: 동영상 삭제
-     * @return 최종 동영상 URL (CloudFront URL, 없으면 null)
-     */
+    // 동영상 업데이트 처리
     private String updateVideo(UpdateBoastCatPostRequest request, BoastCatPost post) {
         ImageItemRequest video = request.getVideo();
         String existingVideoUrl = post.getVideoUrl();
@@ -221,9 +198,9 @@ public class BoastCatPostService {
         return finalVideoUrl;
     }
 
-    // ========== 상세조회 + 조회수 통합 API (v1: 비교군 / v2: 채택) ==========
+    // ========== 상세조회 + 조회수 통합 API ==========
 
-    // v1: 상세조회 + 더티 체킹 (Lost Update 발생, 비교군)
+    // v1: 상세조회 + 더티 체킹
     @Transactional
     public GetBoastCatPostResponse getBoastCatPostV1(Long id) {
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
@@ -232,7 +209,7 @@ public class BoastCatPostService {
         return GetBoastCatPostResponse.from(post);
     }
 
-    // v2: 상세조회 + 원자적 UPDATE (동시성 보장, 채택)
+    // v2: 상세조회 + 원자적 UPDATE
     @Transactional
     public GetBoastCatPostResponse getBoastCatPostV2(Long id) {
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
@@ -243,7 +220,7 @@ public class BoastCatPostService {
         return GetBoastCatPostResponse.from(post);
     }
 
-    // v3: 상세조회 + 비관적 락 (SELECT FOR UPDATE, 동시성 보장되지만 락 대기 비용 있음, 비교군)
+    // v3: 상세조회 + 비관적 락
     @Transactional
     public GetBoastCatPostResponse getBoastCatPostV3(Long id) {
         BoastCatPost post = boastCatPostRepository.findByIdForUpdate(id)

@@ -10,11 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/**
- * Presigned URL 발급 요청 DTO
- * 클라이언트가 업로드할 파일들의 (Content-Type, 파일 크기) 목록을 전달하면
- * 해당 개수만큼 Presigned URL을 생성하여 반환합니다.
- */
+// Presigned URL 발급 요청 DTO — 업로드할 파일들의 (Content-Type, 크기) 목록을 받아 개수만큼 URL 생성
 @Schema(description = "Presigned URL 발급 요청")
 @Getter
 @NoArgsConstructor

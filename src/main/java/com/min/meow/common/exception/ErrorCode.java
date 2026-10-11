@@ -61,8 +61,18 @@ public enum ErrorCode {
     IMAGE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "파일 크기가 허용 범위를 초과했습니다. (이미지 최대 10MB, 동영상 최대 200MB)"),
     IMAGE_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "업로드 가능 개수를 초과했습니다. (이미지 최대 10장, 동영상 최대 1개)"),
 
-    // 검색 예외
-    SEARCH_KEYWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "검색어는 2글자 이상이어야 합니다."),
+    // 공통 요청 예외 (Spring 기본 예외)
+    VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다"),
+    INVALID_PARAMETER_TYPE(HttpStatus.BAD_REQUEST, "파라미터 형식이 올바르지 않습니다."),
+    MISSING_PARAMETER(HttpStatus.BAD_REQUEST, "필수 파라미터가 없습니다."),
+    INVALID_REQUEST_BODY(HttpStatus.BAD_REQUEST, "요청 본문을 읽을 수 없습니다. JSON 형식을 확인하세요."),
+    INVALID_ARGUMENT(HttpStatus.BAD_REQUEST, "잘못된 입력값입니다."),
+    RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 경로가 존재하지 않습니다."),
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "지원하지 않는 HTTP 메서드입니다."),
+    UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원하지 않는 Content-Type입니다. application/json을 사용하세요."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
+    DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, "데이터 중복 또는 제약 조건 위반입니다."),
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "알 수 없는 오류가 발생했습니다."),
 
     ;
 

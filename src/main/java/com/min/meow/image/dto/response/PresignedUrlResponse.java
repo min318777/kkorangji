@@ -7,12 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * Presigned URL 응답 DTO
- * 클라이언트는 이 정보를 사용하여:
- * 1. presignedUrl로 이미지를 S3에 직접 업로드 (PUT 요청)
- * 2. 업로드 완료 후 key를 게시글 생성 API에 전달
- */
+// Presigned URL 응답 DTO — presignedUrl로 S3에 직접 업로드 후, key를 게시글 생성 API에 전달
 @Schema(description = "S3 Presigned URL 응답")
 @Getter
 @Builder
@@ -28,9 +23,7 @@ public class PresignedUrlResponse {
             example = "meow/uuid-xxx.jpg")
     private String key;
 
-    /**
-     * S3Service.PresignedUrlInfo에서 변환
-     */
+    // S3Service.PresignedUrlInfo에서 변환
     public static PresignedUrlResponse from(S3Service.PresignedUrlInfo info) {
         return PresignedUrlResponse.builder()
                 .presignedUrl(info.presignedUrl())

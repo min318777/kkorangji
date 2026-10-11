@@ -9,12 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 게시글 수정 시 이미지 하나를 나타내는 요청 항목
- * - EXISTING: 유지할 기존 이미지 (value = CloudFront URL)
- * - NEW: 새로 업로드한 이미지 (value = S3 key)
- * 리스트 내 순서가 곧 최종 이미지 노출 순서
- */
+// 게시글 수정 시 이미지 하나를 나타내는 요청 항목 — 리스트 내 순서가 곧 최종 노출 순서 (EXISTING: CloudFront URL, NEW: S3 key)
 @Schema(description = "게시글 이미지 항목 (기존/신규 이미지를 하나의 순서 리스트로 표현)")
 @Getter
 @Builder

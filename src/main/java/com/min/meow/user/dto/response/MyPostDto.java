@@ -7,10 +7,6 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-/**
- * 내가 쓴 게시글 정보 DTO
- * 고양이 자랑글과 실종 고양이글을 통합하여 표현
- */
 @Schema(description = "내가 쓴 게시글 정보")
 @Getter
 @Setter
@@ -49,9 +45,7 @@ public class MyPostDto {
     @Schema(description = "수정일시", example = "2025-01-15T11:00:00")
     private LocalDateTime updatedAt;
 
-    /**
-     * BoastCatPost 엔티티를 DTO로 변환
-     */
+    // BoastCatPost 엔티티를 DTO로 변환
     public static MyPostDto from(BoastCatPost post) {
         return MyPostDto.builder()
                 .postId(post.getId())
@@ -67,9 +61,7 @@ public class MyPostDto {
                 .build();
     }
 
-    /**
-     * LostCatPost 엔티티를 DTO로 변환
-     */
+    // LostCatPost 엔티티를 DTO로 변환
     public static MyPostDto fromLostCatPost(LostCatPost post) {
         return MyPostDto.builder()
                 .postId(post.getId())

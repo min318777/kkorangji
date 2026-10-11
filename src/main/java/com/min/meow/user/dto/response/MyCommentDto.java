@@ -6,10 +6,6 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-/**
- * 내가 쓴 댓글 정보 DTO
- * 댓글이 달린 게시글 정보도 함께 포함
- */
 @Schema(description = "내가 쓴 댓글 정보")
 @Getter
 @Setter
