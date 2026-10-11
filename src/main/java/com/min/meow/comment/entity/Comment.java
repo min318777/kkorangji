@@ -78,6 +78,11 @@ public class Comment {
         return this.user.getId().equals(userId);
     }
 
+    // 대댓글 여부 (parentComment가 있으면 대댓글, null이면 원댓글)
+    public boolean isReply() {
+        return this.parentComment != null;
+    }
+
     public void updateContent(String content) {
         if (content != null) {
             this.contents = content;

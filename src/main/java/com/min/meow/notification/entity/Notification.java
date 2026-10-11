@@ -65,4 +65,9 @@ public class Notification {
         this.isRead = true;
     }
 
+    // 이 알림이 해당 유저 소유인지 확인
+    public boolean isOwnedBy(Long userId) {
+        return this.receiverUserId.equals(userId);
+    }
+
 }

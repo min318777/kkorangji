@@ -39,7 +39,7 @@ public class NotificationQueryService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_NOTIFICATION, "notificationId=" + notificationId));
 
         // 2단계: 본인의 알림인지 권한 검증
-        if (!notification.getReceiverUserId().equals(userId)) {
+        if (!notification.isOwnedBy(userId)) {
             log.warn("알림 접근 권한 없음 - UserId: {}", userId);
             throw new CustomException(ErrorCode.FORBIDDEN_NOTIFICATION_ACCESS);
         }

@@ -101,7 +101,7 @@ public class CommentService {
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", postId)));
             boastCatPostRepository.incrementCommentCount(postId);
 
-            if (!post.getUser().isWithdrawn() && !user.getId().equals(post.getUser().getId())) {
+            if (post.canNotify(userId)) {
                 notificationEventPublisher.publishCommentEvent(
                         new CommentEvent(comment.getId(), postId, PostType.BOAST, user.getNickname(), post.getUser().getId()));
             }
@@ -112,7 +112,7 @@ public class CommentService {
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", postId)));
             lostCatRepository.incrementCommentCount(postId);
 
-            if (!post.getUser().isWithdrawn() && !user.getId().equals(post.getUser().getId())) {
+            if (post.canNotify(userId)) {
                 notificationEventPublisher.publishCommentEvent(
                         new CommentEvent(comment.getId(), postId, PostType.LOST, user.getNickname(), post.getUser().getId()));
             }
@@ -144,7 +144,7 @@ public class CommentService {
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", postId)));
             boastCatPostRepository.incrementCommentCount(postId);
 
-            if (!post.getUser().isWithdrawn() && !user.getId().equals(post.getUser().getId())) {
+            if (post.canNotify(userId)) {
                 saveAndSendNotificationSync(comment.getId(), postId, PostType.BOAST, user.getNickname(), post.getUser().getId());
             }
             // 인기글 Sorted Set 점수 +2 (v2는 이벤트로 비동기 반영, v1은 동기로 직접 반영)
@@ -154,7 +154,7 @@ public class CommentService {
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", postId)));
             lostCatRepository.incrementCommentCount(postId);
 
-            if (!post.getUser().isWithdrawn() && !user.getId().equals(post.getUser().getId())) {
+            if (post.canNotify(userId)) {
                 saveAndSendNotificationSync(comment.getId(), postId, PostType.LOST, user.getNickname(), post.getUser().getId());
             }
         }
@@ -206,7 +206,7 @@ public class CommentService {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
 
-        if (comment.getParentComment() != null) {
+        if (comment.isReply()) {
             deleteReply(comment);
         } else {
             deleteRootComment(comment);
@@ -254,7 +254,7 @@ public class CommentService {
         Comment parent = commentRepository.findById(parentCommentId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_COMMENT, Map.of("parentCommentId", parentCommentId)));
 
-        if (parent.getParentComment() != null) {
+        if (parent.isReply()) {
             throw new CustomException(ErrorCode.COMMENT_DEPTH_EXCEEDED);
         }
         if (parent.isDeleted()) {

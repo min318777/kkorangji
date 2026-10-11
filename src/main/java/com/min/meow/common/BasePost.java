@@ -36,11 +36,9 @@ public abstract class BasePost {
             foreignKeyDefinition = "FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE RESTRICT"))
     protected User user;
 
-    // DB 레벨 제약: 조회수 기본값 0
     @ColumnDefault("0")
     protected int view;
 
-    // 비정규화 필드: 댓글 수 직접 저장 (JOIN 없이 조회 가능)
     @Builder.Default
     @ColumnDefault("0")
     protected int commentCount = 0;
@@ -48,7 +46,7 @@ public abstract class BasePost {
     protected LocalDateTime createdAt;
     protected LocalDateTime updatedAt;
 
-    // 목록 썸네일 URL (첫 번째 이미지, 없으면 null) — JOIN 없이 SELECT 가능
+    // 목록 썸네일 URL (첫 번째 이미지, 없으면 null)
     @Column(length = 500)
     protected String thumbnailUrl;
 
@@ -73,6 +71,10 @@ public abstract class BasePost {
 
     public boolean isAuthor(Long userId) {
         return this.user.getId().equals(userId);
+    }
+
+    public boolean canNotify(Long actorUserId) {
+        return !this.user.isWithdrawn() && !this.user.getId().equals(actorUserId);
     }
 
     // 이미지는 keep/new/delete 조합으로 관리되므로 null이면 변경 없음
