@@ -67,12 +67,7 @@ public class ReissueService {
             throw new CustomException(ErrorCode.WITHDRAWN_USER);
         }
 
-        // 첫 번째 Role을 대표 role로 사용
-        String role = user.getRoleNames().stream()
-                .findFirst()
-                .orElse("ROLE_USER");
-
-        // Permission 목록 추출
+        String role = user.getPrimaryRoleName();
         List<String> permissions = List.copyOf(user.getAllPermissionCodes());
 
         // 6. 새로운 토큰 발급 (토큰 로테이션) — TTL은 JwtConfig에서 중앙 관리

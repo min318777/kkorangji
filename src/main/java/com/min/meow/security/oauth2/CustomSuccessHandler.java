@@ -4,6 +4,7 @@ import com.min.meow.security.RefreshCookieProvider;
 import com.min.meow.security.jwt.JwtProvider;
 import com.min.meow.security.service.PermissionCacheService;
 import com.min.meow.security.service.RefreshTokenService;
+import com.min.meow.user.entity.User;
 import com.min.meow.user.service.DauService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -12,15 +13,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -39,19 +37,10 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
         CustomOAuth2User customUserDetails = (CustomOAuth2User) authentication.getPrincipal();
-        Long userId = customUserDetails.getUserId();
-
-        // 일반 로그인(CustomLoginFilter)과 동일하게 role/permissions를 분리해 accessToken에 포함
-        Set<String> allAuthorities = customUserDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toSet());
-        String role = allAuthorities.stream()
-                .filter(a -> a.startsWith("ROLE_"))
-                .findFirst()
-                .orElse("ROLE_USER");
-        List<String> permissions = allAuthorities.stream()
-                .filter(a -> !a.startsWith("ROLE_"))
-                .collect(Collectors.toList());
+        User user = customUserDetails.getUser();
+        Long userId = user.getId();
+        String role = user.getPrimaryRoleName();
+        List<String> permissions = List.copyOf(user.getAllPermissionCodes());
 
         String accessToken = jwtProvider.createAccessToken(userId, role, permissions);
         JwtProvider.RefreshTokenInfo refreshInfo = jwtProvider.createRefreshToken(userId);

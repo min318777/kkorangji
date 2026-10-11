@@ -45,6 +45,14 @@ public class CustomUserDetails implements UserDetails, PrincipalUser {
         return userId;
     }
 
+    public String getRole() {
+        return role;
+    }
+
+    public List<String> getPermissions() {
+        return permissions;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();

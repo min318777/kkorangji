@@ -21,13 +21,10 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -67,22 +64,8 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         Long userId = userDetails.getUserId();
-        // authorities에서 Role과 Permission을 분리
-        // ROLE_ 접두사가 있으면 Role, 없으면 Permission
-        Set<String> allAuthorities = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toSet());
-
-        // 첫 번째 Role을 대표 role로 사용 (JWT의 role 필드)
-        String role = allAuthorities.stream()
-                .filter(a -> a.startsWith("ROLE_"))
-                .findFirst()
-                .orElse("ROLE_USER");
-
-        // Permission 목록 추출
-        List<String> permissions = allAuthorities.stream()
-                .filter(a -> !a.startsWith("ROLE_"))
-                .collect(Collectors.toList());
+        String role = userDetails.getRole();
+        List<String> permissions = userDetails.getPermissions();
 
         // 토큰 생성 — TTL은 JwtConfig에서 중앙 관리, permissions 포함
         String accessToken = jwtProvider.createAccessToken(userId, role, permissions);

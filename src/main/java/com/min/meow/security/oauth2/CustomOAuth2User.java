@@ -30,6 +30,10 @@ public class CustomOAuth2User implements OAuth2User, PrincipalUser {
         return user.getId();
     }
 
+    public User getUser() {
+        return user;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();

@@ -115,6 +115,12 @@ public class User{
                 .collect(Collectors.toSet());
     }
 
+    public String getPrimaryRoleName() {
+        return getRoleNames().stream()
+                .findFirst()
+                .orElse("ROLE_USER");
+    }
+
     // 사용자가 가진 모든 권한 코드 반환 (모든 역할의 권한 합집합)
     public Set<String> getAllPermissionCodes() {
         return userRoles.stream()
