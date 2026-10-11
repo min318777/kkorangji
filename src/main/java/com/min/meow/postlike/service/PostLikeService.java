@@ -51,12 +51,12 @@ public class PostLikeService {
             postLikeRepository.save(like);
             boastCatPostRepository.updateLikeCount(postId, 1);
             // 본인 게시글이거나 탈퇴 회원이면 알림 생략
-            if (!post.getUser().isWithdrawn() && !userId.equals(post.getUser().getId())) {
+            if (post.canNotify(userId)) {
                 notificationEventPublisher.publishLikeEvent(
                         new LikeEvent(like.getId(), postId, PostType.BOAST, post.getUser().getId()));
             }
             notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(postId, 3));
-            return post.getLikeCount() + 1L;
+            return (long) boastCatPostRepository.findLikeCountById(postId);
 
         } catch (DataIntegrityViolationException e) {
             // 동시 요청으로 인한 UniqueConstraint 위반 처리
@@ -76,7 +76,7 @@ public class PostLikeService {
         postLikeRepository.deleteByBoastCatPostIdAndUserId(postId, userId);
         boastCatPostRepository.updateLikeCount(postId, -1);
         notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(postId, -3));
-        return Math.max(0L, post.getLikeCount() - 1);
+        return (long) boastCatPostRepository.findLikeCountById(postId);
     }
 
     // 좋아요 여부 확인

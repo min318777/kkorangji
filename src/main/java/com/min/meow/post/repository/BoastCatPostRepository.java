@@ -70,4 +70,8 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
             "SET b.likeCount = CASE WHEN b.likeCount + :delta < 0 THEN 0 ELSE b.likeCount + :delta END " +
             "WHERE b.id = :id")
     int updateLikeCount(@Param("id") Long id, @Param("delta") int delta);
+
+    // updateLikeCount 반영 후 최신 좋아요 수 조회 (UPDATE는 영향받은 row 수만 반환하므로 재조회 필요)
+    @Query("SELECT b.likeCount FROM BoastCatPost b WHERE b.id = :id")
+    int findLikeCountById(@Param("id") Long id);
 }
