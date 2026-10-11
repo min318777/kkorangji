@@ -66,7 +66,7 @@ public class RedisConfig {
 
         // 캐시용 ObjectMapper 복사본 생성
         ObjectMapper cacheMapper = objectMapper.copy();
-        // 타입 정보 보존 설정 추가 (이게 핵심!)
+        // 타입 정보 보존 설정 추가
         cacheMapper.activateDefaultTyping(
                 cacheMapper.getPolymorphicTypeValidator(),
                 ObjectMapper.DefaultTyping.NON_FINAL
@@ -77,56 +77,19 @@ public class RedisConfig {
         // 해결: activateDefaultTyping()으로 JSON에 타입 정보를 함께 저장 → 정확한 타입으로 복원
 
         // 기본 캐시 설정 (defaultTtl 사용)
-        RedisCacheConfiguration defaultConfiguration = RedisCacheConfiguration.defaultCacheConfig()
-                .disableCachingNullValues()
-                .entryTtl(Duration.ofSeconds(defaultTtl))
-                .serializeKeysWith(RedisSerializationContext
-                        .SerializationPair
-                        .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
+        RedisCacheConfiguration defaultConfiguration = cacheConfig(Duration.ofSeconds(defaultTtl), cacheMapper);
 
         // 마이페이지 통계 캐시 설정 (TTL 10분)
-        // 자랑글 수, 실종글 수, 댓글 수 — 실시간성 낮음
-        // 무효화 트리거: 게시글/댓글 작성·삭제 시
-        RedisCacheConfiguration userStatsConfiguration = RedisCacheConfiguration.defaultCacheConfig()
-                .disableCachingNullValues()
-                .entryTtl(Duration.ofMinutes(10))
-                .serializeKeysWith(RedisSerializationContext
-                        .SerializationPair
-                        .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
+        RedisCacheConfiguration userStatsConfiguration = cacheConfig(Duration.ofMinutes(10), cacheMapper);
 
         // 인기글 캐시 설정 (TTL 30초) — 스탬피드 방지 테스트 주기에 맞춤
-        RedisCacheConfiguration popularPostsConfiguration = RedisCacheConfiguration.defaultCacheConfig()
-                .disableCachingNullValues()
-                .entryTtl(Duration.ofSeconds(30))
-                .serializeKeysWith(RedisSerializationContext
-                        .SerializationPair
-                        .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
+        RedisCacheConfiguration popularPostsConfiguration = cacheConfig(Duration.ofSeconds(30), cacheMapper);
 
         // 상세조회 캐시 설정 (TTL 30초) — 스탬피드 테스트용
-        RedisCacheConfiguration postDetailConfiguration = RedisCacheConfiguration.defaultCacheConfig()
-                .disableCachingNullValues()
-                .entryTtl(Duration.ofSeconds(30))
-                .serializeKeysWith(RedisSerializationContext
-                        .SerializationPair
-                        .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
+        RedisCacheConfiguration postDetailConfiguration = cacheConfig(Duration.ofSeconds(30), cacheMapper);
 
         // 게시글 전체 수 캐시 (TTL 5분) — COUNT(*) 쿼리 대체
-        RedisCacheConfiguration postCountConfiguration = RedisCacheConfiguration.defaultCacheConfig()
-                .disableCachingNullValues()
-                .entryTtl(Duration.ofMinutes(5))
-                .serializeKeysWith(RedisSerializationContext
-                        .SerializationPair
-                        .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
+        RedisCacheConfiguration postCountConfiguration = cacheConfig(Duration.ofMinutes(5), cacheMapper);
 
         return RedisCacheManager.RedisCacheManagerBuilder
                 .fromConnectionFactory(redisConnectionFactory)
@@ -142,6 +105,18 @@ public class RedisConfig {
                 // 실종글 전체 수 캐시 (TTL 5분)
                 .withCacheConfiguration("post:lost:count", postCountConfiguration)
                 .build();
+    }
+
+    // 캐시별 TTL만 다르고 직렬화 방식은 공통인 RedisCacheConfiguration 생성
+    private RedisCacheConfiguration cacheConfig(Duration ttl, ObjectMapper cacheMapper) {
+        return RedisCacheConfiguration.defaultCacheConfig()
+                .disableCachingNullValues()
+                .entryTtl(ttl)
+                .serializeKeysWith(RedisSerializationContext
+                        .SerializationPair
+                        .fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                        .fromSerializer(new GenericJackson2JsonRedisSerializer(cacheMapper)));
     }
 
 
@@ -168,13 +143,11 @@ public class RedisConfig {
         return container;
     }
 
-    // 조회수 캐싱 등 Redis 작업용 RedisTemplate — Key/Value 모두 String 직렬화(INCR 명령어 호환)
     @Bean
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
 
-        // Key와 Value 모두 String으로 직렬화 (INCR 명령어 호환)
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new StringRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());

@@ -5,10 +5,16 @@ import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.notification.entity.Notification;
 import com.min.meow.notification.repository.NotificationRepository;
 import com.min.meow.notification.dto.response.NotificationResponse;
+import com.min.meow.notification.sse.SseEmitterManager;
+import io.sentry.Sentry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,9 +24,10 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class NotificationQueryService {
+public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final SseEmitterManager sseEmitterManager;
 
     // 모든 알림을 최신 순으로 조회
     public Page<NotificationResponse> getAllNotifications(Long userId, Pageable pageable) {
@@ -34,11 +41,9 @@ public class NotificationQueryService {
     public NotificationResponse readSingleNotification(Long notificationId, Long userId) {
         log.debug("단일 알림 읽음 처리 - NotificationId: {}, UserId: {}", notificationId, userId);
 
-        // 1단계: 알림 존재 여부 확인
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_NOTIFICATION, "notificationId=" + notificationId));
 
-        // 2단계: 본인의 알림인지 권한 검증
         if (!notification.isOwnedBy(userId)) {
             log.warn("알림 접근 권한 없음 - UserId: {}", userId);
             throw new CustomException(ErrorCode.FORBIDDEN_NOTIFICATION_ACCESS);
@@ -100,6 +105,15 @@ public class NotificationQueryService {
                 .toList();
     }
 
+    // SSE 재연결 시 끊긴 동안 누락된 알림 재전송
+    public void resendMissedNotifications(Long userId, String lastEventId) {
+        if (lastEventId == null || lastEventId.isBlank()) {
+            return;
+        }
+        getMissedNotifications(userId, Long.parseLong(lastEventId))
+                .forEach(n -> sseEmitterManager.sendToUser(userId, n));
+    }
+
     // 특정 사용자의 모든 읽지 않은 알림을 읽음 처리
     @Transactional
     public int readAllNotifications(Long userId) {
@@ -122,5 +136,25 @@ public class NotificationQueryService {
         int readCount = unreadNotifications.size();
         log.debug("전체 알림 읽음 처리 완료 - 처리된 알림 수: {}", readCount);
         return readCount;
+    }
+
+    // 알림 저장 — DataAccessException 발생 시 최대 3회 재시도, 지수 백오프
+    @Transactional
+    @Retryable(
+            retryFor = DataAccessException.class,
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 1000, multiplier = 2)
+    )
+    public Notification save(Notification notification) {
+        return notificationRepository.save(notification);
+    }
+
+    // 3회 재시도 후 최종 실패 시 호출 — 알림 유실을 로그/Sentry로 남김
+    @Recover
+    public Notification recover(DataAccessException e, Notification notification) {
+        log.error("알림 저장 최종 실패 (3회 재시도 소진) - type: {}, receiverUserId: {}, error: {}",
+                notification.getType(), notification.getReceiverUserId(), e.getMessage());
+        Sentry.captureException(e);
+        return null;
     }
 }

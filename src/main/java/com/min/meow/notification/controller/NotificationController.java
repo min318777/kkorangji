@@ -4,7 +4,7 @@ import com.min.meow.common.ApiResponse;
 import com.min.meow.common.PageResponse;
 import com.min.meow.notification.dto.request.NotificationRequest;
 import com.min.meow.notification.dto.response.NotificationResponse;
-import com.min.meow.notification.service.NotificationQueryService;
+import com.min.meow.notification.service.NotificationService;
 import com.min.meow.notification.sse.SseEmitterManager;
 import com.min.meow.common.PrincipalUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +30,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequestMapping("/api/notifications")
 public class NotificationController {
 
-    private final NotificationQueryService notificationQueryService;
+    private final NotificationService notificationService;
     private final SseEmitterManager sseEmitterManager;
 
     @Operation(summary = "알림 목록 조회",
@@ -45,7 +45,7 @@ public class NotificationController {
 
         Long userId = user.getUserId();
         Pageable pageable = PageRequest.of(page, size);
-        Page<NotificationResponse> notifications = notificationQueryService.getAllNotifications(userId, pageable);
+        Page<NotificationResponse> notifications = notificationService.getAllNotifications(userId, pageable);
 
         return ResponseEntity.ok(ApiResponse.success("알림 목록 조회 성공", PageResponse.from(notifications)));
     }
@@ -60,7 +60,7 @@ public class NotificationController {
 
         Long userId = user.getUserId();
         log.debug("단일 알림 읽음 요청 - NotificationId: {}, UserId: {}", notificationId, userId);
-        NotificationResponse notificationResponse = notificationQueryService
+        NotificationResponse notificationResponse = notificationService
                 .readSingleNotification(notificationId, userId);
 
         return ResponseEntity.ok(ApiResponse.success("알림 읽음 처리 완료", notificationResponse));
@@ -76,7 +76,7 @@ public class NotificationController {
         Long userId = user.getUserId();
         log.debug("여러 개 알림 읽음 요청 - Count: {}, UserId: {}",
                 request.getNotificationIds().size(), userId);
-        int readCount = notificationQueryService
+        int readCount = notificationService
                 .readMultipleNotifications(request.getNotificationIds(), userId);
 
         ReadCountResponse data = new ReadCountResponse(readCount, request.getNotificationIds().size());
@@ -93,7 +93,7 @@ public class NotificationController {
         Long userId = user.getUserId();
         log.debug("전체 알림 읽음 요청 - UserId: {}", userId);
 
-        int readCount = notificationQueryService.readAllNotifications(userId);
+        int readCount = notificationService.readAllNotifications(userId);
 
         ReadCountResponse data = new ReadCountResponse(readCount, readCount);
         return ResponseEntity.ok(ApiResponse.success("모든 알림을 읽음 처리했습니다.", data));
@@ -107,7 +107,7 @@ public class NotificationController {
             @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId,
             jakarta.servlet.http.HttpServletResponse response) {
 
-        // Nginx 계열 리버스 프록시의 버퍼링을 응답 헤더로 직접 비활성화
+        // Nginx 계열 리버스 프록시의 버퍼링 비활성화
         response.setHeader("X-Accel-Buffering", "no");
         response.setHeader("Cache-Control", "no-cache");
 
@@ -115,15 +115,9 @@ public class NotificationController {
         log.debug("SSE 구독 요청 - UserId: {}, lastEventId: {}", userId, lastEventId);
 
         // connect 이벤트 id로 사용할 최신 알림 ID 조회 (프론트 lastEventId 초기값)
-        Long latestNotificationId = notificationQueryService.getLatestNotificationId(userId);
+        Long latestNotificationId = notificationService.getLatestNotificationId(userId);
         SseEmitter emitter = sseEmitterManager.createEmitter(userId, latestNotificationId);
-
-        // 재연결 시 끊긴 동안 누락된 알림 재전송
-        if (lastEventId != null && !lastEventId.isBlank()) {
-            notificationQueryService
-                    .getMissedNotifications(userId, Long.parseLong(lastEventId))
-                    .forEach(n -> sseEmitterManager.sendToUser(userId, n));
-        }
+        notificationService.resendMissedNotifications(userId, lastEventId);
 
         return emitter;
     }

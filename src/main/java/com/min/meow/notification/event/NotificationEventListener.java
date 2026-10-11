@@ -1,7 +1,7 @@
 package com.min.meow.notification.event;
 
 import com.min.meow.notification.entity.Notification;
-import com.min.meow.notification.service.NotificationSaveService;
+import com.min.meow.notification.service.NotificationService;
 import com.min.meow.notification.sse.NotificationSender;
 import io.sentry.Sentry;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class NotificationEventListener {
 
-    private final NotificationSaveService notificationSaveService;
+    private final NotificationService notificationService;
     private final NotificationSender notificationSender;
 
     @Async("notificationExecutor")
@@ -40,7 +40,7 @@ public class NotificationEventListener {
                 .isRead(false)
                 .build();
 
-        Notification saved = notificationSaveService.save(notification);
+        Notification saved = notificationService.save(notification);
         if (saved == null) return;
         log.debug("DB 알림 저장 완료 - ID: {}, Type: {}, ReceiverUserId: {}",
                 saved.getId(), event.type(), saved.getReceiverUserId());
