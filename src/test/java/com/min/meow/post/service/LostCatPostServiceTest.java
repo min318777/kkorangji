@@ -53,9 +53,6 @@ class LostCatPostServiceTest {
     private S3Service s3Service;
 
     @Mock
-    private LostCatPostCountCacheService countCacheService;
-
-    @Mock
     private com.min.meow.post.event.PostImageDeleteEventPublisher postImageDeleteEventPublisher;
 
     private User createUser(Long id) {
@@ -109,7 +106,6 @@ class LostCatPostServiceTest {
 
             // then
             assertThat(response.getCatName()).isEqualTo("나비");
-            then(countCacheService).should().evict();
         }
 
         @Test

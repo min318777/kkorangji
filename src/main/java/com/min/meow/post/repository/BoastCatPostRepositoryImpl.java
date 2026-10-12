@@ -27,7 +27,7 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
         return new PageImpl<>(content, pageable, total);
     }
 
-    // content만 조회 (COUNT 쿼리 없음) - 캐싱된 count와 조합하여 사용
+    // content만 조회 (COUNT 쿼리 없음) - count와 조합하여 사용
     @Override
     public List<BoastCatPostListResponse> findContentWithProjection(Pageable pageable) {
         return queryFactory
@@ -78,7 +78,6 @@ public class BoastCatPostRepositoryImpl implements BoastCatPostRepositoryCustom 
                 .fetch();
     }
 
-    // 전체 게시글 수만 조회 - BoastCatPostCountCacheService에서 캐싱
     @Override
     public long countAllPosts() {
         Long total = queryFactory

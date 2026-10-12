@@ -45,13 +45,11 @@ public class BoastCatPostService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
-    private final BoastCatPostCountCacheService countCacheService;
     private final PostImageDeleteEventPublisher postImageDeleteEventPublisher;
     private final NotificationEventPublisher notificationEventPublisher;
 
     public PageResponse<BoastCatPostListResponse> getAllBoastCatPosts(Pageable pageable){
-        // COUNT는 캐시에서, content는 DB에서 조회 (COUNT 쿼리 성능 개선)
-        long total = countCacheService.countAll();
+        long total = boastCatPostRepository.countAllPosts();
         Page<BoastCatPostListResponse> posts = new PageImpl<>(
                 boastCatPostRepository.findContentWithCoveringIndexUsingIn(pageable),
                 pageable,
@@ -70,8 +68,6 @@ public class BoastCatPostService {
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public CreateBoastCatPostResponse createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest, Long userId){
-        countCacheService.evict();
-
         User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
@@ -125,7 +121,6 @@ public class BoastCatPostService {
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public void deleteBoastCatPost(Long boastCatPostId, Long userId, boolean hasDeleteAuthority){
-        countCacheService.evict();
         BoastCatPost boastCatPost = boastCatPostRepository.findById(boastCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", boastCatPostId)));
         // 본인이 아니고 관리자 권한(post:delete)도 없으면 → 403

@@ -16,10 +16,10 @@ public interface LostCatRepositoryCustom {
     // 내 주변 실종글 조회 (ST_Distance_Sphere 방식) — 정확한 원형 반경 + 거리순 정렬
     Page<LostCatPostListResponse> findNearbyWithST(double lat, double lng, double radiusKm, Pageable pageable);
 
-    // count 캐싱용 - content만 조회 (COUNT 쿼리 없음)
+    // content만 조회 (COUNT 쿼리 없음)
     List<LostCatPostListResponse> findContentWithProjection(Pageable pageable);
 
-    // count 캐싱용 - 전체 게시글 수만 조회
+    // 전체 게시글 수만 조회
     long countAllPosts();
 
     // 커버링 인덱스 서브쿼리 + IN 절 방식 (OFFSET 대용량 성능 최적화)

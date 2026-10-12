@@ -47,12 +47,10 @@ public class LostCatPostService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
-    private final LostCatPostCountCacheService countCacheService;
     private final PostImageDeleteEventPublisher postImageDeleteEventPublisher;
 
     public PageResponse<LostCatPostListResponse> getAllLostCatPosts(Pageable pageable){
-        // COUNT는 캐시에서, content는 커버링 인덱스 서브쿼리로 조회
-        long total = countCacheService.countAll();
+        long total = lostCatRepository.countAllPosts();
         Page<LostCatPostListResponse> posts = new PageImpl<>(
                 lostCatRepository.findContentWithCoveringIndexUsingIn(pageable),
                 pageable,
@@ -84,7 +82,6 @@ public class LostCatPostService {
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public CreateLostCatPostResponse createLostCatPost(CreateLostCatPostRequest createLostCatPostRequest, Long userId){
-        countCacheService.evict();
         User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
@@ -165,7 +162,6 @@ public class LostCatPostService {
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public void deleteLostCatPost(Long lostCatPostId, Long userId, boolean hasDeleteAuthority) {
-        countCacheService.evict();
         LostCatPost lostCatPost = lostCatRepository.findById(lostCatPostId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", lostCatPostId)));
 

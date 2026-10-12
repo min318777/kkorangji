@@ -54,9 +54,6 @@ class BoastCatPostServiceTest {
     private S3Service s3Service;
 
     @Mock
-    private BoastCatPostCountCacheService countCacheService;
-
-    @Mock
     private PopularRankingService popularRankingService;
 
     @Mock
@@ -114,7 +111,6 @@ class BoastCatPostServiceTest {
             // then
             assertThat(response.getImageUrls()).containsExactly(
                     "https://cdn.example.com/a.jpg", "https://cdn.example.com/b.jpg");
-            then(countCacheService).should().evict();
         }
 
         @Test
