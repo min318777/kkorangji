@@ -66,8 +66,6 @@ public class LostCatPostService {
         return GetLostCatPostResponse.from(lostCatPost);
     }
 
-    // ========== 상세조회 + 조회수 통합 API ==========
-
     @Transactional
     public GetLostCatPostResponse getLostCatPostV2(Long lostCatPostId) {
         GetLostCatPostResponse response = getLostCatPost(lostCatPostId);

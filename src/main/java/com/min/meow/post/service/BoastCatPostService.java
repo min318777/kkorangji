@@ -65,8 +65,6 @@ public class BoastCatPostService {
         return GetBoastCatPostResponse.from(post);
     }
 
-    // ========== 상세조회 + 조회수 통합 API ==========
-
     // v1: 상세조회 + 더티 체킹
     @Transactional
     public GetBoastCatPostResponse getBoastCatPostV1(Long id) {
