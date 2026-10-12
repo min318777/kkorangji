@@ -2,6 +2,7 @@ package com.min.meow.config;
 
 import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
+import com.min.meow.post.dto.request.ImageItemRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -153,6 +154,22 @@ public class S3Service {
         }
     }
 
+    // 게시글 수정 시 이미지 목록 재구성 — 최종 URL 목록과 S3에서 삭제할 key 목록을 함께 반환
+    public ImageUpdateResult resolveImageUpdate(List<ImageItemRequest> images, List<String> existingUrls) {
+        List<String> finalUrls = images == null ? List.of() : images.stream()
+                .map(image -> image.getType() == ImageItemRequest.ImageType.NEW
+                        ? toCloudFrontUrl(image.getValue())
+                        : image.getValue())
+                .toList();
+
+        List<String> keysToDelete = existingUrls.stream()
+                .filter(url -> !finalUrls.contains(url))
+                .map(this::extractKeyFromUrl)
+                .toList();
+
+        return new ImageUpdateResult(finalUrls, keysToDelete);
+    }
+
     // CloudFront URL에서 S3 key 추출
     public String extractKeyFromUrl(String cloudFrontUrl) {
         if (cloudFrontUrl == null || cloudFrontUrl.isEmpty()) {
@@ -189,5 +206,11 @@ public class S3Service {
     public record PresignedUrlInfo(
             String presignedUrl,  // S3 Presigned PUT URL
             String key            // S3 object key
+    ) {}
+
+    // resolveImageUpdate 결과 — 최종 URL 목록과 S3에서 삭제할 key 목록
+    public record ImageUpdateResult(
+            List<String> finalUrls,
+            List<String> keysToDelete
     ) {}
 }

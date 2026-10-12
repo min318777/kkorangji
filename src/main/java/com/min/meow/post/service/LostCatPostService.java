@@ -10,7 +10,6 @@ import com.min.meow.post.dto.response.GetLostCatPostResponse;
 import com.min.meow.post.dto.response.LostCatPostListResponse;
 import com.min.meow.post.dto.response.UpdateLostCatPostResponse;
 import com.min.meow.post.dto.request.CreateLostCatPostRequest;
-import com.min.meow.post.dto.request.ImageItemRequest;
 import com.min.meow.post.dto.request.UpdateLostCatPostRequest;
 import com.min.meow.post.entity.LostCatPost;
 import com.min.meow.common.PostType;
@@ -98,11 +97,9 @@ public class LostCatPostService {
         // 첫 번째 이미지를 썸네일로 저장 (목록 조회 시 JOIN 없이 사용)
         String thumbnailUrl = imageUrls.isEmpty() ? null : imageUrls.get(0);
 
-        // latitude/longitude → POINT 변환 (SPATIAL INDEX 활용)
         Double latitude = createLostCatPostRequest.getLatitude();
         Double longitude = createLostCatPostRequest.getLongitude();
-        Point location = (latitude != null && longitude != null)
-                ? GEO_FACTORY.createPoint(new Coordinate(longitude, latitude)) : null;
+        Point location = toPoint(latitude, longitude);
 
         LostCatPost lostCatPost = LostCatPost.builder()
                 .title(createLostCatPostRequest.getTitle())
@@ -143,8 +140,7 @@ public class LostCatPostService {
 
         Double latitude = updateLostCatPostRequest.getLatitude();
         Double longitude = updateLostCatPostRequest.getLongitude();
-        Point location = (latitude != null && longitude != null)
-                ? GEO_FACTORY.createPoint(new Coordinate(longitude, latitude)) : null;
+        Point location = toPoint(latitude, longitude);
 
         lostCatPost.updatePost(
                 updateLostCatPostRequest.getTitle(),
@@ -178,15 +174,12 @@ public class LostCatPostService {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
 
-        // S3 이미지 삭제 (DB 삭제 전에 URL 추출)
         List<String> keys = lostCatPost.getImageUrls().stream()
                 .map(s3Service::extractKeyFromUrl)
                 .filter(key -> key != null && !key.isEmpty())
                 .toList();
-        // 연관 댓글 먼저 삭제 (cascade 제거로 인한 수동 처리)
         commentRepository.deleteAllByPostIdAndPostType(lostCatPostId, PostType.LOST);
         lostCatRepository.deleteById(lostCatPostId);
-        // S3 삭제는 트랜잭션 커밋 후 비동기로 처리 (외부 API 호출을 트랜잭션 밖으로 분리)
         postImageDeleteEventPublisher.publish(keys);
         log.info("게시글 삭제 완료 - userId: {}, postId: {}", userId, lostCatPostId);
     }
@@ -203,25 +196,17 @@ public class LostCatPostService {
         lostCatRepository.save(post);
     }
 
+    // latitude/longitude → POINT 변환 (SPATIAL INDEX 활용)
+    private Point toPoint(Double latitude, Double longitude) {
+        return (latitude != null && longitude != null)
+                ? GEO_FACTORY.createPoint(new Coordinate(longitude, latitude)) : null;
+    }
+
     // 이미지 업데이트 처리
     private List<String> updateImage(UpdateLostCatPostRequest request, LostCatPost post){
-        List<String> finalImageUrls = new ArrayList<>();
-
-        if (request.getImages() != null) {
-            for (ImageItemRequest image : request.getImages()) {
-                finalImageUrls.add(image.getType() == ImageItemRequest.ImageType.NEW
-                        ? s3Service.toCloudFrontUrl(image.getValue())
-                        : image.getValue());
-            }
-        }
-
-        List<String> keysToDelete = post.getImageUrls().stream()
-                .filter(url -> !finalImageUrls.contains(url))
-                .map(s3Service::extractKeyFromUrl)
-                .toList();
-        postImageDeleteEventPublisher.publish(keysToDelete);
-
-        return finalImageUrls;
+        S3Service.ImageUpdateResult result = s3Service.resolveImageUpdate(request.getImages(), post.getImageUrls());
+        postImageDeleteEventPublisher.publish(result.keysToDelete());
+        return result.finalUrls();
     }
 
     // ========== 상세조회 + 조회수 통합 API ==========

@@ -49,8 +49,6 @@ public class BoastCatPostService {
     private final PostImageDeleteEventPublisher postImageDeleteEventPublisher;
     private final NotificationEventPublisher notificationEventPublisher;
 
-
-    // 모든 글 조회 (Projection 적용으로 성능 최적화)
     public PageResponse<BoastCatPostListResponse> getAllBoastCatPosts(Pageable pageable){
         // COUNT는 캐시에서, content는 DB에서 조회 (COUNT 쿼리 성능 개선)
         long total = countCacheService.countAll();
@@ -77,7 +75,6 @@ public class BoastCatPostService {
         User writer = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.UNAUTHORIZED));
 
-        // S3 key를 CloudFront URL로 변환
         List<String> imageUrls = new ArrayList<>();
         if (createBoastCatPostRequest.getImageKeys() != null && !createBoastCatPostRequest.getImageKeys().isEmpty()) {
             imageUrls = s3Service.toCloudFrontUrls(createBoastCatPostRequest.getImageKeys());
@@ -86,11 +83,7 @@ public class BoastCatPostService {
         String videoUrl = createBoastCatPostRequest.getVideoKey() != null
                 ? s3Service.toCloudFrontUrl(createBoastCatPostRequest.getVideoKey())
                 : null;
-
-        // 첫 번째 이미지를 썸네일로 저장 (목록 조회 시 JOIN 없이 사용)
         String thumbnailUrl = imageUrls.isEmpty() ? null : imageUrls.get(0);
-
-        // 엔티티 생성
         BoastCatPost boastCatPost = BoastCatPost.builder()
                 .title(createBoastCatPostRequest.getTitle())
                 .contents(createBoastCatPostRequest.getContent())
@@ -139,7 +132,6 @@ public class BoastCatPostService {
         if (!boastCatPost.isAuthor(userId) && !hasDeleteAuthority) {
             throw new CustomException(ErrorCode.FORBIDDEN_NOT_AUTHOR);
         }
-        // S3 이미지/동영상 삭제 (DB 삭제 전에 URL 추출)
         List<String> keys = new ArrayList<>(boastCatPost.getImageUrls().stream()
                 .map(s3Service::extractKeyFromUrl)
                 .filter(key -> key != null && !key.isEmpty())
@@ -147,33 +139,16 @@ public class BoastCatPostService {
         if (boastCatPost.getVideoUrl() != null) {
             keys.add(s3Service.extractKeyFromUrl(boastCatPost.getVideoUrl()));
         }
-        // 연관 댓글 먼저 삭제 (cascade 제거로 인한 수동 처리)
         commentRepository.deleteAllByPostIdAndPostType(boastCatPostId, PostType.BOAST);
         boastCatPostRepository.deleteById(boastCatPostId);
         popularRankingService.removeFromRanking(boastCatPostId);
-        // S3 삭제는 트랜잭션 커밋 후 비동기로 처리 (외부 API 호출을 트랜잭션 밖으로 분리)
         postImageDeleteEventPublisher.publish(keys);
     }
 
-    // 이미지 업데이트 처리 — images 순서대로 최종 목록 구성, 빠진 기존 이미지는 S3에서 삭제
     private List<String> updateImage(UpdateBoastCatPostRequest request, BoastCatPost post){
-        List<String> finalImageUrls = new ArrayList<>();
-
-        if (request.getImages() != null) {
-            for (ImageItemRequest image : request.getImages()) {
-                finalImageUrls.add(image.getType() == ImageItemRequest.ImageType.NEW
-                        ? s3Service.toCloudFrontUrl(image.getValue())
-                        : image.getValue());
-            }
-        }
-        // S3 삭제는 트랜잭션 커밋 후 비동기로 처리
-        List<String> keysToDelete = post.getImageUrls().stream()
-                .filter(url -> !finalImageUrls.contains(url))
-                .map(s3Service::extractKeyFromUrl)
-                .toList();
-        postImageDeleteEventPublisher.publish(keysToDelete);
-
-        return finalImageUrls;
+        S3Service.ImageUpdateResult result = s3Service.resolveImageUpdate(request.getImages(), post.getImageUrls());
+        postImageDeleteEventPublisher.publish(result.keysToDelete());
+        return result.finalUrls();
     }
 
     // 동영상 업데이트 처리
