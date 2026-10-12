@@ -20,6 +20,12 @@ import java.util.Optional;
 @Repository
 public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long>, BoastCatPostRepositoryCustom {
 
+    // 마이페이지: 사용자가 작성한 고양이 자랑글 목록 조회 (페이징)
+    @Query("SELECT b FROM BoastCatPost b " +
+            "WHERE b.user.id = :userId " +
+            "ORDER BY b.createdAt DESC")
+    Page<BoastCatPost> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
+
     // 단일 게시글 상세 조회 — imageUrls(1:N)는 Fetch Join 시 카테시안 곱/MultipleBagFetchException 위험이 있어 제외
     @Query("SELECT p FROM BoastCatPost p " +
             "LEFT JOIN FETCH p.user " +
@@ -30,12 +36,6 @@ public interface BoastCatPostRepository extends JpaRepository<BoastCatPost, Long
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM BoastCatPost p LEFT JOIN FETCH p.user WHERE p.id = :id")
     Optional<BoastCatPost> findByIdForUpdate(@Param("id") Long id);
-
-    // 마이페이지: 사용자가 작성한 고양이 자랑글 목록 조회 (페이징)
-    @Query("SELECT b FROM BoastCatPost b " +
-            "WHERE b.user.id = :userId " +
-            "ORDER BY b.createdAt DESC")
-    Page<BoastCatPost> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
 
     // ========== 조회수 ==========
 

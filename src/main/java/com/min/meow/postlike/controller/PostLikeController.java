@@ -21,6 +21,16 @@ public class PostLikeController {
 
     private final PostLikeService postLikeService;
 
+    @Operation(summary = "좋아요 여부 확인", description = "현재 로그인 사용자의 좋아요 여부를 조회합니다.")
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/{boastCatPostId}/like/status")
+    public ResponseEntity<ApiResponse<Boolean>> isLiked(
+            @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId,
+            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
+        boolean liked = postLikeService.isLiked(boastCatPostId, user.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("좋아요 여부 조회 성공", liked));
+    }
+
     @Operation(summary = "좋아요 등록", description = "자랑글에 좋아요를 등록합니다. 이미 좋아요한 경우 409 반환.")
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/{boastCatPostId}/like")
@@ -40,15 +50,5 @@ public class PostLikeController {
             @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
         Long likeCount = postLikeService.cancelLike(boastCatPostId, user.getUserId());
         return ResponseEntity.ok(ApiResponse.success("좋아요 취소 성공", likeCount));
-    }
-
-    @Operation(summary = "좋아요 여부 확인", description = "현재 로그인 사용자의 좋아요 여부를 조회합니다.")
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping("/{boastCatPostId}/like/status")
-    public ResponseEntity<ApiResponse<Boolean>> isLiked(
-            @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId,
-            @Parameter(hidden = true) @AuthenticationPrincipal PrincipalUser user) {
-        boolean liked = postLikeService.isLiked(boastCatPostId, user.getUserId());
-        return ResponseEntity.ok(ApiResponse.success("좋아요 여부 조회 성공", liked));
     }
 }

@@ -65,6 +65,36 @@ public class BoastCatPostService {
         return GetBoastCatPostResponse.from(post);
     }
 
+    // ========== 상세조회 + 조회수 통합 API ==========
+
+    // v1: 상세조회 + 더티 체킹
+    @Transactional
+    public GetBoastCatPostResponse getBoastCatPostV1(Long id) {
+        BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", id)));
+        post.incrementView();
+        return GetBoastCatPostResponse.from(post);
+    }
+
+    // v2: 상세조회 + 원자적 UPDATE
+    @Transactional
+    public GetBoastCatPostResponse getBoastCatPostV2(Long id) {
+        BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", id)));
+        boastCatPostRepository.incrementViewCount(id);
+        notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(id, 1));
+        return GetBoastCatPostResponse.from(post);
+    }
+
+    // v3: 상세조회 + 비관적 락
+    @Transactional
+    public GetBoastCatPostResponse getBoastCatPostV3(Long id) {
+        BoastCatPost post = boastCatPostRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", id)));
+        post.incrementView();
+        return GetBoastCatPostResponse.from(post);
+    }
+
     @Transactional
     @CacheEvict(cacheNames = "user:stats", key = "#userId")
     public CreateBoastCatPostResponse createBoastCatPost(CreateBoastCatPostRequest createBoastCatPostRequest, Long userId){
@@ -166,36 +196,6 @@ public class BoastCatPostService {
         }
 
         return finalVideoUrl;
-    }
-
-    // ========== 상세조회 + 조회수 통합 API ==========
-
-    // v1: 상세조회 + 더티 체킹
-    @Transactional
-    public GetBoastCatPostResponse getBoastCatPostV1(Long id) {
-        BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", id)));
-        post.incrementView();
-        return GetBoastCatPostResponse.from(post);
-    }
-
-    // v2: 상세조회 + 원자적 UPDATE
-    @Transactional
-    public GetBoastCatPostResponse getBoastCatPostV2(Long id) {
-        BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", id)));
-        boastCatPostRepository.incrementViewCount(id);
-        notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(id, 1));
-        return GetBoastCatPostResponse.from(post);
-    }
-
-    // v3: 상세조회 + 비관적 락
-    @Transactional
-    public GetBoastCatPostResponse getBoastCatPostV3(Long id) {
-        BoastCatPost post = boastCatPostRepository.findByIdForUpdate(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", id)));
-        post.incrementView();
-        return GetBoastCatPostResponse.from(post);
     }
 
 }

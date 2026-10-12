@@ -66,6 +66,15 @@ public class LostCatPostService {
         return GetLostCatPostResponse.from(lostCatPost);
     }
 
+    // ========== 상세조회 + 조회수 통합 API ==========
+
+    @Transactional
+    public GetLostCatPostResponse getLostCatPostV2(Long lostCatPostId) {
+        GetLostCatPostResponse response = getLostCatPost(lostCatPostId);
+        lostCatRepository.incrementViewCount(lostCatPostId);
+        return response;
+    }
+
     // 내 주변 실종글 조회(Bounding Box 필터) — 현재 위치 기준 radiusKm 반경 내 실종글만 페이징 조회, 좌표 없는 글은 자동 제외
     public PageResponse<LostCatPostListResponse> getNearbyLostCatPosts(double lat, double lng, double radiusKm, Pageable pageable) {
         Page<LostCatPostListResponse> posts = lostCatRepository.findNearbyWithProjection(lat, lng, radiusKm, pageable);
@@ -203,14 +212,5 @@ public class LostCatPostService {
         S3Service.ImageUpdateResult result = s3Service.resolveImageUpdate(request.getImages(), post.getImageUrls());
         postImageDeleteEventPublisher.publish(result.keysToDelete());
         return result.finalUrls();
-    }
-
-    // ========== 상세조회 + 조회수 통합 API ==========
-
-    @Transactional
-    public GetLostCatPostResponse getLostCatPostV2(Long lostCatPostId) {
-        GetLostCatPostResponse response = getLostCatPost(lostCatPostId);
-        lostCatRepository.incrementViewCount(lostCatPostId);
-        return response;
     }
 }

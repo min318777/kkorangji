@@ -54,6 +54,32 @@ public class BoastCatPostController {
         return ResponseEntity.ok(ApiResponse.success("글 조회 성공", getBoastCatPostResponse));
     }
 
+    // ========== 상세조회 + 조회수 통합 API ==========
+
+    @Operation(summary = "자랑글 상세조회 + 조회수 증가 (v1 더티체킹, 비교군)")
+    @SecurityRequirements
+    @GetMapping("/view/v1/{boastCatPostId}")
+    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastCatPostV1(
+            @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId) {
+        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v1)", boastCatPostService.getBoastCatPostV1(boastCatPostId)));
+    }
+
+    @Operation(summary = "자랑글 상세조회 + 조회수 증가 (v2 원자적 UPDATE, 채택)")
+    @SecurityRequirements
+    @GetMapping("/view/v2/{boastCatPostId}")
+    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastCatPostV2(
+            @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId) {
+        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v2)", boastCatPostService.getBoastCatPostV2(boastCatPostId)));
+    }
+
+    @Operation(summary = "자랑글 상세조회 + 조회수 증가 (v3 비관적 락, 비교군)")
+    @SecurityRequirements
+    @GetMapping("/view/v3/{boastCatPostId}")
+    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastCatPostV3(
+            @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId) {
+        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v3)", boastCatPostService.getBoastCatPostV3(boastCatPostId)));
+    }
+
     // 글 생성
     @Operation(summary = "자랑글 생성",
             description = "새 자랑글을 작성합니다. 이미지는 Presigned URL로 S3에 먼저 업로드 후 key를 전달합니다. 인증 필요. " +
@@ -98,32 +124,6 @@ public class BoastCatPostController {
         boolean hasDeleteAuthority = SecurityUtil.hasAuthority("post:delete:any");
         boastCatPostService.deleteBoastCatPost(boastCatPostId, userId, hasDeleteAuthority);
         return ResponseEntity.noContent().build();
-    }
-
-    // ========== 상세조회 + 조회수 통합 API ==========
-
-    @Operation(summary = "자랑글 상세조회 + 조회수 증가 (v1 더티체킹, 비교군)")
-    @SecurityRequirements
-    @GetMapping("/view/v1/{boastCatPostId}")
-    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastCatPostV1(
-            @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId) {
-        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v1)", boastCatPostService.getBoastCatPostV1(boastCatPostId)));
-    }
-
-    @Operation(summary = "자랑글 상세조회 + 조회수 증가 (v2 원자적 UPDATE, 채택)")
-    @SecurityRequirements
-    @GetMapping("/view/v2/{boastCatPostId}")
-    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastCatPostV2(
-            @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId) {
-        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v2)", boastCatPostService.getBoastCatPostV2(boastCatPostId)));
-    }
-
-    @Operation(summary = "자랑글 상세조회 + 조회수 증가 (v3 비관적 락, 비교군)")
-    @SecurityRequirements
-    @GetMapping("/view/v3/{boastCatPostId}")
-    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getBoastCatPostV3(
-            @Parameter(description = "자랑글 ID") @PathVariable Long boastCatPostId) {
-        return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v3)", boastCatPostService.getBoastCatPostV3(boastCatPostId)));
     }
 
 }

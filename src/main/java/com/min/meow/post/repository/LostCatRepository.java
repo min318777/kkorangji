@@ -15,16 +15,17 @@ import java.util.Optional;
 @Repository
 public interface LostCatRepository extends JpaRepository<LostCatPost, Long>, LostCatRepositoryCustom {
 
+    // 마이페이지: 사용자가 작성한 실종글 목록 조회 (페이징)
+    @Query("SELECT l FROM LostCatPost l " +
+           "WHERE l.user.id = :userId " +
+           "ORDER BY l.createdAt DESC")
+    Page<LostCatPost> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
+
     // 단일 게시글 상세 조회 — User(N:1)는 Fetch Join, imageUrls(1:N)는 카테시안 곱/MultipleBagFetchException 위험이 있어 제외
     @Query("SELECT l FROM LostCatPost l " +
             "LEFT JOIN FETCH l.user " +
             "WHERE l.id = :id")
     Optional<LostCatPost> findByIdWithUser(@Param("id") Long id);
-
-    @Query("SELECT l FROM LostCatPost l " +
-           "WHERE l.user.id = :userId " +
-           "ORDER BY l.createdAt DESC")
-    Page<LostCatPost> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
 
     // ========== 조회수 ==========
 

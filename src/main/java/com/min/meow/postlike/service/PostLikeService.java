@@ -29,6 +29,12 @@ public class PostLikeService {
     private final UserRepository userRepository;
     private final NotificationEventPublisher notificationEventPublisher;
 
+    // 좋아요 여부 확인
+    @Transactional(readOnly = true)
+    public boolean isLiked(Long postId, Long userId) {
+        return postLikeRepository.existsByBoastCatPostIdAndUserId(postId, userId);
+    }
+
     @Transactional
     public Long addLike(Long postId, Long userId) {
         if (postLikeRepository.existsByBoastCatPostIdAndUserId(postId, userId)) {
@@ -78,11 +84,5 @@ public class PostLikeService {
         boastCatPostRepository.updateLikeCount(postId, -1);
         notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(postId, -3));
         return (long) boastCatPostRepository.findLikeCountById(postId);
-    }
-
-    // 좋아요 여부 확인
-    @Transactional(readOnly = true)
-    public boolean isLiked(Long postId, Long userId) {
-        return postLikeRepository.existsByBoastCatPostIdAndUserId(postId, userId);
     }
 }

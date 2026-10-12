@@ -69,6 +69,38 @@ public class LostCatPostController {
         return ResponseEntity.ok(ApiResponse.success("상세조회 성공 (v2)", lostCatPostService.getLostCatPostV2(lostCatPostId)));
     }
 
+    @Operation(summary = "내 주변 실종글 조회",
+            description = "현재 위치(위도/경도) 기준으로 반경 내 실종글을 조회합니다. 위치 없는 글은 제외됩니다. 인증 불필요.")
+    @SecurityRequirements
+    @GetMapping("/nearby")
+    public ResponseEntity<ApiResponse<PageResponse<LostCatPostListResponse>>> getNearbyLostCatPosts(
+            @Parameter(description = "현재 위치 위도", example = "37.5665") @RequestParam double lat,
+            @Parameter(description = "현재 위치 경도", example = "126.9780") @RequestParam double lng,
+            @Parameter(description = "검색 반경 (km, 기본값 5)", example = "5") @RequestParam(defaultValue = "5") double radius,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10") @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<LostCatPostListResponse> pageResponse = lostCatPostService.getNearbyLostCatPosts(lat, lng, radius, pageable);
+        return ResponseEntity.ok(ApiResponse.success("내 주변 실종글 조회 성공", pageResponse));
+    }
+
+    @Operation(summary = "내 주변 실종글 조회 (ST_Distance_Sphere)",
+            description = "ST_Distance_Sphere로 정확한 원형 반경 필터 + 가까운 순 정렬. 성능 비교용. 인증 불필요.")
+    @SecurityRequirements
+    @GetMapping("/nearby/st")
+    public ResponseEntity<ApiResponse<PageResponse<LostCatPostListResponse>>> getNearbyLostCatPostsST(
+            @Parameter(description = "현재 위치 위도", example = "37.5665") @RequestParam double lat,
+            @Parameter(description = "현재 위치 경도", example = "126.9780") @RequestParam double lng,
+            @Parameter(description = "검색 반경 (km, 기본값 5)", example = "5") @RequestParam(defaultValue = "5") double radius,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10") @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        PageResponse<LostCatPostListResponse> pageResponse = lostCatPostService.getNearbyLostCatPostsST(lat, lng, radius, pageable);
+        return ResponseEntity.ok(ApiResponse.success("내 주변 실종글 조회 성공 (ST)", pageResponse));
+    }
+
     // 글 생성 (Presigned URL 기반 이미지 업로드)
     @Operation(summary = "실종글 생성",
             description = "새 실종글을 작성합니다. 이미지는 Presigned URL로 S3에 먼저 업로드 후 key를 전달합니다. 인증 필요. " +
@@ -128,39 +160,5 @@ public class LostCatPostController {
         boolean isCompleted = Boolean.TRUE.equals(body.get("isCompleted"));
         lostCatPostService.updateCompletedStatus(lostCatPostId, isCompleted, user.getUserId());
         return ResponseEntity.ok(ApiResponse.success("상태 변경 성공", null));
-    }
-
-    // ========== 위치 기반 조회 ==========
-
-    @Operation(summary = "내 주변 실종글 조회",
-            description = "현재 위치(위도/경도) 기준으로 반경 내 실종글을 조회합니다. 위치 없는 글은 제외됩니다. 인증 불필요.")
-    @SecurityRequirements
-    @GetMapping("/nearby")
-    public ResponseEntity<ApiResponse<PageResponse<LostCatPostListResponse>>> getNearbyLostCatPosts(
-            @Parameter(description = "현재 위치 위도", example = "37.5665") @RequestParam double lat,
-            @Parameter(description = "현재 위치 경도", example = "126.9780") @RequestParam double lng,
-            @Parameter(description = "검색 반경 (km, 기본값 5)", example = "5") @RequestParam(defaultValue = "5") double radius,
-            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기", example = "10") @RequestParam(defaultValue = "10") int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-        PageResponse<LostCatPostListResponse> pageResponse = lostCatPostService.getNearbyLostCatPosts(lat, lng, radius, pageable);
-        return ResponseEntity.ok(ApiResponse.success("내 주변 실종글 조회 성공", pageResponse));
-    }
-
-    @Operation(summary = "내 주변 실종글 조회 (ST_Distance_Sphere)",
-            description = "ST_Distance_Sphere로 정확한 원형 반경 필터 + 가까운 순 정렬. 성능 비교용. 인증 불필요.")
-    @SecurityRequirements
-    @GetMapping("/nearby/st")
-    public ResponseEntity<ApiResponse<PageResponse<LostCatPostListResponse>>> getNearbyLostCatPostsST(
-            @Parameter(description = "현재 위치 위도", example = "37.5665") @RequestParam double lat,
-            @Parameter(description = "현재 위치 경도", example = "126.9780") @RequestParam double lng,
-            @Parameter(description = "검색 반경 (km, 기본값 5)", example = "5") @RequestParam(defaultValue = "5") double radius,
-            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "페이지 크기", example = "10") @RequestParam(defaultValue = "10") int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-        PageResponse<LostCatPostListResponse> pageResponse = lostCatPostService.getNearbyLostCatPostsST(lat, lng, radius, pageable);
-        return ResponseEntity.ok(ApiResponse.success("내 주변 실종글 조회 성공 (ST)", pageResponse));
     }
 }
