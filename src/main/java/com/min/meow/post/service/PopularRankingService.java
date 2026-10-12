@@ -1,6 +1,7 @@
 package com.min.meow.post.service;
 
 import com.min.meow.notification.event.PopularScoreEvent;
+import com.min.meow.notification.event.PostDeletedEvent;
 import com.min.meow.post.repository.PopularPostRepository;
 import com.querydsl.core.Tuple;
 import jakarta.annotation.PostConstruct;
@@ -90,12 +91,14 @@ public class PopularRankingService {
         }
     }
 
-    // 게시글 삭제 시 Sorted Set에서도 제거
-    public void removeFromRanking(Long postId) {
+    // 게시글 삭제 이벤트 수신 → Sorted Set에서도 제거, 트랜잭션 커밋 후 비동기 처리
+    @Async("notificationExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onPostDeleted(PostDeletedEvent event) {
         try {
-            redisTemplate.opsForZSet().remove(getRankingKey(), String.valueOf(postId));
+            redisTemplate.opsForZSet().remove(getRankingKey(), String.valueOf(event.postId()));
         } catch (Exception e) {
-            log.warn("[PopularRanking] 삭제 반영 실패 - postId: {}", postId, e);
+            log.warn("[PopularRanking] 삭제 반영 실패 - postId: {}", event.postId(), e);
         }
     }
 

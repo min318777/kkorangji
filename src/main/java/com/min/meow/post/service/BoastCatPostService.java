@@ -16,6 +16,7 @@ import com.min.meow.common.exception.CustomException;
 import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.notification.event.NotificationEventPublisher;
 import com.min.meow.notification.event.PopularScoreEvent;
+import com.min.meow.notification.event.PostDeletedEvent;
 import com.min.meow.post.event.PostImageDeleteEventPublisher;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.comment.repository.CommentRepository;
@@ -45,7 +46,6 @@ public class BoastCatPostService {
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final BoastCatPostCountCacheService countCacheService;
-    private final PopularRankingService popularRankingService;
     private final PostImageDeleteEventPublisher postImageDeleteEventPublisher;
     private final NotificationEventPublisher notificationEventPublisher;
 
@@ -141,7 +141,7 @@ public class BoastCatPostService {
         }
         commentRepository.deleteAllByPostIdAndPostType(boastCatPostId, PostType.BOAST);
         boastCatPostRepository.deleteById(boastCatPostId);
-        popularRankingService.removeFromRanking(boastCatPostId);
+        notificationEventPublisher.publishPostDeletedEvent(new PostDeletedEvent(boastCatPostId));
         postImageDeleteEventPublisher.publish(keys);
     }
 
@@ -190,7 +190,6 @@ public class BoastCatPostService {
         BoastCatPost post = boastCatPostRepository.findByIdWithUser(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", id)));
         boastCatPostRepository.incrementViewCount(id);
-        // 인기글 Sorted Set 점수 +1 (AFTER_COMMIT 비동기 처리)
         notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(id, 1));
         return GetBoastCatPostResponse.from(post);
     }

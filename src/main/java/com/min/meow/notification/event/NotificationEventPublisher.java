@@ -38,4 +38,9 @@ public class NotificationEventPublisher {
     public void publishPopularScoreEvent(PopularScoreEvent event) {
         eventPublisher.publishEvent(event);
     }
+
+    // 게시글 삭제 이벤트 발행 — PopularRankingService가 Sorted Set에서 제거
+    public void publishPostDeletedEvent(PostDeletedEvent event) {
+        eventPublisher.publishEvent(event);
+    }
 }
