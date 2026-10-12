@@ -85,9 +85,6 @@ public class RedisConfig {
         // 인기글 캐시 설정 (TTL 30초) — 스탬피드 방지 테스트 주기에 맞춤
         RedisCacheConfiguration popularPostsConfiguration = cacheConfig(Duration.ofSeconds(30), cacheMapper);
 
-        // 상세조회 캐시 설정 (TTL 30초) — 스탬피드 테스트용
-        RedisCacheConfiguration postDetailConfiguration = cacheConfig(Duration.ofSeconds(30), cacheMapper);
-
         // 게시글 전체 수 캐시 (TTL 5분) — COUNT(*) 쿼리 대체
         RedisCacheConfiguration postCountConfiguration = cacheConfig(Duration.ofMinutes(5), cacheMapper);
 
@@ -98,8 +95,6 @@ public class RedisConfig {
                 .withCacheConfiguration("user:stats", userStatsConfiguration)
                 // 인기글 목록 캐시 — v1(무방지, 비교 기준선) 30초 TTL
                 .withCacheConfiguration("post:boast:popular", popularPostsConfiguration)
-                // 상세조회 캐시 — v1/v2/v3 공용 (TTL 30초)
-                .withCacheConfiguration("post:boast:detail", postDetailConfiguration)
                 // 자랑글 전체 수 캐시 (TTL 5분)
                 .withCacheConfiguration("post:boast:count", postCountConfiguration)
                 // 실종글 전체 수 캐시 (TTL 5분)

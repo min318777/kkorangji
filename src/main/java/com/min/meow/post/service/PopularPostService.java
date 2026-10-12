@@ -1,27 +1,15 @@
 package com.min.meow.post.service;
 
-import com.min.meow.common.exception.CustomException;
-import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
-import com.min.meow.post.dto.response.GetBoastCatPostResponse;
-import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.repository.PopularPostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -32,9 +20,6 @@ public class PopularPostService {
 
     private final PopularPostRepository popularPostRepository;
     private final PopularRankingService popularRankingService;
-    private final CacheManager cacheManager;
-    private final RedisTemplate<String, String> redisTemplate;
-    private final RedissonClient redissonClient;
 
     // v1: 기본 @Cacheable
     public List<BoastCatPostListResponse> getPopularPosts() {
@@ -62,92 +47,4 @@ public class PopularPostService {
                 .collect(Collectors.toList());
     }
 
-    // ========== 인기글 상세조회 — Cache Stampede 방지 비교 ==========
-
-    // v1: 기본 @Cacheable — Stampede 방지 없음 (비교 기준선)
-    @Cacheable(cacheNames = "post:boast:detail", key = "#id")
-    public GetBoastCatPostResponse getDetailV1(Long id) {
-        log.debug("[인기글 상세 v1 Cache MISS] postId: {}, thread: {}", id, Thread.currentThread().getName());
-        return fetchDetail(id);
-    }
-
-    // v2: Lettuce SETNX 분산 락 — Stampede 방지, MISS 시 첫 스레드만 DB 조회하고 나머지는 대기
-    public GetBoastCatPostResponse getDetailV2(Long id) {
-        String lockKey = "lock:post:boast:detail:" + id;
-        Cache cache = cacheManager.getCache("post:boast:detail");
-
-        Cache.ValueWrapper cached = cache.get(id);
-        if (cached != null) return (GetBoastCatPostResponse) cached.get();
-
-        Boolean locked = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", Duration.ofSeconds(3));
-
-        if (Boolean.TRUE.equals(locked)) {
-            try {
-                Cache.ValueWrapper recheck = cache.get(id);
-                if (recheck != null) return (GetBoastCatPostResponse) recheck.get();
-                log.debug("[인기글 상세 v2 락 획득-DB 조회] postId: {}, thread: {}", id, Thread.currentThread().getName());
-                GetBoastCatPostResponse result = fetchDetail(id);
-                cache.put(id, result);
-                return result;
-            } finally {
-                redisTemplate.delete(lockKey);
-            }
-        } else {
-            log.debug("[인기글 상세 v2 락 대기] postId: {}", id);
-            for (int i = 0; i < 30; i++) {
-                try { Thread.sleep(100); } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-                Cache.ValueWrapper retry = cache.get(id);
-                if (retry != null) return (GetBoastCatPostResponse) retry.get();
-            }
-            log.warn("[인기글 상세 v2 타임아웃] 안전망 DB 조회 - postId: {}", id);
-            return fetchDetail(id);
-        }
-    }
-
-    // v3: Cache Warming — DetailCacheWarmingScheduler가 25초마다 선제 갱신 (현재 스케줄러 비활성 상태, 설계 의도만 반영)
-    @Cacheable(cacheNames = "post:boast:detail", key = "#id")
-    public GetBoastCatPostResponse getDetailV3(Long id) {
-        log.warn("[인기글 상세 v3 Cache MISS] 워밍 실패 - postId: {}", id);
-        return fetchDetail(id);
-    }
-
-    // v4: Redisson RLock — Stampede 방지, Pub/Sub 기반 대기 + Lua 스크립트 원자적 해제
-    public GetBoastCatPostResponse getDetailV4(Long id) {
-        Cache cache = cacheManager.getCache("post:boast:detail");
-
-        Cache.ValueWrapper cached = cache.get(id);
-        if (cached != null) return (GetBoastCatPostResponse) cached.get();
-
-        RLock lock = redissonClient.getLock("lock:post:boast:detail:v4:" + id);
-        try {
-            if (lock.tryLock(3, 5, TimeUnit.SECONDS)) {
-                try {
-                    Cache.ValueWrapper recheck = cache.get(id);
-                    if (recheck != null) return (GetBoastCatPostResponse) recheck.get();
-
-                    log.debug("[인기글 상세 v4 락 획득-DB 조회] postId: {}, thread: {}", id, Thread.currentThread().getName());
-                    GetBoastCatPostResponse result = fetchDetail(id);
-                    cache.put(id, result);
-                    return result;
-                } finally {
-                    lock.unlock();
-                }
-            }
-            log.warn("[인기글 상세 v4 타임아웃] 안전망 DB 조회 - postId: {}", id);
-            return fetchDetail(id);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return fetchDetail(id);
-        }
-    }
-
-    // DB 직접 조회 — 캐시 없음 (스케줄러 워밍 / 폴백용)
-    public GetBoastCatPostResponse fetchDetail(Long id) {
-        BoastCatPost post = popularPostRepository.findByIdWithUser(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + id));
-        return GetBoastCatPostResponse.from(post);
-    }
 }

@@ -2,16 +2,13 @@ package com.min.meow.post.controller;
 
 import com.min.meow.common.ApiResponse;
 import com.min.meow.post.dto.response.BoastCatPostListResponse;
-import com.min.meow.post.dto.response.GetBoastCatPostResponse;
 import com.min.meow.post.service.PopularPostService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,45 +40,4 @@ public class PopularPostController {
         return ResponseEntity.ok(ApiResponse.success("인기 게시물 조회 성공 (v5)", popularPostService.getPopularPostsV5()));
     }
 
-    // ========== 인기글 상세조회 — Cache Stampede 방지 비교 ==========
-
-    // 인기글 상세조회 v1 — 기본 @Cacheable(비교 기준선), TTL 만료 시 동시 요청이 몰려 Stampede 발생
-    @Operation(summary = "인기글 상세 조회 (v1 - 기본 캐시)",
-            description = "기본 @Cacheable. TTL 만료 시 Stampede 발생. 비교 기준선.")
-    @SecurityRequirements
-    @GetMapping("/popular/detail/{id}")
-    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getPopularPostDetail(
-            @Parameter(description = "게시글 ID", example = "1") @PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success("인기글 상세 조회 성공 (v1)", popularPostService.getDetailV1(id)));
-    }
-
-    // 인기글 상세조회 v2 — Lettuce SETNX 분산 락, MISS 시 첫 스레드만 DB 조회 나머지는 100ms 간격 대기(최대 3초)
-    @Operation(summary = "인기글 상세 조회 (v2 - 분산 락)",
-            description = "Redis SETNX 분산 락. MISS 시 첫 스레드만 DB 조회, 나머지 대기.")
-    @SecurityRequirements
-    @GetMapping("/popular/detail/v2/{id}")
-    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getPopularPostDetailV2(
-            @Parameter(description = "게시글 ID", example = "1") @PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success("인기글 상세 조회 성공 (v2)", popularPostService.getDetailV2(id)));
-    }
-
-    // 인기글 상세조회 v3 — Cache Warming으로 Stampede 원천 차단 설계이나, 현재 워밍 스케줄러는 비활성 상태
-    @Operation(summary = "인기글 상세 조회 (v3 - Cache Warming)",
-            description = "설계상 스케줄러가 25초마다 TOP 24 상세 캐시 선제 갱신해 MISS를 방지하나, 현재 워밍 스케줄러가 비활성 상태라 TTL 만료 시 MISS 발생.")
-    @SecurityRequirements
-    @GetMapping("/popular/detail/v3/{id}")
-    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getPopularPostDetailV3(
-            @Parameter(description = "게시글 ID", example = "1") @PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success("인기글 상세 조회 성공 (v3)", popularPostService.getDetailV3(id)));
-    }
-
-    // 인기글 상세조회 v4 — Redisson RLock, v2(폴링)와 달리 Pub/Sub 기반 대기 + Lua 스크립트 원자적 해제
-    @Operation(summary = "인기글 상세 조회 (v4 - Redisson RLock)",
-            description = "Redisson RLock. Pub/Sub 기반 대기 + Lua 스크립트 원자적 해제. MISS 시 첫 스레드만 DB 조회.")
-    @SecurityRequirements
-    @GetMapping("/popular/detail/v4/{id}")
-    public ResponseEntity<ApiResponse<GetBoastCatPostResponse>> getPopularPostDetailV4(
-            @Parameter(description = "게시글 ID", example = "1") @PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success("인기글 상세 조회 성공 (v4)", popularPostService.getDetailV4(id)));
-    }
 }
