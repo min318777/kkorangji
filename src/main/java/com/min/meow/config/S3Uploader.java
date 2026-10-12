@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-// deprecated: 서버 경유 업로드 방식(메모리/트래픽 부담) → Presigned URL 기반 S3Service로 전환됨
+// deprecated: 서버 경유 업로드 방식 → Presigned URL 기반 S3Service로 전환됨
 @Deprecated(since = "2025.02", forRemoval = true)
 @Component
 @RequiredArgsConstructor
@@ -30,7 +30,6 @@ public class S3Uploader {
     @Value("${cloud.aws.s3.baseUrl}")
     private String baseUrl;
 
-    // deprecated: S3Service#toCloudFrontUrls로 대체됨
     @Deprecated
     public List<String> uploadFiles(List<MultipartFile> files){
         return files.stream()
@@ -38,7 +37,6 @@ public class S3Uploader {
                 .collect(Collectors.toList());
     }
 
-    // deprecated: S3Service#generatePresignedUrl로 대체됨
     @Deprecated
     public String uploadFile(MultipartFile file) {
         String key = "kkorangji/" + UUID.randomUUID() + "-" + file.getOriginalFilename();

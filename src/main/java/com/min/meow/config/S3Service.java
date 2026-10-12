@@ -10,8 +10,6 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -23,7 +21,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-// S3 서비스 — 클라이언트가 Presigned URL로 S3에 직접 업로드하고, 서버는 key를 CloudFront URL로 변환해 저장
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -99,20 +96,6 @@ public class S3Service {
                 .collect(Collectors.toList());
     }
 
-    // S3 파일 존재 여부 확인
-    public boolean doesObjectExist(String key) {
-        try {
-            HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(key)
-                    .build();
-            s3Client.headObject(headObjectRequest);
-            return true;
-        } catch (NoSuchKeyException e) {
-            return false;
-        }
-    }
-
     // S3 파일 삭제
     public void deleteFile(String key) {
         try {
@@ -123,8 +106,6 @@ public class S3Service {
             s3Client.deleteObject(deleteRequest);
             log.info("S3 파일 삭제 완료 - key: {}", key);
         } catch (SdkException e) {
-            // 예외를 삼키지 않고 래핑해서 전파 (FastAPI의 raise DatabaseException() from e 패턴)
-            // 원인(cause) 체인을 보존하여 디버깅 시 근본 원인 추적 가능
             log.error("S3 파일 삭제 실패 - key: {}", key, e);
             throw new CustomException(ErrorCode.S3_DELETE_FAILED, e);
         }
