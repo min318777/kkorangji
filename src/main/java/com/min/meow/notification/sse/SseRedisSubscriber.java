@@ -15,8 +15,6 @@ import org.springframework.stereotype.Component;
 public class SseRedisSubscriber implements MessageListener {
 
     private final SseEmitterManager sseEmitterManager;
-    // RedisConfig ObjectMapper는 activateDefaultTyping이 적용되어 타입 정보가 포함된 JSON을 생성함
-    // Pub/Sub 역직렬화는 순수 ObjectMapper로 분리하여 타입 충돌 방지
     private final ObjectMapper objectMapper;
 
     public SseRedisSubscriber(SseEmitterManager sseEmitterManager) {
@@ -29,7 +27,6 @@ public class SseRedisSubscriber implements MessageListener {
     @Override
     public void onMessage(Message message, byte[] pattern) {
         try {
-            // 채널명에서 userId 추출 (sse:notify:{userId})
             String channel = new String(message.getChannel());
             Long userId = Long.parseLong(channel.replace("sse:notify:", ""));
 

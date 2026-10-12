@@ -80,11 +80,6 @@ public class LostCatPost extends BasePost {
         replaceImages(newImageUrls);
     }
 
-    // 완료 상태 변경
-    public void markAsCompleted() {
-        this.isCompleted = true;
-    }
-
     // 완료 상태 토글 (찾는 중 ↔ 귀가 완료)
     public void setCompletedStatus(boolean completed) {
         this.isCompleted = completed;

@@ -10,6 +10,7 @@ import com.min.meow.post.entity.BoastCatPost;
 import com.min.meow.post.repository.BoastCatPostRepository;
 import com.min.meow.postlike.entity.PostLike;
 import com.min.meow.postlike.repository.PostLikeRepository;
+import com.min.meow.user.entity.User;
 import com.min.meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,7 @@ public class PostLikeService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, "postId=" + postId));
 
         try {
-            var user = userRepository.findById(userId)
+            User user = userRepository.findById(userId)
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
             if (user.isWithdrawn()) {
                 throw new CustomException(ErrorCode.NOT_FOUND_USER);

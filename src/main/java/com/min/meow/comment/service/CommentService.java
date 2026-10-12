@@ -95,7 +95,6 @@ public class CommentService {
                 .build();
         commentRepository.save(comment);
 
-        // postType에 따라 댓글 수 증가 및 알림 발행
         if (postType == PostType.BOAST) {
             BoastCatPost post = boastCatPostRepository.findById(postId)
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", postId)));
@@ -105,7 +104,6 @@ public class CommentService {
                 notificationEventPublisher.publishCommentEvent(
                         new CommentEvent(comment.getId(), postId, PostType.BOAST, user.getNickname(), post.getUser().getId()));
             }
-            // 인기글 Sorted Set 점수 +2
             notificationEventPublisher.publishPopularScoreEvent(new PopularScoreEvent(postId, 2));
         } else {
             LostCatPost post = lostCatRepository.findById(postId)
@@ -143,17 +141,14 @@ public class CommentService {
             BoastCatPost post = boastCatPostRepository.findById(postId)
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", postId)));
             boastCatPostRepository.incrementCommentCount(postId);
-
             if (post.canNotify(userId)) {
                 saveAndSendNotificationSync(comment.getId(), postId, PostType.BOAST, user.getNickname(), post.getUser().getId());
             }
-            // 인기글 Sorted Set 점수 +2 (v2는 이벤트로 비동기 반영, v1은 동기로 직접 반영)
             popularRankingService.incrementScoreSync(postId, 2);
         } else {
             LostCatPost post = lostCatRepository.findById(postId)
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_POST, Map.of("postId", postId)));
             lostCatRepository.incrementCommentCount(postId);
-
             if (post.canNotify(userId)) {
                 saveAndSendNotificationSync(comment.getId(), postId, PostType.LOST, user.getNickname(), post.getUser().getId());
             }
