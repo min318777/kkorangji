@@ -5,6 +5,7 @@ import com.min.meow.common.exception.ErrorCode;
 import com.min.meow.common.NotificationType;
 import com.min.meow.notification.entity.Notification;
 import com.min.meow.notification.repository.NotificationRepository;
+import com.min.meow.notification.sse.SseEmitterManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,14 +22,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("NotificationQueryService 유닛 테스트")
-class NotificationQueryServiceTest {
+@DisplayName("NotificationService 유닛 테스트")
+class NotificationServiceTest {
 
     @InjectMocks
-    private NotificationQueryService notificationQueryService;
+    private NotificationService notificationService;
 
     @Mock
     private NotificationRepository notificationRepository;
+
+    @Mock
+    private SseEmitterManager sseEmitterManager;
 
     private Notification createNotification(Long id, Long receiverUserId, boolean isRead) {
         return Notification.builder()
@@ -53,7 +57,7 @@ class NotificationQueryServiceTest {
             given(notificationRepository.findById(1L)).willReturn(Optional.of(notification));
 
             // when
-            notificationQueryService.readSingleNotification(1L, 10L);
+            notificationService.readSingleNotification(1L, 10L);
 
             // then
             assertThat(notification.isRead()).isTrue();
@@ -67,7 +71,7 @@ class NotificationQueryServiceTest {
             given(notificationRepository.findById(1L)).willReturn(Optional.of(notification));
 
             // when & then — 예외 없이 정상 처리
-            var response = notificationQueryService.readSingleNotification(1L, 10L);
+            var response = notificationService.readSingleNotification(1L, 10L);
             assertThat(response).isNotNull();
         }
 
@@ -78,7 +82,7 @@ class NotificationQueryServiceTest {
             given(notificationRepository.findById(1L)).willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> notificationQueryService.readSingleNotification(1L, 10L))
+            assertThatThrownBy(() -> notificationService.readSingleNotification(1L, 10L))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.NOT_FOUND_NOTIFICATION);
@@ -92,7 +96,7 @@ class NotificationQueryServiceTest {
             given(notificationRepository.findById(1L)).willReturn(Optional.of(notification));
 
             // when & then — receiverUserId=10인데 userId=99로 요청
-            assertThatThrownBy(() -> notificationQueryService.readSingleNotification(1L, 99L))
+            assertThatThrownBy(() -> notificationService.readSingleNotification(1L, 99L))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorCode")
                     .isEqualTo(ErrorCode.FORBIDDEN_NOTIFICATION_ACCESS);
@@ -118,7 +122,7 @@ class NotificationQueryServiceTest {
                     .willReturn(List.of(unread1, alreadyRead, unread2));
 
             // when
-            int result = notificationQueryService.readMultipleNotifications(List.of(1L, 2L, 3L), userId);
+            int result = notificationService.readMultipleNotifications(List.of(1L, 2L, 3L), userId);
 
             // then
             assertThat(result).isEqualTo(2);
@@ -134,7 +138,7 @@ class NotificationQueryServiceTest {
                     .willReturn(List.of());
 
             // when
-            int result = notificationQueryService.readMultipleNotifications(List.of(1L), 10L);
+            int result = notificationService.readMultipleNotifications(List.of(1L), 10L);
 
             // then
             assertThat(result).isZero();
@@ -156,7 +160,7 @@ class NotificationQueryServiceTest {
                     .willReturn(List.of(unread1, unread2));
 
             // when
-            int result = notificationQueryService.readAllNotifications(userId);
+            int result = notificationService.readAllNotifications(userId);
 
             // then
             assertThat(result).isEqualTo(2);
@@ -171,7 +175,7 @@ class NotificationQueryServiceTest {
             given(notificationRepository.findAllByReceiverUserIdAndIsReadFalse(10L)).willReturn(List.of());
 
             // when
-            int result = notificationQueryService.readAllNotifications(10L);
+            int result = notificationService.readAllNotifications(10L);
 
             // then
             assertThat(result).isZero();

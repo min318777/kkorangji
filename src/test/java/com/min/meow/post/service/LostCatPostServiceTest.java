@@ -164,6 +164,8 @@ class LostCatPostServiceTest {
                     .build();
 
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
+            given(s3Service.resolveImageUpdate(request.getImages(), post.getImageUrls()))
+                    .willReturn(new S3Service.ImageUpdateResult(List.of(), List.of("old.jpg")));
 
             // when
             UpdateLostCatPostResponse response = lostCatPostService.updateLostCatPost(postId, request, userId);
@@ -213,7 +215,9 @@ class LostCatPostServiceTest {
                     .build();
 
             given(lostCatRepository.findById(postId)).willReturn(Optional.of(post));
-            given(s3Service.toCloudFrontUrl("meow/new.jpg")).willReturn("https://cdn.example.com/new.jpg");
+            given(s3Service.resolveImageUpdate(request.getImages(), post.getImageUrls()))
+                    .willReturn(new S3Service.ImageUpdateResult(
+                            List.of("https://cdn.example.com/new.jpg"), List.of("old.jpg")));
 
             // when
             UpdateLostCatPostResponse response = lostCatPostService.updateLostCatPost(postId, request, userId);

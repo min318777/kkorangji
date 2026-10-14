@@ -54,9 +54,6 @@ class BoastCatPostServiceTest {
     private S3Service s3Service;
 
     @Mock
-    private PopularRankingService popularRankingService;
-
-    @Mock
     private com.min.meow.post.event.PostImageDeleteEventPublisher postImageDeleteEventPublisher;
 
     @Mock
@@ -172,6 +169,8 @@ class BoastCatPostServiceTest {
                     .build();
 
             given(boastCatPostRepository.findById(postId)).willReturn(Optional.of(post));
+            given(s3Service.resolveImageUpdate(request.getImages(), post.getImageUrls()))
+                    .willReturn(new S3Service.ImageUpdateResult(List.of(), List.of("old.jpg")));
 
             // when
             UpdateBoastCatPostResponse response = boastCatPostService.updateBoastCatPost(request, postId, userId);
@@ -219,7 +218,9 @@ class BoastCatPostServiceTest {
                     .build();
 
             given(boastCatPostRepository.findById(postId)).willReturn(Optional.of(post));
-            given(s3Service.toCloudFrontUrl("meow/new.jpg")).willReturn("https://cdn.example.com/new.jpg");
+            given(s3Service.resolveImageUpdate(request.getImages(), post.getImageUrls()))
+                    .willReturn(new S3Service.ImageUpdateResult(
+                            List.of("https://cdn.example.com/new.jpg"), List.of("old.jpg")));
 
             // when
             UpdateBoastCatPostResponse response = boastCatPostService.updateBoastCatPost(request, postId, userId);
@@ -234,7 +235,7 @@ class BoastCatPostServiceTest {
     class Delete {
 
         @Test
-        @DisplayName("성공: 본인 글은 삭제할 수 있고 인기글 랭킹에서도 함께 제거된다")
+        @DisplayName("성공: 본인 글은 삭제할 수 있고 게시글 삭제 이벤트가 발행된다")
         void test_성공_본인_글_삭제() {
             // given
             Long userId = 1L;
@@ -250,7 +251,8 @@ class BoastCatPostServiceTest {
             // then
             then(commentRepository).should().deleteAllByPostIdAndPostType(postId, PostType.BOAST);
             then(boastCatPostRepository).should().deleteById(postId);
-            then(popularRankingService).should().removeFromRanking(postId);
+            then(notificationEventPublisher).should()
+                    .publishPostDeletedEvent(new com.min.meow.notification.event.PostDeletedEvent(postId));
         }
 
         @Test
@@ -291,7 +293,7 @@ class BoastCatPostServiceTest {
                     .isEqualTo(ErrorCode.FORBIDDEN_NOT_AUTHOR);
 
             then(boastCatPostRepository).should(never()).deleteById(any());
-            then(popularRankingService).should(never()).removeFromRanking(any());
+            then(notificationEventPublisher).should(never()).publishPostDeletedEvent(any());
         }
     }
 }

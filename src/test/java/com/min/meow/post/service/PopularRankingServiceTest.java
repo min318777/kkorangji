@@ -1,5 +1,6 @@
 package com.min.meow.post.service;
 
+import com.min.meow.notification.event.PostDeletedEvent;
 import com.min.meow.post.repository.PopularPostRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -36,8 +37,8 @@ class PopularRankingServiceTest {
     private PopularPostRepository popularPostRepository;
 
     @Nested
-    @DisplayName("removeFromRanking() — 게시글 삭제 시 랭킹에서 제거")
-    class RemoveFromRanking {
+    @DisplayName("onPostDeleted() — 게시글 삭제 이벤트 수신 시 랭킹에서 제거")
+    class OnPostDeleted {
 
         @Test
         @DisplayName("성공: 지정한 postId를 Sorted Set에서 제거한다")
@@ -46,7 +47,7 @@ class PopularRankingServiceTest {
             given(redisTemplate.opsForZSet()).willReturn(zSetOperations);
 
             // when
-            popularRankingService.removeFromRanking(42L);
+            popularRankingService.onPostDeleted(new PostDeletedEvent(42L));
 
             // then
             then(zSetOperations).should().remove("post:boast:popular:ranking", "42");
@@ -61,7 +62,7 @@ class PopularRankingServiceTest {
                     .willThrow(new RuntimeException("Redis 연결 끊김"));
 
             // when & then — 예외 없이 정상 반환
-            popularRankingService.removeFromRanking(42L);
+            popularRankingService.onPostDeleted(new PostDeletedEvent(42L));
         }
     }
 

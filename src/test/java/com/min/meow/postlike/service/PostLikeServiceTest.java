@@ -90,6 +90,7 @@ class PostLikeServiceTest {
             given(postLikeRepository.existsByBoastCatPostIdAndUserId(postId, userId)).willReturn(false);
             given(boastCatPostRepository.findByIdWithUser(postId)).willReturn(Optional.of(post));
             given(userRepository.findById(userId)).willReturn(Optional.of(liker));
+            given(boastCatPostRepository.findLikeCountById(postId)).willReturn(4);
 
             // when
             Long result = postLikeService.addLike(postId, userId);
@@ -245,6 +246,7 @@ class PostLikeServiceTest {
 
             given(postLikeRepository.existsByBoastCatPostIdAndUserId(postId, userId)).willReturn(true);
             given(boastCatPostRepository.findById(postId)).willReturn(Optional.of(post));
+            given(boastCatPostRepository.findLikeCountById(postId)).willReturn(4);
 
             // when
             Long result = postLikeService.cancelLike(postId, userId);
@@ -303,6 +305,7 @@ class PostLikeServiceTest {
 
             given(postLikeRepository.existsByBoastCatPostIdAndUserId(postId, userId)).willReturn(true);
             given(boastCatPostRepository.findById(postId)).willReturn(Optional.of(post));
+            given(boastCatPostRepository.findLikeCountById(postId)).willReturn(0);
 
             // when
             Long result = postLikeService.cancelLike(postId, userId);
